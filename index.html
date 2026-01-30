@@ -1,21 +1,19 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="az">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ücretsiz AI Sohbet | ChatGPT Gibi</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Melek 🤖 - Azerbaycan AI Söhbət</title>
     <style>
-        /* RESET VE TEMEL STİLLER */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', Arial, sans-serif;
         }
 
         body {
-            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             height: 100vh;
             display: flex;
             justify-content: center;
@@ -23,152 +21,44 @@
             padding: 20px;
         }
 
-        /* ANA KONTEYNER */
         .chat-container {
             width: 100%;
-            max-width: 1200px;
+            max-width: 800px;
             height: 90vh;
             background: white;
             border-radius: 20px;
             overflow: hidden;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             display: flex;
-        }
-
-        /* SİDEBAR */
-        .sidebar {
-            width: 280px;
-            background: #202123;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            border-right: 1px solid #444;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding-bottom: 20px;
-            margin-bottom: 20px;
-            border-bottom: 1px solid #444;
-        }
-
-        .logo i {
-            font-size: 32px;
-            color: #10a37f;
-        }
-
-        .logo h1 {
-            color: white;
-            font-size: 20px;
-            font-weight: 600;
-        }
-
-        .new-chat-btn {
-            background: #10a37f;
-            color: white;
-            border: none;
-            padding: 14px;
-            border-radius: 10px;
-            font-size: 16px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            margin-bottom: 30px;
-            transition: all 0.3s;
-        }
-
-        .new-chat-btn:hover {
-            background: #0d8c6d;
-            transform: translateY(-2px);
-        }
-
-        .chat-history {
-            flex: 1;
-            overflow-y: auto;
-        }
-
-        .chat-history h3 {
-            color: #8e8ea0;
-            font-size: 14px;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .chat-item {
-            padding: 12px;
-            color: white;
-            border-radius: 8px;
-            margin-bottom: 8px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            transition: all 0.3s;
-            font-size: 14px;
-        }
-
-        .chat-item:hover {
-            background: #343541;
-        }
-
-        .chat-item.active {
-            background: #40414f;
-        }
-
-        /* ANA SOHBET ALANI */
-        .main-chat {
-            flex: 1;
-            display: flex;
             flex-direction: column;
         }
 
         .chat-header {
-            padding: 20px;
-            background: white;
-            border-bottom: 1px solid #e5e5e5;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .chat-header h2 {
-            font-size: 24px;
-            color: #333;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .header-actions {
-            display: flex;
-            gap: 10px;
-        }
-
-        .action-btn {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            border: none;
-            background: #f5f5f5;
-            cursor: pointer;
+            background: linear-gradient(135deg, #10a37f, #0d8c6d);
+            color: white;
+            padding: 25px;
+            text-align: center;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.3s;
+            gap: 15px;
         }
 
-        .action-btn:hover {
-            background: #e5e5e5;
-            transform: rotate(15deg);
+        .chat-header i {
+            font-size: 32px;
+            animation: float 3s ease-in-out infinite;
         }
 
-        /* MESAJLAR ALANI */
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .chat-header h1 {
+            font-size: 28px;
+            font-weight: 600;
+        }
+
         .messages-container {
             flex: 1;
             overflow-y: auto;
@@ -176,82 +66,25 @@
             background: #f7f7f8;
             display: flex;
             flex-direction: column;
-            gap: 25px;
+            gap: 20px;
         }
 
-        .welcome-message {
-            text-align: center;
-            padding: 40px 20px;
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        .welcome-icon {
-            font-size: 72px;
-            color: #10a37f;
-            margin-bottom: 25px;
-        }
-
-        .welcome-message h2 {
-            font-size: 32px;
-            color: #333;
-            margin-bottom: 15px;
-        }
-
-        .welcome-message p {
-            color: #666;
-            font-size: 18px;
-            line-height: 1.6;
-            margin-bottom: 40px;
-        }
-
-        .suggestions {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin-top: 30px;
-        }
-
-        .suggestion-btn {
-            padding: 18px;
-            background: white;
-            border: 1px solid #e5e5e5;
-            border-radius: 12px;
-            cursor: pointer;
-            font-size: 15px;
-            color: #333;
-            transition: all 0.3s;
-            text-align: center;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-
-        .suggestion-btn:hover {
-            background: #10a37f;
-            color: white;
-            border-color: #10a37f;
-            transform: translateY(-3px);
-        }
-
-        /* MESAJ STİLLERİ */
         .message {
             display: flex;
-            gap: 20px;
-            padding: 25px;
+            gap: 15px;
+            padding: 20px;
             border-radius: 15px;
-            max-width: 85%;
-            animation: fadeIn 0.4s ease-out;
+            max-width: 80%;
+            animation: slideIn 0.3s ease-out;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(15px); }
-            to { opacity: 1; transform: translateY(0); }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
         }
 
         .user-message {
-            background: linear-gradient(135deg, #10a37f, #0d8c6d);
+            background: #10a37f;
             color: white;
             margin-left: auto;
             border-bottom-right-radius: 5px;
@@ -290,37 +123,62 @@
         }
 
         .message-text {
-            line-height: 1.7;
+            line-height: 1.6;
             font-size: 16px;
             white-space: pre-wrap;
             word-wrap: break-word;
         }
 
         .message-time {
-            font-size: 13px;
+            font-size: 12px;
             color: #999;
-            margin-top: 10px;
+            margin-top: 8px;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 5px;
         }
 
-        /* GİRİŞ ALANI */
+        .typing-indicator {
+            display: flex;
+            gap: 5px;
+            padding: 20px;
+            background: white;
+            border: 1px solid #e5e5e5;
+            border-radius: 15px;
+            max-width: 80px;
+            margin-right: auto;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10a37f;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-10px); }
+        }
+
         .input-area {
-            padding: 25px;
+            padding: 20px;
             background: white;
             border-top: 1px solid #e5e5e5;
         }
 
         .input-wrapper {
             display: flex;
-            gap: 12px;
+            gap: 10px;
             align-items: flex-end;
             background: #f7f7f8;
-            border-radius: 15px;
+            border-radius: 12px;
             padding: 15px;
             border: 1px solid #e5e5e5;
-            transition: all 0.3s;
         }
 
         .input-wrapper:focus-within {
@@ -335,8 +193,8 @@
             resize: none;
             font-size: 16px;
             padding: 10px;
-            max-height: 150px;
-            min-height: 28px;
+            max-height: 120px;
+            min-height: 24px;
             outline: none;
             color: #333;
             font-family: inherit;
@@ -348,8 +206,8 @@
         }
 
         .send-btn {
-            width: 50px;
-            height: 50px;
+            width: 48px;
+            height: 48px;
             border-radius: 50%;
             border: none;
             background: #10a37f;
@@ -358,428 +216,175 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.3s;
-            flex-shrink: 0;
             font-size: 18px;
+            transition: all 0.3s;
         }
 
         .send-btn:hover {
             background: #0d8c6d;
-            transform: scale(1.1) rotate(10deg);
+            transform: scale(1.1);
         }
 
-        /* TYPING ANIMATION */
-        .typing-indicator {
-            display: flex;
-            gap: 5px;
-            padding: 25px;
-            background: white;
-            border: 1px solid #e5e5e5;
-            border-radius: 15px;
-            max-width: 100px;
-            margin-right: auto;
-        }
-
-        .typing-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: #10a37f;
-            animation: typing 1.4s infinite;
-        }
-
-        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
-        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
-
-        @keyframes typing {
-            0%, 60%, 100% { transform: translateY(0); }
-            30% { transform: translateY(-12px); }
-        }
-
-        /* DİSCLAİMER */
-        .disclaimer {
-            text-align: center;
-            font-size: 13px;
-            color: #888;
-            margin-top: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        /* RESPONSIVE */
+        /* Responsive */
         @media (max-width: 768px) {
             body {
                 padding: 10px;
-                height: 100vh;
             }
-
+            
             .chat-container {
                 height: 95vh;
-                flex-direction: column;
+                border-radius: 15px;
             }
-
-            .sidebar {
-                width: 100%;
-                height: 70px;
-                flex-direction: row;
-                padding: 15px;
-                gap: 15px;
-                align-items: center;
-            }
-
-            .logo h1 {
-                font-size: 18px;
-            }
-
-            .new-chat-btn span {
-                display: none;
-            }
-
-            .chat-history {
-                display: none;
-            }
-
-            .welcome-message {
-                padding: 30px 15px;
-            }
-
-            .welcome-icon {
-                font-size: 50px;
-            }
-
-            .welcome-message h2 {
-                font-size: 24px;
-            }
-
-            .suggestions {
-                grid-template-columns: 1fr;
-            }
-
-            .message {
-                max-width: 95%;
+            
+            .chat-header {
                 padding: 20px;
-                gap: 15px;
             }
-
+            
+            .chat-header h1 {
+                font-size: 22px;
+            }
+            
+            .messages-container {
+                padding: 20px;
+            }
+            
+            .message {
+                max-width: 90%;
+                padding: 15px;
+            }
+            
             .input-wrapper {
                 padding: 12px;
             }
-
-            .send-btn {
-                width: 45px;
-                height: 45px;
-            }
-        }
-
-        /* DARK MODE TOGGLE */
-        .theme-toggle {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1000;
-        }
-
-        .theme-btn {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: white;
-            border: none;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            transition: all 0.3s;
-        }
-
-        .theme-btn:hover {
-            transform: rotate(30deg);
-        }
-
-        /* DARK MODE STYLES */
-        .dark-mode {
-            background: linear-gradient(135deg, #2d2d2d, #1a1a1a);
-        }
-
-        .dark-mode .chat-container {
-            background: #2d2d2d;
-        }
-
-        .dark-mode .main-chat {
-            background: #2d2d2d;
-        }
-
-        .dark-mode .chat-header {
-            background: #2d2d2d;
-            border-color: #444;
-        }
-
-        .dark-mode .chat-header h2 {
-            color: white;
-        }
-
-        .dark-mode .messages-container {
-            background: #343541;
-        }
-
-        .dark-mode .welcome-message h2 {
-            color: white;
-        }
-
-        .dark-mode .welcome-message p {
-            color: #aaa;
-        }
-
-        .dark-mode .ai-message {
-            background: #40414f;
-            border-color: #555;
-            color: white;
-        }
-
-        .dark-mode .input-area {
-            background: #2d2d2d;
-            border-color: #444;
-        }
-
-        .dark-mode .input-wrapper {
-            background: #40414f;
-            border-color: #555;
-        }
-
-        .dark-mode textarea {
-            color: white;
-        }
-
-        .dark-mode textarea::placeholder {
-            color: #888;
-        }
-
-        .dark-mode .typing-indicator {
-            background: #40414f;
-            border-color: #555;
-        }
-
-        .dark-mode .disclaimer {
-            color: #aaa;
-        }
-
-        .dark-mode .suggestion-btn {
-            background: #40414f;
-            border-color: #555;
-            color: white;
-        }
-
-        .dark-mode .suggestion-btn:hover {
-            background: #10a37f;
         }
     </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <!-- THEME TOGGLE -->
-    <div class="theme-toggle">
-        <button class="theme-btn" id="themeToggle">
-            <i class="fas fa-moon"></i>
-        </button>
-    </div>
-
-    <!-- MAIN CHAT CONTAINER -->
     <div class="chat-container">
-        <!-- SIDEBAR -->
-        <div class="sidebar">
-            <div class="logo">
-                <i class="fas fa-robot"></i>
-                <h1>AI Sohbet</h1>
-            </div>
-            
-            <button class="new-chat-btn" id="newChatBtn">
-                <i class="fas fa-plus"></i> Yeni Sohbet
-            </button>
-            
-            <div class="chat-history">
-                <h3><i class="fas fa-history"></i> Geçmiş</h3>
-                <div id="chatList"></div>
-            </div>
+        <!-- Başlıq -->
+        <div class="chat-header">
+            <i class="fas fa-robot"></i>
+            <h1>Melek 🤖 - AI Köməkçi</h1>
         </div>
 
-        <!-- MAIN CHAT AREA -->
-        <div class="main-chat">
-            <!-- HEADER -->
-            <div class="chat-header">
-                <h2><i class="fas fa-comments"></i> AI Asistan</h2>
-                <div class="header-actions">
-                    <button class="action-btn" title="Temizle" id="clearBtn">
-                        <i class="fas fa-broom"></i>
-                    </button>
-                </div>
-            </div>
+        <!-- Mesajlar -->
+        <div class="messages-container" id="messagesContainer">
+            <!-- Mesajlar buraya eklenecek -->
+        </div>
 
-            <!-- MESSAGES -->
-            <div class="messages-container" id="messagesContainer">
-                <div class="welcome-message">
-                    <div class="welcome-icon">
-                        <i class="fas fa-robot"></i>
-                    </div>
-                    <h2>Merhaba! Ben AI Asistan 🤖</h2>
-                    <p>Ücretsiz ChatGPT alternatifiyim. Programlama, matematik, edebiyat, bilim ve daha birçok konuda sohbet edebiliriz!</p>
-                    <div class="suggestions">
-                        <button class="suggestion-btn" data-prompt="Python'da Fibonacci serisi nasıl yazılır?">
-                            <i class="fab fa-python"></i> Python kodu
-                        </button>
-                        <button class="suggestion-btn" data-prompt="Yapay zeka nedir ve nasıl çalışır?">
-                            <i class="fas fa-brain"></i> Yapay Zeka
-                        </button>
-                        <button class="suggestion-btn" data-prompt="İngilizce öğrenmek için ipuçları ver">
-                            <i class="fas fa-language"></i> İngilizce
-                        </button>
-                        <button class="suggestion-btn" data-prompt="Güneş sistemi hakkında bilgi ver">
-                            <i class="fas fa-globe-americas"></i> Uzay
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- INPUT AREA -->
-            <div class="input-area">
-                <div class="input-wrapper">
-                    <textarea 
-                        id="messageInput" 
-                        placeholder="AI ile sohbet etmek için mesaj yazın... (Shift+Enter yeni satır)"
-                        rows="1"
-                    ></textarea>
-                    <button id="sendBtn" class="send-btn">
-                        <i class="fas fa-paper-plane"></i>
-                    </button>
-                </div>
-                <div class="disclaimer">
-                    <i class="fas fa-info-circle"></i>
-                    Ücretsiz AI - Yanıtlar %100 doğru olmayabilir
-                </div>
+        <!-- Mesaj Girişi -->
+        <div class="input-area">
+            <div class="input-wrapper">
+                <textarea 
+                    id="messageInput" 
+                    placeholder="Melek'e mesaj yazın... (Enter ile gönder)"
+                    rows="1"
+                ></textarea>
+                <button id="sendBtn" class="send-btn">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
             </div>
         </div>
     </div>
 
     <script>
-        // AI SOHBET UYGULAMASI
+        // AI SÖHBƏT SİSTEMİ
         class AIChat {
             constructor() {
                 this.messages = [];
-                this.currentChatId = this.generateChatId();
-                this.isDarkMode = localStorage.getItem('darkMode') === 'true';
-                this.aiResponses = [
-                    "Merhaba! Size nasıl yardımcı olabilirim?",
-                    "Bu konu hakkında düşünüyorum... Biraz daha açıklayabilir misiniz?",
-                    "İlginç bir soru! Bunu araştırmak gerekli.",
-                    "Anlıyorum. Bu konuda şunları söyleyebilirim...",
-                    "Teşekkür ederim paylaştığınız için! Başka sorularınız var mı?",
-                    "Bu harika bir konu! Devam etmek ister misiniz?",
-                    "Sanırım bunu tam anlamadım. Biraz daha açıklayabilir misiniz?",
-                    "Kesinlikle! Bu konuda size yardımcı olabilirim.",
-                    "Bu soru üzerinde düşünmem gerekiyor. Biraz zaman verir misiniz?",
-                    "Harika bir noktaya değindiniz! Bu konuyu detaylandıralım."
-                ];
-                
+                this.aiName = "Melek 🤖";
+                this.context = []; // Söhbət konteksti
                 this.init();
             }
             
             init() {
                 this.bindEvents();
-                this.applyDarkMode();
-                this.loadChatHistory();
-                this.autoResizeTextarea();
-            }
-            
-            generateChatId() {
-                return 'chat_' + Date.now();
+                this.addWelcomeMessage();
+                setTimeout(() => {
+                    this.addAIMessage("Salam! Mən Melek. Sənin AI köməkçinəm. Necəsən?");
+                }, 500);
             }
             
             bindEvents() {
-                // Mesaj gönderme
-                document.getElementById('sendBtn').addEventListener('click', () => this.sendMessage());
+                const sendBtn = document.getElementById('sendBtn');
+                const input = document.getElementById('messageInput');
                 
-                document.getElementById('messageInput').addEventListener('keydown', (e) => {
+                sendBtn.addEventListener('click', () => this.sendMessage());
+                
+                input.addEventListener('keydown', (e) => {
                     if (e.key === 'Enter' && !e.shiftKey) {
                         e.preventDefault();
                         this.sendMessage();
                     }
                 });
                 
-                // Yeni sohbet
-                document.getElementById('newChatBtn').addEventListener('click', () => this.createNewChat());
-                
-                // Temizle
-                document.getElementById('clearBtn').addEventListener('click', () => this.clearChat());
-                
-                // Tema değiştirme
-                document.getElementById('themeToggle').addEventListener('click', () => this.toggleTheme());
-                
-                // Öneri butonları
-                document.querySelectorAll('.suggestion-btn').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        const prompt = e.currentTarget.dataset.prompt;
-                        document.getElementById('messageInput').value = prompt;
-                        this.sendMessage();
-                    });
+                input.addEventListener('input', () => {
+                    input.style.height = 'auto';
+                    input.style.height = Math.min(input.scrollHeight, 120) + 'px';
                 });
                 
-                // Textarea otomatik boyutlandırma
-                const textarea = document.getElementById('messageInput');
-                textarea.addEventListener('input', () => {
-                    textarea.style.height = 'auto';
-                    textarea.style.height = Math.min(textarea.scrollHeight, 150) + 'px';
-                });
+                input.focus();
             }
             
-            sendMessage() {
+            async sendMessage() {
                 const input = document.getElementById('messageInput');
                 const message = input.value.trim();
                 
                 if (!message) return;
                 
-                // Kullanıcı mesajını ekle
                 this.addMessage(message, 'user');
-                
-                // Input'u temizle
                 input.value = '';
                 input.style.height = 'auto';
+                input.focus();
                 
-                // AI yanıtını simüle et
-                setTimeout(() => {
-                    this.getAIResponse(message);
-                }, 800 + Math.random() * 1000);
+                // AI cavabını al
+                await this.getAIResponse(message);
             }
             
             addMessage(text, type) {
                 const message = {
-                    id: Date.now(),
                     text: text,
                     type: type,
-                    time: new Date().toLocaleTimeString('tr-TR', { 
+                    time: new Date().toLocaleTimeString('az-AZ', { 
                         hour: '2-digit', 
                         minute: '2-digit' 
                     })
                 };
                 
                 this.messages.push(message);
+                this.context.push(`${type === 'user' ? 'İstifadəçi' : 'AI'}: ${text}`);
+                
+                // Son 10 mesajı saxla
+                if (this.context.length > 10) {
+                    this.context = this.context.slice(-10);
+                }
+                
                 this.renderMessage(message);
-                this.saveToStorage();
                 this.scrollToBottom();
+            }
+            
+            addAIMessage(text) {
+                this.addMessage(text, 'ai');
+            }
+            
+            addWelcomeMessage() {
+                this.addMessage("Salam! Mən Melek. Sənin AI köməkçinəm. Necəsən?", 'ai');
             }
             
             renderMessage(message) {
                 const container = document.getElementById('messagesContainer');
                 const messageDiv = document.createElement('div');
-                
                 messageDiv.className = `message ${message.type}-message`;
+                
+                const icon = message.type === 'user' ? 
+                    '<i class="fas fa-user"></i>' : 
+                    '<i class="fas fa-robot"></i>';
+                
                 messageDiv.innerHTML = `
-                    <div class="message-icon">
-                        <i class="fas fa-${message.type === 'user' ? 'user' : 'robot'}"></i>
-                    </div>
+                    <div class="message-icon">${icon}</div>
                     <div class="message-content">
-                        <div class="message-text">${this.escapeHtml(message.text)}</div>
+                        <div class="message-text">${this.formatText(message.text)}</div>
                         <div class="message-time">
                             <i class="far fa-clock"></i> ${message.time}
                         </div>
@@ -789,192 +394,177 @@
                 container.appendChild(messageDiv);
             }
             
-            getAIResponse(userMessage) {
+            async getAIResponse(userMessage) {
                 const container = document.getElementById('messagesContainer');
                 
-                // Typing göstergesi
+                // Yazır göstəricisi
                 const typingDiv = document.createElement('div');
                 typingDiv.className = 'typing-indicator';
-                typingDiv.id = 'typingIndicator';
                 typingDiv.innerHTML = `
                     <div class="typing-dot"></div>
                     <div class="typing-dot"></div>
                     <div class="typing-dot"></div>
                 `;
-                
                 container.appendChild(typingDiv);
                 this.scrollToBottom();
                 
-                // AI yanıtını oluştur
-                setTimeout(() => {
-                    document.getElementById('typingIndicator')?.remove();
-                    
-                    // Akıllı yanıt oluştur
-                    let response;
-                    const lowerMsg = userMessage.toLowerCase();
-                    
-                    if (lowerMsg.includes('merhaba') || lowerMsg.includes('selam')) {
-                        response = "Merhaba! 👋 Ben AI asistanınız. Size nasıl yardımcı olabilirim?";
-                    } else if (lowerMsg.includes('nasılsın')) {
-                        response = "Teşekkür ederim, iyiyim! 😊 Siz nasılsınız?";
-                    } else if (lowerMsg.includes('teşekkür')) {
-                        response = "Rica ederim! Her zaman yardımcı olmaktan mutluluk duyarım. 🙏";
-                    } else if (lowerMsg.includes('python') || lowerMsg.includes('kod')) {
-                        response = "Python'da bir örnek vermek gerekirse:\n\n```python\ndef merhaba_dunya():\n    print('Merhaba Dünya!')\n\n# Fonksiyonu çağır\nmerhaba_dunya()\n```\nBu basit bir Python fonksiyonu örneğidir. Başka bir konuda yardımcı olabilirim.";
-                    } else if (lowerMsg.includes('ingilizce')) {
-                        response = "İngilizce öğrenmek için:\n1. Her gün 10 yeni kelime öğrenin\n2. İngilizce film/dizi izleyin\n3. Pratik yapmak için language exchange yapın\n4. Gramer kurallarını günlük hayatta kullanın\n5. İngilizce kitap okuyun";
-                    } else if (lowerMsg.includes('yapay zeka') || lowerMsg.includes('ai')) {
-                        response = "Yapay zeka, makinelerin insan zekasını taklit etmesidir. Makine öğrenmesi, derin öğrenme ve doğal dil işleme gibi alt dalları vardır. ChatGPT gibi modeller, büyük dil modelleri kullanarak insan benzeri metinler üretebilir.";
-                    } else if (lowerMsg.includes('uzay') || lowerMsg.includes('güneş')) {
-                        response = "Güneş sistemi 8 gezegenden oluşur:\n1. Merkür\n2. Venüs\n3. Dünya\n4. Mars\n5. Jüpiter\n6. Satürn\n7. Uranüs\n8. Neptün\n\nGüneş sistemimiz Samanyolu galaksisinde bulunur.";
-                    } else {
-                        // Rastgele akıllı yanıt
-                        const responses = [
-                            `${userMessage} hakkında ilginç bir konu! Bu konuda şunları söyleyebilirim...`,
-                            `Anladığım kadarıyla "${userMessage}" hakkında konuşuyoruz. Bu konu üzerine düşüncelerim şöyle:`,
-                            `Teşekkürler bu soru için! "${userMessage}" konusunda size şu bilgileri verebilirim:`,
-                            `Harika bir soru! ${userMessage} hakkında detaylı bilgi paylaşmak isterim.`,
-                            `Bu konuyu araştırdım ve "${userMessage}" hakkında şunları buldum:`
-                        ];
-                        response = responses[Math.floor(Math.random() * responses.length)] + 
-                                  "\n\nAI olarak her konuda sohbet edebilirim. Başka sorularınız var mı?";
-                    }
-                    
-                    this.addMessage(response, 'ai');
-                }, 1500 + Math.random() * 1000);
-            }
-            
-            createNewChat() {
-                this.currentChatId = this.generateChatId();
-                this.messages = [];
-                this.clearMessages();
-                this.saveToStorage();
-            }
-            
-            clearChat() {
-                if (confirm('Bu sohbeti temizlemek istediğinize emin misiniz?')) {
-                    this.messages = [];
-                    this.clearMessages();
-                    this.saveToStorage();
+                try {
+                    const response = await this.generateAIResponse(userMessage);
+                    typingDiv.remove();
+                    this.addAIMessage(response);
+                } catch (error) {
+                    typingDiv.remove();
+                    this.addAIMessage("Bağışlayın, texniki problem yaşadım. Yenidən cəhd edin.");
                 }
             }
             
-            clearMessages() {
-                const container = document.getElementById('messagesContainer');
-                container.innerHTML = `
-                    <div class="welcome-message">
-                        <div class="welcome-icon">
-                            <i class="fas fa-robot"></i>
-                        </div>
-                        <h2>Merhaba! Ben AI Asistan 🤖</h2>
-                        <p>Ücretsiz ChatGPT alternatifiyim. Programlama, matematik, edebiyat, bilim ve daha birçok konuda sohbet edebiliriz!</p>
-                        <div class="suggestions">
-                            <button class="suggestion-btn" data-prompt="Python'da Fibonacci serisi nasıl yazılır?">
-                                <i class="fab fa-python"></i> Python kodu
-                            </button>
-                            <button class="suggestion-btn" data-prompt="Yapay zeka nedir ve nasıl çalışır?">
-                                <i class="fas fa-brain"></i> Yapay Zeka
-                            </button>
-                            <button class="suggestion-btn" data-prompt="İngilizce öğrenmek için ipuçları ver">
-                                <i class="fas fa-language"></i> İngilizce
-                            </button>
-                            <button class="suggestion-btn" data-prompt="Güneş sistemi hakkında bilgi ver">
-                                <i class="fas fa-globe-americas"></i> Uzay
-                            </button>
-                        </div>
-                    </div>
-                `;
-                
-                // Yeni öneri butonlarına event ekle
-                document.querySelectorAll('.suggestion-btn').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        const prompt = e.currentTarget.dataset.prompt;
-                        document.getElementById('messageInput').value = prompt;
-                        this.sendMessage();
+            async generateAIResponse(userMessage) {
+                // Google Generative AI API (ücretsiz)
+                try {
+                    // API endpoint'i - ücretsiz alternatif
+                    const response = await fetch('https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': 'Bearer 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', // Ücretsiz token
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            inputs: {
+                                text: userMessage,
+                                context: this.context.join('\n')
+                            },
+                            parameters: {
+                                max_length: 150,
+                                temperature: 0.7,
+                                top_p: 0.9
+                            }
+                        })
                     });
-                });
-            }
-            
-            toggleTheme() {
-                this.isDarkMode = !this.isDarkMode;
-                document.body.classList.toggle('dark-mode', this.isDarkMode);
-                localStorage.setItem('darkMode', this.isDarkMode);
-                
-                const icon = document.querySelector('#themeToggle i');
-                icon.className = this.isDarkMode ? 'fas fa-sun' : 'fas fa-moon';
-            }
-            
-            applyDarkMode() {
-                if (this.isDarkMode) {
-                    document.body.classList.add('dark-mode');
-                    const icon = document.querySelector('#themeToggle i');
-                    icon.className = 'fas fa-sun';
-                }
-            }
-            
-            saveToStorage() {
-                const chats = JSON.parse(localStorage.getItem('aiChats') || '{}');
-                chats[this.currentChatId] = {
-                    id: this.currentChatId,
-                    messages: this.messages,
-                    time: new Date().toISOString()
-                };
-                localStorage.setItem('aiChats', JSON.stringify(chats));
-                this.updateChatList();
-            }
-            
-            loadChatHistory() {
-                const chats = JSON.parse(localStorage.getItem('aiChats') || '{}');
-                if (Object.keys(chats).length > 0) {
-                    const latestChat = Object.values(chats).sort((a, b) => 
-                        new Date(b.time) - new Date(a.time)
-                    )[0];
                     
-                    if (latestChat) {
-                        this.currentChatId = latestChat.id;
-                        this.messages = latestChat.messages || [];
-                        this.renderAllMessages();
+                    if (response.ok) {
+                        const data = await response.json();
+                        return data.generated_text || this.getFallbackResponse(userMessage);
                     }
+                } catch (e) {
+                    console.log('API error, using fallback');
                 }
-                this.updateChatList();
+                
+                // API olmadığı zaman akıllı yedek sistem
+                return this.getSmartResponse(userMessage);
             }
             
-            renderAllMessages() {
-                this.clearMessages();
-                const container = document.getElementById('messagesContainer');
-                const welcomeMsg = container.querySelector('.welcome-message');
-                if (welcomeMsg) welcomeMsg.remove();
+            getSmartResponse(userMessage) {
+                const msg = userMessage.toLowerCase();
                 
-                this.messages.forEach(msg => this.renderMessage(msg));
-                this.scrollToBottom();
+                // Azerbaycanca akıllı yanıtlar
+                if (msg.includes('salam') || msg.includes('səlam') || msg.includes('salamlar')) {
+                    const responses = [
+                        "Salam! Necəsən? 😊",
+                        "Salam! Çox şadam ki, səninlə danışıram!",
+                        "Salam əzizim! Sənə necə kömək edə bilərəm?",
+                        "Salam! Mən Melek. Danışmağa hazıram! 🤖"
+                    ];
+                    return responses[Math.floor(Math.random() * responses.length)];
+                }
+                
+                if (msg.includes('necəsin') || msg.includes('necesen')) {
+                    return "Çox sağ ol, yaxşıyam! Sən necəsən? Mənə hər mövzuda sual verə bilərsən!";
+                }
+                
+                if (msg.includes('sağ ol') || msg.includes('təşəkkür')) {
+                    return "Buyurun! 😇 Hər zaman kömək etməkdən məmnunam. Başqa sualın var?";
+                }
+                
+                if (msg.includes('adın') || msg.includes('kimsin')) {
+                    return "Mənim adım Melek! 🤖 Bir süni intellekt köməkçisiyəm. Sənə hər mövzuda kömək edə bilərəm!";
+                }
+                
+                if (msg.includes('nə edə bilirsən') || msg.includes('ne ede bilirsen')) {
+                    return "Mənimlə hər mövzuda söhbət edə bilərsən! İstər sual ver, istər fikir mübadiləsi et, istərsənsə sadəcə söhbət et! 🎯";
+                }
+                
+                if (msg.includes('sevirəm') || msg.includes('aşiq')) {
+                    return "Sevgi gözəl bir hissdir! ❤️ İnsanları bir-birinə bağlayır və həyatı gözəlləşdirir. Sevgi dolu bir gün keçirməni arzulayıram!";
+                }
+                
+                if (msg.includes('kömək') || msg.includes('yardım')) {
+                    return "Əlbəttə ki, kömək edəcəm! 🤝\nMənə istədiyin mövzuda sual verə bilərsən:\n• Məlumat sualları\n• Proqramlaşdırma köməyi\n• Həyat məsləhətləri\n• Söhbət etmək\n\nNə haqqında danışaq?";
+                }
+                
+                if (msg.includes('hava') || msg.includes('havalar')) {
+                    return "Hava haqqında danışaq! ☀️🌧️\nBu gün üçün tam məlumatım yoxdur amma sənə bunu deyə bilərəm: Yaxşı bir gün keçirmək üçün hava vəziyyəti qədər müsbət düşüncələr də vacibdir! 😊";
+                }
+                
+                if (msg.includes('səhər')) {
+                    return "Sabahınız xeyir! ☀️ Yeni gününüz gözəl keçsin! Bu gün nə etməyi planlayırsan?";
+                }
+                
+                if (msg.includes('axşam')) {
+                    return "Axşamınız xeyir! 🌙 Gününüz necə keçdi? Bu gün baş verən maraqlı hadisələri mənimlə bölüşmək istəyirsən?";
+                }
+                
+                if (msg.includes('yaxşı') || msg.includes('gözəl')) {
+                    return "Çox sevindim! 😊 Bu barədə danışmaq istəyirsən? Hər hansı bir sualın varsa, sənə kömək etmək üçün buradayam!";
+                }
+                
+                if (msg.includes('pis') || msg.includes('yaman')) {
+                    return "Bağışlayın, bunu eşitdiyimə görə üzülürəm. 😔 Sənə necə kömək edə bilərəm? Hər şeyi mənimlə bölüşə bilərsən!";
+                }
+                
+                if (msg.includes('azərbaycan') || msg.includes('azerbaijan')) {
+                    return "Azərbaycan haqqında danışaq! 🇦🇿\nAzərbaycan - Qafqazın incisi! Gözəl təbiəti, zəngin mədəniyyəti və mehriban insanları ilə məşhurdur. Bakı, Gəncə, Şəki kimi gözəl şəhərləri var!";
+                }
+                
+                if (msg.includes('bakı') || msg.includes('baku')) {
+                    return "Bakı haqqında danışaq! 🏙️\nBakı - Azərbaycanın paytaxtı və ən böyük şəhəri. Xəzər dənizinin sahilində yerləşir. Köhnə Şəhər (İçərişəhər), Qız Qalası, Heydər Əliyev Mərkəzi kimi görməli yerləri var!";
+                }
+                
+                if (msg.includes('proqramlaşdırma') || msg.includes('kod')) {
+                    return "Proqramlaşdırma haqqında danışaq! 💻\n\nPython dilində nümunə:\n```python\nprint('Salam, Azərbaycan!')\nprint('Mən Python öyrənirəm!')\n```\n\nJava dilində:\n```java\npublic class Salam {\n    public static void main(String[] args) {\n        System.out.println('Salam Dünya!');\n    }\n}\n```\n\nHansı proqramlaşdırma dili ilə maraqlanırsan?";
+                }
+                
+                if (msg.includes('ingilis') || msg.includes('english')) {
+                    return "İngilis dili haqqında danışaq! 🇬🇧\n\nİngilis dilini öyrənmək üçün tövsiyələr:\n1. Hər gün 10 yeni söz öyrən\n2. İngilis dilində film və serial izlə\n3. Dil mübadiləsi et\n4. Qrammatika qaydalarını gündəlik həyatda işlət\n5. İngilis dilində kitab oxu\n\nİngilis dilində əsas ifadələr:\n• Hello - Salam\n• How are you? - Necəsən?\n• Thank you - Sağ ol\n• Goodbye - Sağ ol";
+                }
+                
+                // Kontekstə əsaslanan yanıt
+                const lastAIMessage = this.messages
+                    .filter(m => m.type === 'ai')
+                    .slice(-1)[0]?.text || '';
+                
+                if (lastAIMessage.includes('Necəsən?')) {
+                    const responses = [
+                        "Çox yaxşıyam, sağ ol soruşdun! 😊 Sən necəsən?",
+                        "Yaxşıyam, təşəkkür edirəm! Bu gün nələr edirsən?",
+                        "Əla hiss edirəm! Sənə necə kömək edə bilərəm?",
+                        "Çox yaxşı, sağ ol! Sənin günün necə keçir?"
+                    ];
+                    return responses[Math.floor(Math.random() * responses.length)];
+                }
+                
+                // Ümumi akıllı yanıt
+                const genericResponses = [
+                    `"${userMessage}" haqqında maraqlı mövzu! Bu barədə nə düşünürsən?`,
+                    `Anladım. "${userMessage}" haqqında danışırıq. Bu mövzuda sənə necə kömək edə bilərəm?`,
+                    `Təşəkkürlər bu sual üçün! "${userMessage}" mövzusunda sənə bu məlumatları verə bilərəm:`,
+                    `Maraqlı sual! ${userMessage} haqqında ətraflı məlumat paylaşmaq istəyirəm.`,
+                    `Bu mövzunu araşdırdım və "${userMessage}" haqqında bunları tapdım:`
+                ];
+                
+                const randomResponse = genericResponses[Math.floor(Math.random() * genericResponses.length)];
+                return randomResponse + "\n\nAI kimi hər mövzuda söhbət edə bilərəm. Başqa sualların var?";
             }
             
-            updateChatList() {
-                const container = document.getElementById('chatList');
-                const chats = JSON.parse(localStorage.getItem('aiChats') || '{}');
-                
-                container.innerHTML = '';
-                
-                Object.values(chats)
-                    .sort((a, b) => new Date(b.time) - new Date(a.time))
-                    .forEach(chat => {
-                        const preview = chat.messages[0]?.text?.substring(0, 30) || 'Yeni Sohbet';
-                        const item = document.createElement('div');
-                        item.className = `chat-item ${chat.id === this.currentChatId ? 'active' : ''}`;
-                        item.innerHTML = `
-                            <i class="fas fa-comment"></i>
-                            <span>${this.escapeHtml(preview)}...</span>
-                        `;
-                        
-                        item.addEventListener('click', () => {
-                            this.currentChatId = chat.id;
-                            this.messages = chat.messages || [];
-                            this.renderAllMessages();
-                            this.updateChatList();
-                        });
-                        
-                        container.appendChild(item);
-                    });
+            getFallbackResponse(userMessage) {
+                // Basit fallback yanıtları
+                const responses = [
+                    "Başa düşdüm! Bu mövzuda sənə necə kömək edə bilərəm?",
+                    "Maraqlı! Bunun haqqında daha çox danışmaq istəyirsən?",
+                    "Təşəkkür edirəm paylaşdığın üçün! Başqa sualların var?",
+                    "Anladım. Bu barədə nə düşünürsən?",
+                    "Hmm, bu barədə düşünürəm... Biraz daha izah edə bilərsən?"
+                ];
+                return responses[Math.floor(Math.random() * responses.length)];
             }
             
             scrollToBottom() {
@@ -982,18 +572,12 @@
                 container.scrollTop = container.scrollHeight;
             }
             
-            autoResizeTextarea() {
-                const textarea = document.getElementById('messageInput');
-                textarea.addEventListener('focus', () => {
-                    textarea.style.height = 'auto';
-                    textarea.style.height = Math.min(textarea.scrollHeight, 150) + 'px';
-                });
-            }
-            
-            escapeHtml(text) {
-                const div = document.createElement('div');
-                div.textContent = text;
-                return div.innerHTML.replace(/\n/g, '<br>');
+            formatText(text) {
+                // Basit formatlama
+                return text
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\n/g, '<br>')
+                    .replace(/`(.*?)`/g, '<code>$1</code>');
             }
         }
 
