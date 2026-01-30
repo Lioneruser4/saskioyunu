@@ -1,1038 +1,1006 @@
 <!DOCTYPE html>
-<html lang="az">
+<html lang="tr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mamba Pub POS - Professional</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <title>Ücretsiz AI Sohbet | ChatGPT Gibi</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { background-color: #020617; color: #f8fafc; font-family: 'Segoe UI', sans-serif; margin: 0; }
-        .menu-item { transition: all 0.2s; border: 1px solid #1e293b; cursor: pointer; }
-        .menu-item:hover { border-color: #ef4444; background: #0f172a; transform: translateY(-2px); }
-        .active-table { background: #ef4444 !important; border-color: #f87171 !important; box-shadow: 0 0 20px rgba(239, 68, 68, 0.5); }
-        .has-order { position: relative; border-color: #22c55e !important; }
-        .has-order::after { content: '●'; position: absolute; top: 5px; right: 5px; color: #22c55e; font-size: 12px; }
-        .custom-scroll::-webkit-scrollbar { width: 5px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
-        
-        @media print {
-            body * { visibility: hidden; }
-            #receipt-print, #receipt-print * { visibility: visible; }
-            #receipt-print { 
-                position: absolute !important; 
-                left: 0 !important; 
-                top: 0 !important; 
-                width: 80mm !important;
-                font-size: 11px !important;
-                padding: 10px !important;
-                margin: 0 !important;
-                background: white !important;
-                color: black !important;
-                font-family: 'Courier New', monospace !important;
-            }
-            @page { 
-                margin: 0 !important; 
-                size: 80mm auto !important; 
-            }
+        /* RESET VE TEMEL STİLLER */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        
-        .category-btn.active { background: #ef4444 !important; color: white !important; }
-        
-        .modal { 
-            display: none; 
-            position: fixed; 
-            top: 0; 
-            left: 0; 
-            width: 100%; 
-            height: 100%; 
-            background: rgba(0,0,0,0.95); 
-            z-index: 1000; 
-            backdrop-filter: blur(5px);
+
+        body {
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
         }
-        .modal-content { 
-            background: white; 
-            width: 80mm; 
-            margin: 20px auto; 
-            border-radius: 5px; 
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-        
-        #admin-panel {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
+
+        /* ANA KONTEYNER */
+        .chat-container {
             width: 100%;
-            height: 100%;
-            background: rgba(15, 23, 42, 0.98);
-            z-index: 2000;
-            backdrop-filter: blur(10px);
-            overflow-y: auto;
+            max-width: 1200px;
+            height: 90vh;
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            display: flex;
         }
-        
-        .quantity-btn {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            background: #334155;
+
+        /* SİDEBAR */
+        .sidebar {
+            width: 280px;
+            background: #202123;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #444;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #444;
+        }
+
+        .logo i {
+            font-size: 32px;
+            color: #10a37f;
+        }
+
+        .logo h1 {
+            color: white;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .new-chat-btn {
+            background: #10a37f;
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: bold;
+            gap: 10px;
+            margin-bottom: 30px;
+            transition: all 0.3s;
+        }
+
+        .new-chat-btn:hover {
+            background: #0d8c6d;
+            transform: translateY(-2px);
+        }
+
+        .chat-history {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .chat-history h3 {
+            color: #8e8ea0;
+            font-size: 14px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .chat-item {
+            padding: 12px;
+            color: white;
+            border-radius: 8px;
+            margin-bottom: 8px;
             cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s;
+            font-size: 14px;
         }
-        .quantity-btn:hover {
-            background: #475569;
+
+        .chat-item:hover {
+            background: #343541;
         }
-        
-        .order-row {
-            transition: background 0.2s;
+
+        .chat-item.active {
+            background: #40414f;
         }
-        .order-row:hover {
-            background: rgba(30, 41, 59, 0.5);
+
+        /* ANA SOHBET ALANI */
+        .main-chat {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-header {
+            padding: 20px;
+            background: white;
+            border-bottom: 1px solid #e5e5e5;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-header h2 {
+            font-size: 24px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            background: #f5f5f5;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .action-btn:hover {
+            background: #e5e5e5;
+            transform: rotate(15deg);
+        }
+
+        /* MESAJLAR ALANI */
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px;
+            background: #f7f7f8;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        .welcome-message {
+            text-align: center;
+            padding: 40px 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .welcome-icon {
+            font-size: 72px;
+            color: #10a37f;
+            margin-bottom: 25px;
+        }
+
+        .welcome-message h2 {
+            font-size: 32px;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .welcome-message p {
+            color: #666;
+            font-size: 18px;
+            line-height: 1.6;
+            margin-bottom: 40px;
+        }
+
+        .suggestions {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .suggestion-btn {
+            padding: 18px;
+            background: white;
+            border: 1px solid #e5e5e5;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 15px;
+            color: #333;
+            transition: all 0.3s;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .suggestion-btn:hover {
+            background: #10a37f;
+            color: white;
+            border-color: #10a37f;
+            transform: translateY(-3px);
+        }
+
+        /* MESAJ STİLLERİ */
+        .message {
+            display: flex;
+            gap: 20px;
+            padding: 25px;
+            border-radius: 15px;
+            max-width: 85%;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .user-message {
+            background: linear-gradient(135deg, #10a37f, #0d8c6d);
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 5px;
+        }
+
+        .ai-message {
+            background: white;
+            border: 1px solid #e5e5e5;
+            margin-right: auto;
+            border-bottom-left-radius: 5px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        .message-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 18px;
+        }
+
+        .user-message .message-icon {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .ai-message .message-icon {
+            background: #10a37f;
+            color: white;
+        }
+
+        .message-content {
+            flex: 1;
+        }
+
+        .message-text {
+            line-height: 1.7;
+            font-size: 16px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .message-time {
+            font-size: 13px;
+            color: #999;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* GİRİŞ ALANI */
+        .input-area {
+            padding: 25px;
+            background: white;
+            border-top: 1px solid #e5e5e5;
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+            background: #f7f7f8;
+            border-radius: 15px;
+            padding: 15px;
+            border: 1px solid #e5e5e5;
+            transition: all 0.3s;
+        }
+
+        .input-wrapper:focus-within {
+            border-color: #10a37f;
+            box-shadow: 0 0 0 3px rgba(16, 163, 127, 0.1);
+        }
+
+        textarea {
+            flex: 1;
+            border: none;
+            background: transparent;
+            resize: none;
+            font-size: 16px;
+            padding: 10px;
+            max-height: 150px;
+            min-height: 28px;
+            outline: none;
+            color: #333;
+            font-family: inherit;
+            line-height: 1.5;
+        }
+
+        textarea::placeholder {
+            color: #999;
+        }
+
+        .send-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: none;
+            background: #10a37f;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            flex-shrink: 0;
+            font-size: 18px;
+        }
+
+        .send-btn:hover {
+            background: #0d8c6d;
+            transform: scale(1.1) rotate(10deg);
+        }
+
+        /* TYPING ANIMATION */
+        .typing-indicator {
+            display: flex;
+            gap: 5px;
+            padding: 25px;
+            background: white;
+            border: 1px solid #e5e5e5;
+            border-radius: 15px;
+            max-width: 100px;
+            margin-right: auto;
+        }
+
+        .typing-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #10a37f;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-12px); }
+        }
+
+        /* DİSCLAİMER */
+        .disclaimer {
+            text-align: center;
+            font-size: 13px;
+            color: #888;
+            margin-top: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+                height: 100vh;
+            }
+
+            .chat-container {
+                height: 95vh;
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                height: 70px;
+                flex-direction: row;
+                padding: 15px;
+                gap: 15px;
+                align-items: center;
+            }
+
+            .logo h1 {
+                font-size: 18px;
+            }
+
+            .new-chat-btn span {
+                display: none;
+            }
+
+            .chat-history {
+                display: none;
+            }
+
+            .welcome-message {
+                padding: 30px 15px;
+            }
+
+            .welcome-icon {
+                font-size: 50px;
+            }
+
+            .welcome-message h2 {
+                font-size: 24px;
+            }
+
+            .suggestions {
+                grid-template-columns: 1fr;
+            }
+
+            .message {
+                max-width: 95%;
+                padding: 20px;
+                gap: 15px;
+            }
+
+            .input-wrapper {
+                padding: 12px;
+            }
+
+            .send-btn {
+                width: 45px;
+                height: 45px;
+            }
+        }
+
+        /* DARK MODE TOGGLE */
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .theme-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: white;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+        }
+
+        .theme-btn:hover {
+            transform: rotate(30deg);
+        }
+
+        /* DARK MODE STYLES */
+        .dark-mode {
+            background: linear-gradient(135deg, #2d2d2d, #1a1a1a);
+        }
+
+        .dark-mode .chat-container {
+            background: #2d2d2d;
+        }
+
+        .dark-mode .main-chat {
+            background: #2d2d2d;
+        }
+
+        .dark-mode .chat-header {
+            background: #2d2d2d;
+            border-color: #444;
+        }
+
+        .dark-mode .chat-header h2 {
+            color: white;
+        }
+
+        .dark-mode .messages-container {
+            background: #343541;
+        }
+
+        .dark-mode .welcome-message h2 {
+            color: white;
+        }
+
+        .dark-mode .welcome-message p {
+            color: #aaa;
+        }
+
+        .dark-mode .ai-message {
+            background: #40414f;
+            border-color: #555;
+            color: white;
+        }
+
+        .dark-mode .input-area {
+            background: #2d2d2d;
+            border-color: #444;
+        }
+
+        .dark-mode .input-wrapper {
+            background: #40414f;
+            border-color: #555;
+        }
+
+        .dark-mode textarea {
+            color: white;
+        }
+
+        .dark-mode textarea::placeholder {
+            color: #888;
+        }
+
+        .dark-mode .typing-indicator {
+            background: #40414f;
+            border-color: #555;
+        }
+
+        .dark-mode .disclaimer {
+            color: #aaa;
+        }
+
+        .dark-mode .suggestion-btn {
+            background: #40414f;
+            border-color: #555;
+            color: white;
+        }
+
+        .dark-mode .suggestion-btn:hover {
+            background: #10a37f;
         }
     </style>
 </head>
-<body class="h-screen flex flex-col">
-
-    <header class="bg-slate-900 p-4 border-b border-slate-800 flex justify-between items-center px-6 shadow-2xl">
-        <div class="flex items-center gap-4">
-            <h1 class="text-3xl font-black tracking-tighter text-white">
-                MAMBA <span class="text-red-600">PUB</span>
-            </h1>
-            <div class="bg-slate-800 px-3 py-1 rounded-full text-xs">
-                <i class="fas fa-database text-green-400 mr-1"></i>
-                <span id="data-status">Yaddaş aktiv</span>
-            </div>
-            <button onclick="toggleAdminPanel()" class="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded-lg text-xs font-bold">
-                <i class="fas fa-cog mr-1"></i>Admin
-            </button>
-        </div>
-        <div class="flex items-center gap-4">
-            <div id="clock" class="text-slate-300 font-mono text-lg font-bold">--:--:--</div>
-            <button onclick="showReceiptModal()" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg font-bold flex items-center gap-2">
-                <i class="fas fa-receipt"></i> Fiş Çıkar
-            </button>
-        </div>
-    </header>
-
-    <div id="table-nav" class="flex gap-2 p-4 bg-slate-900/50 border-b border-slate-800 overflow-x-auto">
-        <div class="flex gap-2 flex-nowrap">
-            <button onclick="selectCategory('İçkilər')" class="category-btn px-4 py-2 bg-slate-800 rounded-lg font-bold border border-slate-700 hover:border-red-500">İçkilər</button>
-            <button onclick="selectCategory('Mezeler')" class="category-btn px-4 py-2 bg-slate-800 rounded-lg font-bold border border-slate-700 hover:border-red-500">Mezeler</button>
-            <button onclick="selectCategory('İsti Yeməklər')" class="category-btn px-4 py-2 bg-slate-800 rounded-lg font-bold border border-slate-700 hover:border-red-500">İsti Yeməklər</button>
-            <button onclick="selectCategory('Setlər')" class="category-btn px-4 py-2 bg-slate-800 rounded-lg font-bold border border-slate-700 hover:border-red-500">Setlər</button>
-            <button onclick="selectCategory('Digər')" class="category-btn px-4 py-2 bg-slate-800 rounded-lg font-bold border border-slate-700 hover:border-red-500">Digər</button>
-        </div>
+<body>
+    <!-- THEME TOGGLE -->
+    <div class="theme-toggle">
+        <button class="theme-btn" id="themeToggle">
+            <i class="fas fa-moon"></i>
+        </button>
     </div>
 
-    <div class="flex flex-1 overflow-hidden">
-        <div class="w-3/4 p-6 overflow-y-auto custom-scroll">
-            <div class="mb-4">
-                <h2 id="current-category-title" class="text-2xl font-bold text-white">İçkilər</h2>
-                <p class="text-slate-400">Aşağıdakı məhsullardan seçim edin</p>
+    <!-- MAIN CHAT CONTAINER -->
+    <div class="chat-container">
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <div class="logo">
+                <i class="fas fa-robot"></i>
+                <h1>AI Sohbet</h1>
             </div>
             
-            <div id="menu-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            </div>
-        </div>
-
-        <div class="w-1/4 bg-slate-900 border-l border-slate-800 flex flex-col">
-            <div class="p-4 border-b border-slate-800 bg-slate-900/80">
-                <div class="flex justify-between items-center mb-2">
-                    <h2 id="active-table-title" class="text-xl font-black text-white">MASA 1</h2>
-                    <div class="text-xs text-slate-400 bg-slate-800 px-2 py-1 rounded">
-                        <i class="fas fa-clock mr-1"></i>
-                        <span id="table-time">--:--</span>
-                    </div>
-                </div>
-                
-                <div class="flex gap-2 overflow-x-auto pb-2">
-                    <button onclick="selectTable('1')" class="table-btn px-3 py-1 bg-slate-800 rounded border border-slate-700 text-sm">1</button>
-                    <button onclick="selectTable('2')" class="table-btn px-3 py-1 bg-slate-800 rounded border border-slate-700 text-sm">2</button>
-                    <button onclick="selectTable('3')" class="table-btn px-3 py-1 bg-slate-800 rounded border border-slate-700 text-sm">3</button>
-                    <button onclick="selectTable('4')" class="table-btn px-3 py-1 bg-slate-800 rounded border border-slate-700 text-sm">4</button>
-                    <button onclick="selectTable('5')" class="table-btn px-3 py-1 bg-slate-800 rounded border border-slate-700 text-sm">5</button>
-                    <button onclick="selectTable('6')" class="table-btn px-3 py-1 bg-slate-800 rounded border border-slate-700 text-sm">6</button>
-                    <button onclick="selectTable('Kabinet')" class="table-btn px-3 py-1 bg-slate-800 rounded border border-slate-700 text-sm">BAR</button>
-                    <button onclick="selectTable('TERAS')" class="table-btn px-3 py-1 bg-slate-800 rounded border border-slate-700 text-sm">TERAS</button>
-                </div>
-            </div>
-
-            <div id="order-items" class="flex-1 overflow-y-auto p-4 custom-scroll">
-            </div>
-
-            <div class="p-4 bg-slate-950 border-t border-slate-800 space-y-4">
-                <div class="flex justify-between items-end">
-                    <span class="text-slate-400 font-bold text-sm">ÜMUMİ:</span>
-                    <span id="total-price" class="text-3xl font-mono font-black text-green-500">0.00 ₼</span>
-                </div>
-                
-                <div class="grid grid-cols-2 gap-2">
-                    <button onclick="showReceiptModal()" class="bg-red-600 hover:bg-red-700 py-3 rounded-lg font-bold text-white flex items-center justify-center gap-2">
-                        <i class="fas fa-file-invoice-dollar"></i>
-                        Fiş Çıkar
-                    </button>
-                    <button onclick="clearCurrentTable()" class="bg-slate-800 hover:bg-slate-700 py-3 rounded-lg font-bold text-white">
-                        Təmizlə
-                    </button>
-                </div>
-                
-                <div class="text-center text-xs text-slate-500">
-                    <i class="fas fa-hdd mr-1"></i>
-                    <span id="storage-info">PC yaddaşında saxlanılır</span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="admin-panel">
-        <div class="min-h-screen bg-gradient-to-br from-slate-900 to-slate-950 p-6">
-            <div class="max-w-6xl mx-auto">
-                <div class="flex justify-between items-center mb-8">
-                    <h1 class="text-3xl font-bold text-white">
-                        <i class="fas fa-user-shield text-blue-500 mr-3"></i>
-                        Admin Panel
-                    </h1>
-                    <button onclick="toggleAdminPanel()" class="bg-red-600 hover:bg-red-700 px-6 py-3 rounded-lg font-bold text-white">
-                        <i class="fas fa-times mr-2"></i>Bağla
-                    </button>
-                </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                    <div class="bg-slate-800/50 p-6 rounded-2xl border border-slate-700">
-                        <h2 class="text-xl font-bold text-white mb-4">
-                            <i class="fas fa-plus-circle text-green-500 mr-2"></i>
-                            Yeni Məhsul Əlavə Et
-                        </h2>
-                        
-                        <div class="space-y-4">
-                            <div>
-                                <label class="block text-sm font-medium text-slate-300 mb-2">Məhsul Adı</label>
-                                <input type="text" id="new-item-name" 
-                                       class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-white">
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-medium text-slate-300 mb-2">Qiymət (₼)</label>
-                                <input type="number" step="0.01" id="new-item-price" 
-                                       class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-white">
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-medium text-slate-300 mb-2">Kateqoriya</label>
-                                <select id="new-item-category" 
-                                        class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-white">
-                                    <option value="İçkilər">İçkilər</option>
-                                    <option value="Mezeler">Mezeler</option>
-                                    <option value="İsti Yeməklər">İsti Yeməklər</option>
-                                    <option value="Setlər">Setlər</option>
-                                    <option value="Digər">Digər</option>
-                                </select>
-                            </div>
-                            
-                            <button onclick="addNewMenuItem()" 
-                                    class="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 py-4 rounded-xl font-bold text-white">
-                                <i class="fas fa-save mr-2"></i>Məhsulu Əlavə Et
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div class="bg-slate-800/50 p-6 rounded-2xl border border-slate-700">
-                        <h2 class="text-xl font-bold text-white mb-4">
-                            <i class="fas fa-list text-blue-500 mr-2"></i>
-                            Mövcud Menyu
-                        </h2>
-                        
-                        <div class="overflow-y-auto max-h-96">
-                            <table class="w-full">
-                                <thead>
-                                    <tr class="text-left text-sm text-slate-400 border-b border-slate-700">
-                                        <th class="pb-3">Ad</th>
-                                        <th class="pb-3">Kateqoriya</th>
-                                        <th class="pb-3">Qiymət</th>
-                                        <th class="pb-3">Əməliyyat</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="menu-list">
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="bg-slate-800/50 p-6 rounded-2xl border border-slate-700 mb-8">
-                    <h2 class="text-xl font-bold text-white mb-4">
-                        <i class="fas fa-tags text-yellow-500 mr-2"></i>
-                        Toplu Qiymət Dəyişikliyi
-                    </h2>
-                    
-                    <div class="grid grid-cols-3 gap-4">
-                        <button onclick="changeAllPrices(5, 'increase')" 
-                                class="bg-green-600 hover:bg-green-700 py-4 rounded-xl font-bold">
-                            +5% Artır
-                        </button>
-                        <button onclick="changeAllPrices(10, 'increase')" 
-                                class="bg-green-600 hover:bg-green-700 py-4 rounded-xl font-bold">
-                            +10% Artır
-                        </button>
-                        <button onclick="changeAllPrices(5, 'decrease')" 
-                                class="bg-red-600 hover:bg-red-700 py-4 rounded-xl font-bold">
-                            -5% Azalt
-                        </button>
-                    </div>
-                    
-                    <div class="mt-6">
-                        <div class="flex gap-3">
-                            <input type="number" id="custom-percent" placeholder="Faiz" 
-                                   class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-white">
-                            <button onclick="changeCustomPercent()" 
-                                    class="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg font-bold">
-                                Tətbiq et
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="bg-slate-800/50 p-6 rounded-2xl border border-slate-700">
-                    <h2 class="text-xl font-bold text-white mb-4">
-                        <i class="fas fa-database text-purple-500 mr-2"></i>
-                        Veri İdarəetmə
-                    </h2>
-                    
-                    <div class="grid grid-cols-3 gap-4">
-                        <button onclick="exportMenuData()" 
-                                class="bg-blue-600 hover:bg-blue-700 py-4 rounded-xl font-bold">
-                            <i class="fas fa-download mr-2"></i>Export
-                        </button>
-                        <button onclick="importMenuData()" 
-                                class="bg-purple-600 hover:bg-purple-700 py-4 rounded-xl font-bold">
-                            <i class="fas fa-upload mr-2"></i>Import
-                        </button>
-                        <button onclick="resetAllData()" 
-                                class="bg-red-600 hover:bg-red-700 py-4 rounded-xl font-bold">
-                            <i class="fas fa-trash mr-2"></i>Sıfırla
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="receipt-modal" class="modal">
-        <div class="modal-content animate__animated animate__fadeIn">
-            <div id="receipt-print" style="width: 80mm; font-family: 'Courier New', monospace; padding: 15px; background: white; color: black; margin: 0 auto; font-size: 11px; line-height: 1.2;">
-                <center>
-                    <b style="font-size: 16px; display: block; margin-bottom: 5px;">MAMBA PUB</b>
-                    <hr style="border-top: 1px dashed #000; margin: 8px 0;">
-                    <span style="font-size: 11px;" id="receipt-date"></span><br>
-                    <span style="font-size: 11px;">Fiş No: <span id="receipt-no">0001</span></span><br>
-                    <span style="font-size: 11px;">Kassa: 1</span><br>
-                    <hr style="border-top: 1px dashed #000; margin: 8px 0;">
-                    <b style="font-size: 14px; display: block; padding: 4px 0;" id="receipt-table">MASA 1</b>
-                    <hr style="border-top: 1px dashed #000; margin: 8px 0;">
-                </center>
-                
-                <div id="receipt-items" style="font-size: 11px; margin: 10px 0;">
-                </div>
-                
-                <hr style="border-top: 1px dashed #000; margin: 10px 0;">
-                <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: bold;">
-                    <span>TOPLAM:</span>
-                    <span id="receipt-total">0.00 AZN</span>
-                </div>
-                
-                <center style="margin-top: 20px; font-size: 10px;">
-                    <b>TƏŞƏKKÜRLƏR!</b><br>
-                    Nuş Olsun!<br>
-                    <span style="font-size: 9px;">* Qiymətlərə ƏDV daxildir</span>
-                </center>
-                <hr style="border-top: 1px dashed #000; margin: 8px 0;">
-                <center style="font-size: 9px; color: #666;">
-                    Çek tarixi: <span id="receipt-time"></span><br>
-                    Müştəri nümunəsi
-                </center>
-            </div>
+            <button class="new-chat-btn" id="newChatBtn">
+                <i class="fas fa-plus"></i> Yeni Sohbet
+            </button>
             
-            <div style="display: flex; gap: 10px; padding: 15px; background: #f5f5f5; border-top: 1px solid #ddd;">
-                <button onclick="printReceiptNow()" class="flex-1 bg-green-600 text-white py-3 rounded font-bold">
-                    <i class="fas fa-print mr-2"></i>YAZDIR
-                </button>
-                <button onclick="closeModal()" class="flex-1 bg-red-600 text-white py-3 rounded font-bold">
-                    <i class="fas fa-times mr-2"></i>KAPAT
-                </button>
+            <div class="chat-history">
+                <h3><i class="fas fa-history"></i> Geçmiş</h3>
+                <div id="chatList"></div>
+            </div>
+        </div>
+
+        <!-- MAIN CHAT AREA -->
+        <div class="main-chat">
+            <!-- HEADER -->
+            <div class="chat-header">
+                <h2><i class="fas fa-comments"></i> AI Asistan</h2>
+                <div class="header-actions">
+                    <button class="action-btn" title="Temizle" id="clearBtn">
+                        <i class="fas fa-broom"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- MESSAGES -->
+            <div class="messages-container" id="messagesContainer">
+                <div class="welcome-message">
+                    <div class="welcome-icon">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <h2>Merhaba! Ben AI Asistan 🤖</h2>
+                    <p>Ücretsiz ChatGPT alternatifiyim. Programlama, matematik, edebiyat, bilim ve daha birçok konuda sohbet edebiliriz!</p>
+                    <div class="suggestions">
+                        <button class="suggestion-btn" data-prompt="Python'da Fibonacci serisi nasıl yazılır?">
+                            <i class="fab fa-python"></i> Python kodu
+                        </button>
+                        <button class="suggestion-btn" data-prompt="Yapay zeka nedir ve nasıl çalışır?">
+                            <i class="fas fa-brain"></i> Yapay Zeka
+                        </button>
+                        <button class="suggestion-btn" data-prompt="İngilizce öğrenmek için ipuçları ver">
+                            <i class="fas fa-language"></i> İngilizce
+                        </button>
+                        <button class="suggestion-btn" data-prompt="Güneş sistemi hakkında bilgi ver">
+                            <i class="fas fa-globe-americas"></i> Uzay
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- INPUT AREA -->
+            <div class="input-area">
+                <div class="input-wrapper">
+                    <textarea 
+                        id="messageInput" 
+                        placeholder="AI ile sohbet etmek için mesaj yazın... (Shift+Enter yeni satır)"
+                        rows="1"
+                    ></textarea>
+                    <button id="sendBtn" class="send-btn">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+                <div class="disclaimer">
+                    <i class="fas fa-info-circle"></i>
+                    Ücretsiz AI - Yanıtlar %100 doğru olmayabilir
+                </div>
             </div>
         </div>
     </div>
-
-    <input type="file" id="file-import" accept=".json" style="display: none;">
 
     <script>
-        // IndexedDB için database oluşturma
-        let db;
-        let menu = [];
-        let tables = {};
-        let activeTable = "1";
-        let activeCategory = "İçkilər";
-        let receiptCounter = 1000;
-        let nextItemId = 1;
-        const defaultMenu = [
-            { id: 1, name: 'Nzs Pivə 1.80m', price: 1.80, category: 'İçkilər' },
-            { id: 2, name: 'Xırdalan 0.5L', price: 1.80, category: 'İçkilər' },
-            { id: 3, name: 'Cola 1L', price: 3.00, category: 'İçkilər' },
-            { id: 4, name: 'Fanta 0.5L', price: 1.50, category: 'İçkilər' },
-            { id: 5, name: 'Sprite 0.5L', price: 1.50, category: 'İçkilər' },
-            { id: 6, name: 'Su 0.5L', price: 0.80, category: 'İçkilər' },
-            { id: 7, name: 'Red Bull', price: 4.00, category: 'İçkilər' },
-            { id: 8, name: 'Araq 50ml', price: 3.50, category: 'İçkilər' },
-            { id: 9, name: 'Vodka 50ml', price: 4.00, category: 'İçkilər' },
-            { id: 10, name: 'Viski 50ml', price: 5.00, category: 'İçkilər' },
-            { id: 11, name: 'Semiçka', price: 2.00, category: 'Mezeler' },
-            { id: 12, name: 'Sardelka', price: 6.00, category: 'Mezeler' },
-            { id: 13, name: 'Turşu', price: 3.00, category: 'Mezeler' },
-            { id: 14, name: 'Çips', price: 4.00, category: 'Mezeler' },
-            { id: 15, name: 'Qoz-Fındıq', price: 3.50, category: 'Mezeler' },
-            { id: 16, name: 'Tabaka Toyuq', price: 18.00, category: 'İsti Yeməklər' },
-            { id: 17, name: 'Qovurma', price: 12.00, category: 'İsti Yeməklər' },
-            { id: 18, name: 'KFC Kotlet', price: 9.00, category: 'İsti Yeməklər' },
-            { id: 19, name: 'Toyuq şiş', price: 8.00, category: 'İsti Yeməklər' },
-            { id: 20, name: 'Lüle kebab', price: 9.50, category: 'İsti Yeməklər' },
-            { id: 21, name: 'SET 1 (20 AZN)', price: 20.00, category: 'Setlər' },
-            { id: 22, name: 'SET 2 (25 AZN)', price: 25.00, category: 'Setlər' },
-            { id: 23, name: 'SET 3 (30 AZN)', price: 30.00, category: 'Setlər' },
-            { id: 24, name: 'SET 4 (40 AZN)', price: 40.00, category: 'Setlər' },
-            { id: 25, name: 'Boğaz', price: 1.50, category: 'Digər' },
-            { id: 26, name: 'Qəlyan', price: 12.00, category: 'Digər' },
-            { id: 27, name: 'Nargilə', price: 15.00, category: 'Digər' },
-            { id: 28, name: 'Çay', price: 1.00, category: 'Digər' }
-        ];
-
-        // IndexedDB başlatma
-        function initDB() {
-            const request = indexedDB.open('MambaPubDB', 2);
-            
-            request.onerror = function(event) {
-                console.error("Database error:", event.target.error);
-            };
-            
-            request.onupgradeneeded = function(event) {
-                db = event.target.result;
+        // AI SOHBET UYGULAMASI
+        class AIChat {
+            constructor() {
+                this.messages = [];
+                this.currentChatId = this.generateChatId();
+                this.isDarkMode = localStorage.getItem('darkMode') === 'true';
+                this.aiResponses = [
+                    "Merhaba! Size nasıl yardımcı olabilirim?",
+                    "Bu konu hakkında düşünüyorum... Biraz daha açıklayabilir misiniz?",
+                    "İlginç bir soru! Bunu araştırmak gerekli.",
+                    "Anlıyorum. Bu konuda şunları söyleyebilirim...",
+                    "Teşekkür ederim paylaştığınız için! Başka sorularınız var mı?",
+                    "Bu harika bir konu! Devam etmek ister misiniz?",
+                    "Sanırım bunu tam anlamadım. Biraz daha açıklayabilir misiniz?",
+                    "Kesinlikle! Bu konuda size yardımcı olabilirim.",
+                    "Bu soru üzerinde düşünmem gerekiyor. Biraz zaman verir misiniz?",
+                    "Harika bir noktaya değindiniz! Bu konuyu detaylandıralım."
+                ];
                 
-                // Menu store
-                if (!db.objectStoreNames.contains('menu')) {
-                    const menuStore = db.createObjectStore('menu', { keyPath: 'id' });
-                    menuStore.createIndex('category', 'category', { unique: false });
-                }
+                this.init();
+            }
+            
+            init() {
+                this.bindEvents();
+                this.applyDarkMode();
+                this.loadChatHistory();
+                this.autoResizeTextarea();
+            }
+            
+            generateChatId() {
+                return 'chat_' + Date.now();
+            }
+            
+            bindEvents() {
+                // Mesaj gönderme
+                document.getElementById('sendBtn').addEventListener('click', () => this.sendMessage());
                 
-                // Tables store
-                if (!db.objectStoreNames.contains('tables')) {
-                    db.createObjectStore('tables');
-                }
-                
-                // Settings store
-                if (!db.objectStoreNames.contains('settings')) {
-                    const settingsStore = db.createObjectStore('settings');
-                }
-            };
-            
-            request.onsuccess = function(event) {
-                db = event.target.result;
-                loadAllData();
-            };
-        }
-
-        // Tüm verileri yükle
-        function loadAllData() {
-            // Menu yükle
-            const menuTransaction = db.transaction(['menu'], 'readonly');
-            const menuStore = menuTransaction.objectStore('menu');
-            const menuRequest = menuStore.getAll();
-            
-            menuRequest.onsuccess = function() {
-                if (menuRequest.result.length === 0) {
-                    // Default menu yükle
-                    const transaction = db.transaction(['menu'], 'readwrite');
-                    const store = transaction.objectStore('menu');
-                    defaultMenu.forEach(item => store.put(item));
-                    menu = [...defaultMenu];
-                    nextItemId = Math.max(...defaultMenu.map(item => item.id)) + 1;
-                } else {
-                    menu = menuRequest.result;
-                    nextItemId = Math.max(...menu.map(item => item.id)) + 1;
-                }
-                renderMenu();
-                loadMenuList();
-            };
-            
-            // Tables yükle
-            const tablesTransaction = db.transaction(['tables'], 'readonly');
-            const tablesStore = tablesTransaction.objectStore('tables');
-            const tablesRequest = tablesStore.get('data');
-            
-            tablesRequest.onsuccess = function() {
-                if (tablesRequest.result) {
-                    tables = tablesRequest.result;
-                } else {
-                    // Default tables oluştur
-                    tables = {
-                        "1": [], "2": [], "3": [], "4": [], "5": [], "6": [], 
-                        "BAR": [], "TERAS": []
-                    };
-                    saveTablesToDB();
-                }
-                updateOrderDisplay();
-            };
-            
-            // Settings yükle
-            const settingsTransaction = db.transaction(['settings'], 'readonly');
-            const settingsStore = settingsTransaction.objectStore('settings');
-            const activeTableRequest = settingsStore.get('activeTable');
-            const receiptCounterRequest = settingsStore.get('receiptCounter');
-            
-            activeTableRequest.onsuccess = function() {
-                if (activeTableRequest.result) {
-                    activeTable = activeTableRequest.result;
-                    selectTable(activeTable);
-                }
-            };
-            
-            receiptCounterRequest.onsuccess = function() {
-                if (receiptCounterRequest.result) {
-                    receiptCounter = receiptCounterRequest.result;
-                }
-            };
-        }
-
-        // Tables'ı database'e kaydet
-        function saveTablesToDB() {
-            if (!db) return;
-            const transaction = db.transaction(['tables'], 'readwrite');
-            const store = transaction.objectStore('tables');
-            store.put(tables, 'data');
-            updateStorageInfo();
-        }
-
-        // Menu'yu database'e kaydet
-        function saveMenuToDB() {
-            if (!db) return;
-            const transaction = db.transaction(['menu'], 'readwrite');
-            const store = transaction.objectStore('menu');
-            menu.forEach(item => store.put(item));
-            updateStorageInfo();
-        }
-
-        // Settings'i kaydet
-        function saveSettingsToDB() {
-            if (!db) return;
-            const transaction = db.transaction(['settings'], 'readwrite');
-            const store = transaction.objectStore('settings');
-            store.put(activeTable, 'activeTable');
-            store.put(receiptCounter, 'receiptCounter');
-        }
-
-        // Ana save fonksiyonu
-        function saveData() {
-            saveTablesToDB();
-            saveSettingsToDB();
-            const statusEl = document.getElementById('data-status');
-            if(statusEl) statusEl.innerHTML = '<i class="fas fa-check-circle text-green-400 mr-1"></i>Saxlanıldı';
-        }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            initDB();
-            updateClock();
-            setInterval(updateClock, 1000);
-            selectCategory('İçkilər');
-            setInterval(saveData, 30000); // 30 saniyede bir otomatik kaydet
-        });
-
-        function updateClock() {
-            const now = new Date();
-            const clockEl = document.getElementById('clock');
-            const timeEl = document.getElementById('table-time');
-            if(clockEl) clockEl.textContent = now.toLocaleTimeString('az-AZ');
-            if(timeEl) timeEl.textContent = now.toLocaleTimeString('az-AZ', {hour12: false});
-        }
-
-        function selectCategory(category) {
-            activeCategory = category;
-            const titleEl = document.getElementById('current-category-title');
-            if(titleEl) titleEl.textContent = category;
-            
-            document.querySelectorAll('.category-btn').forEach(btn => {
-                btn.classList.remove('active');
-                if (btn.textContent === category) btn.classList.add('active');
-            });
-            renderMenu();
-        }
-
-        function renderMenu() {
-            const grid = document.getElementById('menu-grid');
-            if(!grid) return;
-            const filtered = menu.filter(item => item.category === activeCategory);
-            
-            grid.innerHTML = filtered.map(item => `
-                <div onclick="addToTable(${item.id})" 
-                     class="menu-item bg-slate-900 p-4 rounded-xl animate__animated animate__fadeIn">
-                    <div class="text-[10px] text-red-500 font-black mb-1 uppercase">${item.category}</div>
-                    <div class="text-sm font-bold text-white h-12 leading-tight mb-2">${item.name}</div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-lg font-mono font-black text-green-500">${item.price.toFixed(2)} ₼</span>
-                        <i class="fas fa-plus-circle text-slate-500 hover:text-red-500"></i>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function selectTable(tableId) {
-            activeTable = tableId;
-            const titleEl = document.getElementById('active-table-title');
-            if(titleEl) titleEl.textContent = `MASA ${tableId}`;
-            
-            document.querySelectorAll('.table-btn').forEach(btn => {
-                btn.classList.remove('active-table');
-                if (btn.textContent === tableId) btn.classList.add('active-table');
-            });
-            updateOrderDisplay();
-            saveSettingsToDB();
-        }
-
-        function addToTable(itemId) {
-            const menuItem = menu.find(item => item.id === itemId);
-            if (!menuItem) return;
-            if(!tables[activeTable]) tables[activeTable] = [];
-            
-            let table = tables[activeTable];
-            let existing = table.find(i => i.id === itemId);
-            
-            if (existing) {
-                existing.count++;
-                existing.totalPrice = existing.price * existing.count;
-            } else {
-                table.push({ 
-                    id: menuItem.id,
-                    name: menuItem.name, 
-                    price: menuItem.price, 
-                    count: 1,
-                    totalPrice: menuItem.price
-                });
-            }
-            saveData();
-            updateOrderDisplay();
-            showNotification(`${menuItem.name} əlavə edildi`);
-        }
-
-        function updateOrderDisplay() {
-            const list = document.getElementById('order-items');
-            const totalDisplay = document.getElementById('total-price');
-            if(!list || !totalDisplay) return;
-
-            let items = tables[activeTable] || [];
-            let total = 0;
-            
-            if (items.length === 0) {
-                list.innerHTML = `
-                    <div class="text-center py-10 text-slate-500">
-                        <i class="fas fa-shopping-cart text-4xl mb-3"></i>
-                        <div>Sifariş yoxdur</div>
-                        <div class="text-sm mt-2">Menyudan məhsul seçin</div>
-                    </div>
-                `;
-            } else {
-                list.innerHTML = '';
-                items.forEach((item, index) => {
-                    const itemTotal = item.price * item.count;
-                    total += itemTotal;
-                    list.innerHTML += `
-                        <div class="order-row bg-slate-800/60 p-3 rounded-xl border border-slate-700 mb-2 animate__animated animate__slideInRight">
-                            <div class="flex justify-between items-center mb-2">
-                                <div class="flex items-center">
-                                    <span class="font-bold text-red-500 mr-3 text-lg">${item.count}x</span>
-                                    <span class="font-bold">${item.name}</span>
-                                </div>
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <div class="flex items-center gap-2">
-                                    <button onclick="updateQuantity(${index}, -1)" class="quantity-btn">
-                                        <i class="fas fa-minus text-xs"></i>
-                                    </button>
-                                    <span class="font-bold w-8 text-center">${item.count}</span>
-                                    <button onclick="updateQuantity(${index}, 1)" class="quantity-btn">
-                                        <i class="fas fa-plus text-xs"></i>
-                                    </button>
-                                </div>
-                                <div class="text-right">
-                                    <div class="font-bold text-green-400 text-lg">${itemTotal.toFixed(2)} ₼</div>
-                                    <button onclick="removeFromTable(${index})" class="text-xs text-red-500 hover:text-red-400 mt-1">
-                                        <i class="fas fa-trash mr-1"></i>Sil
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                });
-            }
-            totalDisplay.textContent = total.toFixed(2) + " ₼";
-        }
-
-        function updateQuantity(index, change) {
-            let table = tables[activeTable];
-            if (table && table[index]) {
-                table[index].count += change;
-                if (table[index].count <= 0) table.splice(index, 1);
-                else table[index].totalPrice = table[index].price * table[index].count;
-                saveData();
-                updateOrderDisplay();
-            }
-        }
-
-        function removeFromTable(index) {
-            if(tables[activeTable]) tables[activeTable].splice(index, 1);
-            saveData();
-            updateOrderDisplay();
-            showNotification('Məhsul silindi');
-        }
-
-        function clearCurrentTable() {
-            if (!tables[activeTable] || tables[activeTable].length === 0) return;
-            if (confirm(`${activeTable} masasını təmizləmək istədiyinizə əminsiniz?`)) {
-                tables[activeTable] = [];
-                saveData();
-                updateOrderDisplay();
-                showNotification('Masa təmizləndi');
-            }
-        }
-
-        function showReceiptModal() {
-            const items = tables[activeTable] || [];
-            if (items.length === 0) {
-                showNotification('Fiş çıxarmaq üçün sifariş yoxdur!', 'error');
-                return;
-            }
-            
-            const now = new Date();
-            receiptCounter++;
-            const noEl = document.getElementById('receipt-no');
-            const dateEl = document.getElementById('receipt-date');
-            const timeEl = document.getElementById('receipt-time');
-            const tabEl = document.getElementById('receipt-table');
-            const itemsDiv = document.getElementById('receipt-items');
-            const totalEl = document.getElementById('receipt-total');
-
-            if(noEl) noEl.textContent = receiptCounter.toString().padStart(4, '0');
-            if(dateEl) dateEl.textContent = now.toLocaleDateString('az-AZ');
-            if(timeEl) timeEl.textContent = now.toLocaleTimeString('az-AZ');
-            if(tabEl) tabEl.textContent = `MASA ${activeTable}`;
-            
-            let itemsHTML = '';
-            let total = 0;
-            items.forEach(item => {
-                const itemTotal = item.price * item.count;
-                total += itemTotal;
-                itemsHTML += `
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px; border-bottom: 1px dotted #eee; padding-bottom: 2px; font-size: 11px;">
-                        <div><span style="font-weight: bold;">${item.count}x</span> ${item.name}</div>
-                        <div>${itemTotal.toFixed(2)} AZN</div>
-                    </div>
-                `;
-            });
-            
-            if(itemsDiv) itemsDiv.innerHTML = itemsHTML;
-            if(totalEl) totalEl.textContent = total.toFixed(2) + ' AZN';
-            const modal = document.getElementById('receipt-modal');
-            if(modal) modal.style.display = 'block';
-        }
-
-        function printReceiptNow() {
-            const receiptElement = document.getElementById('receipt-print');
-            const printWindow = window.open('', '_blank', 'width=80mm,height=600');
-            
-            printWindow.document.write(`
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <title>MAMBA PUB Fiş #${receiptCounter}</title>
-                    <meta charset="UTF-8">
-                    <style>
-                        @page { 
-                            margin: 0 !important; 
-                            padding: 0 !important;
-                            size: 80mm auto !important; 
-                        }
-                        body { 
-                            width: 80mm !important; 
-                            margin: 0 !important; 
-                            padding: 0 !important; 
-                            font-family: 'Courier New', monospace !important;
-                            font-size: 11px !important; 
-                            line-height: 1.2 !important;
-                            background: white !important; 
-                            color: black !important;
-                        }
-                        .receipt { 
-                            width: 80mm !important; 
-                            padding: 10px !important; 
-                            box-sizing: border-box !important;
-                        }
-                        hr { 
-                            border: none !important; 
-                            border-top: 1px dashed #000 !important; 
-                            margin: 8px 0 !important;
-                        }
-                        * {
-                            max-width: 80mm !important;
-                        }
-                    </style>
-                    <script>
-                        window.onload = function() { 
-                            window.print(); 
-                            setTimeout(function() { window.close(); }, 1000); 
-                        };
-                    <\/script>
-                </head>
-                <body>
-                    <div class="receipt">${receiptElement.innerHTML}</div>
-                </body>
-                </html>
-            `);
-            
-            printWindow.document.close();
-            
-            // Siparişi temizle
-            tables[activeTable] = [];
-            saveData();
-            updateOrderDisplay();
-            showNotification(`Fiş #${receiptCounter} çap edildi`);
-            closeModal();
-        }
-
-        function closeModal() {
-            const modal = document.getElementById('receipt-modal');
-            if(modal) modal.style.display = 'none';
-        }
-
-        function updateStorageInfo() {
-            const infoEl = document.getElementById('storage-info');
-            if(infoEl) infoEl.textContent = 'IndexedDB - Kalıcı yaddaş';
-        }
-
-        function toggleAdminPanel() {
-            const panel = document.getElementById('admin-panel');
-            if(!panel) return;
-            if (panel.style.display === 'block') panel.style.display = 'none';
-            else { panel.style.display = 'block'; loadMenuList(); }
-        }
-
-        function loadMenuList() {
-            const menuList = document.getElementById('menu-list');
-            if(!menuList) return;
-            menuList.innerHTML = '';
-            menu.forEach(item => {
-                menuList.innerHTML += `
-                    <tr class="border-b border-slate-700">
-                        <td class="py-3"><input type="text" value="${item.name}" onchange="updateMenuItem(${item.id}, 'name', this.value)" class="bg-slate-900 border border-slate-700 rounded px-3 py-1 text-white w-full"></td>
-                        <td class="py-3"><select onchange="updateMenuItem(${item.id}, 'category', this.value)" class="bg-slate-900 border border-slate-700 rounded px-3 py-1 text-white">
-                                <option value="İçkilər" ${item.category === 'İçkilər' ? 'selected' : ''}>İçkilər</option>
-                                <option value="Mezeler" ${item.category === 'Mezeler' ? 'selected' : ''}>Mezeler</option>
-                                <option value="İsti Yeməklər" ${item.category === 'İsti Yeməklər' ? 'selected' : ''}>İsti Yeməklər</option>
-                                <option value="Setlər" ${item.category === 'Setlər' ? 'selected' : ''}>Setlər</option>
-                                <option value="Digər" ${item.category === 'Digər' ? 'selected' : ''}>Digər</option>
-                            </select></td>
-                        <td class="py-3"><input type="number" step="0.01" value="${item.price.toFixed(2)}" onchange="updateMenuItem(${item.id}, 'price', parseFloat(this.value))" class="bg-slate-900 border border-slate-700 rounded px-3 py-1 text-white w-24"></td>
-                        <td class="py-3"><button onclick="deleteMenuItem(${item.id})" class="bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-xs"><i class="fas fa-trash"></i></button></td>
-                    </tr>
-                `;
-            });
-        }
-
-        function addNewMenuItem() {
-            const nameEl = document.getElementById('new-item-name');
-            const priceEl = document.getElementById('new-item-price');
-            const catEl = document.getElementById('new-item-category');
-            if(!nameEl || !priceEl || !catEl) return;
-
-            const name = nameEl.value;
-            const price = parseFloat(priceEl.value);
-            const category = catEl.value;
-            
-            if (!name || isNaN(price) || price <= 0) {
-                showNotification('Məlumatı düzgün daxil edin!', 'error');
-                return;
-            }
-            
-            const newItem = { id: nextItemId++, name, price, category };
-            menu.push(newItem);
-            
-            // Database'e kaydet
-            const transaction = db.transaction(['menu'], 'readwrite');
-            const store = transaction.objectStore('menu');
-            store.put(newItem);
-            
-            loadMenuList(); 
-            renderMenu();
-            nameEl.value = ''; 
-            priceEl.value = '';
-            showNotification('Məhsul əlavə edildi');
-        }
-
-        function updateMenuItem(id, field, value) {
-            const item = menu.find(item => item.id === id);
-            if (item) { 
-                item[field] = value; 
-                
-                // Database'i güncelle
-                const transaction = db.transaction(['menu'], 'readwrite');
-                const store = transaction.objectStore('menu');
-                store.put(item);
-                
-                renderMenu(); 
-            }
-        }
-
-        function deleteMenuItem(id) {
-            if (confirm('Silmək istəyirsiniz?')) {
-                menu = menu.filter(item => item.id !== id);
-                
-                // Database'den sil
-                const transaction = db.transaction(['menu'], 'readwrite');
-                const store = transaction.objectStore('menu');
-                store.delete(id);
-                
-                loadMenuList(); 
-                renderMenu();
-                showNotification('Məhsul silindi');
-            }
-        }
-
-        function changeAllPrices(percent, type) {
-            if (!confirm(`${percent}% qiymət dəyişikliyini təsdiqləyirsiniz?`)) return;
-            menu.forEach(item => {
-                if (type === 'increase') item.price *= (1 + percent / 100);
-                else item.price *= (1 - percent / 100);
-                item.price = Math.round(item.price * 100) / 100;
-            });
-            
-            // Database'i güncelle
-            const transaction = db.transaction(['menu'], 'readwrite');
-            const store = transaction.objectStore('menu');
-            menu.forEach(item => store.put(item));
-            
-            loadMenuList(); 
-            renderMenu();
-            showNotification('Qiymətlər yeniləndi');
-        }
-
-        function changeCustomPercent() {
-            const percent = parseFloat(document.getElementById('custom-percent').value);
-            if (!percent || isNaN(percent)) return;
-            const type = confirm(`${percent}% artırmaq istəyirsiniz?`) ? 'increase' : 'decrease';
-            changeAllPrices(percent, type);
-            document.getElementById('custom-percent').value = '';
-        }
-
-        function exportMenuData() {
-            const exportData = {
-                menu: menu,
-                tables: tables,
-                activeTable: activeTable,
-                receiptCounter: receiptCounter,
-                exportDate: new Date().toISOString(),
-                version: '2.0'
-            };
-            
-            const dataStr = JSON.stringify(exportData, null, 2);
-            const blob = new Blob([dataStr], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url; 
-            a.download = `mamba_backup_${new Date().toISOString().split('T')[0]}.json`;
-            document.body.appendChild(a); 
-            a.click(); 
-            document.body.removeChild(a);
-            showNotification('Export tamamlandı');
-        }
-
-        function importMenuData() { 
-            document.getElementById('file-import').click(); 
-        }
-
-        document.getElementById('file-import').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(ex) {
-                try {
-                    const data = JSON.parse(ex.target.result);
-                    if (data.menu) {
-                        // Database'e kaydet
-                        const transaction = db.transaction(['menu', 'tables', 'settings'], 'readwrite');
-                        const menuStore = transaction.objectStore('menu');
-                        const tablesStore = transaction.objectStore('tables');
-                        const settingsStore = transaction.objectStore('settings');
-                        
-                        // Menu'yu güncelle
-                        menuStore.clear();
-                        data.menu.forEach(item => menuStore.put(item));
-                        menu = data.menu;
-                        nextItemId = menu.length > 0 ? Math.max(...menu.map(item => item.id)) + 1 : 1;
-                        
-                        // Tables'ı güncelle (eğer varsa)
-                        if (data.tables) {
-                            tablesStore.put(data.tables, 'data');
-                            tables = data.tables;
-                        }
-                        
-                        // Settings'i güncelle (eğer varsa)
-                        if (data.activeTable) {
-                            settingsStore.put(data.activeTable, 'activeTable');
-                            activeTable = data.activeTable;
-                            selectTable(activeTable);
-                        }
-                        
-                        if (data.receiptCounter) {
-                            settingsStore.put(data.receiptCounter, 'receiptCounter');
-                            receiptCounter = data.receiptCounter;
-                        }
-                        
-                        loadMenuList(); 
-                        renderMenu();
-                        updateOrderDisplay();
-                        showNotification('İmport tamamlandı');
+                document.getElementById('messageInput').addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        this.sendMessage();
                     }
-                } catch(err) { 
-                    console.error(err);
-                    showNotification('Fayl xətası!', 'error'); 
+                });
+                
+                // Yeni sohbet
+                document.getElementById('newChatBtn').addEventListener('click', () => this.createNewChat());
+                
+                // Temizle
+                document.getElementById('clearBtn').addEventListener('click', () => this.clearChat());
+                
+                // Tema değiştirme
+                document.getElementById('themeToggle').addEventListener('click', () => this.toggleTheme());
+                
+                // Öneri butonları
+                document.querySelectorAll('.suggestion-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const prompt = e.currentTarget.dataset.prompt;
+                        document.getElementById('messageInput').value = prompt;
+                        this.sendMessage();
+                    });
+                });
+                
+                // Textarea otomatik boyutlandırma
+                const textarea = document.getElementById('messageInput');
+                textarea.addEventListener('input', () => {
+                    textarea.style.height = 'auto';
+                    textarea.style.height = Math.min(textarea.scrollHeight, 150) + 'px';
+                });
+            }
+            
+            sendMessage() {
+                const input = document.getElementById('messageInput');
+                const message = input.value.trim();
+                
+                if (!message) return;
+                
+                // Kullanıcı mesajını ekle
+                this.addMessage(message, 'user');
+                
+                // Input'u temizle
+                input.value = '';
+                input.style.height = 'auto';
+                
+                // AI yanıtını simüle et
+                setTimeout(() => {
+                    this.getAIResponse(message);
+                }, 800 + Math.random() * 1000);
+            }
+            
+            addMessage(text, type) {
+                const message = {
+                    id: Date.now(),
+                    text: text,
+                    type: type,
+                    time: new Date().toLocaleTimeString('tr-TR', { 
+                        hour: '2-digit', 
+                        minute: '2-digit' 
+                    })
+                };
+                
+                this.messages.push(message);
+                this.renderMessage(message);
+                this.saveToStorage();
+                this.scrollToBottom();
+            }
+            
+            renderMessage(message) {
+                const container = document.getElementById('messagesContainer');
+                const messageDiv = document.createElement('div');
+                
+                messageDiv.className = `message ${message.type}-message`;
+                messageDiv.innerHTML = `
+                    <div class="message-icon">
+                        <i class="fas fa-${message.type === 'user' ? 'user' : 'robot'}"></i>
+                    </div>
+                    <div class="message-content">
+                        <div class="message-text">${this.escapeHtml(message.text)}</div>
+                        <div class="message-time">
+                            <i class="far fa-clock"></i> ${message.time}
+                        </div>
+                    </div>
+                `;
+                
+                container.appendChild(messageDiv);
+            }
+            
+            getAIResponse(userMessage) {
+                const container = document.getElementById('messagesContainer');
+                
+                // Typing göstergesi
+                const typingDiv = document.createElement('div');
+                typingDiv.className = 'typing-indicator';
+                typingDiv.id = 'typingIndicator';
+                typingDiv.innerHTML = `
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                `;
+                
+                container.appendChild(typingDiv);
+                this.scrollToBottom();
+                
+                // AI yanıtını oluştur
+                setTimeout(() => {
+                    document.getElementById('typingIndicator')?.remove();
+                    
+                    // Akıllı yanıt oluştur
+                    let response;
+                    const lowerMsg = userMessage.toLowerCase();
+                    
+                    if (lowerMsg.includes('merhaba') || lowerMsg.includes('selam')) {
+                        response = "Merhaba! 👋 Ben AI asistanınız. Size nasıl yardımcı olabilirim?";
+                    } else if (lowerMsg.includes('nasılsın')) {
+                        response = "Teşekkür ederim, iyiyim! 😊 Siz nasılsınız?";
+                    } else if (lowerMsg.includes('teşekkür')) {
+                        response = "Rica ederim! Her zaman yardımcı olmaktan mutluluk duyarım. 🙏";
+                    } else if (lowerMsg.includes('python') || lowerMsg.includes('kod')) {
+                        response = "Python'da bir örnek vermek gerekirse:\n\n```python\ndef merhaba_dunya():\n    print('Merhaba Dünya!')\n\n# Fonksiyonu çağır\nmerhaba_dunya()\n```\nBu basit bir Python fonksiyonu örneğidir. Başka bir konuda yardımcı olabilirim.";
+                    } else if (lowerMsg.includes('ingilizce')) {
+                        response = "İngilizce öğrenmek için:\n1. Her gün 10 yeni kelime öğrenin\n2. İngilizce film/dizi izleyin\n3. Pratik yapmak için language exchange yapın\n4. Gramer kurallarını günlük hayatta kullanın\n5. İngilizce kitap okuyun";
+                    } else if (lowerMsg.includes('yapay zeka') || lowerMsg.includes('ai')) {
+                        response = "Yapay zeka, makinelerin insan zekasını taklit etmesidir. Makine öğrenmesi, derin öğrenme ve doğal dil işleme gibi alt dalları vardır. ChatGPT gibi modeller, büyük dil modelleri kullanarak insan benzeri metinler üretebilir.";
+                    } else if (lowerMsg.includes('uzay') || lowerMsg.includes('güneş')) {
+                        response = "Güneş sistemi 8 gezegenden oluşur:\n1. Merkür\n2. Venüs\n3. Dünya\n4. Mars\n5. Jüpiter\n6. Satürn\n7. Uranüs\n8. Neptün\n\nGüneş sistemimiz Samanyolu galaksisinde bulunur.";
+                    } else {
+                        // Rastgele akıllı yanıt
+                        const responses = [
+                            `${userMessage} hakkında ilginç bir konu! Bu konuda şunları söyleyebilirim...`,
+                            `Anladığım kadarıyla "${userMessage}" hakkında konuşuyoruz. Bu konu üzerine düşüncelerim şöyle:`,
+                            `Teşekkürler bu soru için! "${userMessage}" konusunda size şu bilgileri verebilirim:`,
+                            `Harika bir soru! ${userMessage} hakkında detaylı bilgi paylaşmak isterim.`,
+                            `Bu konuyu araştırdım ve "${userMessage}" hakkında şunları buldum:`
+                        ];
+                        response = responses[Math.floor(Math.random() * responses.length)] + 
+                                  "\n\nAI olarak her konuda sohbet edebilirim. Başka sorularınız var mı?";
+                    }
+                    
+                    this.addMessage(response, 'ai');
+                }, 1500 + Math.random() * 1000);
+            }
+            
+            createNewChat() {
+                this.currentChatId = this.generateChatId();
+                this.messages = [];
+                this.clearMessages();
+                this.saveToStorage();
+            }
+            
+            clearChat() {
+                if (confirm('Bu sohbeti temizlemek istediğinize emin misiniz?')) {
+                    this.messages = [];
+                    this.clearMessages();
+                    this.saveToStorage();
                 }
-            };
-            reader.readAsText(file);
-        });
-
-        function resetAllData() {
-            if (confirm('BÜTÜN MƏLUMATLAR SIFIRLANACAQ! Təsdiqləyirsiniz?')) {
-                indexedDB.deleteDatabase('MambaPubDB');
-                location.reload();
+            }
+            
+            clearMessages() {
+                const container = document.getElementById('messagesContainer');
+                container.innerHTML = `
+                    <div class="welcome-message">
+                        <div class="welcome-icon">
+                            <i class="fas fa-robot"></i>
+                        </div>
+                        <h2>Merhaba! Ben AI Asistan 🤖</h2>
+                        <p>Ücretsiz ChatGPT alternatifiyim. Programlama, matematik, edebiyat, bilim ve daha birçok konuda sohbet edebiliriz!</p>
+                        <div class="suggestions">
+                            <button class="suggestion-btn" data-prompt="Python'da Fibonacci serisi nasıl yazılır?">
+                                <i class="fab fa-python"></i> Python kodu
+                            </button>
+                            <button class="suggestion-btn" data-prompt="Yapay zeka nedir ve nasıl çalışır?">
+                                <i class="fas fa-brain"></i> Yapay Zeka
+                            </button>
+                            <button class="suggestion-btn" data-prompt="İngilizce öğrenmek için ipuçları ver">
+                                <i class="fas fa-language"></i> İngilizce
+                            </button>
+                            <button class="suggestion-btn" data-prompt="Güneş sistemi hakkında bilgi ver">
+                                <i class="fas fa-globe-americas"></i> Uzay
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                // Yeni öneri butonlarına event ekle
+                document.querySelectorAll('.suggestion-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const prompt = e.currentTarget.dataset.prompt;
+                        document.getElementById('messageInput').value = prompt;
+                        this.sendMessage();
+                    });
+                });
+            }
+            
+            toggleTheme() {
+                this.isDarkMode = !this.isDarkMode;
+                document.body.classList.toggle('dark-mode', this.isDarkMode);
+                localStorage.setItem('darkMode', this.isDarkMode);
+                
+                const icon = document.querySelector('#themeToggle i');
+                icon.className = this.isDarkMode ? 'fas fa-sun' : 'fas fa-moon';
+            }
+            
+            applyDarkMode() {
+                if (this.isDarkMode) {
+                    document.body.classList.add('dark-mode');
+                    const icon = document.querySelector('#themeToggle i');
+                    icon.className = 'fas fa-sun';
+                }
+            }
+            
+            saveToStorage() {
+                const chats = JSON.parse(localStorage.getItem('aiChats') || '{}');
+                chats[this.currentChatId] = {
+                    id: this.currentChatId,
+                    messages: this.messages,
+                    time: new Date().toISOString()
+                };
+                localStorage.setItem('aiChats', JSON.stringify(chats));
+                this.updateChatList();
+            }
+            
+            loadChatHistory() {
+                const chats = JSON.parse(localStorage.getItem('aiChats') || '{}');
+                if (Object.keys(chats).length > 0) {
+                    const latestChat = Object.values(chats).sort((a, b) => 
+                        new Date(b.time) - new Date(a.time)
+                    )[0];
+                    
+                    if (latestChat) {
+                        this.currentChatId = latestChat.id;
+                        this.messages = latestChat.messages || [];
+                        this.renderAllMessages();
+                    }
+                }
+                this.updateChatList();
+            }
+            
+            renderAllMessages() {
+                this.clearMessages();
+                const container = document.getElementById('messagesContainer');
+                const welcomeMsg = container.querySelector('.welcome-message');
+                if (welcomeMsg) welcomeMsg.remove();
+                
+                this.messages.forEach(msg => this.renderMessage(msg));
+                this.scrollToBottom();
+            }
+            
+            updateChatList() {
+                const container = document.getElementById('chatList');
+                const chats = JSON.parse(localStorage.getItem('aiChats') || '{}');
+                
+                container.innerHTML = '';
+                
+                Object.values(chats)
+                    .sort((a, b) => new Date(b.time) - new Date(a.time))
+                    .forEach(chat => {
+                        const preview = chat.messages[0]?.text?.substring(0, 30) || 'Yeni Sohbet';
+                        const item = document.createElement('div');
+                        item.className = `chat-item ${chat.id === this.currentChatId ? 'active' : ''}`;
+                        item.innerHTML = `
+                            <i class="fas fa-comment"></i>
+                            <span>${this.escapeHtml(preview)}...</span>
+                        `;
+                        
+                        item.addEventListener('click', () => {
+                            this.currentChatId = chat.id;
+                            this.messages = chat.messages || [];
+                            this.renderAllMessages();
+                            this.updateChatList();
+                        });
+                        
+                        container.appendChild(item);
+                    });
+            }
+            
+            scrollToBottom() {
+                const container = document.getElementById('messagesContainer');
+                container.scrollTop = container.scrollHeight;
+            }
+            
+            autoResizeTextarea() {
+                const textarea = document.getElementById('messageInput');
+                textarea.addEventListener('focus', () => {
+                    textarea.style.height = 'auto';
+                    textarea.style.height = Math.min(textarea.scrollHeight, 150) + 'px';
+                });
+            }
+            
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML.replace(/\n/g, '<br>');
             }
         }
 
-        function showNotification(message, type = 'success') {
-            const notification = document.createElement('div');
-            notification.className = `fixed top-4 right-4 px-4 py-3 rounded-lg font-bold shadow-xl animate__animated animate__fadeInRight z-50 ${type === 'error' ? 'bg-red-600' : type === 'warning' ? 'bg-yellow-600' : 'bg-green-600'}`;
-            notification.innerHTML = `<div class="flex items-center gap-2"><i class="fas ${type === 'error' ? 'fa-exclamation-circle' : 'fa-check-circle'}"></i><span>${message}</span></div>`;
-            document.body.appendChild(notification);
-            setTimeout(() => {
-                notification.classList.replace('animate__fadeInRight', 'animate__fadeOutRight');
-                setTimeout(() => notification.remove(), 500);
-            }, 3000);
-        }
-
-        document.addEventListener('keydown', function(e) {
-            if (e.ctrlKey && e.key === 'p') { e.preventDefault(); showReceiptModal(); }
-            if (e.key === 'Escape') { closeModal(); document.getElementById('admin-panel').style.display = 'none'; }
-            if (e.ctrlKey && e.key === 'a') { e.preventDefault(); toggleAdminPanel(); }
+        // UYGULAMAYI BAŞLAT
+        document.addEventListener('DOMContentLoaded', () => {
+            window.chatApp = new AIChat();
         });
     </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
 </body>
 </html>
