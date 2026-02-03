@@ -1,590 +1,1700 @@
 <!DOCTYPE html>
-<html lang="az">
+<html lang="tr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Melek 🤖 - Azerbaycan AI Söhbət</title>
+    <title>Mafia Oyunu - Telegram</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-
-        .chat-container {
-            width: 100%;
-            max-width: 800px;
-            height: 90vh;
-            background: white;
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            display: flex;
-            flex-direction: column;
-        }
-
-        .chat-header {
-            background: linear-gradient(135deg, #10a37f, #0d8c6d);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
             color: white;
-            padding: 25px;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 100%;
+            min-height: 100vh;
+            padding: 20px;
+            padding-bottom: 100px;
+        }
+
+        .screen {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header {
             text-align: center;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 15px;
+            padding: 20px 0;
+            margin-bottom: 30px;
         }
 
-        .chat-header i {
-            font-size: 32px;
-            animation: float 3s ease-in-out infinite;
+        .logo {
+            font-size: 36px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
         }
 
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
+        .subtitle {
+            color: #a0aec0;
+            font-size: 14px;
         }
 
-        .chat-header h1 {
-            font-size: 28px;
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 18px 25px;
+            border-radius: 15px;
+            font-size: 16px;
             font-weight: 600;
-        }
-
-        .messages-container {
-            flex: 1;
-            overflow-y: auto;
-            padding: 30px;
-            background: #f7f7f8;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .message {
-            display: flex;
-            gap: 15px;
-            padding: 20px;
-            border-radius: 15px;
-            max-width: 80%;
-            animation: slideIn 0.3s ease-out;
-        }
-
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateX(-20px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-
-        .user-message {
-            background: #10a37f;
-            color: white;
-            margin-left: auto;
-            border-bottom-right-radius: 5px;
-        }
-
-        .ai-message {
-            background: white;
-            border: 1px solid #e5e5e5;
-            margin-right: auto;
-            border-bottom-left-radius: 5px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-        }
-
-        .message-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            font-size: 18px;
-        }
-
-        .user-message .message-icon {
-            background: rgba(255,255,255,0.2);
-        }
-
-        .ai-message .message-icon {
-            background: #10a37f;
-            color: white;
-        }
-
-        .message-content {
-            flex: 1;
-        }
-
-        .message-text {
-            line-height: 1.6;
-            font-size: 16px;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-        }
-
-        .message-time {
-            font-size: 12px;
-            color: #999;
-            margin-top: 8px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .typing-indicator {
-            display: flex;
-            gap: 5px;
-            padding: 20px;
-            background: white;
-            border: 1px solid #e5e5e5;
-            border-radius: 15px;
-            max-width: 80px;
-            margin-right: auto;
-        }
-
-        .typing-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #10a37f;
-            animation: typing 1.4s infinite;
-        }
-
-        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
-        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
-
-        @keyframes typing {
-            0%, 60%, 100% { transform: translateY(0); }
-            30% { transform: translateY(-10px); }
-        }
-
-        .input-area {
-            padding: 20px;
-            background: white;
-            border-top: 1px solid #e5e5e5;
-        }
-
-        .input-wrapper {
-            display: flex;
-            gap: 10px;
-            align-items: flex-end;
-            background: #f7f7f8;
-            border-radius: 12px;
-            padding: 15px;
-            border: 1px solid #e5e5e5;
-        }
-
-        .input-wrapper:focus-within {
-            border-color: #10a37f;
-            box-shadow: 0 0 0 3px rgba(16, 163, 127, 0.1);
-        }
-
-        textarea {
-            flex: 1;
-            border: none;
-            background: transparent;
-            resize: none;
-            font-size: 16px;
-            padding: 10px;
-            max-height: 120px;
-            min-height: 24px;
-            outline: none;
-            color: #333;
-            font-family: inherit;
-            line-height: 1.5;
-        }
-
-        textarea::placeholder {
-            color: #999;
-        }
-
-        .send-btn {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            border: none;
-            background: #10a37f;
-            color: white;
             cursor: pointer;
+            width: 100%;
+            margin: 10px 0;
+            transition: all 0.3s;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 18px;
+            gap: 12px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #f56565 0%, #c53030 100%);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #48bb78 0%, #2f855a 100%);
+        }
+
+        .input-group {
+            margin: 20px 0;
+        }
+
+        .input-label {
+            display: block;
+            margin-bottom: 10px;
+            color: #a0aec0;
+            font-size: 14px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 18px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            color: white;
+            font-size: 16px;
             transition: all 0.3s;
         }
 
-        .send-btn:hover {
-            background: #0d8c6d;
-            transform: scale(1.1);
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
+        }
+
+        .room-list {
+            display: grid;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .room-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .room-card:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .room-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .room-id {
+            font-size: 28px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .room-info {
+            color: #a0aec0;
+            font-size: 14px;
+        }
+
+        .room-settings {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .setting-badge {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+
+        .player-list {
+            display: grid;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .player-card {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .player-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            margin-right: 15px;
+            object-fit: cover;
+            border: 3px solid #667eea;
+        }
+
+        .player-info {
+            flex: 1;
+        }
+
+        .player-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .player-status {
+            font-size: 12px;
+            color: #a0aec0;
+        }
+
+        .alive {
+            color: #48bb78;
+        }
+
+        .dead {
+            color: #f56565;
+            text-decoration: line-through;
+        }
+
+        .game-phase {
+            text-align: center;
+            padding: 30px 20px;
+            background: linear-gradient(135deg, #4c51bf 0%, #702459 100%);
+            border-radius: 20px;
+            margin-bottom: 30px;
+        }
+
+        .phase-title {
+            font-size: 28px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .phase-message {
+            font-size: 18px;
+            opacity: 0.9;
+            margin-bottom: 20px;
+        }
+
+        .phase-timer {
+            font-size: 72px;
+            font-weight: bold;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+        }
+
+        .role-reveal {
+            text-align: center;
+            padding: 30px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            margin-bottom: 30px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        .role-title {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .role-mafia {
+            color: #f56565;
+        }
+
+        .role-doctor {
+            color: #4299e1;
+        }
+
+        .role-police {
+            color: #48bb78;
+        }
+
+        .role-citizen {
+            color: #a0aec0;
+        }
+
+        .role-description {
+            font-size: 16px;
+            line-height: 1.5;
+            margin: 20px 0;
+        }
+
+        .role-abilities {
+            list-style: none;
+            margin-top: 20px;
+        }
+
+        .role-abilities li {
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            margin: 5px 0;
+            border-radius: 10px;
+        }
+
+        .chat-container {
+            height: 300px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .chat-message {
+            margin-bottom: 15px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 12px;
+            color: #a0aec0;
+        }
+
+        .message-content {
+            word-break: break-word;
+            line-height: 1.4;
+        }
+
+        .mafia-chat {
+            border-left-color: #f56565;
+            background: rgba(245, 101, 101, 0.1);
+        }
+
+        .chat-input-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            color: white;
+        }
+
+        .chat-send {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 15px;
+            cursor: pointer;
+        }
+
+        .voting-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .vote-card {
+            text-align: center;
+            padding: 20px 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .vote-card:hover {
+            border-color: #667eea;
+            transform: scale(1.05);
+        }
+
+        .vote-card.selected {
+            border-color: #48bb78;
+            background: rgba(72, 187, 120, 0.1);
+        }
+
+        .vote-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            margin: 0 auto 10px;
+            object-fit: cover;
+        }
+
+        .vote-name {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .vote-role {
+            font-size: 12px;
+            color: #a0aec0;
+            margin-top: 5px;
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            z-index: 1000;
+            animation: slideUp 0.3s ease;
+            display: none;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .notification.show {
+            display: block;
+        }
+
+        .notification-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .notification-message {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(26, 32, 44, 0.95);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 15px 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .nav-btn {
+            flex: 1;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .nav-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .nav-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255, 255, 255, 0.1);
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
 
         /* Responsive */
         @media (max-width: 768px) {
-            body {
-                padding: 10px;
-            }
-            
-            .chat-container {
-                height: 95vh;
-                border-radius: 15px;
-            }
-            
-            .chat-header {
-                padding: 20px;
-            }
-            
-            .chat-header h1 {
-                font-size: 22px;
-            }
-            
-            .messages-container {
-                padding: 20px;
-            }
-            
-            .message {
-                max-width: 90%;
+            .container {
                 padding: 15px;
+                padding-bottom: 80px;
             }
             
-            .input-wrapper {
-                padding: 12px;
+            .card {
+                padding: 20px;
+            }
+            
+            .phase-timer {
+                font-size: 48px;
+            }
+            
+            .voting-grid {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
             }
         }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 4px;
+        }
     </style>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <div class="chat-container">
-        <!-- Başlıq -->
-        <div class="chat-header">
-            <i class="fas fa-robot"></i>
-            <h1>Melek 🤖 - AI Köməkçi</h1>
-        </div>
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+    </div>
 
-        <!-- Mesajlar -->
-        <div class="messages-container" id="messagesContainer">
-            <!-- Mesajlar buraya eklenecek -->
-        </div>
-
-        <!-- Mesaj Girişi -->
-        <div class="input-area">
-            <div class="input-wrapper">
-                <textarea 
-                    id="messageInput" 
-                    placeholder="Melek'e mesaj yazın... (Enter ile gönder)"
-                    rows="1"
-                ></textarea>
-                <button id="sendBtn" class="send-btn">
-                    <i class="fas fa-paper-plane"></i>
+    <div class="container">
+        <!-- Login Screen -->
+        <div id="login-screen" class="screen">
+            <div class="header">
+                <div class="logo">🔫 MAFIA</div>
+                <div class="subtitle">Telegram WebApp Mafia Oyunu</div>
+            </div>
+            
+            <div class="card">
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <img src="" alt="Avatar" id="user-avatar" style="width: 100px; height: 100px; border-radius: 50%; margin: 0 auto 20px; border: 4px solid #667eea; object-fit: cover;">
+                    <h2 id="user-name">Yükleniyor...</h2>
+                    <p id="user-status" style="color: #a0aec0; margin-top: 10px;">Telegram ile giriş yapılıyor...</p>
+                </div>
+                
+                <button class="btn" id="btn-lobby" style="display: none;">
+                    <span>🎮 Lobiye Git</span>
+                </button>
+                
+                <button class="btn btn-secondary" id="btn-reconnect" style="display: none;">
+                    <span>↻ Son Odaya Dön</span>
                 </button>
             </div>
         </div>
+
+        <!-- Lobby Screen -->
+        <div id="lobby-screen" class="screen">
+            <div class="header">
+                <div class="logo">🎮 LOBBY</div>
+                <div class="subtitle">Oda seç veya yeni oda kur</div>
+            </div>
+            
+            <div class="card">
+                <button class="btn" id="btn-create-room">
+                    <span>➕ Yeni Oda Kur</span>
+                </button>
+                
+                <div class="input-group">
+                    <div class="input-label">Oda Numarası ile Katıl</div>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="room-code" placeholder="Örn: ABC123" maxlength="6" style="flex: 1;">
+                        <button class="btn" id="btn-join-room" style="width: auto; padding: 15px 25px;">
+                            <span>Katıl</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3 style="margin-bottom: 20px;">🏠 Aktif Odalar</h3>
+                <div id="rooms-list" class="room-list">
+                    <!-- Odalar buraya gelecek -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Create Room Screen -->
+        <div id="create-room-screen" class="screen">
+            <div class="header">
+                <div class="logo">🛠️ ODA KUR</div>
+                <div class="subtitle">Oyun ayarlarını yapılandır</div>
+            </div>
+            
+            <div class="card">
+                <div class="input-group">
+                    <div class="input-label">👤 Mafia Sayısı</div>
+                    <select id="mafia-count">
+                        <option value="1">1 Mafia</option>
+                        <option value="2" selected>2 Mafia</option>
+                        <option value="3">3 Mafia</option>
+                        <option value="4">4 Mafia</option>
+                    </select>
+                </div>
+                
+                <div class="input-group">
+                    <div class="input-label">🏥 Doktor Sayısı</div>
+                    <select id="doctor-count">
+                        <option value="0">Doktor Yok</option>
+                        <option value="1" selected>1 Doktor</option>
+                    </select>
+                </div>
+                
+                <div class="input-group">
+                    <div class="input-label">👮 Polis Sayısı</div>
+                    <select id="police-count">
+                        <option value="0">Polis Yok</option>
+                        <option value="1" selected>1 Polis</option>
+                    </select>
+                </div>
+                
+                <div class="input-group">
+                    <div class="input-label">👥 Vatandaş Sayısı</div>
+                    <select id="citizen-count">
+                        <option value="3">3 Vatandaş</option>
+                        <option value="4">4 Vatandaş</option>
+                        <option value="5" selected>5 Vatandaş</option>
+                        <option value="6">6 Vatandaş</option>
+                        <option value="7">7 Vatandaş</option>
+                    </select>
+                </div>
+                
+                <div style="display: flex; gap: 10px; margin-top: 30px;">
+                    <button class="btn btn-secondary" id="btn-cancel-create">
+                        <span>❌ İptal</span>
+                    </button>
+                    <button class="btn btn-success" id="btn-create-game">
+                        <span>✅ Oda Kur</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Room Screen -->
+        <div id="room-screen" class="screen">
+            <div class="header">
+                <div class="logo" id="room-title">ODA: ---</div>
+                <div class="subtitle" id="room-status">Oyuncular bekleniyor...</div>
+            </div>
+            
+            <div id="room-waiting" style="display: none;">
+                <div class="card">
+                    <h3 style="margin-bottom: 15px;">👥 Oyuncular</h3>
+                    <div id="room-players" class="player-list">
+                        <!-- Oyuncular buraya gelecek -->
+                    </div>
+                    
+                    <div style="margin-top: 30px;">
+                        <button class="btn btn-success" id="btn-start-game" style="display: none;">
+                            <span>▶️ OYUNU BAŞLAT</span>
+                        </button>
+                        
+                        <div style="color: #a0aec0; font-size: 14px; text-align: center; margin-top: 20px;">
+                            Oyun başlatmak için odada en az 5 oyuncu olmalıdır.
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="room-playing" style="display: none;">
+                <!-- Oyun ekranı buraya gelecek -->
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="game-screen" class="screen">
+            <!-- Oyun arayüzü dinamik olarak oluşturulacak -->
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <div class="bottom-nav" id="bottom-nav" style="display: none;">
+        <button class="nav-btn" data-screen="lobby">
+            <span>🏠</span>
+            <span>Lobi</span>
+        </button>
+        <button class="nav-btn" data-screen="room">
+            <span>🎮</span>
+            <span>Oda</span>
+        </button>
+        <button class="nav-btn" data-screen="game">
+            <span>🔫</span>
+            <span>Oyun</span>
+        </button>
+    </div>
+
+    <!-- Notification -->
+    <div class="notification" id="notification">
+        <div class="notification-title" id="notif-title">Bildirim</div>
+        <div class="notification-message" id="notif-message"></div>
     </div>
 
     <script>
-        // AI SÖHBƏT SİSTEMİ
-        class AIChat {
-            constructor() {
-                this.messages = [];
-                this.aiName = "Melek 🤖";
-                this.context = []; // Söhbət konteksti
-                this.init();
+        // Telegram WebApp
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.enableClosingConfirmation();
+        
+        // Global state
+        let socket = null;
+        let currentUser = null;
+        let currentRoom = null;
+        let gameState = null;
+        let authToken = null;
+        let reconnectData = null;
+        
+        // DOM Elements
+        const loadingEl = document.getElementById('loading');
+        const notificationEl = document.getElementById('notification');
+        const notifTitleEl = document.getElementById('notif-title');
+        const notifMessageEl = document.getElementById('notif-message');
+        
+        // Screens
+        const screens = {
+            login: document.getElementById('login-screen'),
+            lobby: document.getElementById('lobby-screen'),
+            createRoom: document.getElementById('create-room-screen'),
+            room: document.getElementById('room-screen'),
+            game: document.getElementById('game-screen')
+        };
+        
+        // Show notification
+        function showNotification(title, message, duration = 3000) {
+            notifTitleEl.textContent = title;
+            notifMessageEl.textContent = message;
+            notificationEl.classList.add('show');
+            
+            setTimeout(() => {
+                notificationEl.classList.remove('show');
+            }, duration);
+        }
+        
+        // Show loading
+        function showLoading() {
+            loadingEl.style.display = 'flex';
+        }
+        
+        // Hide loading
+        function hideLoading() {
+            loadingEl.style.display = 'none';
+        }
+        
+        // Show screen
+        function showScreen(screenName) {
+            Object.values(screens).forEach(screen => {
+                screen.classList.remove('active');
+            });
+            
+            if (screens[screenName]) {
+                screens[screenName].classList.add('active');
             }
             
-            init() {
-                this.bindEvents();
-                this.addWelcomeMessage();
-                setTimeout(() => {
-                    this.addAIMessage("Salam! Mən Melek. Sənin AI köməkçinəm. Necəsən?");
-                }, 500);
-            }
+            // Update bottom nav
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.screen === screenName);
+            });
             
-            bindEvents() {
-                const sendBtn = document.getElementById('sendBtn');
-                const input = document.getElementById('messageInput');
-                
-                sendBtn.addEventListener('click', () => this.sendMessage());
-                
-                input.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        this.sendMessage();
-                    }
-                });
-                
-                input.addEventListener('input', () => {
-                    input.style.height = 'auto';
-                    input.style.height = Math.min(input.scrollHeight, 120) + 'px';
-                });
-                
-                input.focus();
+            // Show/hide bottom nav
+            const bottomNav = document.getElementById('bottom-nav');
+            if (screenName === 'lobby' || screenName === 'room' || screenName === 'game') {
+                bottomNav.style.display = 'flex';
+            } else {
+                bottomNav.style.display = 'none';
             }
-            
-            async sendMessage() {
-                const input = document.getElementById('messageInput');
-                const message = input.value.trim();
+        }
+        
+        // Initialize Telegram authentication
+        async function initTelegramAuth() {
+            try {
+                showLoading();
                 
-                if (!message) return;
+                // Get initData from Telegram
+                const initData = tg.initData;
                 
-                this.addMessage(message, 'user');
-                input.value = '';
-                input.style.height = 'auto';
-                input.focus();
-                
-                // AI cavabını al
-                await this.getAIResponse(message);
-            }
-            
-            addMessage(text, type) {
-                const message = {
-                    text: text,
-                    type: type,
-                    time: new Date().toLocaleTimeString('az-AZ', { 
-                        hour: '2-digit', 
-                        minute: '2-digit' 
-                    })
-                };
-                
-                this.messages.push(message);
-                this.context.push(`${type === 'user' ? 'İstifadəçi' : 'AI'}: ${text}`);
-                
-                // Son 10 mesajı saxla
-                if (this.context.length > 10) {
-                    this.context = this.context.slice(-10);
+                if (!initData) {
+                    throw new Error('Telegram verisi yüklenemedi');
                 }
                 
-                this.renderMessage(message);
-                this.scrollToBottom();
-            }
-            
-            addAIMessage(text) {
-                this.addMessage(text, 'ai');
-            }
-            
-            addWelcomeMessage() {
-                this.addMessage("Salam! Mən Melek. Sənin AI köməkçinəm. Necəsən?", 'ai');
-            }
-            
-            renderMessage(message) {
-                const container = document.getElementById('messagesContainer');
-                const messageDiv = document.createElement('div');
-                messageDiv.className = `message ${message.type}-message`;
+                // Authenticate with server
+                const response = await fetch('/api/auth', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ initData })
+                });
                 
-                const icon = message.type === 'user' ? 
-                    '<i class="fas fa-user"></i>' : 
-                    '<i class="fas fa-robot"></i>';
+                const data = await response.json();
                 
-                messageDiv.innerHTML = `
-                    <div class="message-icon">${icon}</div>
-                    <div class="message-content">
-                        <div class="message-text">${this.formatText(message.text)}</div>
-                        <div class="message-time">
-                            <i class="far fa-clock"></i> ${message.time}
+                if (!data.success) {
+                    throw new Error(data.error || 'Authentication failed');
+                }
+                
+                // Save token and user data
+                authToken = data.token;
+                currentUser = data.user;
+                
+                // Update UI
+                document.getElementById('user-avatar').src = currentUser.photoUrl || 'https://via.placeholder.com/100';
+                document.getElementById('user-name').textContent = currentUser.firstName || currentUser.username;
+                document.getElementById('user-status').textContent = 'Giriş başarılı!';
+                
+                // Check for reconnection
+                const savedRoom = localStorage.getItem('lastRoom');
+                if (savedRoom) {
+                    reconnectData = JSON.parse(savedRoom);
+                    document.getElementById('btn-reconnect').style.display = 'block';
+                }
+                
+                document.getElementById('btn-lobby').style.display = 'block';
+                hideLoading();
+                
+            } catch (error) {
+                console.error('Auth error:', error);
+                document.getElementById('user-status').textContent = `Hata: ${error.message}`;
+                hideLoading();
+                
+                // Fallback: Allow manual lobby access
+                document.getElementById('btn-lobby').style.display = 'block';
+                document.getElementById('btn-lobby').textContent = 'Devam Et (Demo Modu)';
+            }
+        }
+        
+        // Initialize Socket.IO
+        function initSocket() {
+            if (socket) {
+                socket.disconnect();
+            }
+            
+            socket = io({
+                reconnection: true,
+                reconnectionAttempts: 10,
+                reconnectionDelay: 1000,
+                reconnectionDelayMax: 5000,
+                timeout: 20000
+            });
+            
+            // Connection events
+            socket.on('connect', () => {
+                console.log('Socket connected:', socket.id);
+                
+                // Authenticate with token
+                if (authToken && currentRoom) {
+                    socket.emit('authenticate', {
+                        token: authToken,
+                        roomId: currentRoom
+                    });
+                } else if (authToken) {
+                    socket.emit('authenticate', {
+                        token: authToken,
+                        roomId: null
+                    });
+                }
+            });
+            
+            socket.on('disconnect', (reason) => {
+                console.log('Socket disconnected:', reason);
+                if (reason === 'io server disconnect') {
+                    socket.connect();
+                }
+            });
+            
+            socket.on('connect_error', (error) => {
+                console.error('Connection error:', error);
+                showNotification('Bağlantı Hatası', 'Sunucuya bağlanılamıyor. Yeniden deneniyor...', 5000);
+            });
+            
+            socket.on('pong', () => {
+                // Keep alive
+            });
+            
+            // Authentication
+            socket.on('auth-success', (data) => {
+                console.log('Authentication successful');
+                currentUser = data.user;
+                
+                if (data.currentRoom) {
+                    currentRoom = data.currentRoom;
+                    joinRoom(currentRoom);
+                } else {
+                    showScreen('lobby');
+                }
+                
+                hideLoading();
+            });
+            
+            socket.on('auth-error', (error) => {
+                console.error('Auth error:', error);
+                showNotification('Kimlik Doğrulama Hatası', error);
+                hideLoading();
+            });
+            
+            // Lobby updates
+            socket.on('lobby-update', (rooms) => {
+                updateRoomsList(rooms);
+            });
+            
+            // Room updates
+            socket.on('room-update', (roomInfo) => {
+                updateRoomInfo(roomInfo);
+            });
+            
+            socket.on('room-created', (data) => {
+                showNotification('Oda Kuruldu', `Oda ID: ${data.roomId}`);
+                joinRoom(data.roomId);
+            });
+            
+            socket.on('room-error', (error) => {
+                showNotification('Oda Hatası', error);
+            });
+            
+            socket.on('player-joined', (player) => {
+                showNotification('Oyuncu Katıldı', `${player.username} odaya katıldı`);
+            });
+            
+            socket.on('player-left', (player) => {
+                showNotification('Oyuncu Ayrıldı', `${player.username} odadan ayrıldı`);
+            });
+            
+            socket.on('player-kicked', (player) => {
+                showNotification('Oyuncu Atıldı', `${player.playerName} odadan atıldı`);
+            });
+            
+            socket.on('player-disconnected', (player) => {
+                showNotification('Bağlantı Kesildi', `${player.playerName} bağlantısı koptu`);
+            });
+            
+            socket.on('player-reconnected', (player) => {
+                showNotification('Bağlantı Kuruldu', `${player.username} tekrar bağlandı`);
+            });
+            
+            socket.on('kicked', (message) => {
+                showNotification('Atıldınız', message);
+                currentRoom = null;
+                localStorage.removeItem('lastRoom');
+                showScreen('lobby');
+            });
+            
+            // Game events
+            socket.on('game-started', (data) => {
+                showNotification('Oyun Başladı!', 'Rolleriniz dağıtılıyor...');
+                startGame(data);
+            });
+            
+            socket.on('your-role', (data) => {
+                showRoleReveal(data);
+            });
+            
+            socket.on('mafia-team', (mafias) => {
+                showMafiaTeam(mafias);
+            });
+            
+            socket.on('phase-changed', (data) => {
+                updateGamePhase(data);
+            });
+            
+            socket.on('night-result', (data) => {
+                showNightResult(data);
+            });
+            
+            socket.on('vote-result', (data) => {
+                showVoteResult(data);
+            });
+            
+            socket.on('game-ended', (data) => {
+                endGame(data);
+            });
+            
+            socket.on('day-chat', (message) => {
+                addChatMessage(message, false);
+            });
+            
+            socket.on('mafia-chat', (message) => {
+                addChatMessage(message, true);
+            });
+            
+            socket.on('mafia-chat-enabled', (enabled) => {
+                if (enabled) {
+                    showMafiaChat();
+                }
+            });
+            
+            socket.on('mafia-action', (data) => {
+                showNotification('Mafia Hareketi', `${data.mafiaName} hedef seçti`);
+            });
+            
+            socket.on('action-confirmed', (message) => {
+                showNotification('Onaylandı', message);
+            });
+            
+            socket.on('police-result', (data) => {
+                showPoliceResult(data);
+            });
+            
+            socket.on('game-state', (state) => {
+                restoreGameState(state);
+            });
+            
+            socket.on('error', (message) => {
+                showNotification('Hata', message);
+            });
+        }
+        
+        // Update rooms list
+        function updateRoomsList(rooms) {
+            const roomsList = document.getElementById('rooms-list');
+            roomsList.innerHTML = '';
+            
+            if (rooms.length === 0) {
+                roomsList.innerHTML = `
+                    <div style="text-align: center; padding: 30px; color: #a0aec0;">
+                        Aktif oda bulunamadı. İlk odayı sen kur!
+                    </div>
+                `;
+                return;
+            }
+            
+            rooms.forEach(room => {
+                const roomEl = document.createElement('div');
+                roomEl.className = 'room-card';
+                roomEl.innerHTML = `
+                    <div class="room-header">
+                        <div class="room-id">${room.id}</div>
+                        <div class="room-info">${room.players}/${room.maxPlayers} 👥</div>
+                    </div>
+                    <div>Kurucu: ${room.owner}</div>
+                    <div class="room-settings">
+                        <span class="setting-badge">${room.settings.mafiaCount} Mafia</span>
+                        ${room.settings.doctorCount > 0 ? `<span class="setting-badge">${room.settings.doctorCount} Doktor</span>` : ''}
+                        ${room.settings.policeCount > 0 ? `<span class="setting-badge">${room.settings.policeCount} Polis</span>` : ''}
+                        <span class="setting-badge">${room.settings.citizenCount} Vatandaş</span>
+                    </div>
+                `;
+                
+                roomEl.addEventListener('click', () => {
+                    joinRoom(room.id);
+                });
+                
+                roomsList.appendChild(roomEl);
+            });
+        }
+        
+        // Join room
+        function joinRoom(roomId) {
+            showLoading();
+            currentRoom = roomId.toUpperCase();
+            
+            // Save to localStorage for reconnection
+            localStorage.setItem('lastRoom', JSON.stringify({
+                roomId: currentRoom,
+                timestamp: Date.now()
+            }));
+            
+            socket.emit('join-room', roomId);
+            showScreen('room');
+            hideLoading();
+        }
+        
+        // Update room info
+        function updateRoomInfo(roomInfo) {
+            document.getElementById('room-title').textContent = `ODA: ${roomInfo.id}`;
+            document.getElementById('room-status').textContent = 
+                roomInfo.gameState === 'waiting' ? 'Oyuncular bekleniyor...' : 'Oyun devam ediyor...';
+            
+            const waitingDiv = document.getElementById('room-waiting');
+            const playingDiv = document.getElementById('room-playing');
+            
+            if (roomInfo.gameState === 'waiting') {
+                waitingDiv.style.display = 'block';
+                playingDiv.style.display = 'none';
+                
+                // Update players list
+                const playersList = document.getElementById('room-players');
+                playersList.innerHTML = '';
+                
+                roomInfo.players.forEach(player => {
+                    const playerEl = document.createElement('div');
+                    playerEl.className = 'player-card';
+                    playerEl.innerHTML = `
+                        <img src="${player.photoUrl || 'https://via.placeholder.com/50'}" class="player-avatar">
+                        <div class="player-info">
+                            <div class="player-name">
+                                ${player.username}
+                                ${player.isOwner ? ' 👑' : ''}
+                            </div>
+                            <div class="player-status">
+                                ${player.id === currentUser.id ? '(Siz)' : ''}
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Add kick button for owner
+                    if (roomInfo.owner === currentUser.id && player.id !== currentUser.id) {
+                        const kickBtn = document.createElement('button');
+                        kickBtn.className = 'btn-danger';
+                        kickBtn.style.padding = '8px 15px';
+                        kickBtn.style.fontSize = '12px';
+                        kickBtn.textContent = 'At';
+                        kickBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            socket.emit('kick-player', player.id);
+                        });
+                        playerEl.appendChild(kickBtn);
+                    }
+                    
+                    playersList.appendChild(playerEl);
+                });
+                
+                // Show/hide start button
+                const startBtn = document.getElementById('btn-start-game');
+                const totalPlayers = roomInfo.settings.mafiaCount + roomInfo.settings.doctorCount + 
+                                   roomInfo.settings.policeCount + roomInfo.settings.citizenCount;
+                
+                if (roomInfo.owner === currentUser.id && roomInfo.players.length >= totalPlayers) {
+                    startBtn.style.display = 'block';
+                } else {
+                    startBtn.style.display = 'none';
+                }
+                
+            } else {
+                waitingDiv.style.display = 'none';
+                playingDiv.style.display = 'block';
+            }
+        }
+        
+        // Start game
+        function startGame(data) {
+            showScreen('game');
+            
+            const gameScreen = document.getElementById('game-screen');
+            gameScreen.innerHTML = `
+                <div id="game-container"></div>
+            `;
+        }
+        
+        // Show role reveal
+        function showRoleReveal(data) {
+            const gameContainer = document.getElementById('game-container');
+            
+            gameContainer.innerHTML = `
+                <div class="role-reveal">
+                    <div class="role-title ${'role-' + data.role}">
+                        ${getRoleName(data.role)}
+                    </div>
+                    <div class="role-description">
+                        ${data.description}
+                    </div>
+                    <ul class="role-abilities">
+                        ${data.abilities.map(ability => `<li>${ability}</li>`).join('')}
+                    </ul>
+                    <button class="btn" id="btn-continue" style="margin-top: 30px;">
+                        <span>Devam Et</span>
+                    </button>
+                </div>
+            `;
+            
+            document.getElementById('btn-continue').addEventListener('click', () => {
+                gameContainer.innerHTML = `
+                    <div id="phase-container"></div>
+                    <div id="game-content"></div>
+                `;
+            });
+        }
+        
+        // Show mafia team
+        function showMafiaTeam(mafias) {
+            if (mafias.length > 1) {
+                const gameContainer = document.getElementById('game-container');
+                
+                gameContainer.innerHTML += `
+                    <div class="card" style="margin-top: 20px;">
+                        <h3>👥 Mafia Takımı</h3>
+                        <div class="player-list">
+                            ${mafias.map(mafia => `
+                                <div class="player-card">
+                                    <img src="${mafia.photoUrl || 'https://via.placeholder.com/50'}" class="player-avatar">
+                                    <div class="player-info">
+                                        <div class="player-name">${mafia.username}</div>
+                                        <div class="player-status">Mafia</div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        // Update game phase
+        function updateGamePhase(data) {
+            const phaseContainer = document.getElementById('phase-container');
+            const gameContent = document.getElementById('game-content');
+            
+            // Update phase display
+            phaseContainer.innerHTML = `
+                <div class="game-phase">
+                    <div class="phase-title">
+                        ${data.phase === 'night' ? '🌙 GECE' : 
+                          data.phase === 'day' ? '☀️ GÜNDÜZ' : 
+                          data.phase === 'voting' ? '🗳️ OYLAMA' : ''}
+                    </div>
+                    <div class="phase-message">${data.message}</div>
+                    <div class="phase-timer" id="phase-timer">${data.timer || '--'}</div>
+                    <div>Gün ${data.dayNumber}</div>
+                </div>
+            `;
+            
+            // Update game content based on phase
+            if (data.phase === 'night') {
+                showNightPhase();
+            } else if (data.phase === 'day') {
+                showDayPhase();
+            } else if (data.phase === 'voting') {
+                showVotingPhase();
+            }
+            
+            // Start timer
+            if (data.timer) {
+                startTimer(data.timer);
+            }
+        }
+        
+        // Show night phase
+        function showNightPhase() {
+            const gameContent = document.getElementById('game-content');
+            
+            // Get player role
+            // This would come from game state
+            const role = 'citizen'; // Placeholder
+            
+            if (role === 'mafia') {
+                gameContent.innerHTML = `
+                    <div class="card">
+                        <h3>🎯 Birini Öldür</h3>
+                        <div id="night-targets" class="voting-grid"></div>
+                        <div id="mafia-chat-container" style="margin-top: 30px;">
+                            <h3>💬 Mafia Sohbeti</h3>
+                            <div class="chat-container" id="mafia-chat"></div>
+                            <div class="chat-input-container">
+                                <input type="text" class="chat-input" id="mafia-chat-input" placeholder="Mafialarla konuş...">
+                                <button class="chat-send" id="mafia-chat-send">Gönder</button>
+                            </div>
                         </div>
                     </div>
                 `;
                 
-                container.appendChild(messageDiv);
-            }
-            
-            async getAIResponse(userMessage) {
-                const container = document.getElementById('messagesContainer');
+                // Load targets
+                loadNightTargets();
                 
-                // Yazır göstəricisi
-                const typingDiv = document.createElement('div');
-                typingDiv.className = 'typing-indicator';
-                typingDiv.innerHTML = `
-                    <div class="typing-dot"></div>
-                    <div class="typing-dot"></div>
-                    <div class="typing-dot"></div>
-                `;
-                container.appendChild(typingDiv);
-                this.scrollToBottom();
-                
-                try {
-                    const response = await this.generateAIResponse(userMessage);
-                    typingDiv.remove();
-                    this.addAIMessage(response);
-                } catch (error) {
-                    typingDiv.remove();
-                    this.addAIMessage("Bağışlayın, texniki problem yaşadım. Yenidən cəhd edin.");
-                }
-            }
-            
-            async generateAIResponse(userMessage) {
-                // Google Generative AI API (ücretsiz)
-                try {
-                    // API endpoint'i - ücretsiz alternatif
-                    const response = await fetch('https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium', {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': 'Bearer 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', // Ücretsiz token
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            inputs: {
-                                text: userMessage,
-                                context: this.context.join('\n')
-                            },
-                            parameters: {
-                                max_length: 150,
-                                temperature: 0.7,
-                                top_p: 0.9
-                            }
-                        })
-                    });
-                    
-                    if (response.ok) {
-                        const data = await response.json();
-                        return data.generated_text || this.getFallbackResponse(userMessage);
+                // Setup mafia chat
+                document.getElementById('mafia-chat-send').addEventListener('click', () => {
+                    const input = document.getElementById('mafia-chat-input');
+                    const message = input.value.trim();
+                    if (message) {
+                        socket.emit('send-chat', { message, isMafiaChat: true });
+                        input.value = '';
                     }
-                } catch (e) {
-                    console.log('API error, using fallback');
-                }
+                });
                 
-                // API olmadığı zaman akıllı yedek sistem
-                return this.getSmartResponse(userMessage);
-            }
-            
-            getSmartResponse(userMessage) {
-                const msg = userMessage.toLowerCase();
+            } else if (role === 'doctor') {
+                gameContent.innerHTML = `
+                    <div class="card">
+                        <h3>🏥 Birini Tedavi Et</h3>
+                        <div id="doctor-targets" class="voting-grid"></div>
+                    </div>
+                `;
                 
-                // Azerbaycanca akıllı yanıtlar
-                if (msg.includes('salam') || msg.includes('səlam') || msg.includes('salamlar')) {
-                    const responses = [
-                        "Salam! Necəsən? 😊",
-                        "Salam! Çox şadam ki, səninlə danışıram!",
-                        "Salam əzizim! Sənə necə kömək edə bilərəm?",
-                        "Salam! Mən Melek. Danışmağa hazıram! 🤖"
-                    ];
-                    return responses[Math.floor(Math.random() * responses.length)];
-                }
+                loadDoctorTargets();
                 
-                if (msg.includes('necəsin') || msg.includes('necesen')) {
-                    return "Çox sağ ol, yaxşıyam! Sən necəsən? Mənə hər mövzuda sual verə bilərsən!";
-                }
+            } else if (role === 'police') {
+                gameContent.innerHTML = `
+                    <div class="card">
+                        <h3>👮 Birini Kontrol Et</h3>
+                        <div id="police-targets" class="voting-grid"></div>
+                    </div>
+                `;
                 
-                if (msg.includes('sağ ol') || msg.includes('təşəkkür')) {
-                    return "Buyurun! 😇 Hər zaman kömək etməkdən məmnunam. Başqa sualın var?";
-                }
+                loadPoliceTargets();
                 
-                if (msg.includes('adın') || msg.includes('kimsin')) {
-                    return "Mənim adım Melek! 🤖 Bir süni intellekt köməkçisiyəm. Sənə hər mövzuda kömək edə bilərəm!";
-                }
-                
-                if (msg.includes('nə edə bilirsən') || msg.includes('ne ede bilirsen')) {
-                    return "Mənimlə hər mövzuda söhbət edə bilərsən! İstər sual ver, istər fikir mübadiləsi et, istərsənsə sadəcə söhbət et! 🎯";
-                }
-                
-                if (msg.includes('sevirəm') || msg.includes('aşiq')) {
-                    return "Sevgi gözəl bir hissdir! ❤️ İnsanları bir-birinə bağlayır və həyatı gözəlləşdirir. Sevgi dolu bir gün keçirməni arzulayıram!";
-                }
-                
-                if (msg.includes('kömək') || msg.includes('yardım')) {
-                    return "Əlbəttə ki, kömək edəcəm! 🤝\nMənə istədiyin mövzuda sual verə bilərsən:\n• Məlumat sualları\n• Proqramlaşdırma köməyi\n• Həyat məsləhətləri\n• Söhbət etmək\n\nNə haqqında danışaq?";
-                }
-                
-                if (msg.includes('hava') || msg.includes('havalar')) {
-                    return "Hava haqqında danışaq! ☀️🌧️\nBu gün üçün tam məlumatım yoxdur amma sənə bunu deyə bilərəm: Yaxşı bir gün keçirmək üçün hava vəziyyəti qədər müsbət düşüncələr də vacibdir! 😊";
-                }
-                
-                if (msg.includes('səhər')) {
-                    return "Sabahınız xeyir! ☀️ Yeni gününüz gözəl keçsin! Bu gün nə etməyi planlayırsan?";
-                }
-                
-                if (msg.includes('axşam')) {
-                    return "Axşamınız xeyir! 🌙 Gününüz necə keçdi? Bu gün baş verən maraqlı hadisələri mənimlə bölüşmək istəyirsən?";
-                }
-                
-                if (msg.includes('yaxşı') || msg.includes('gözəl')) {
-                    return "Çox sevindim! 😊 Bu barədə danışmaq istəyirsən? Hər hansı bir sualın varsa, sənə kömək etmək üçün buradayam!";
-                }
-                
-                if (msg.includes('pis') || msg.includes('yaman')) {
-                    return "Bağışlayın, bunu eşitdiyimə görə üzülürəm. 😔 Sənə necə kömək edə bilərəm? Hər şeyi mənimlə bölüşə bilərsən!";
-                }
-                
-                if (msg.includes('azərbaycan') || msg.includes('azerbaijan')) {
-                    return "Azərbaycan haqqında danışaq! 🇦🇿\nAzərbaycan - Qafqazın incisi! Gözəl təbiəti, zəngin mədəniyyəti və mehriban insanları ilə məşhurdur. Bakı, Gəncə, Şəki kimi gözəl şəhərləri var!";
-                }
-                
-                if (msg.includes('bakı') || msg.includes('baku')) {
-                    return "Bakı haqqında danışaq! 🏙️\nBakı - Azərbaycanın paytaxtı və ən böyük şəhəri. Xəzər dənizinin sahilində yerləşir. Köhnə Şəhər (İçərişəhər), Qız Qalası, Heydər Əliyev Mərkəzi kimi görməli yerləri var!";
-                }
-                
-                if (msg.includes('proqramlaşdırma') || msg.includes('kod')) {
-                    return "Proqramlaşdırma haqqında danışaq! 💻\n\nPython dilində nümunə:\n```python\nprint('Salam, Azərbaycan!')\nprint('Mən Python öyrənirəm!')\n```\n\nJava dilində:\n```java\npublic class Salam {\n    public static void main(String[] args) {\n        System.out.println('Salam Dünya!');\n    }\n}\n```\n\nHansı proqramlaşdırma dili ilə maraqlanırsan?";
-                }
-                
-                if (msg.includes('ingilis') || msg.includes('english')) {
-                    return "İngilis dili haqqında danışaq! 🇬🇧\n\nİngilis dilini öyrənmək üçün tövsiyələr:\n1. Hər gün 10 yeni söz öyrən\n2. İngilis dilində film və serial izlə\n3. Dil mübadiləsi et\n4. Qrammatika qaydalarını gündəlik həyatda işlət\n5. İngilis dilində kitab oxu\n\nİngilis dilində əsas ifadələr:\n• Hello - Salam\n• How are you? - Necəsən?\n• Thank you - Sağ ol\n• Goodbye - Sağ ol";
-                }
-                
-                // Kontekstə əsaslanan yanıt
-                const lastAIMessage = this.messages
-                    .filter(m => m.type === 'ai')
-                    .slice(-1)[0]?.text || '';
-                
-                if (lastAIMessage.includes('Necəsən?')) {
-                    const responses = [
-                        "Çox yaxşıyam, sağ ol soruşdun! 😊 Sən necəsən?",
-                        "Yaxşıyam, təşəkkür edirəm! Bu gün nələr edirsən?",
-                        "Əla hiss edirəm! Sənə necə kömək edə bilərəm?",
-                        "Çox yaxşı, sağ ol! Sənin günün necə keçir?"
-                    ];
-                    return responses[Math.floor(Math.random() * responses.length)];
-                }
-                
-                // Ümumi akıllı yanıt
-                const genericResponses = [
-                    `"${userMessage}" haqqında maraqlı mövzu! Bu barədə nə düşünürsən?`,
-                    `Anladım. "${userMessage}" haqqında danışırıq. Bu mövzuda sənə necə kömək edə bilərəm?`,
-                    `Təşəkkürlər bu sual üçün! "${userMessage}" mövzusunda sənə bu məlumatları verə bilərəm:`,
-                    `Maraqlı sual! ${userMessage} haqqında ətraflı məlumat paylaşmaq istəyirəm.`,
-                    `Bu mövzunu araşdırdım və "${userMessage}" haqqında bunları tapdım:`
-                ];
-                
-                const randomResponse = genericResponses[Math.floor(Math.random() * genericResponses.length)];
-                return randomResponse + "\n\nAI kimi hər mövzuda söhbət edə bilərəm. Başqa sualların var?";
-            }
-            
-            getFallbackResponse(userMessage) {
-                // Basit fallback yanıtları
-                const responses = [
-                    "Başa düşdüm! Bu mövzuda sənə necə kömək edə bilərəm?",
-                    "Maraqlı! Bunun haqqında daha çox danışmaq istəyirsən?",
-                    "Təşəkkür edirəm paylaşdığın üçün! Başqa sualların var?",
-                    "Anladım. Bu barədə nə düşünürsən?",
-                    "Hmm, bu barədə düşünürəm... Biraz daha izah edə bilərsən?"
-                ];
-                return responses[Math.floor(Math.random() * responses.length)];
-            }
-            
-            scrollToBottom() {
-                const container = document.getElementById('messagesContainer');
-                container.scrollTop = container.scrollHeight;
-            }
-            
-            formatText(text) {
-                // Basit formatlama
-                return text
-                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                    .replace(/\n/g, '<br>')
-                    .replace(/`(.*?)`/g, '<code>$1</code>');
+            } else {
+                gameContent.innerHTML = `
+                    <div class="card">
+                        <h3>😴 Uyuyorsun</h3>
+                        <p style="text-align: center; padding: 30px; color: #a0aec0;">
+                            Gece vakti... Sabah olmasını bekliyorsun.
+                        </p>
+                    </div>
+                `;
             }
         }
-
-        // UYGULAMAYI BAŞLAT
+        
+        // Show day phase
+        function showDayPhase() {
+            const gameContent = document.getElementById('game-content');
+            
+            gameContent.innerHTML = `
+                <div class="card">
+                    <h3>💬 Tartışma</h3>
+                    <div class="chat-container" id="day-chat"></div>
+                    <div class="chat-input-container">
+                        <input type="text" class="chat-input" id="day-chat-input" placeholder="Herkesle konuş...">
+                        <button class="chat-send" id="day-chat-send">Gönder</button>
+                    </div>
+                </div>
+            `;
+            
+            // Setup day chat
+            document.getElementById('day-chat-send').addEventListener('click', () => {
+                const input = document.getElementById('day-chat-input');
+                const message = input.value.trim();
+                if (message) {
+                    socket.emit('send-chat', { message, isMafiaChat: false });
+                    input.value = '';
+                }
+            });
+        }
+        
+        // Show voting phase
+        function showVotingPhase() {
+            const gameContent = document.getElementById('game-content');
+            
+            gameContent.innerHTML = `
+                <div class="card">
+                    <h3>🗳️ Kimden Şüpheleniyorsun?</h3>
+                    <div id="voting-targets" class="voting-grid"></div>
+                </div>
+            `;
+            
+            loadVotingTargets();
+        }
+        
+        // Load night targets
+        function loadNightTargets() {
+            // This would load from game state
+            const targets = [
+                { id: '1', name: 'Player 1', photo: '' },
+                { id: '2', name: 'Player 2', photo: '' }
+            ];
+            
+            const container = document.getElementById('night-targets');
+            container.innerHTML = '';
+            
+            targets.forEach(target => {
+                const card = document.createElement('div');
+                card.className = 'vote-card';
+                card.innerHTML = `
+                    <img src="${target.photo || 'https://via.placeholder.com/60'}" class="vote-avatar">
+                    <div class="vote-name">${target.name}</div>
+                `;
+                
+                card.addEventListener('click', () => {
+                    socket.emit('mafia-vote', target.id);
+                    document.querySelectorAll('#night-targets .vote-card').forEach(c => {
+                        c.classList.remove('selected');
+                    });
+                    card.classList.add('selected');
+                });
+                
+                container.appendChild(card);
+            });
+        }
+        
+        // Load doctor targets
+        function loadDoctorTargets() {
+            // Similar to loadNightTargets but for doctor
+        }
+        
+        // Load police targets
+        function loadPoliceTargets() {
+            // Similar to loadNightTargets but for police
+        }
+        
+        // Load voting targets
+        function loadVotingTargets() {
+            // Similar to loadNightTargets but for voting
+        }
+        
+        // Show night result
+        function showNightResult(data) {
+            const gameContainer = document.getElementById('game-container');
+            
+            gameContainer.innerHTML += `
+                <div class="card" style="margin-top: 20px; animation: pulse 2s;">
+                    <h3>🌅 Sabah Sonuçları</h3>
+                    <p style="text-align: center; padding: 20px; font-size: 18px;">
+                        ${data.message}
+                    </p>
+                    ${data.killedPlayer ? `
+                        <div style="text-align: center; margin-top: 20px;">
+                            <div style="font-size: 24px; color: #f56565;">☠️ ${data.killedPlayer.name}</div>
+                            <div style="color: #a0aec0; margin-top: 10px;">Rolü: ${data.killedPlayer.role}</div>
+                        </div>
+                    ` : ''}
+                    ${data.savedPlayer ? `
+                        <div style="text-align: center; margin-top: 20px;">
+                            <div style="font-size: 24px; color: #48bb78;">💉 ${data.savedPlayer.name}</div>
+                            <div style="color: #a0aec0; margin-top: 10px;">Doktor tarafından kurtarıldı!</div>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+        
+        // Show vote result
+        function showVoteResult(data) {
+            const gameContainer = document.getElementById('game-container');
+            
+            gameContainer.innerHTML += `
+                <div class="card" style="margin-top: 20px;">
+                    <h3>📊 Oylama Sonucu</h3>
+                    <p style="text-align: center; padding: 20px; font-size: 18px;">
+                        ${data.message}
+                    </p>
+                    ${data.executedPlayer ? `
+                        <div style="text-align: center; margin-top: 20px;">
+                            <div style="font-size: 24px; color: #f56565;">🪢 ${data.executedPlayer.name}</div>
+                            <div style="color: #a0aec0; margin-top: 10px;">Rolü: ${data.executedPlayer.role}</div>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+        
+        // Show police result
+        function showPoliceResult(data) {
+            showNotification('Polis Sonucu', 
+                `${data.targetName} ${data.isMafia ? 'MAFIA!' : 'masum görünüyor.'}`);
+        }
+        
+        // End game
+        function endGame(data) {
+            const gameScreen = document.getElementById('game-screen');
+            
+            gameScreen.innerHTML = `
+                <div class="game-phase" style="background: ${data.winner === 'citizens' ? 'linear-gradient(135deg, #48bb78 0%, #2f855a 100%)' : 'linear-gradient(135deg, #f56565 0%, #c53030 100%)'};">
+                    <div class="phase-title">${data.winner === 'citizens' ? '🎉 VATANDAŞLAR KAZANDI!' : '😈 MAFİALAR KAZANDI!'}</div>
+                    <div class="phase-message">${data.message}</div>
+                </div>
+                
+                <div class="card">
+                    <h3>👥 Tüm Roller</h3>
+                    <div class="player-list">
+                        ${data.playerRoles.map(player => `
+                            <div class="player-card">
+                                <img src="${player.photoUrl || 'https://via.placeholder.com/50'}" class="player-avatar">
+                                <div class="player-info">
+                                    <div class="player-name ${player.isAlive ? 'alive' : 'dead'}">
+                                        ${player.name}
+                                        ${player.isAlive ? ' ❤️' : ' ☠️'}
+                                    </div>
+                                    <div class="player-status ${'role-' + player.role}">
+                                        ${player.roleName}
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 10px; margin-top: 30px;">
+                    <button class="btn btn-secondary" id="btn-back-to-lobby">
+                        <span>🏠 Lobiye Dön</span>
+                    </button>
+                    <button class="btn" id="btn-play-again">
+                        <span>🔄 Tekrar Oyna</span>
+                    </button>
+                </div>
+            `;
+            
+            document.getElementById('btn-back-to-lobby').addEventListener('click', () => {
+                currentRoom = null;
+                localStorage.removeItem('lastRoom');
+                showScreen('lobby');
+            });
+            
+            document.getElementById('btn-play-again').addEventListener('click', () => {
+                showScreen('lobby');
+            });
+        }
+        
+        // Restore game state
+        function restoreGameState(state) {
+            // Implement game state restoration
+            console.log('Restoring game state:', state);
+        }
+        
+        // Start timer
+        function startTimer(seconds) {
+            let timeLeft = seconds;
+            const timerEl = document.getElementById('phase-timer');
+            
+            if (!timerEl) return;
+            
+            const interval = setInterval(() => {
+                timeLeft--;
+                timerEl.textContent = timeLeft;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(interval);
+                }
+            }, 1000);
+        }
+        
+        // Add chat message
+        function addChatMessage(message, isMafiaChat) {
+            const chatId = isMafiaChat ? 'mafia-chat' : 'day-chat';
+            const chatEl = document.getElementById(chatId);
+            
+            if (!chatEl) return;
+            
+            const messageEl = document.createElement('div');
+            messageEl.className = `chat-message ${isMafiaChat ? 'mafia-chat' : ''}`;
+            messageEl.innerHTML = `
+                <div class="message-header">
+                    <span>${message.username}</span>
+                    <span>${new Date(message.timestamp).toLocaleTimeString()}</span>
+                </div>
+                <div class="message-content">${message.message}</div>
+            `;
+            
+            chatEl.appendChild(messageEl);
+            chatEl.scrollTop = chatEl.scrollHeight;
+        }
+        
+        // Show mafia chat
+        function showMafiaChat() {
+            const mafiaChatEl = document.getElementById('mafia-chat-container');
+            if (mafiaChatEl) {
+                mafiaChatEl.style.display = 'block';
+            }
+        }
+        
+        // Get role name
+        function getRoleName(role) {
+            const names = {
+                mafia: 'Mafia',
+                doctor: 'Doktor',
+                police: 'Polis',
+                citizen: 'Vatandaş'
+            };
+            return names[role] || role;
+        }
+        
+        // Event Listeners
         document.addEventListener('DOMContentLoaded', () => {
-            window.chatApp = new AIChat();
+            // Initialize
+            initSocket();
+            initTelegramAuth();
+            
+            // Bottom nav
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    showScreen(btn.dataset.screen);
+                });
+            });
+            
+            // Login screen buttons
+            document.getElementById('btn-lobby').addEventListener('click', () => {
+                showScreen('lobby');
+            });
+            
+            document.getElementById('btn-reconnect').addEventListener('click', async () => {
+                if (reconnectData) {
+                    showLoading();
+                    try {
+                        const response = await fetch('/api/reconnect', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                token: authToken,
+                                roomId: reconnectData.roomId
+                            })
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                            currentRoom = reconnectData.roomId;
+                            socket.emit('authenticate', {
+                                token: authToken,
+                                roomId: currentRoom
+                            });
+                        } else {
+                            throw new Error(data.error);
+                        }
+                    } catch (error) {
+                        showNotification('Hata', 'Yeniden bağlanılamadı: ' + error.message);
+                        hideLoading();
+                    }
+                }
+            });
+            
+            // Lobby screen buttons
+            document.getElementById('btn-create-room').addEventListener('click', () => {
+                showScreen('createRoom');
+            });
+            
+            document.getElementById('btn-join-room').addEventListener('click', () => {
+                const roomCode = document.getElementById('room-code').value.trim();
+                if (roomCode.length === 6) {
+                    joinRoom(roomCode);
+                } else {
+                    showNotification('Hata', 'Geçerli bir oda kodu girin (6 karakter)');
+                }
+            });
+            
+            // Create room screen buttons
+            document.getElementById('btn-cancel-create').addEventListener('click', () => {
+                showScreen('lobby');
+            });
+            
+            document.getElementById('btn-create-game').addEventListener('click', () => {
+                const settings = {
+                    mafiaCount: document.getElementById('mafia-count').value,
+                    doctorCount: document.getElementById('doctor-count').value,
+                    policeCount: document.getElementById('police-count').value,
+                    citizenCount: document.getElementById('citizen-count').value
+                };
+                
+                socket.emit('create-room', settings);
+            });
+            
+            // Room screen buttons
+            document.getElementById('btn-start-game').addEventListener('click', () => {
+                socket.emit('start-game');
+            });
+            
+            // Auto-focus room code input
+            document.getElementById('room-code')?.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    document.getElementById('btn-join-room').click();
+                }
+            });
         });
+        
+        // Keep connection alive
+        setInterval(() => {
+            if (socket && socket.connected) {
+                socket.emit('ping');
+            }
+        }, 25000);
+        
+        // Keep Render awake
+        setInterval(() => {
+            fetch('/ping').catch(() => {});
+        }, 30000);
     </script>
 </body>
 </html>
