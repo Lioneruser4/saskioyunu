@@ -4,11 +4,18 @@ const socketIo = require('socket.io');
 const { v4: uuidv4 } = require('uuid');
 const NodeCache = require('node-cache');
 const sqlite3 = require('sqlite3').verbose();
+const helmet = require('helmet');
+const compression = require('compression');
+const cors = require('cors');
 const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  },
   pingTimeout: 60000,
   pingInterval: 25000,
   transports: ['websocket', 'polling']
@@ -16,29 +23,59 @@ const io = socketIo(server, {
 
 const PORT = process.env.PORT || 3000;
 
-// SQLite database for game persistence
-const db = new sqlite3.Database(':memory:');
+// Security middleware
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://telegram.org", "https://cdn.socket.io"],
+      connectSrc: ["'self'", "wss://saskioyunu-1.onrender.com", "https://saskioyunu-1.onrender.com"]
+    }
+  },
+  crossOriginEmbedderPolicy: false
+}));
 
-// Initialize database
+app.use(compression());
+app.use(cors());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Serve static files
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Database setup
+const db = new sqlite3.Database(':memory:');
 db.serialize(() => {
   db.run(`
-    CREATE TABLE IF NOT EXISTS games (
+    CREATE TABLE games (
       roomId TEXT PRIMARY KEY,
       gameData TEXT,
-      lastUpdated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      lastUpdated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      isDemo INTEGER DEFAULT 0
     )
   `);
   
   db.run(`
-    CREATE TABLE IF NOT EXISTS users (
+    CREATE TABLE users (
       userId TEXT PRIMARY KEY,
       userData TEXT,
       lastSeen TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
   `);
+  
+  db.run(`
+    CREATE TABLE game_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      roomId TEXT,
+      event TEXT,
+      data TEXT,
+      timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
 });
 
-// In-memory cache with 5 minute TTL
+// Cache
 const gameCache = new NodeCache({ stdTTL: 300, checkperiod: 60 });
 
 // Game state
@@ -46,27 +83,86 @@ const games = new Map();
 const users = new Map();
 const socketToUser = new Map();
 const reconnectionTokens = new Map();
+const demoGames = new Map();
 
-// Middleware
-app.use(express.static('public'));
-app.use(express.json());
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
-  next();
+// Game constants
+const ROLES = {
+  MAFIA: 'mafia',
+  DOCTOR: 'doctor',
+  POLICE: 'police',
+  CITIZEN: 'citizen'
+};
+
+const PHASES = {
+  NIGHT: 'night',
+  DAY: 'day',
+  VOTING: 'voting',
+  WAITING: 'waiting'
+};
+
+// Helper functions
+function logGameEvent(roomId, event, data) {
+  db.run(
+    'INSERT INTO game_logs (roomId, event, data) VALUES (?, ?, ?)',
+    [roomId, event, JSON.stringify(data)]
+  );
+}
+
+function saveGameState(roomId, game) {
+  try {
+    const gameData = JSON.stringify(game);
+    db.run(
+      'INSERT OR REPLACE INTO games (roomId, gameData, lastUpdated, isDemo) VALUES (?, ?, ?, ?)',
+      [roomId, gameData, new Date().toISOString(), game.isDemo ? 1 : 0]
+    );
+    gameCache.set(roomId, gameData);
+  } catch (error) {
+    console.error('Save game error:', error);
+  }
+}
+
+async function loadGameState(roomId) {
+  return new Promise((resolve, reject) => {
+    db.get('SELECT gameData FROM games WHERE roomId = ?', [roomId], (err, row) => {
+      if (err || !row) {
+        resolve(null);
+        return;
+      }
+      try {
+        resolve(JSON.parse(row.gameData));
+      } catch (error) {
+        resolve(null);
+      }
+    });
+  });
+}
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'healthy',
+    timestamp: Date.now(),
+    games: games.size,
+    users: users.size,
+    uptime: process.uptime()
+  });
 });
 
-// Keep Render awake endpoint
+// Keep alive endpoint
 app.get('/ping', (req, res) => {
-  res.json({ status: 'alive', timestamp: Date.now() });
+  res.json({ 
+    status: 'alive', 
+    timestamp: Date.now(),
+    server: 'Mafia Game Server'
+  });
 });
 
-// WebApp authentication endpoint
-app.post('/api/auth', async (req, res) => {
+// Authentication endpoints
+app.post('/api/auth/telegram', async (req, res) => {
   try {
     const { initData } = req.body;
     
-    // Parse Telegram WebApp initData
+    // Simple Telegram validation (in production use proper validation)
     const params = new URLSearchParams(initData);
     const userStr = params.get('user');
     
@@ -75,18 +171,17 @@ app.post('/api/auth', async (req, res) => {
     }
     
     const userData = JSON.parse(userStr);
-    
-    // Generate reconnection token
     const token = uuidv4();
     
-    // Save user to database
     const user = {
-      id: userData.id.toString(),
+      id: `tg_${userData.id}`,
+      telegramId: userData.id,
       username: userData.username || `User_${userData.id}`,
       firstName: userData.first_name,
       lastName: userData.last_name,
       photoUrl: userData.photo_url,
       token: token,
+      isDemo: false,
       lastSeen: Date.now()
     };
     
@@ -110,114 +205,196 @@ app.post('/api/auth', async (req, res) => {
     });
     
   } catch (error) {
-    console.error('Auth error:', error);
+    console.error('Telegram auth error:', error);
     res.status(500).json({ error: 'Authentication failed' });
   }
 });
 
-// Reconnection endpoint
-app.post('/api/reconnect', (req, res) => {
-  const { token, roomId } = req.body;
-  
-  const userId = reconnectionTokens.get(token);
-  if (!userId) {
-    return res.status(401).json({ error: 'Invalid token' });
+app.post('/api/auth/demo', (req, res) => {
+  try {
+    const { username, photoUrl } = req.body;
+    const token = uuidv4();
+    const demoId = `demo_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    const user = {
+      id: demoId,
+      username: username || `Demo_${Math.floor(Math.random() * 1000)}`,
+      firstName: username || 'Demo Player',
+      photoUrl: photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(username || 'Demo')}&background=random`,
+      token: token,
+      isDemo: true,
+      lastSeen: Date.now()
+    };
+    
+    users.set(user.id, user);
+    reconnectionTokens.set(token, user.id);
+    
+    res.json({
+      success: true,
+      token: token,
+      user: {
+        id: user.id,
+        username: user.username,
+        firstName: user.firstName,
+        photoUrl: user.photoUrl,
+        isDemo: true
+      }
+    });
+    
+  } catch (error) {
+    console.error('Demo auth error:', error);
+    res.status(500).json({ error: 'Demo authentication failed' });
   }
-  
-  const user = users.get(userId);
-  if (!user) {
-    return res.status(404).json({ error: 'User not found' });
-  }
-  
-  const game = games.get(roomId);
-  if (!game) {
-    return res.status(404).json({ error: 'Game not found' });
-  }
-  
-  res.json({
-    success: true,
-    user: {
-      id: user.id,
-      username: user.username,
-      firstName: user.firstName,
-      photoUrl: user.photoUrl
-    },
-    gameState: game.gameState,
-    roomId: roomId
-  });
 });
 
-// Save game state to database
-function saveGameState(roomId, game) {
+// Game creation endpoint
+app.post('/api/game/create', (req, res) => {
   try {
-    const gameData = JSON.stringify({
-      ...game,
-      players: game.players.map(pId => users.get(pId)),
-      lastUpdated: Date.now()
+    const { token, settings, isDemo } = req.body;
+    const userId = reconnectionTokens.get(token);
+    
+    if (!userId && !isDemo) {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+    
+    const roomId = uuidv4().substr(0, 6).toUpperCase();
+    const game = {
+      id: roomId,
+      owner: userId || 'demo_system',
+      players: userId ? [userId] : [],
+      settings: {
+        mafiaCount: Math.min(Math.max(1, parseInt(settings.mafiaCount) || 2), 4),
+        doctorCount: Math.min(Math.max(0, parseInt(settings.doctorCount) || 1), 2),
+        policeCount: Math.min(Math.max(0, parseInt(settings.policeCount) || 1), 2),
+        citizenCount: Math.min(Math.max(3, parseInt(settings.citizenCount) || 5), 10),
+        isDemo: isDemo || false,
+        selectedRole: settings.selectedRole // For solo play
+      },
+      gameState: 'waiting',
+      phase: PHASES.WAITING,
+      dayNumber: 1,
+      votes: {},
+      nightActions: {},
+      killedTonight: null,
+      savedTonight: null,
+      chatHistory: [],
+      dayChatEnabled: false,
+      mafiaChatEnabled: false,
+      lastActionTime: Date.now(),
+      isDemo: isDemo || false,
+      botPlayers: []
+    };
+    
+    games.set(roomId, game);
+    saveGameState(roomId, game);
+    
+    if (isDemo) {
+      demoGames.set(roomId, game);
+    }
+    
+    res.json({
+      success: true,
+      roomId: roomId,
+      game: game
     });
     
-    db.run(
-      'INSERT OR REPLACE INTO games (roomId, gameData, lastUpdated) VALUES (?, ?, ?)',
-      [roomId, gameData, new Date().toISOString()]
-    );
-    
-    gameCache.set(roomId, gameData);
   } catch (error) {
-    console.error('Save game error:', error);
+    console.error('Game creation error:', error);
+    res.status(500).json({ error: 'Game creation failed' });
+  }
+});
+
+// Add bot players for demo/solo mode
+function addBotPlayers(game, count, excludedRole = null) {
+  const roles = [];
+  const totalPlayers = game.settings.mafiaCount + game.settings.doctorCount + 
+                      game.settings.policeCount + game.settings.citizenCount;
+  
+  // Add mafias
+  for (let i = 0; i < game.settings.mafiaCount; i++) {
+    roles.push(ROLES.MAFIA);
+  }
+  
+  // Add doctor
+  for (let i = 0; i < game.settings.doctorCount; i++) {
+    roles.push(ROLES.DOCTOR);
+  }
+  
+  // Add police
+  for (let i = 0; i < game.settings.policeCount; i++) {
+    roles.push(ROLES.POLICE);
+  }
+  
+  // Add citizens
+  for (let i = 0; i < game.settings.citizenCount; i++) {
+    roles.push(ROLES.CITIZEN);
+  }
+  
+  // Remove the player's selected role if playing solo
+  if (excludedRole) {
+    const index = roles.indexOf(excludedRole);
+    if (index > -1) {
+      roles.splice(index, 1);
+    }
+  }
+  
+  // Create bot players
+  for (let i = 0; i < count; i++) {
+    const botId = `bot_${Date.now()}_${i}_${Math.random().toString(36).substr(2, 6)}`;
+    const bot = {
+      id: botId,
+      username: `Bot_${i + 1}`,
+      firstName: `Bot ${i + 1}`,
+      photoUrl: `https://ui-avatars.com/api/?name=Bot${i + 1}&background=random&color=fff`,
+      isBot: true,
+      role: roles[i] || ROLES.CITIZEN,
+      isAlive: true
+    };
+    
+    game.players.push(botId);
+    game.botPlayers.push(bot);
+    users.set(botId, bot);
   }
 }
 
-// Load game state from database
-async function loadGameState(roomId) {
-  return new Promise((resolve, reject) => {
-    db.get('SELECT gameData FROM games WHERE roomId = ?', [roomId], (err, row) => {
-      if (err || !row) {
-        resolve(null);
-        return;
-      }
-      
-      try {
-        const gameData = JSON.parse(row.gameData);
-        resolve(gameData);
-      } catch (error) {
-        resolve(null);
-      }
-    });
-  });
-}
-
-// Socket.IO connection
+// Socket.IO setup
 io.on('connection', (socket) => {
-  console.log('Client connected:', socket.id);
+  console.log('New connection:', socket.id);
   
-  // Send ping every 20 seconds to keep connection alive
+  // Connection health
   const pingInterval = setInterval(() => {
     socket.emit('ping');
   }, 20000);
   
   socket.on('pong', () => {
-    // Connection is alive
+    // Connection alive
   });
   
   socket.on('authenticate', async ({ token, roomId }) => {
     try {
       const userId = reconnectionTokens.get(token);
       if (!userId) {
-        socket.emit('auth-error', 'Invalid token');
+        socket.emit('auth-error', 'Invalid session');
         return;
       }
       
       let user = users.get(userId);
       if (!user) {
         // Try to load from database
-        db.get('SELECT userData FROM users WHERE userId = ?', [userId], (err, row) => {
-          if (row) {
-            user = JSON.parse(row.userData);
-            users.set(userId, user);
-          }
+        const savedUser = await new Promise((resolve) => {
+          db.get('SELECT userData FROM users WHERE userId = ?', [userId], (err, row) => {
+            if (row) {
+              resolve(JSON.parse(row.userData));
+            } else {
+              resolve(null);
+            }
+          });
         });
         
-        if (!user) {
+        if (savedUser) {
+          user = savedUser;
+          users.set(userId, user);
+        } else {
           socket.emit('auth-error', 'User not found');
           return;
         }
@@ -231,7 +408,6 @@ io.on('connection', (socket) => {
       if (roomId) {
         game = games.get(roomId);
         if (!game) {
-          // Try to load from database
           const savedGame = await loadGameState(roomId);
           if (savedGame) {
             game = savedGame;
@@ -243,34 +419,51 @@ io.on('connection', (socket) => {
           socket.join(roomId);
           user.roomId = roomId;
           
-          // Notify room
-          io.to(roomId).emit('player-reconnected', {
-            userId: user.id,
-            username: user.username
+          // Add player to game if not already
+          if (!game.players.includes(userId)) {
+            game.players.push(userId);
+            saveGameState(roomId, game);
+          }
+          
+          socket.emit('auth-success', {
+            user: {
+              id: user.id,
+              username: user.username,
+              firstName: user.firstName,
+              photoUrl: user.photoUrl,
+              isDemo: user.isDemo
+            },
+            currentRoom: roomId,
+            gameState: game.gameState
           });
           
-          // Send current game state
-          socket.emit('game-state', getGameStateForPlayer(roomId, userId));
+          // Send game state
+          if (game.gameState === 'playing') {
+            socket.emit('game-state', getGameStateForPlayer(roomId, userId));
+          } else {
+            updateRoom(roomId);
+          }
+          
+          logGameEvent(roomId, 'player_reconnected', { userId, username: user.username });
         }
+      } else {
+        socket.emit('auth-success', {
+          user: {
+            id: user.id,
+            username: user.username,
+            firstName: user.firstName,
+            photoUrl: user.photoUrl,
+            isDemo: user.isDemo
+          },
+          currentRoom: null,
+          gameState: null
+        });
       }
       
-      socket.emit('auth-success', {
-        user: {
-          id: user.id,
-          username: user.username,
-          firstName: user.firstName,
-          photoUrl: user.photoUrl
-        },
-        currentRoom: roomId,
-        gameState: game ? game.gameState : null
-      });
-      
-      if (!roomId) {
-        updateLobby();
-      }
+      updateLobby();
       
     } catch (error) {
-      console.error('Authentication error:', error);
+      console.error('Auth error:', error);
       socket.emit('auth-error', 'Authentication failed');
     }
   });
@@ -279,24 +472,26 @@ io.on('connection', (socket) => {
     const userId = socketToUser.get(socket.id);
     const user = users.get(userId);
     
-    if (!user) {
+    if (!user && !settings.isDemo) {
       socket.emit('error', 'User not found');
       return;
     }
     
-    const roomId = uuidv4().substring(0, 6).toUpperCase();
+    const roomId = uuidv4().substr(0, 6).toUpperCase();
     const game = {
       id: roomId,
-      owner: userId,
-      players: [userId],
+      owner: userId || 'demo_system',
+      players: userId ? [userId] : [],
       settings: {
-        mafiaCount: Math.max(1, parseInt(settings.mafiaCount) || 2),
-        doctorCount: Math.max(0, parseInt(settings.doctorCount) || 1),
-        policeCount: Math.max(0, parseInt(settings.policeCount) || 1),
-        citizenCount: Math.max(3, parseInt(settings.citizenCount) || 5)
+        mafiaCount: Math.min(Math.max(1, parseInt(settings.mafiaCount) || 2), 4),
+        doctorCount: Math.min(Math.max(0, parseInt(settings.doctorCount) || 1), 2),
+        policeCount: Math.min(Math.max(0, parseInt(settings.policeCount) || 1), 2),
+        citizenCount: Math.min(Math.max(3, parseInt(settings.citizenCount) || 5), 10),
+        isDemo: settings.isDemo || false,
+        selectedRole: settings.selectedRole
       },
       gameState: 'waiting',
-      phase: 'waiting',
+      phase: PHASES.WAITING,
       dayNumber: 1,
       votes: {},
       nightActions: {},
@@ -305,11 +500,19 @@ io.on('connection', (socket) => {
       chatHistory: [],
       dayChatEnabled: false,
       mafiaChatEnabled: false,
-      lastActionTime: Date.now()
+      lastActionTime: Date.now(),
+      isDemo: settings.isDemo || false,
+      botPlayers: []
     };
     
     games.set(roomId, game);
-    user.roomId = roomId;
+    if (game.isDemo) {
+      demoGames.set(roomId, game);
+    }
+    
+    if (userId) {
+      user.roomId = roomId;
+    }
     
     socket.join(roomId);
     saveGameState(roomId, game);
@@ -317,13 +520,22 @@ io.on('connection', (socket) => {
     socket.emit('room-created', { roomId });
     updateRoom(roomId);
     updateLobby();
+    
+    logGameEvent(roomId, 'room_created', { 
+      userId, 
+      settings: game.settings,
+      isDemo: game.isDemo 
+    });
   });
   
   socket.on('join-room', (roomId) => {
     const userId = socketToUser.get(socket.id);
     const user = users.get(userId);
     
-    if (!user) return;
+    if (!user) {
+      socket.emit('error', 'Please authenticate first');
+      return;
+    }
     
     const game = games.get(roomId.toUpperCase());
     if (!game) {
@@ -356,33 +568,48 @@ io.on('connection', (socket) => {
     saveGameState(roomId.toUpperCase(), game);
     updateRoom(roomId.toUpperCase());
     updateLobby();
+    
+    logGameEvent(roomId, 'player_joined', { userId, username: user.username });
   });
   
-  socket.on('start-game', () => {
+  socket.on('start-game', ({ withBots = false, selectedRole = null }) => {
     const userId = socketToUser.get(socket.id);
     const game = getGameByUserId(userId);
     
-    if (!game || game.owner !== userId || game.gameState !== 'waiting') {
+    if (!game || game.owner !== userId) {
       return;
     }
     
-    assignRoles(game);
+    // For solo play with bots
+    if (withBots || game.isDemo) {
+      const totalPlayers = game.settings.mafiaCount + game.settings.doctorCount + 
+                          game.settings.policeCount + game.settings.citizenCount;
+      const botCount = totalPlayers - game.players.length;
+      
+      if (botCount > 0) {
+        addBotPlayers(game, botCount, selectedRole);
+      }
+    }
+    
+    assignRoles(game, selectedRole);
     game.gameState = 'playing';
-    game.phase = 'night';
+    game.phase = PHASES.NIGHT;
     game.dayNumber = 1;
     game.lastActionTime = Date.now();
     
     // Notify all players
     io.to(game.id).emit('game-started', {
       roomId: game.id,
-      dayNumber: game.dayNumber
+      dayNumber: game.dayNumber,
+      totalPlayers: game.players.length
     });
     
-    // Send role information privately
+    // Send role information
     game.players.forEach(playerId => {
       const player = users.get(playerId);
-      const playerSocket = getSocketByUserId(playerId);
+      if (!player) return;
       
+      const playerSocket = getSocketByUserId(playerId);
       if (playerSocket) {
         playerSocket.emit('your-role', {
           role: player.role,
@@ -390,10 +617,12 @@ io.on('connection', (socket) => {
           abilities: getRoleAbilities(player.role)
         });
         
-        // Send mafia team info to mafias
-        if (player.role === 'mafia') {
+        if (player.role === ROLES.MAFIA) {
           const mafiaTeam = game.players
-            .filter(pId => users.get(pId).role === 'mafia')
+            .filter(pId => {
+              const p = users.get(pId);
+              return p && p.role === ROLES.MAFIA;
+            })
             .map(pId => ({
               id: pId,
               username: users.get(pId).username,
@@ -405,15 +634,22 @@ io.on('connection', (socket) => {
     });
     
     saveGameState(game.id, game);
+    logGameEvent(game.id, 'game_started', { 
+      players: game.players.length,
+      withBots: withBots,
+      selectedRole: selectedRole 
+    });
+    
     startNightPhase(game);
   });
   
+  // Game actions
   socket.on('mafia-vote', (targetUserId) => {
     const userId = socketToUser.get(socket.id);
     const user = users.get(userId);
     const game = getGameByUserId(userId);
     
-    if (!game || game.phase !== 'night' || user.role !== 'mafia' || !user.isAlive) {
+    if (!game || game.phase !== PHASES.NIGHT || user.role !== ROLES.MAFIA || !user.isAlive) {
       return;
     }
     
@@ -423,20 +659,8 @@ io.on('connection', (socket) => {
     socket.emit('action-confirmed', 'Hedef seçildi');
     saveGameState(game.id, game);
     
-    // Notify other mafias
-    game.players.forEach(pId => {
-      const pUser = users.get(pId);
-      if (pUser.role === 'mafia' && pUser.isAlive && pId !== userId) {
-        const pSocket = getSocketByUserId(pId);
-        if (pSocket) {
-          pSocket.emit('mafia-action', {
-            mafiaId: userId,
-            mafiaName: user.username,
-            targetId: targetUserId
-          });
-        }
-      }
-    });
+    // Process bot actions
+    processBotActions(game);
   });
   
   socket.on('doctor-save', (targetUserId) => {
@@ -444,7 +668,7 @@ io.on('connection', (socket) => {
     const user = users.get(userId);
     const game = getGameByUserId(userId);
     
-    if (!game || game.phase !== 'night' || user.role !== 'doctor' || !user.isAlive) {
+    if (!game || game.phase !== PHASES.NIGHT || user.role !== ROLES.DOCTOR || !user.isAlive) {
       return;
     }
     
@@ -453,6 +677,8 @@ io.on('connection', (socket) => {
     
     socket.emit('action-confirmed', 'Hasta seçildi');
     saveGameState(game.id, game);
+    
+    processBotActions(game);
   });
   
   socket.on('police-check', (targetUserId) => {
@@ -460,7 +686,7 @@ io.on('connection', (socket) => {
     const user = users.get(userId);
     const game = getGameByUserId(userId);
     
-    if (!game || game.phase !== 'night' || user.role !== 'police' || !user.isAlive) {
+    if (!game || game.phase !== PHASES.NIGHT || user.role !== ROLES.POLICE || !user.isAlive) {
       return;
     }
     
@@ -471,10 +697,11 @@ io.on('connection', (socket) => {
     socket.emit('police-result', {
       targetId: targetUserId,
       targetName: targetUser.username,
-      isMafia: targetUser.role === 'mafia'
+      isMafia: targetUser.role === ROLES.MAFIA
     });
     
     saveGameState(game.id, game);
+    processBotActions(game);
   });
   
   socket.on('day-vote', (targetUserId) => {
@@ -482,7 +709,7 @@ io.on('connection', (socket) => {
     const user = users.get(userId);
     const game = getGameByUserId(userId);
     
-    if (!game || game.phase !== 'voting' || !user.isAlive) {
+    if (!game || game.phase !== PHASES.VOTING || !user.isAlive) {
       return;
     }
     
@@ -492,6 +719,7 @@ io.on('connection', (socket) => {
     socket.emit('vote-recorded', 'Oy verildi');
     saveGameState(game.id, game);
     
+    processBotActions(game);
     checkDayVotes(game);
   });
   
@@ -512,11 +740,11 @@ io.on('connection', (socket) => {
       isMafiaChat: isMafiaChat || false
     };
     
-    // Mafia chat (only at night)
-    if (isMafiaChat && game.phase === 'night' && user.role === 'mafia') {
+    // Mafia chat
+    if (isMafiaChat && game.phase === PHASES.NIGHT && user.role === ROLES.MAFIA) {
       game.players.forEach(pId => {
         const pUser = users.get(pId);
-        if (pUser.role === 'mafia' && pUser.isAlive) {
+        if (pUser && pUser.role === ROLES.MAFIA && pUser.isAlive) {
           const pSocket = getSocketByUserId(pId);
           if (pSocket) {
             pSocket.emit('mafia-chat', chatMessage);
@@ -578,7 +806,6 @@ io.on('connection', (socket) => {
         user.lastSeen = Date.now();
         user.socketId = null;
         
-        // Save to database
         db.run(
           'UPDATE users SET userData = ?, lastSeen = ? WHERE userId = ?',
           [JSON.stringify(user), new Date().toISOString(), userId]
@@ -599,7 +826,7 @@ io.on('connection', (socket) => {
   });
 });
 
-// Game Logic Functions
+// Game logic functions
 function getGameByUserId(userId) {
   const user = users.get(userId);
   return user && user.roomId ? games.get(user.roomId) : null;
@@ -615,11 +842,12 @@ function getSocketByUserId(userId) {
 
 function updateLobby() {
   const lobbyGames = Array.from(games.values())
-    .filter(game => game.gameState === 'waiting')
+    .filter(game => game.gameState === 'waiting' && !game.isDemo)
     .map(game => ({
       id: game.id,
-      owner: users.get(game.owner)?.username,
-      players: game.players.length,
+      owner: users.get(game.owner)?.username || 'System',
+      players: game.players.filter(id => !users.get(id)?.isBot).length,
+      botPlayers: game.players.filter(id => users.get(id)?.isBot).length,
       maxPlayers: getMaxPlayers(game.settings),
       settings: game.settings
     }));
@@ -629,33 +857,37 @@ function updateLobby() {
 
 function updateRoom(roomId) {
   const game = games.get(roomId);
-  if (game) {
-    const roomInfo = {
-      id: game.id,
-      owner: game.owner,
-      players: getRoomPlayersInfo(game),
-      gameState: game.gameState,
-      settings: game.settings,
-      phase: game.phase,
-      dayNumber: game.dayNumber
-    };
-    
-    io.to(roomId).emit('room-update', roomInfo);
-  }
+  if (!game) return;
+  
+  const roomInfo = {
+    id: game.id,
+    owner: game.owner,
+    players: getRoomPlayersInfo(game),
+    gameState: game.gameState,
+    settings: game.settings,
+    phase: game.phase,
+    dayNumber: game.dayNumber,
+    isDemo: game.isDemo
+  };
+  
+  io.to(roomId).emit('room-update', roomInfo);
 }
 
 function getRoomPlayersInfo(game) {
   return game.players.map(playerId => {
     const user = users.get(playerId);
+    if (!user) return null;
+    
     return {
       id: playerId,
       username: user.username,
       photoUrl: user.photoUrl,
-      isAlive: user.isAlive,
+      isAlive: user.isAlive !== false,
       role: game.gameState === 'playing' ? user.role : null,
-      isOwner: game.owner === playerId
+      isOwner: game.owner === playerId,
+      isBot: user.isBot || false
     };
-  });
+  }).filter(Boolean);
 }
 
 function getMaxPlayers(settings) {
@@ -663,40 +895,52 @@ function getMaxPlayers(settings) {
          settings.policeCount + settings.citizenCount;
 }
 
-function assignRoles(game) {
-  const players = [...game.players];
+function assignRoles(game, selectedRole = null) {
+  const humanPlayers = game.players.filter(id => !users.get(id)?.isBot);
+  const botPlayers = game.players.filter(id => users.get(id)?.isBot);
+  
   const roles = [];
   
-  // Add mafias
+  // Add roles based on settings
   for (let i = 0; i < game.settings.mafiaCount; i++) {
-    roles.push('mafia');
+    roles.push(ROLES.MAFIA);
   }
-  
-  // Add doctor
   for (let i = 0; i < game.settings.doctorCount; i++) {
-    roles.push('doctor');
+    roles.push(ROLES.DOCTOR);
   }
-  
-  // Add police
   for (let i = 0; i < game.settings.policeCount; i++) {
-    roles.push('police');
+    roles.push(ROLES.POLICE);
   }
-  
-  // Add citizens
   for (let i = 0; i < game.settings.citizenCount; i++) {
-    roles.push('citizen');
+    roles.push(ROLES.CITIZEN);
   }
   
   // Shuffle roles
   shuffleArray(roles);
   
-  players.forEach((playerId, index) => {
-    const user = users.get(playerId);
-    if (user) {
-      user.role = roles[index] || 'citizen';
-      user.isAlive = true;
-      user.votesAgainst = 0;
+  // Assign selected role to human player if specified
+  let assignedRoles = [...roles];
+  if (selectedRole && humanPlayers.length > 0) {
+    const selectedIndex = assignedRoles.indexOf(selectedRole);
+    if (selectedIndex > -1) {
+      assignedRoles.splice(selectedIndex, 1);
+      const user = users.get(humanPlayers[0]);
+      if (user) {
+        user.role = selectedRole;
+        user.isAlive = true;
+      }
     }
+  }
+  
+  // Assign remaining roles
+  let roleIndex = 0;
+  game.players.forEach(playerId => {
+    const user = users.get(playerId);
+    if (!user || user.role) return; // Skip if already assigned (selected role)
+    
+    user.role = assignedRoles[roleIndex] || ROLES.CITIZEN;
+    user.isAlive = true;
+    roleIndex++;
   });
 }
 
@@ -708,7 +952,7 @@ function shuffleArray(array) {
 }
 
 function startNightPhase(game) {
-  game.phase = 'night';
+  game.phase = PHASES.NIGHT;
   game.votes = {};
   game.nightActions = {};
   game.killedTonight = null;
@@ -721,13 +965,14 @@ function startNightPhase(game) {
     phase: 'night',
     dayNumber: game.dayNumber,
     message: '🌙 Gece vakti... Rollerinizi kullanın!',
-    timer: 45
+    timer: 45,
+    canChat: false
   });
   
-  // Enable mafia chat
+  // Enable mafia chat for mafias
   game.players.forEach(playerId => {
     const user = users.get(playerId);
-    if (user.role === 'mafia' && user.isAlive) {
+    if (user && user.role === ROLES.MAFIA && user.isAlive) {
       const socket = getSocketByUserId(playerId);
       if (socket) {
         socket.emit('mafia-chat-enabled', true);
@@ -736,11 +981,15 @@ function startNightPhase(game) {
   });
   
   saveGameState(game.id, game);
+  logGameEvent(game.id, 'night_started', { dayNumber: game.dayNumber });
   
   // Night phase timer
-  setTimeout(() => {
+  const nightTimer = setTimeout(() => {
     resolveNightActions(game);
   }, 45000);
+  
+  // Store timer reference for cleanup
+  game.nightTimer = nightTimer;
 }
 
 function resolveNightActions(game) {
@@ -785,7 +1034,8 @@ function resolveNightActions(game) {
         savedPlayer: {
           id: targetToKill,
           name: users.get(targetToKill).username
-        }
+        },
+        killedPlayer: null
       });
     } else {
       // Player is killed
@@ -799,22 +1049,26 @@ function resolveNightActions(game) {
           id: targetToKill,
           name: killedUser.username,
           role: killedUser.role
-        }
+        },
+        savedPlayer: null
       });
     }
   } else {
     io.to(game.id).emit('night-result', {
       message: 'Sabah oldu! Kimse öldürülmedi.',
-      killedPlayer: null
+      killedPlayer: null,
+      savedPlayer: null
     });
   }
   
   // Start day phase
-  startDayPhase(game);
+  setTimeout(() => {
+    startDayPhase(game);
+  }, 5000);
 }
 
 function startDayPhase(game) {
-  game.phase = 'day';
+  game.phase = PHASES.DAY;
   game.dayChatEnabled = true;
   game.mafiaChatEnabled = false;
   game.lastActionTime = Date.now();
@@ -823,19 +1077,23 @@ function startDayPhase(game) {
     phase: 'day',
     dayNumber: game.dayNumber,
     message: '☀️ Gündüz vakti! 2 dakika tartışma süresi.',
-    timer: 120
+    timer: 120,
+    canChat: true
   });
   
   saveGameState(game.id, game);
+  logGameEvent(game.id, 'day_started', { dayNumber: game.dayNumber });
   
   // 2-minute discussion
-  setTimeout(() => {
+  const dayTimer = setTimeout(() => {
     startVotingPhase(game);
   }, 120000);
+  
+  game.dayTimer = dayTimer;
 }
 
 function startVotingPhase(game) {
-  game.phase = 'voting';
+  game.phase = PHASES.VOTING;
   game.dayChatEnabled = false;
   game.votes = {};
   game.lastActionTime = Date.now();
@@ -844,15 +1102,19 @@ function startVotingPhase(game) {
     phase: 'voting',
     dayNumber: game.dayNumber,
     message: '🗳️ Oylama zamanı! Şüphelendiğiniz kişiyi seçin.',
-    timer: 30
+    timer: 30,
+    canChat: false
   });
   
   saveGameState(game.id, game);
+  logGameEvent(game.id, 'voting_started', { dayNumber: game.dayNumber });
   
   // 30-second voting
-  setTimeout(() => {
+  const votingTimer = setTimeout(() => {
     resolveVoting(game);
   }, 30000);
+  
+  game.votingTimer = votingTimer;
 }
 
 function resolveVoting(game) {
@@ -885,32 +1147,28 @@ function resolveVoting(game) {
     .filter(([, votes]) => votes === maxVotes)
     .map(([playerId]) => playerId);
   
+  let resultMessage = '';
+  let executedPlayer = null;
+  
   if (tiedPlayers.length > 1) {
-    // Tie - no one dies
-    io.to(game.id).emit('vote-result', {
-      message: 'Oylama berabere! Kimse asılmadı.',
-      executedPlayer: null
-    });
+    resultMessage = 'Oylama berabere! Kimse asılmadı.';
   } else if (playerToExecute && maxVotes > 0) {
-    // Execute player
     const executedUser = users.get(playerToExecute);
     executedUser.isAlive = false;
-    
-    io.to(game.id).emit('vote-result', {
-      message: `${executedUser.username} oylama sonucunda asıldı! (Rolü: ${getRoleName(executedUser.role)})`,
-      executedPlayer: {
-        id: playerToExecute,
-        name: executedUser.username,
-        role: executedUser.role
-      }
-    });
+    executedPlayer = {
+      id: playerToExecute,
+      name: executedUser.username,
+      role: executedUser.role
+    };
+    resultMessage = `${executedUser.username} oylama sonucunda asıldı! (Rolü: ${getRoleName(executedUser.role)})`;
   } else {
-    // No votes
-    io.to(game.id).emit('vote-result', {
-      message: 'Kimse oy vermedi!',
-      executedPlayer: null
-    });
+    resultMessage = 'Kimse oy vermedi!';
   }
+  
+  io.to(game.id).emit('vote-result', {
+    message: resultMessage,
+    executedPlayer: executedPlayer
+  });
   
   // Check game end
   if (checkGameEnd(game)) {
@@ -929,13 +1187,13 @@ function resolveVoting(game) {
 function checkDayVotes(game) {
   const alivePlayers = game.players.filter(playerId => {
     const user = users.get(playerId);
-    return user && user.isAlive;
+    return user && user.isAlive && !user.isBot;
   });
   
   const dayVotes = game.votes.day || {};
   const votedPlayers = Object.keys(dayVotes);
   
-  // Check if all alive players have voted
+  // Check if all alive human players have voted
   if (alivePlayers.every(playerId => votedPlayers.includes(playerId))) {
     resolveVoting(game);
   }
@@ -948,12 +1206,12 @@ function checkGameEnd(game) {
   });
   
   const aliveMafias = alivePlayers.filter(playerId => 
-    users.get(playerId).role === 'mafia'
+    users.get(playerId).role === ROLES.MAFIA
   );
   
   const aliveCivilians = alivePlayers.filter(playerId => {
     const role = users.get(playerId).role;
-    return role === 'citizen' || role === 'doctor' || role === 'police';
+    return role === ROLES.CITIZEN || role === ROLES.DOCTOR || role === ROLES.POLICE;
   });
   
   let winner = null;
@@ -964,7 +1222,8 @@ function checkGameEnd(game) {
     message = '🎉 Tebrikler! Vatandaşlar tüm mafiaları yakaladı ve kazandı!';
   } else if (aliveMafias.length >= aliveCivilians.length) {
     winner = 'mafia';
-    message = `😈 Mafialar kazandı! ${aliveMafias.length} mafia sokaklarda hâlâ serbest!`;
+    const mafiaNames = aliveMafias.map(id => users.get(id).username).join(', ');
+    message = `😈 Mafialar kazandı! ${aliveMafias.length} mafia (${mafiaNames}) sokaklarda hâlâ serbest!`;
   }
   
   if (winner) {
@@ -979,20 +1238,27 @@ function checkGameEnd(game) {
         photoUrl: user.photoUrl,
         role: user.role,
         roleName: getRoleName(user.role),
-        isAlive: user.isAlive
+        isAlive: user.isAlive,
+        isBot: user.isBot || false
       };
     });
     
     io.to(game.id).emit('game-ended', {
       winner: winner,
       message: message,
-      playerRoles: playerRoles
+      playerRoles: playerRoles,
+      dayNumber: game.dayNumber
     });
+    
+    // Clean up timers
+    if (game.nightTimer) clearTimeout(game.nightTimer);
+    if (game.dayTimer) clearTimeout(game.dayTimer);
+    if (game.votingTimer) clearTimeout(game.votingTimer);
     
     // Clean up
     game.players.forEach(playerId => {
       const user = users.get(playerId);
-      if (user) {
+      if (user && !user.isBot) {
         user.roomId = null;
         user.role = null;
         user.isAlive = true;
@@ -1005,7 +1271,12 @@ function checkGameEnd(game) {
     });
     
     games.delete(game.id);
+    if (game.isDemo) {
+      demoGames.delete(game.id);
+    }
     db.run('DELETE FROM games WHERE roomId = ?', [game.id]);
+    
+    logGameEvent(game.id, 'game_ended', { winner, message });
     updateLobby();
     
     return true;
@@ -1024,6 +1295,7 @@ function leaveRoom(userId) {
     
     if (game.players.length === 0) {
       games.delete(game.id);
+      if (game.isDemo) demoGames.delete(game.id);
       db.run('DELETE FROM games WHERE roomId = ?', [game.id]);
     } else {
       if (game.owner === userId) {
@@ -1058,66 +1330,169 @@ function getGameStateForPlayer(roomId, userId) {
     players: getRoomPlayersInfo(game),
     chatHistory: game.chatHistory.slice(-50),
     dayChatEnabled: game.dayChatEnabled,
-    mafiaChatEnabled: game.mafiaChatEnabled && user.role === 'mafia',
+    mafiaChatEnabled: game.mafiaChatEnabled && user.role === ROLES.MAFIA,
     yourRole: user.role,
-    yourStatus: user.isAlive ? 'alive' : 'dead'
+    yourStatus: user.isAlive ? 'alive' : 'dead',
+    isDemo: game.isDemo
   };
   
   return gameState;
 }
 
+function processBotActions(game) {
+  // Process bot actions based on game phase and role
+  game.players.forEach(playerId => {
+    const user = users.get(playerId);
+    if (!user || !user.isBot || !user.isAlive) return;
+    
+    // Bot logic based on role
+    switch (user.role) {
+      case ROLES.MAFIA:
+        processMafiaBot(game, user);
+        break;
+      case ROLES.DOCTOR:
+        processDoctorBot(game, user);
+        break;
+      case ROLES.POLICE:
+        processPoliceBot(game, user);
+        break;
+      case ROLES.CITIZEN:
+        processCitizenBot(game, user);
+        break;
+    }
+  });
+}
+
+function processMafiaBot(game, bot) {
+  if (game.phase !== PHASES.NIGHT) return;
+  
+  // Choose a random alive non-mafia player
+  const targets = game.players.filter(id => {
+    const targetUser = users.get(id);
+    return targetUser && targetUser.isAlive && targetUser.role !== ROLES.MAFIA;
+  });
+  
+  if (targets.length > 0) {
+    const randomTarget = targets[Math.floor(Math.random() * targets.length)];
+    game.nightActions.mafia = game.nightActions.mafia || {};
+    game.nightActions.mafia[bot.id] = randomTarget;
+  }
+}
+
+function processDoctorBot(game, bot) {
+  if (game.phase !== PHASES.NIGHT) return;
+  
+  // Choose a random alive player (including self)
+  const targets = game.players.filter(id => {
+    const targetUser = users.get(id);
+    return targetUser && targetUser.isAlive;
+  });
+  
+  if (targets.length > 0) {
+    const randomTarget = targets[Math.floor(Math.random() * targets.length)];
+    game.nightActions.doctor = game.nightActions.doctor || {};
+    game.nightActions.doctor[bot.id] = randomTarget;
+  }
+}
+
+function processPoliceBot(game, bot) {
+  if (game.phase !== PHASES.NIGHT) return;
+  
+  // Choose a random alive player
+  const targets = game.players.filter(id => {
+    const targetUser = users.get(id);
+    return targetUser && targetUser.isAlive && id !== bot.id;
+  });
+  
+  if (targets.length > 0) {
+    const randomTarget = targets[Math.floor(Math.random() * targets.length)];
+    game.nightActions.police = game.nightActions.police || {};
+    game.nightActions.police[bot.id] = randomTarget;
+  }
+}
+
+function processCitizenBot(game, bot) {
+  if (game.phase !== PHASES.VOTING) return;
+  
+  // Vote for a random alive player (not self)
+  const targets = game.players.filter(id => {
+    const targetUser = users.get(id);
+    return targetUser && targetUser.isAlive && id !== bot.id;
+  });
+  
+  if (targets.length > 0) {
+    const randomTarget = targets[Math.floor(Math.random() * targets.length)];
+    game.votes.day = game.votes.day || {};
+    game.votes.day[bot.id] = randomTarget;
+  }
+}
+
 function getRoleDescription(role) {
   const descriptions = {
-    mafia: 'Gece vakti diğer mafialarla birlikte birini öldürebilirsin. Mafia sohbetini kullanarak plan yapabilirsin.',
-    doctor: 'Gece vakti birini tedavi edebilirsin. Eğer mafialar o kişiyi vurursa, sen onu kurtarırsın.',
-    police: 'Gece vakti birinin mafia olup olmadığını kontrol edebilirsin.',
-    citizen: 'Mafiaları bulup oylamada asmaya çalış. Diğer vatandaşlarla işbirliği yap.'
+    [ROLES.MAFIA]: 'Gece vakti diğer mafialarla birlikte birini öldürebilirsin. Mafia sohbetini kullanarak plan yapabilirsin.',
+    [ROLES.DOCTOR]: 'Gece vakti birini tedavi edebilirsin. Eğer mafialar o kişiyi vurursa, sen onu kurtarırsın.',
+    [ROLES.POLICE]: 'Gece vakti birinin mafia olup olmadığını kontrol edebilirsin.',
+    [ROLES.CITIZEN]: 'Mafiaları bulup oylamada asmaya çalış. Diğer vatandaşlarla işbirliği yap.'
   };
   return descriptions[role] || 'Bilinmeyen rol';
 }
 
 function getRoleAbilities(role) {
   const abilities = {
-    mafia: ['Gece vakti öldürme', 'Mafia sohbeti', 'Diğer mafiaları görme'],
-    doctor: ['Gece vakti tedavi', 'Bir kişiyi kurtarma'],
-    police: ['Gece vakti sorgulama', 'Mafia tespit etme'],
-    citizen: ['Gündüz oy verme', 'Tartışmaya katılma']
+    [ROLES.MAFIA]: ['Gece vakti öldürme', 'Mafia sohbeti', 'Diğer mafiaları görme'],
+    [ROLES.DOCTOR]: ['Gece vakti tedavi', 'Bir kişiyi kurtarma'],
+    [ROLES.POLICE]: ['Gece vakti sorgulama', 'Mafia tespit etme'],
+    [ROLES.CITIZEN]: ['Gündüz oy verme', 'Tartışmaya katılma']
   };
   return abilities[role] || [];
 }
 
 function getRoleName(role) {
   const names = {
-    mafia: 'Mafia',
-    doctor: 'Doktor',
-    police: 'Polis',
-    citizen: 'Vatandaş'
+    [ROLES.MAFIA]: 'Mafia',
+    [ROLES.DOCTOR]: 'Doktor',
+    [ROLES.POLICE]: 'Polis',
+    [ROLES.CITIZEN]: 'Vatandaş'
   };
   return names[role] || 'Bilinmeyen';
 }
 
-// Keep Render awake
-setInterval(() => {
-  http.get(`http://localhost:${PORT}/ping`, (res) => {
-    console.log('Ping sent to keep Render awake');
-  }).on('error', (err) => {
-    console.log('Ping error:', err.message);
-  });
-}, 30000); // Her 30 saniyede bir
-
 // Cleanup old games
 setInterval(() => {
   const now = Date.now();
+  const oneHour = 3600000;
+  
   Array.from(games.entries()).forEach(([roomId, game]) => {
-    if (now - game.lastActionTime > 3600000) { // 1 saat
+    if (now - game.lastActionTime > oneHour) {
       games.delete(roomId);
+      demoGames.delete(roomId);
       db.run('DELETE FROM games WHERE roomId = ?', [roomId]);
       console.log('Cleaned up old game:', roomId);
     }
   });
-}, 600000); // Her 10 dakikada bir
+}, 600000);
 
+// Keep Render awake
+setInterval(() => {
+  const keepAliveUrl = 'https://saskioyunu-1.onrender.com/ping';
+  fetch(keepAliveUrl).catch(() => {
+    console.log('Keep-alive ping failed');
+  });
+}, 25000);
+
+// Error handling
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+// Start server
 server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`Telegram WebApp ready!`);
+  console.log(`🚀 Mafia Game Server running on port ${PORT}`);
+  console.log(`🔗 Server URL: https://saskioyunu-1.onrender.com`);
+  console.log(`📱 Telegram WebApp ready!`);
+  console.log(`🎮 Demo mode enabled!`);
 });
