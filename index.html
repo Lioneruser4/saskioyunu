@@ -842,6 +842,7 @@
         function initTelegram() {
             if (window.Telegram && window.Telegram.WebApp) {
                 const tg = window.Telegram.WebApp;
+                tg.ready();
                 tg.expand();
 
                 const user = tg.initDataUnsafe.user;
@@ -1219,8 +1220,9 @@
             document.getElementById('nightPhase').style.display = 'block';
             document.getElementById('votingSection').style.display = 'none';
 
-            // Start 60 second timer
-            startTimer(60);
+            // Start timer
+            const remaining = (data.remainingTime !== undefined && data.remainingTime !== null) ? data.remainingTime : 60;
+            startTimer(remaining);
 
             const nightContent = document.getElementById('nightContent');
             nightContent.innerHTML = '';
@@ -1263,8 +1265,9 @@
             document.getElementById('nightPhase').style.display = 'none';
             document.getElementById('votingSection').style.display = 'block';
 
-            // Start 90 second timer
-            startTimer(90);
+            // Start timer
+            const remaining = (data.remainingTime !== undefined && data.remainingTime !== null) ? data.remainingTime : 90;
+            startTimer(remaining);
 
             // Update log
             if (data.log && data.log.length > 0) {
@@ -1275,6 +1278,11 @@
             }
 
             updateVotingOptions(data.alivePlayers);
+
+            // Telegram Full Screen ensure
+            if (window.Telegram && Telegram.WebApp) {
+                Telegram.WebApp.expand();
+            }
         }
 
         function updateMafiaTargets(players) {
@@ -1333,7 +1341,7 @@
             if (!container) return;
             container.innerHTML = '';
 
-            players.forEach(player => {
+            players.filter(p => p.id !== userData.id).forEach(player => {
                 const card = document.createElement('div');
                 card.className = 'selection-card';
                 card.onclick = () => selectVoteOption(player.id, card);
