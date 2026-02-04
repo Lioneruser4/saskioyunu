@@ -689,23 +689,38 @@
 
             <div class="room-join">
                 <h3><i class="fas fa-hashtag"></i> Otaq Nömrəsi ilə Qoşul</h3>
-                <div class="join-input-group">
+                <div class="join-input-group" style="flex-direction: column; gap: 10px;">
                     <input type="text" class="room-input" id="roomCodeInput" placeholder="Otaq kodu">
-                    <button class="join-btn" onclick="joinRoomByCode()">GİR</button>
+                    <input type="password" class="room-input" id="roomPasswordInput" placeholder="Şifrə (əgər varsa)">
+                    <button class="join-btn" onclick="joinRoomByCode()" style="width: 100%;">GİR</button>
                 </div>
             </div>
         </div>
 
         <!-- Room List -->
         <div id="roomList">
+            <button class="menu-btn" onclick="showMainMenu()"
+                style="margin-bottom: 15px; background: rgba(255,255,255,0.1);"><i class="fas fa-arrow-left"></i>
+                Geri</button>
             <h2 style="margin-bottom: 20px;"><i class="fas fa-list"></i> Mövcud Otaqlar</h2>
             <div id="roomsContainer"></div>
         </div>
 
         <!-- Create Room -->
         <div id="createRoom">
+            <button class="menu-btn" onclick="showMainMenu()"
+                style="margin-bottom: 15px; background: rgba(255,255,255,0.1);"><i class="fas fa-arrow-left"></i>
+                Geri</button>
             <h2 style="margin-bottom: 20px;"><i class="fas fa-plus-circle"></i> Otaq Yarat</h2>
             <div class="create-form">
+                <div class="form-group">
+                    <label><i class="fas fa-edit"></i> Otaq Adı (isteğe bağlı)</label>
+                    <input type="text" id="newRoomName" placeholder="Məsələn: Professional Mafia">
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-lock"></i> Şifrə (isteğe bağlı)</label>
+                    <input type="password" id="newRoomPassword" placeholder="Şifrə qoymaq üçün yazın">
+                </div>
                 <div class="form-group">
                     <label><i class="fas fa-user-secret"></i> Mafia Sayı</label>
                     <input type="number" id="mafiaCount" min="1" max="5" value="2">
@@ -728,6 +743,9 @@
 
         <!-- Game Room (Lobby) -->
         <div id="gameRoom">
+            <button class="menu-btn" onclick="leaveRoom()"
+                style="margin-bottom: 15px; background: rgba(255,107,107,0.3);"><i class="fas fa-sign-out-alt"></i>
+                Otaqdan Çıx</button>
             <div class="room-header">
                 <h2><i class="fas fa-door-open"></i> Otaq #<span id="roomCode"></span></h2>
                 <p id="roomConfig"></p>
@@ -780,6 +798,9 @@
 
         <!-- Training Mode -->
         <div id="trainingMode">
+            <button class="menu-btn" onclick="showMainMenu()"
+                style="margin-bottom: 15px; background: rgba(255,255,255,0.1);"><i class="fas fa-arrow-left"></i>
+                Geri</button>
             <h2 style="margin-bottom: 20px;"><i class="fas fa-robot"></i> Məşq Rejimi</h2>
             <div class="bot-config">
                 <div class="form-group">
@@ -895,10 +916,10 @@
                     data: userData
                 }));
 
+                // Always request sync to restore state if previously in a game
                 setTimeout(() => {
-                    document.getElementById('loadingScreen').style.display = 'none';
-                    showMainMenu();
-                }, 500);
+                    send('syncState');
+                }, 100);
             };
 
             ws.onmessage = (event) => {
@@ -909,6 +930,7 @@
             ws.onclose = () => {
                 console.log('Bağlantı kəsildi');
                 document.getElementById('connectionStatus').classList.add('show');
+                document.getElementById('connectionStatus').textContent = 'Yenidən bağlanılır...';
                 attemptReconnect();
             };
 
@@ -922,6 +944,8 @@
                 reconnectAttempts++;
                 console.log(`Yenidən bağlanılır... Cəhd ${reconnectAttempts}`);
                 setTimeout(connectWebSocket, reconnectDelay);
+            } else {
+                document.getElementById('connectionStatus').textContent = 'Bağlantı uğursuz oldu';
             }
         }
 
@@ -943,6 +967,27 @@
                 case 'gameStarted':
                     gameState = message.data;
                     showGameScreen();
+                    break;
+                case 'gameStateSync':
+                    // Restore game state after reconnection
+                    if (message.data.room) {
+                        currentRoom = message.data.room;
+                        if (message.data.room.gameStarted) {
+                            gameState = message.data.gameState;
+                            showGameScreen();
+                            if (message.data.gameState.phase === 'night') {
+                                handleNightPhase(message.data.gameState);
+                            } else {
+                                handleDayPhase(message.data.gameState);
+                            }
+                        } else {
+                            showGameRoom();
+                        }
+                    } else {
+                        // No room found, go to main menu
+                        showMainMenu();
+                    }
+                    document.getElementById('loadingScreen').style.display = 'none';
                     break;
                 case 'nightPhase':
                     handleNightPhase(message.data);
@@ -1024,8 +1069,9 @@
 
         function joinRoomByCode() {
             const code = document.getElementById('roomCodeInput').value.trim();
+            const password = document.getElementById('roomPasswordInput').value.trim();
             if (code) {
-                send('joinRoom', { code });
+                send('joinRoom', { code, password });
             }
         }
 
@@ -1036,7 +1082,9 @@
                 doctor: parseInt(document.getElementById('doctorCount').value),
                 citizen: parseInt(document.getElementById('citizenCount').value)
             };
-            send('createRoom', config);
+            const name = document.getElementById('newRoomName').value.trim();
+            const password = document.getElementById('newRoomPassword').value.trim();
+            send('createRoom', { config, name, password });
         }
 
         function startGame() {
@@ -1047,6 +1095,12 @@
             const role = document.getElementById('trainingRole').value;
             const botCount = parseInt(document.getElementById('botCount').value);
             send('startTraining', { role, botCount });
+        }
+
+        function leaveRoom() {
+            send('leaveRoom');
+            currentRoom = null;
+            showMainMenu();
         }
 
         function updateRoomList(rooms) {
@@ -1061,9 +1115,19 @@
             rooms.forEach(room => {
                 const card = document.createElement('div');
                 card.className = 'room-card';
-                card.onclick = () => send('joinRoom', { code: room.code });
+                card.onclick = () => {
+                    if (room.hasPassword) {
+                        const pass = prompt('Bu otaq şifrlidir. Şifrəni daxil edin:');
+                        if (pass !== null) {
+                            send('joinRoom', { code: room.code, password: pass });
+                        }
+                    } else {
+                        send('joinRoom', { code: room.code });
+                    }
+                };
                 card.innerHTML = `
-                    <h4><i class="fas fa-door-open"></i> Otaq #${room.code}</h4>
+                    <h4><i class="fas fa-door-open"></i> ${room.name} ${room.hasPassword ? '<i class="fas fa-lock" style="color: #ffd93d; font-size: 14px;"></i>' : ''}</h4>
+                    <p><i class="fas fa-hashtag"></i> Kod: ${room.code}</p>
                     <p><i class="fas fa-users"></i> Oyunçular: ${room.players.length}/${room.config.mafia + room.config.police + room.config.doctor + room.config.citizen}</p>
                     <p><i class="fas fa-user-secret"></i> Mafia: ${room.config.mafia} | <i class="fas fa-shield-alt"></i> Polis: ${room.config.police} | <i class="fas fa-user-md"></i> Doktor: ${room.config.doctor} | <i class="fas fa-user"></i> Vətəndaş: ${room.config.citizen}</p>
                 `;
