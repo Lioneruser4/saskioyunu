@@ -2,6 +2,9 @@ const express = require('express');
 const http = require('http');
 const WebSocket = require('ws');
 const path = require('path');
+const fs = require('fs');
+
+const STATE_FILE = path.join(__dirname, 'game_state.json');
 
 const app = express();
 const server = http.createServer(app);
@@ -25,11 +28,60 @@ app.get('/ping', (req, res) => {
 const rooms = new Map();
 const users = new Map();
 const connections = new Map();
+let roomCounter = 1;
+
+// Load state from file
+try {
+    if (fs.existsSync(STATE_FILE)) {
+        const data = JSON.parse(fs.readFileSync(STATE_FILE, 'utf8'));
+        roomCounter = data.roomCounter || 1;
+        if (data.users) {
+            data.users.forEach(([k, v]) => users.set(k, v));
+        }
+        // Room reconstruction will happen below Room class definition
+    }
+} catch (e) {
+    console.error('State load error:', e);
+}
+
+function saveState() {
+    try {
+        const data = {
+            roomCounter,
+            users: Array.from(users.entries()),
+            rooms: Array.from(rooms.values()).map(r => ({
+                code: r.code,
+                name: r.name,
+                password: r.password,
+                config: r.config,
+                host: r.host,
+                players: r.players,
+                gameStarted: r.gameStarted,
+                day: r.day,
+                phase: r.phase,
+                alivePlayers: r.alivePlayers,
+                deadPlayers: r.deadPlayers,
+                roles: r.roles,
+                votes: r.votes,
+                mafiaVotes: r.mafiaVotes,
+                policeCheck: r.policeCheck,
+                doctorSave: r.doctorSave,
+                mafiaChat: r.mafiaChat,
+                isTraining: r.isTraining
+            }))
+        };
+        fs.writeFileSync(STATE_FILE, JSON.stringify(data), 'utf8');
+    } catch (e) {
+        console.error('State save error:', e);
+    }
+}
 
 // Room class
 class Room {
-    constructor(code, config, host) {
+    constructor(code, config, host, name = null, password = null) {
         this.code = code;
+        this.name = name || `Mafia Otağı ${code}`;
+        this.password = password;
         this.config = config;
         this.host = host;
         this.players = [];
@@ -190,6 +242,8 @@ class Room {
     toJSON() {
         return {
             code: this.code,
+            name: this.name,
+            hasPassword: !!this.password,
             config: this.config,
             host: this.host,
             players: this.players,
@@ -198,10 +252,43 @@ class Room {
     }
 }
 
+// Reconstruct rooms from loaded state
+try {
+    if (fs.existsSync(STATE_FILE)) {
+        const data = JSON.parse(fs.readFileSync(STATE_FILE, 'utf8'));
+        if (data.rooms) {
+            data.rooms.forEach(roomData => {
+                const room = new Room(roomData.code, roomData.config, roomData.host, roomData.name, roomData.password);
+                Object.assign(room, roomData);
+                rooms.set(room.code, room);
+            });
+        }
+    }
+} catch (e) {
+    console.error('Room reconstruction error:', e);
+}
+
+// Global error handlers
+process.on('uncaughtException', (err) => {
+    console.error('Uncaught Exception:', err);
+    saveState();
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+    saveState();
+});
+
 // WebSocket connection handler
 wss.on('connection', (ws) => {
     console.log('New client connected');
     let userId = null;
+    let isAlive = true;
+
+    // Heartbeat
+    ws.on('pong', () => {
+        isAlive = true;
+    });
 
     ws.on('message', (message) => {
         try {
@@ -242,7 +329,7 @@ wss.on('connection', (ws) => {
                 break;
 
             case 'joinRoom':
-                handleJoinRoom(userId, data.code);
+                handleJoinRoom(userId, data.code, data.password);
                 break;
 
             case 'createRoom':
@@ -285,6 +372,10 @@ wss.on('connection', (ws) => {
                 handleStartTraining(userId, data);
                 break;
 
+            case 'syncState':
+                handleSyncState(userId);
+                break;
+
             case 'ping':
                 sendToClient(ws, 'pong');
                 break;
@@ -311,10 +402,15 @@ function handleAutoJoin(userId) {
     handleCreateRoom(userId, config);
 }
 
-function handleJoinRoom(userId, code) {
+function handleJoinRoom(userId, code, password = null) {
     const room = rooms.get(code);
     if (!room) {
         sendError(userId, 'Otaq tapılmadı');
+        return;
+    }
+
+    if (room.password && room.password !== password) {
+        sendError(userId, 'Şifrə yanlışdır');
         return;
     }
 
@@ -323,21 +419,31 @@ function handleJoinRoom(userId, code) {
         return;
     }
 
+    const totalPlayers = getTotalPlayers(room.config);
+    if (room.players.length >= totalPlayers) {
+        sendError(userId, 'Otaq doludur');
+        return;
+    }
+
     const user = users.get(userId);
     room.addPlayer(user);
 
     sendToClient(connections.get(userId), 'roomJoined', room.toJSON());
     broadcastToRoom(room, 'roomUpdate', room.toJSON());
+    saveState();
 }
 
-function handleCreateRoom(userId, config) {
+function handleCreateRoom(userId, data) {
     const code = generateRoomCode();
-    const room = new Room(code, config, userId);
+    const { config, name, password } = data;
+    const roomName = name || `Mafia Otağı ${roomCounter++}`;
+    const room = new Room(code, config, userId, roomName, password);
     const user = users.get(userId);
     room.addPlayer(user);
 
     rooms.set(code, room);
     sendToClient(connections.get(userId), 'roomJoined', room.toJSON());
+    saveState();
 }
 
 function handleLeaveRoom(userId) {
@@ -349,6 +455,7 @@ function handleLeaveRoom(userId) {
         } else {
             broadcastToRoom(room, 'roomUpdate', room.toJSON());
         }
+        saveState();
     }
 }
 
@@ -388,6 +495,7 @@ function handleStartGame(userId) {
     });
 
     // Start night phase
+    saveState();
     setTimeout(() => {
         startNightPhase(room);
     }, 5000);
@@ -414,6 +522,7 @@ function startNightPhase(room) {
     }
 
     // Auto-advance after 60 seconds
+    saveState();
     setTimeout(() => {
         if (room.phase === 'night') {
             startDayPhase(room);
@@ -452,6 +561,7 @@ function startDayPhase(room) {
     }
 
     // Auto-advance after 90 seconds
+    saveState();
     setTimeout(() => {
         if (room.phase === 'day') {
             endDayPhase(room);
@@ -472,6 +582,7 @@ function endDayPhase(room) {
     room.day++;
 
     // Start next night
+    saveState();
     setTimeout(() => {
         startNightPhase(room);
     }, 5000);
@@ -498,6 +609,7 @@ function endGame(room, winner) {
         room.mafiaVotes = {};
 
         broadcastToRoom(room, 'roomUpdate', room.toJSON());
+        saveState();
     }, 10000);
 }
 
@@ -623,6 +735,7 @@ function handleStartTraining(userId, data) {
     sendToClient(connections.get(userId), 'gameStarted', gameData);
 
     // Start night phase for training
+    saveState();
     setTimeout(() => {
         startNightPhase(room);
     }, 3000);
@@ -668,6 +781,30 @@ function simulateBotActions(room) {
                 }
             });
         }, 3000);
+    }
+}
+
+function handleSyncState(userId) {
+    const room = findUserRoom(userId);
+    if (room) {
+        const gameState = {
+            phase: room.phase,
+            day: room.day,
+            myRole: room.roles[userId],
+            alivePlayers: room.alivePlayers,
+            log: []
+        };
+
+        sendToClient(connections.get(userId), 'gameStateSync', {
+            room: room.toJSON(),
+            gameState: gameState
+        });
+    } else {
+        // No room found, send empty state
+        sendToClient(connections.get(userId), 'gameStateSync', {
+            room: null,
+            gameState: null
+        });
     }
 }
 
@@ -726,7 +863,19 @@ function broadcastToRoom(room, type, data) {
 // Keep server awake
 setInterval(() => {
     console.log('Server is alive:', new Date().toISOString());
-}, 30000);
+}, 20000); // Every 20 seconds
+
+// WebSocket heartbeat - ping all clients
+setInterval(() => {
+    wss.clients.forEach((ws) => {
+        if (ws.isAlive === false) {
+            console.log('Terminating dead connection');
+            return ws.terminate();
+        }
+        ws.isAlive = false;
+        ws.ping();
+    });
+}, 20000); // Every 20 seconds
 
 // Self-ping to prevent Render sleep
 if (process.env.RENDER) {
@@ -737,7 +886,7 @@ if (process.env.RENDER) {
         }).on('error', (err) => {
             console.error('Self-ping error:', err);
         });
-    }, 25000); // Every 25 seconds
+    }, 20000); // Every 20 seconds
 }
 
 server.listen(PORT, () => {
