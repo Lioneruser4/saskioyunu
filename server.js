@@ -1,1077 +1,706 @@
 const express = require('express');
 const http = require('http');
 const WebSocket = require('ws');
-const crypto = require('crypto');
+const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
-// Statik dosyalar
+const PORT = process.env.PORT || 3000;
+
+// Serve static files
 app.use(express.static(__dirname));
 
-// Ana sayfa
 app.get('/', (req, res) => {
-    res.sendFile(__dirname + '/index.html');
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Render için health check
-app.get('/health', (req, res) => {
+// Keep-alive ping endpoint
+app.get('/ping', (req, res) => {
     res.status(200).send('OK');
 });
 
-// Oyun sunucusu verileri
+// Game state
 const rooms = new Map();
-const players = new Map();
-const games = new Map();
+const users = new Map();
 const connections = new Map();
 
-// Oyun ayarları
-const ROLE_EMOJIS = {
-    citizen: '👨‍🌾',
-    mafia: '🕵️',
-    police: '👮',
-    doctor: '👨‍⚕️'
-};
+// Room class
+class Room {
+    constructor(code, config, host) {
+        this.code = code;
+        this.config = config;
+        this.host = host;
+        this.players = [];
+        this.gameStarted = false;
+        this.gameState = null;
+        this.day = 1;
+        this.phase = 'day';
+        this.alivePlayers = [];
+        this.deadPlayers = [];
+        this.roles = {};
+        this.votes = {};
+        this.mafiaVotes = {};
+        this.policeCheck = null;
+        this.doctorSave = null;
+        this.mafiaChat = [];
+    }
 
-const ROLE_NAMES = {
-    citizen: 'Vatandaş',
-    mafia: 'Mafia',
-    police: 'Polis',
-    doctor: 'Doktor'
-};
-
-// Oda ID oluştur
-function generateRoomId() {
-    return Math.random().toString(36).substr(2, 6).toUpperCase();
-}
-
-// Oyuncu ID oluştur
-function generatePlayerId() {
-    return crypto.randomBytes(8).toString('hex');
-}
-
-// Bot oluştur
-function createBot(roomId, role) {
-    const botId = 'bot_' + crypto.randomBytes(4).toString('hex');
-    return {
-        id: botId,
-        name: `Bot_${role.charAt(0).toUpperCase() + role.slice(1)}`,
-        profilePic: `https://ui-avatars.com/api/?name=Bot${role.charAt(0).toUpperCase()}&background=7209b7&color=fff&size=100`,
-        role: role,
-        alive: true,
-        isBot: true,
-        roomId: roomId,
-        votes: [],
-        lastAction: Date.now()
-    };
-}
-
-// Bot davranışı
-function botAction(bot, game) {
-    if (!bot.alive) return;
-    
-    const room = rooms.get(bot.roomId);
-    if (!room || !room.game) return;
-    
-    setTimeout(() => {
-        if (bot.role === 'mafia' && game.phase === 'night') {
-            // Mafia bot: rastgele bir canlı vatandaşı hedefle
-            const targets = game.players.filter(p => 
-                p.alive && 
-                p.role !== 'mafia' && 
-                !p.isBot
-            );
-            if (targets.length > 0) {
-                const target = targets[Math.floor(Math.random() * targets.length)];
-                handleVote({
-                    type: 'vote',
-                    targetId: target.id,
-                    voteType: 'kill'
-                }, { userId: bot.id });
-            }
-        } else if (bot.role === 'police' && game.phase === 'night') {
-            // Polis bot: şüpheli birini araştır
-            const targets = game.players.filter(p => p.alive && !p.isBot);
-            if (targets.length > 0) {
-                const target = targets[Math.floor(Math.random() * targets.length)];
-                handleVote({
-                    type: 'vote',
-                    targetId: target.id,
-                    voteType: 'investigate'
-                }, { userId: bot.id });
-            }
-        } else if (bot.role === 'doctor' && game.phase === 'night') {
-            // Doktor bot: rastgele birini tedavi et (kendini de olabilir)
-            const targets = game.players.filter(p => p.alive);
-            if (targets.length > 0) {
-                const target = targets[Math.floor(Math.random() * targets.length)];
-                handleVote({
-                    type: 'vote',
-                    targetId: target.id,
-                    voteType: 'heal'
-                }, { userId: bot.id });
-            }
-        } else if (game.phase === 'day' && bot.alive) {
-            // Gündüz: rastgele oy ver
-            const targets = game.players.filter(p => p.alive && p.id !== bot.id);
-            if (targets.length > 0) {
-                const target = targets[Math.floor(Math.random() * targets.length)];
-                handleVote({
-                    type: 'vote',
-                    targetId: target.id,
-                    voteType: 'lynch'
-                }, { userId: bot.id });
-            }
+    addPlayer(player) {
+        if (!this.players.find(p => p.id === player.id)) {
+            this.players.push(player);
         }
-    }, Math.random() * 3000 + 2000); // 2-5 saniye gecikme
-}
+    }
 
-// Oda oluştur
-function createRoom(ownerId, settings) {
-    const roomId = generateRoomId();
-    const room = {
-        id: roomId,
-        ownerId: ownerId,
-        players: [],
-        settings: settings,
-        status: 'waiting',
-        createdAt: Date.now(),
-        game: null
-    };
-    
-    rooms.set(roomId, room);
-    return room;
-}
-
-// Oyun başlat
-function startGame(roomId) {
-    const room = rooms.get(roomId);
-    if (!room || room.players.length < 4) return null;
-    
-    const players = [...room.players];
-    
-    // Rolleri dağıt
-    const roles = [];
-    
-    // Mafialar
-    for (let i = 0; i < room.settings.mafiaCount; i++) {
-        roles.push('mafia');
-    }
-    
-    // Polisler
-    for (let i = 0; i < room.settings.policeCount; i++) {
-        roles.push('police');
-    }
-    
-    // Doktorlar
-    for (let i = 0; i < room.settings.doctorCount; i++) {
-        roles.push('doctor');
-    }
-    
-    // Kalanlar vatandaş
-    while (roles.length < players.length) {
-        roles.push('citizen');
-    }
-    
-    // Rolleri karıştır ve dağıt
-    shuffleArray(roles);
-    
-    players.forEach((player, index) => {
-        player.role = roles[index];
-        player.alive = true;
-        player.votes = [];
-        
-        // Oyuncuya rolünü bildir
-        const ws = connections.get(player.id);
-        if (ws && ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify({
-                type: 'role_assigned',
-                role: player.role
-            }));
+    removePlayer(playerId) {
+        this.players = this.players.filter(p => p.id !== playerId);
+        if (this.players.length === 0) {
+            return true; // Room should be deleted
         }
-    });
-    
-    const game = {
-        roomId: roomId,
-        players: players,
-        phase: 'day',
-        dayNumber: 1,
-        votes: {},
-        nightActions: {},
-        killedTonight: null,
-        healedTonight: null,
-        investigatedTonight: [],
-        startedAt: Date.now()
-    };
-    
-    room.game = game;
-    room.status = 'playing';
-    games.set(roomId, game);
-    
-    // Tüm oyunculara oyunun başladığını bildir
-    broadcastToRoom(roomId, {
-        type: 'game_start',
-        game: {
-            role: players.find(p => p.id === room.ownerId)?.role || 'citizen',
-            players: players.map(p => ({
-                id: p.id,
-                name: p.name,
-                role: p.role,
-                alive: p.alive,
-                profilePic: p.profilePic
-            }))
+        if (this.host === playerId && this.players.length > 0) {
+            this.host = this.players[0].id;
         }
-    });
-    
-    // Botları başlat
-    players.filter(p => p.isBot).forEach(bot => {
-        botAction(bot, game);
-    });
-    
-    return game;
-}
-
-// Dizi karıştır
-function shuffleArray(array) {
-    for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
+        return false;
     }
-    return array;
-}
 
-// Oda içi yayın
-function broadcastToRoom(roomId, message) {
-    const room = rooms.get(roomId);
-    if (!room) return;
-    
-    room.players.forEach(player => {
-        const ws = connections.get(player.id);
-        if (ws && ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify(message));
-        }
-    });
-}
-
-// Oyuncuya gönder
-function sendToPlayer(playerId, message) {
-    const ws = connections.get(playerId);
-    if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify(message));
+    canStart() {
+        const total = this.config.mafia + this.config.police + this.config.doctor + this.config.citizen;
+        return this.players.length === total;
     }
-}
 
-// Lobi güncelle
-function updateLobby() {
-    const lobbyData = Array.from(rooms.values()).map(room => ({
-        id: room.id,
-        players: room.players.map(p => ({
-            id: p.id,
-            name: p.name,
-            profilePic: p.profilePic
-        })),
-        maxPlayers: room.settings.maxPlayers,
-        settings: room.settings,
-        status: room.status
-    }));
-    
-    connections.forEach((ws, playerId) => {
-        if (ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify({
-                type: 'lobby_update',
-                rooms: lobbyData
-            }));
+    assignRoles() {
+        const roles = [];
+        for (let i = 0; i < this.config.mafia; i++) roles.push('mafia');
+        for (let i = 0; i < this.config.police; i++) roles.push('police');
+        for (let i = 0; i < this.config.doctor; i++) roles.push('doctor');
+        for (let i = 0; i < this.config.citizen; i++) roles.push('citizen');
+
+        // Shuffle roles
+        for (let i = roles.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [roles[i], roles[j]] = [roles[j], roles[i]];
         }
-    });
-}
 
-// Faz değiştir
-function changePhase(roomId, newPhase) {
-    const room = rooms.get(roomId);
-    if (!room || !room.game) return;
-    
-    const game = room.game;
-    game.phase = newPhase;
-    
-    if (newPhase === 'night') {
-        game.nightActions = {};
-        game.killedTonight = null;
-        game.healedTonight = null;
-        game.investigatedTonight = [];
-        
-        // Gece başında tüm oyları temizle
-        game.players.forEach(player => {
-            player.votes = [];
+        this.players.forEach((player, index) => {
+            this.roles[player.id] = roles[index];
         });
-    } else if (newPhase === 'day') {
-        game.dayNumber++;
-        
-        // Gece aksiyonlarını işle
-        processNightActions(roomId);
-        
-        // Tüm oyları temizle
-        game.votes = {};
-    }
-    
-    broadcastToRoom(roomId, {
-        type: 'phase_change',
-        phase: newPhase,
-        dayNumber: game.dayNumber
-    });
-    
-    // Botları tetikle
-    game.players.filter(p => p.isBot && p.alive).forEach(bot => {
-        botAction(bot, game);
-    });
-}
 
-// Gece aksiyonlarını işle
-function processNightActions(roomId) {
-    const room = rooms.get(roomId);
-    if (!room || !room.game) return;
-    
-    const game = room.game;
-    
-    // Mafiaların oylarını say
-    const mafiaVotes = {};
-    game.players
-        .filter(p => p.alive && p.role === 'mafia')
-        .forEach(mafia => {
-            mafia.votes.forEach(vote => {
-                if (vote.type === 'kill') {
-                    mafiaVotes[vote.targetId] = (mafiaVotes[vote.targetId] || 0) + 1;
-                }
-            });
-        });
-    
-    // En çok oy alanı bul
-    let maxVotes = 0;
-    let targetId = null;
-    Object.entries(mafiaVotes).forEach(([id, votes]) => {
-        if (votes > maxVotes) {
-            maxVotes = votes;
-            targetId = id;
-        }
-    });
-    
-    // Doktor oylarını say
-    const doctorVotes = {};
-    game.players
-        .filter(p => p.alive && p.role === 'doctor')
-        .forEach(doctor => {
-            doctor.votes.forEach(vote => {
-                if (vote.type === 'heal') {
-                    doctorVotes[vote.targetId] = (doctorVotes[vote.targetId] || 0) + 1;
-                }
-            });
-        });
-    
-    // Doktorun hedefi
-    let doctorTargetId = null;
-    let maxDoctorVotes = 0;
-    Object.entries(doctorVotes).forEach(([id, votes]) => {
-        if (votes > maxDoctorVotes) {
-            maxDoctorVotes = votes;
-            doctorTargetId = id;
-        }
-    });
-    
-    // Öldürme işlemi
-    if (targetId && targetId !== doctorTargetId) {
-        const target = game.players.find(p => p.id === targetId);
-        if (target && target.alive) {
-            target.alive = false;
-            game.killedTonight = targetId;
-            
-            broadcastToRoom(roomId, {
-                type: 'vote_result',
-                voteType: 'kill',
-                targetName: target.name,
-                healed: false
-            });
-        }
-    } else if (targetId && targetId === doctorTargetId) {
-        // Doktor tedavi etti
-        game.healedTonight = targetId;
-        
-        const target = game.players.find(p => p.id === targetId);
-        broadcastToRoom(roomId, {
-            type: 'vote_result',
-            voteType: 'kill',
-            targetName: target.name,
-            healed: true
-        });
+        this.alivePlayers = [...this.players];
     }
-    
-    // Polis araştırmaları
-    game.players
-        .filter(p => p.alive && p.role === 'police')
-        .forEach(police => {
-            police.votes.forEach(vote => {
-                if (vote.type === 'investigate') {
-                    const target = game.players.find(p => p.id === vote.targetId);
-                    if (target) {
-                        sendToPlayer(police.id, {
-                            type: 'vote_result',
-                            voteType: 'investigate',
-                            targetName: target.name,
-                            isMafia: target.role === 'mafia'
-                        });
-                    }
-                }
-            });
-        });
-    
-    // Oyun bitti mi kontrol et
-    checkGameEnd(roomId);
-}
 
-// Oylama işle
-function handleVote(data, ws) {
-    const playerId = ws.userId;
-    const roomId = ws.roomId;
-    
-    const room = rooms.get(roomId);
-    if (!room || !room.game) return;
-    
-    const game = room.game;
-    const player = game.players.find(p => p.id === playerId);
-    if (!player || !player.alive) return;
-    
-    // Oy kaydet
-    player.votes.push({
-        type: data.voteType,
-        targetId: data.targetId,
-        timestamp: Date.now()
-    });
-    
-    // Tüm oylar tamam mı kontrol et
-    checkVotesComplete(roomId, data.voteType);
-}
-
-// Oylar tamam mı kontrol et
-function checkVotesComplete(roomId, voteType) {
-    const room = rooms.get(roomId);
-    if (!room || !room.game) return;
-    
-    const game = room.game;
-    
-    let requiredPlayers = [];
-    if (voteType === 'kill') {
-        requiredPlayers = game.players.filter(p => p.alive && p.role === 'mafia');
-    } else if (voteType === 'heal') {
-        requiredPlayers = game.players.filter(p => p.alive && p.role === 'doctor');
-    } else if (voteType === 'investigate') {
-        requiredPlayers = game.players.filter(p => p.alive && p.role === 'police');
-    } else if (voteType === 'lynch') {
-        requiredPlayers = game.players.filter(p => p.alive);
+    startGame() {
+        this.gameStarted = true;
+        this.assignRoles();
+        this.phase = 'night';
+        this.day = 1;
     }
-    
-    // Botların oylarını otomatik ekle
-    requiredPlayers.filter(p => p.isBot && p.votes.length === 0).forEach(bot => {
-        botAction(bot, game);
-    });
-    
-    // Tüm oylar verildi mi kontrol et
-    const allVoted = requiredPlayers.every(p => 
-        p.votes.some(v => v.type === voteType)
-    );
-    
-    if (allVoted) {
-        if (voteType === 'lynch') {
-            processLynchVote(roomId);
-        } else if (game.phase === 'night') {
-            // Gece fazını bitir
-            setTimeout(() => {
-                changePhase(roomId, 'day');
-            }, 3000);
+
+    getMafiaPlayers() {
+        return this.alivePlayers.filter(p => this.roles[p.id] === 'mafia');
+    }
+
+    getCitizenPlayers() {
+        return this.alivePlayers.filter(p => this.roles[p.id] !== 'mafia');
+    }
+
+    processNightActions() {
+        const log = [];
+
+        // Process mafia kill
+        const mafiaTarget = this.getMostVoted(this.mafiaVotes);
+        let killed = null;
+
+        if (mafiaTarget && mafiaTarget !== this.doctorSave) {
+            killed = mafiaTarget;
+            this.alivePlayers = this.alivePlayers.filter(p => p.id !== killed);
+            const killedPlayer = this.players.find(p => p.id === killed);
+            this.deadPlayers.push(killedPlayer);
+            log.push(`${killedPlayer.name} gecə öldürüldü.`);
+        } else if (mafiaTarget && mafiaTarget === this.doctorSave) {
+            const savedPlayer = this.players.find(p => p.id === this.doctorSave);
+            log.push(`Mafia ${savedPlayer.name}-i öldürməyə çalışdı, amma doktor onu xilas etdi!`);
         }
-    }
-}
 
-// Linç oylaması
-function processLynchVote(roomId) {
-    const room = rooms.get(roomId);
-    if (!room || !room.game) return;
-    
-    const game = room.game;
-    
-    // Tüm oyları say
-    const voteCount = {};
-    game.players
-        .filter(p => p.alive)
-        .forEach(player => {
-            const lynchVote = player.votes.find(v => v.type === 'lynch');
-            if (lynchVote) {
-                voteCount[lynchVote.targetId] = (voteCount[lynchVote.targetId] || 0) + 1;
+        // Reset night actions
+        this.mafiaVotes = {};
+        this.policeCheck = null;
+        this.doctorSave = null;
+        this.mafiaChat = [];
+
+        return log;
+    }
+
+    processDayVoting() {
+        const log = [];
+        const eliminated = this.getMostVoted(this.votes);
+
+        if (eliminated) {
+            this.alivePlayers = this.alivePlayers.filter(p => p.id !== eliminated);
+            const eliminatedPlayer = this.players.find(p => p.id === eliminated);
+            this.deadPlayers.push(eliminatedPlayer);
+            log.push(`${eliminatedPlayer.name} səsvermə ilə oyundan çıxarıldı. Rolu: ${this.getRoleName(this.roles[eliminated])}`);
+        }
+
+        this.votes = {};
+        return log;
+    }
+
+    getMostVoted(votes) {
+        const voteCounts = {};
+        Object.values(votes).forEach(targetId => {
+            voteCounts[targetId] = (voteCounts[targetId] || 0) + 1;
+        });
+
+        let maxVotes = 0;
+        let target = null;
+        Object.entries(voteCounts).forEach(([playerId, count]) => {
+            if (count > maxVotes) {
+                maxVotes = count;
+                target = playerId;
             }
         });
-    
-    // En çok oy alanı bul
-    let maxVotes = 0;
-    let targetId = null;
-    Object.entries(voteCount).forEach(([id, votes]) => {
-        if (votes > maxVotes) {
-            maxVotes = votes;
-            targetId = id;
+
+        return target;
+    }
+
+    checkWinCondition() {
+        const mafiaCount = this.getMafiaPlayers().length;
+        const citizenCount = this.getCitizenPlayers().length;
+
+        if (mafiaCount === 0) {
+            return 'citizens';
         }
-    });
-    
-    // Beraberlik kontrolü
-    const tiedPlayers = Object.entries(voteCount)
-        .filter(([id, votes]) => votes === maxVotes)
-        .map(([id]) => id);
-    
-    if (tiedPlayers.length > 1) {
-        // Beraberlik: kimse asılmaz
-        broadcastToRoom(roomId, {
-            type: 'vote_result',
-            voteType: 'lynch',
-            targetName: 'Hiç kimse',
-            revealedRole: null
-        });
-    } else if (targetId) {
-        // Birini as
-        const target = game.players.find(p => p.id === targetId);
-        if (target && target.alive) {
-            target.alive = false;
-            
-            broadcastToRoom(roomId, {
-                type: 'vote_result',
-                voteType: 'lynch',
-                targetName: target.name,
-                revealedRole: target.role === 'mafia' ? 'Mafia çıktı!' : 'Masum çıktı!'
-            });
-            
-            // Oyun bitti mi kontrol et
-            checkGameEnd(roomId);
+        if (mafiaCount >= citizenCount) {
+            return 'mafia';
         }
+        return null;
+    }
+
+    getRoleName(role) {
+        const names = {
+            mafia: 'Mafia',
+            police: 'Polis',
+            doctor: 'Doktor',
+            citizen: 'Vətəndaş'
+        };
+        return names[role] || role;
+    }
+
+    toJSON() {
+        return {
+            code: this.code,
+            config: this.config,
+            host: this.host,
+            players: this.players,
+            gameStarted: this.gameStarted
+        };
     }
 }
 
-// Oyun bitti mi kontrol et
-function checkGameEnd(roomId) {
-    const room = rooms.get(roomId);
-    if (!room || !room.game) return;
-    
-    const game = room.game;
-    
-    const alivePlayers = game.players.filter(p => p.alive);
-    const aliveMafias = alivePlayers.filter(p => p.role === 'mafia');
-    const aliveCivilians = alivePlayers.filter(p => p.role !== 'mafia');
-    
-    if (aliveMafias.length === 0) {
-        // Vatandaşlar kazandı
-        endGame(roomId, 'citizens');
-    } else if (aliveMafias.length >= aliveCivilians.length) {
-        // Mafialar kazandı
-        endGame(roomId, 'mafia');
-    }
-}
+// WebSocket connection handler
+wss.on('connection', (ws) => {
+    console.log('New client connected');
+    let userId = null;
 
-// Oyunu bitir
-function endGame(roomId, winner) {
-    const room = rooms.get(roomId);
-    if (!room || !room.game) return;
-    
-    const game = room.game;
-    
-    broadcastToRoom(roomId, {
-        type: 'game_over',
-        winner: winner,
-        players: game.players.map(p => ({
-            id: p.id,
-            name: p.name,
-            role: p.role,
-            alive: p.alive,
-            profilePic: p.profilePic
-        }))
-    });
-    
-    // Oyun durumunu sıfırla ama odayı açık tut
-    room.game = null;
-    room.status = 'waiting';
-    
-    // Oyuncuların rollerini sıfırla
-    room.players.forEach(player => {
-        player.role = null;
-        player.alive = true;
-        player.votes = [];
-    });
-    
-    games.delete(roomId);
-}
-
-// WebSocket bağlantıları
-wss.on('connection', (ws, req) => {
-    console.log('Yeni WebSocket bağlantısı');
-    
     ws.on('message', (message) => {
         try {
             const data = JSON.parse(message);
-            handleMessage(data, ws);
+            handleMessage(ws, data);
         } catch (error) {
-            console.error('Mesaj parse hatası:', error);
+            console.error('Error parsing message:', error);
         }
     });
-    
+
     ws.on('close', () => {
-        console.log('WebSocket bağlantısı kapandı');
-        
-        // Bağlantıyı temizle
-        if (ws.userId) {
-            connections.delete(ws.userId);
-            
-            // Oyuncuyu odadan çıkar
-            if (ws.roomId) {
-                const room = rooms.get(ws.roomId);
-                if (room) {
-                    room.players = room.players.filter(p => p.id !== ws.userId);
-                    
-                    // Oda boşsa sil
-                    if (room.players.length === 0) {
-                        rooms.delete(ws.roomId);
-                        games.delete(ws.roomId);
-                    } else {
-                        // Odadaki diğer oyunculara bildir
-                        broadcastToRoom(ws.roomId, {
-                            type: 'room_update',
-                            room: {
-                                id: room.id,
-                                players: room.players,
-                                ownerId: room.ownerId,
-                                settings: room.settings,
-                                status: room.status
-                            }
-                        });
-                        
-                        // Sahip çıktıysa yeni sahip seç
-                        if (room.ownerId === ws.userId && room.players.length > 0) {
-                            room.ownerId = room.players[0].id;
-                        }
-                        
-                        updateLobby();
-                    }
-                }
-            }
+        console.log('Client disconnected');
+        if (userId) {
+            handleDisconnect(userId);
         }
     });
-    
-    ws.on('error', (error) => {
-        console.error('WebSocket hatası:', error);
-    });
+
+    function handleMessage(ws, message) {
+        const { type, data } = message;
+
+        switch (type) {
+            case 'auth':
+                userId = data.id;
+                users.set(userId, data);
+                connections.set(userId, ws);
+                sendToClient(ws, 'auth', { success: true });
+                break;
+
+            case 'getRooms':
+                const roomList = Array.from(rooms.values())
+                    .filter(room => !room.gameStarted)
+                    .map(room => room.toJSON());
+                sendToClient(ws, 'roomList', roomList);
+                break;
+
+            case 'autoJoin':
+                handleAutoJoin(userId);
+                break;
+
+            case 'joinRoom':
+                handleJoinRoom(userId, data.code);
+                break;
+
+            case 'createRoom':
+                handleCreateRoom(userId, data);
+                break;
+
+            case 'leaveRoom':
+                handleLeaveRoom(userId);
+                break;
+
+            case 'kickPlayer':
+                handleKickPlayer(userId, data.playerId);
+                break;
+
+            case 'startGame':
+                handleStartGame(userId);
+                break;
+
+            case 'mafiaVote':
+                handleMafiaVote(userId, data.targetId);
+                break;
+
+            case 'policeCheck':
+                handlePoliceCheck(userId, data.targetId);
+                break;
+
+            case 'doctorSave':
+                handleDoctorSave(userId, data.targetId);
+                break;
+
+            case 'vote':
+                handleVote(userId, data.targetId);
+                break;
+
+            case 'mafiaChat':
+                handleMafiaChat(userId, data.message);
+                break;
+
+            case 'startTraining':
+                handleStartTraining(userId, data);
+                break;
+
+            case 'ping':
+                sendToClient(ws, 'pong');
+                break;
+        }
+    }
 });
 
-// Mesaj işleme
-function handleMessage(data, ws) {
-    switch (data.type) {
-        case 'auth':
-            handleAuth(data, ws);
-            break;
-            
-        case 'get_lobby':
-            sendLobbyUpdate(ws);
-            break;
-            
-        case 'create_room':
-            handleCreateRoom(data, ws);
-            break;
-            
-        case 'join_room':
-            handleJoinRoom(data, ws);
-            break;
-            
-        case 'leave_room':
-            handleLeaveRoom(ws);
-            break;
-            
-        case 'start_game':
-            handleStartGame(ws);
-            break;
-            
-        case 'vote':
-            handleVote(data, ws);
-            break;
-            
-        case 'chat':
-            handleChat(data, ws);
-            break;
-            
-        case 'private_chat':
-            handlePrivateChat(data, ws);
-            break;
-            
-        case 'kick_player':
-            handleKickPlayer(data, ws);
-            break;
-            
-        case 'add_bot':
-            handleAddBot(data, ws);
-            break;
-            
-        case 'start_practice':
-            handleStartPractice(data, ws);
-            break;
-            
-        case 'ping':
-            // Ping cevabı
-            if (ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({ type: 'pong' }));
-            }
-            break;
-    }
-}
-
-// Kimlik doğrulama
-function handleAuth(data, ws) {
-    ws.userId = data.userId;
-    connections.set(data.userId, ws);
-    
-    ws.send(JSON.stringify({
-        type: 'auth_success',
-        userId: data.userId
-    }));
-}
-
-// Lobi güncellemesi gönder
-function sendLobbyUpdate(ws) {
-    const lobbyData = Array.from(rooms.values()).map(room => ({
-        id: room.id,
-        players: room.players.map(p => ({
-            id: p.id,
-            name: p.name,
-            profilePic: p.profilePic
-        })),
-        maxPlayers: room.settings.maxPlayers,
-        settings: room.settings,
-        status: room.status
-    }));
-    
-    ws.send(JSON.stringify({
-        type: 'lobby_update',
-        rooms: lobbyData
-    }));
-}
-
-// Oda oluştur
-function handleCreateRoom(data, ws) {
-    if (!ws.userId) return;
-    
-    const room = createRoom(ws.userId, data.settings);
-    
-    // Oyuncuyu odaya ekle
-    const player = {
-        id: ws.userId,
-        name: data.userName || 'Oyuncu',
-        profilePic: data.profilePic || 'https://ui-avatars.com/api/?name=Oyuncu&background=4361ee&color=fff&size=100',
-        roomId: room.id,
-        role: null,
-        alive: true,
-        votes: []
-    };
-    
-    room.players.push(player);
-    ws.roomId = room.id;
-    
-    ws.send(JSON.stringify({
-        type: 'room_joined',
-        room: {
-            id: room.id,
-            players: room.players,
-            ownerId: room.ownerId,
-            settings: room.settings,
-            status: room.status
+function handleAutoJoin(userId) {
+    // Find available room
+    for (const room of rooms.values()) {
+        if (!room.gameStarted && room.players.length < getTotalPlayers(room.config)) {
+            handleJoinRoom(userId, room.code);
+            return;
         }
-    }));
-    
-    updateLobby();
+    }
+
+    // Create new room if no available
+    const config = {
+        mafia: 2,
+        police: 1,
+        doctor: 1,
+        citizen: 4
+    };
+    handleCreateRoom(userId, config);
 }
 
-// Odaya katıl
-function handleJoinRoom(data, ws) {
-    if (!ws.userId) return;
-    
-    const room = rooms.get(data.roomId);
-    if (!room || room.status !== 'waiting' || room.players.length >= room.settings.maxPlayers) {
-        ws.send(JSON.stringify({
-            type: 'error',
-            message: 'Odaya katılamadınız'
-        }));
+function handleJoinRoom(userId, code) {
+    const room = rooms.get(code);
+    if (!room) {
+        sendError(userId, 'Otaq tapılmadı');
         return;
     }
-    
-    // Oyuncuyu odaya ekle
-    const player = {
-        id: ws.userId,
-        name: data.userName || 'Oyuncu',
-        profilePic: data.profilePic || 'https://ui-avatars.com/api/?name=Oyuncu&background=4361ee&color=fff&size=100',
-        roomId: room.id,
-        role: null,
-        alive: true,
-        votes: []
-    };
-    
-    room.players.push(player);
-    ws.roomId = room.id;
-    
-    // Katılan oyuncuya bilgi gönder
-    ws.send(JSON.stringify({
-        type: 'room_joined',
-        room: {
-            id: room.id,
-            players: room.players,
-            ownerId: room.ownerId,
-            settings: room.settings,
-            status: room.status
-        }
-    }));
-    
-    // Odadaki diğer oyunculara bildir
-    broadcastToRoom(room.id, {
-        type: 'room_update',
-        room: {
-            id: room.id,
-            players: room.players,
-            ownerId: room.ownerId,
-            settings: room.settings,
-            status: room.status
-        }
-    });
-    
-    updateLobby();
-}
 
-// Odadan çık
-function handleLeaveRoom(ws) {
-    if (!ws.userId || !ws.roomId) return;
-    
-    const room = rooms.get(ws.roomId);
-    if (!room) return;
-    
-    // Oyuncuyu çıkar
-    room.players = room.players.filter(p => p.id !== ws.userId);
-    
-    // Oda boşsa sil
-    if (room.players.length === 0) {
-        rooms.delete(room.id);
-        games.delete(room.id);
-    } else {
-        // Sahip çıktıysa yeni sahip seç
-        if (room.ownerId === ws.userId) {
-            room.ownerId = room.players[0].id;
-        }
-        
-        // Odadaki diğer oyunculara bildir
-        broadcastToRoom(room.id, {
-            type: 'room_update',
-            room: {
-                id: room.id,
-                players: room.players,
-                ownerId: room.ownerId,
-                settings: room.settings,
-                status: room.status
-            }
-        });
+    if (room.gameStarted) {
+        sendError(userId, 'Oyun artıq başlayıb');
+        return;
     }
-    
-    ws.roomId = null;
-    updateLobby();
+
+    const user = users.get(userId);
+    room.addPlayer(user);
+
+    sendToClient(connections.get(userId), 'roomJoined', room.toJSON());
+    broadcastToRoom(room, 'roomUpdate', room.toJSON());
 }
 
-// Oyun başlat
-function handleStartGame(ws) {
-    if (!ws.userId || !ws.roomId) return;
-    
-    const room = rooms.get(ws.roomId);
-    if (!room || room.ownerId !== ws.userId || room.players.length < 4) return;
-    
-    startGame(room.id);
+function handleCreateRoom(userId, config) {
+    const code = generateRoomCode();
+    const room = new Room(code, config, userId);
+    const user = users.get(userId);
+    room.addPlayer(user);
+
+    rooms.set(code, room);
+    sendToClient(connections.get(userId), 'roomJoined', room.toJSON());
 }
 
-// Sohbet mesajı
-function handleChat(data, ws) {
-    if (!ws.userId || !ws.roomId) return;
-    
-    const room = rooms.get(ws.roomId);
-    if (!room) return;
-    
-    const player = room.players.find(p => p.id === ws.userId);
-    if (!player) return;
-    
-    broadcastToRoom(room.id, {
-        type: 'chat_message',
-        playerId: player.id,
-        name: player.name,
-        profilePic: player.profilePic,
-        message: data.message,
-        isDiscussion: data.isDiscussion || false
-    });
-}
-
-// Özel sohbet
-function handlePrivateChat(data, ws) {
-    if (!ws.userId || !ws.roomId) return;
-    
-    const room = rooms.get(ws.roomId);
-    if (!room || !room.game) return;
-    
-    const player = room.players.find(p => p.id === ws.userId);
-    if (!player) return;
-    
-    // Mafia sohbeti veya rol bazlı özel sohbet
-    const targetRole = data.toRole || player.role;
-    
-    room.players
-        .filter(p => p.role === targetRole && p.alive)
-        .forEach(targetPlayer => {
-            const targetWs = connections.get(targetPlayer.id);
-            if (targetWs && targetWs.readyState === WebSocket.OPEN) {
-                targetWs.send(JSON.stringify({
-                    type: 'private_chat',
-                    playerId: player.id,
-                    name: player.name,
-                    profilePic: player.profilePic,
-                    message: data.message,
-                    toRole: targetRole
-                }));
-            }
-        });
-}
-
-// Oyuncu at
-function handleKickPlayer(data, ws) {
-    if (!ws.userId || !ws.roomId) return;
-    
-    const room = rooms.get(ws.roomId);
-    if (!room || room.ownerId !== ws.userId) return;
-    
-    const targetPlayer = room.players.find(p => p.id === data.playerId);
-    if (!targetPlayer) return;
-    
-    // Oyuncuyu çıkar
-    room.players = room.players.filter(p => p.id !== data.playerId);
-    
-    // Oyuncuya bildir
-    const targetWs = connections.get(data.playerId);
-    if (targetWs) {
-        targetWs.send(JSON.stringify({
-            type: 'player_kicked',
-            playerId: data.playerId
-        }));
-        
-        targetWs.roomId = null;
-    }
-    
-    // Odadaki diğer oyunculara bildir
-    broadcastToRoom(room.id, {
-        type: 'room_update',
-        room: {
-            id: room.id,
-            players: room.players,
-            ownerId: room.ownerId,
-            settings: room.settings,
-            status: room.status
+function handleLeaveRoom(userId) {
+    const room = findUserRoom(userId);
+    if (room) {
+        const shouldDelete = room.removePlayer(userId);
+        if (shouldDelete) {
+            rooms.delete(room.code);
+        } else {
+            broadcastToRoom(room, 'roomUpdate', room.toJSON());
         }
-    });
-    
-    updateLobby();
-}
-
-// Bot ekle
-function handleAddBot(data, ws) {
-    if (!ws.roomId) return;
-    
-    const room = rooms.get(ws.roomId);
-    if (!room || room.players.length >= room.settings.maxPlayers) return;
-    
-    const bot = createBot(room.id, data.role);
-    room.players.push(bot);
-    
-    broadcastToRoom(room.id, {
-        type: 'room_update',
-        room: {
-            id: room.id,
-            players: room.players,
-            ownerId: room.ownerId,
-            settings: room.settings,
-            status: room.status
-        }
-    });
-    
-    updateLobby();
-}
-
-// Alıştırma modu
-function handleStartPractice(data, ws) {
-    if (!ws.userId) return;
-    
-    // Özel alıştırma odası oluştur
-    const roomId = 'practice_' + ws.userId;
-    const room = {
-        id: roomId,
-        ownerId: ws.userId,
-        players: [],
-        settings: {
-            mafiaCount: 2,
-            policeCount: 1,
-            doctorCount: 1,
-            maxPlayers: 10
-        },
-        status: 'waiting',
-        game: null
-    };
-    
-    rooms.set(roomId, room);
-    ws.roomId = roomId;
-    
-    // Oyuncuyu ekle
-    const player = {
-        id: ws.userId,
-        name: data.userName || 'Oyuncu',
-        profilePic: data.profilePic || 'https://ui-avatars.com/api/?name=Oyuncu&background=4361ee&color=fff&size=100',
-        roomId: roomId,
-        role: null,
-        alive: true,
-        votes: []
-    };
-    
-    room.players.push(player);
-    
-    // Botlar ekle
-    const bots = [
-        createBot(roomId, 'citizen'),
-        createBot(roomId, 'citizen'),
-        createBot(roomId, 'mafia'),
-        createBot(roomId, 'police'),
-        createBot(roomId, 'doctor')
-    ];
-    
-    bots.forEach(bot => room.players.push(bot));
-    
-    // Oyunu başlat
-    startGame(roomId);
-    
-    // Oyuncuya istediği rolü ata
-    const game = room.game;
-    const playerInGame = game.players.find(p => p.id === ws.userId);
-    if (playerInGame) {
-        playerInGame.role = data.role || 'citizen';
-        
-        ws.send(JSON.stringify({
-            type: 'role_assigned',
-            role: playerInGame.role
-        }));
     }
 }
 
-// Sunucuyu başlat
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-    console.log(`Sunucu ${PORT} portunda çalışıyor`);
-    
-    // Render uyumasın diye periyodik ping
-    setInterval(() => {
-        console.log('Sunucu aktif...');
+function handleKickPlayer(userId, playerId) {
+    const room = findUserRoom(userId);
+    if (room && room.host === userId) {
+        room.removePlayer(playerId);
+        sendToClient(connections.get(playerId), 'kicked', {});
+        broadcastToRoom(room, 'roomUpdate', room.toJSON());
+    }
+}
+
+function handleStartGame(userId) {
+    const room = findUserRoom(userId);
+    if (!room || room.host !== userId) {
+        sendError(userId, 'Yalnız otaq sahibi oyunu başlada bilər');
+        return;
+    }
+
+    if (!room.canStart()) {
+        sendError(userId, 'Oyunu başlatmaq üçün bütün oyunçular gəlməlidir');
+        return;
+    }
+
+    room.startGame();
+
+    // Send role to each player
+    room.players.forEach(player => {
+        const gameData = {
+            phase: room.phase,
+            day: room.day,
+            myRole: room.roles[player.id],
+            alivePlayers: room.alivePlayers,
+            log: []
+        };
+        sendToClient(connections.get(player.id), 'gameStarted', gameData);
+    });
+
+    // Start night phase
+    setTimeout(() => {
+        startNightPhase(room);
+    }, 5000);
+}
+
+function startNightPhase(room) {
+    room.phase = 'night';
+
+    room.players.forEach(player => {
+        if (room.alivePlayers.find(p => p.id === player.id)) {
+            const nightData = {
+                phase: 'night',
+                day: room.day,
+                myRole: room.roles[player.id],
+                alivePlayers: room.alivePlayers
+            };
+            sendToClient(connections.get(player.id), 'nightPhase', nightData);
+        }
+    });
+
+    // Auto-advance after 60 seconds
+    setTimeout(() => {
+        if (room.phase === 'night') {
+            startDayPhase(room);
+        }
     }, 60000);
+}
+
+function startDayPhase(room) {
+    room.phase = 'day';
+
+    const log = room.processNightActions();
+
+    // Check win condition
+    const winner = room.checkWinCondition();
+    if (winner) {
+        endGame(room, winner);
+        return;
+    }
+
+    room.players.forEach(player => {
+        if (room.alivePlayers.find(p => p.id === player.id)) {
+            const dayData = {
+                phase: 'day',
+                day: room.day,
+                myRole: room.roles[player.id],
+                alivePlayers: room.alivePlayers,
+                log: log
+            };
+            sendToClient(connections.get(player.id), 'dayPhase', dayData);
+        }
+    });
+
+    // Auto-advance after 90 seconds
+    setTimeout(() => {
+        if (room.phase === 'day') {
+            endDayPhase(room);
+        }
+    }, 90000);
+}
+
+function endDayPhase(room) {
+    const log = room.processDayVoting();
+
+    // Check win condition
+    const winner = room.checkWinCondition();
+    if (winner) {
+        endGame(room, winner);
+        return;
+    }
+
+    room.day++;
+
+    // Start next night
+    setTimeout(() => {
+        startNightPhase(room);
+    }, 5000);
+}
+
+function endGame(room, winner) {
+    room.players.forEach(player => {
+        sendToClient(connections.get(player.id), 'gameEnd', {
+            winner: winner,
+            roles: room.roles
+        });
+    });
+
+    // Reset room
+    setTimeout(() => {
+        room.gameStarted = false;
+        room.gameState = null;
+        room.day = 1;
+        room.phase = 'day';
+        room.alivePlayers = [];
+        room.deadPlayers = [];
+        room.roles = {};
+        room.votes = {};
+        room.mafiaVotes = {};
+
+        broadcastToRoom(room, 'roomUpdate', room.toJSON());
+    }, 10000);
+}
+
+function handleMafiaVote(userId, targetId) {
+    const room = findUserRoom(userId);
+    if (room && room.roles[userId] === 'mafia') {
+        room.mafiaVotes[userId] = targetId;
+
+        // Broadcast to other mafia members
+        room.getMafiaPlayers().forEach(player => {
+            if (player.id !== userId) {
+                sendToClient(connections.get(player.id), 'mafiaVoteUpdate', {
+                    voter: users.get(userId).name,
+                    target: users.get(targetId).name
+                });
+            }
+        });
+    }
+}
+
+function handlePoliceCheck(userId, targetId) {
+    const room = findUserRoom(userId);
+    if (room && room.roles[userId] === 'police') {
+        room.policeCheck = targetId;
+        const targetRole = room.roles[targetId];
+        const isMafia = targetRole === 'mafia';
+
+        sendToClient(connections.get(userId), 'policeResult', {
+            target: users.get(targetId).name,
+            isMafia: isMafia
+        });
+    }
+}
+
+function handleDoctorSave(userId, targetId) {
+    const room = findUserRoom(userId);
+    if (room && room.roles[userId] === 'doctor') {
+        room.doctorSave = targetId;
+        sendToClient(connections.get(userId), 'doctorConfirm', {
+            target: users.get(targetId).name
+        });
+    }
+}
+
+function handleVote(userId, targetId) {
+    const room = findUserRoom(userId);
+    if (room && room.phase === 'day') {
+        room.votes[userId] = targetId;
+    }
+}
+
+function handleMafiaChat(userId, message) {
+    const room = findUserRoom(userId);
+    if (room && room.roles[userId] === 'mafia') {
+        const chatMessage = {
+            sender: users.get(userId).name,
+            message: message,
+            timestamp: Date.now()
+        };
+
+        room.mafiaChat.push(chatMessage);
+
+        // Broadcast to all mafia members
+        room.getMafiaPlayers().forEach(player => {
+            sendToClient(connections.get(player.id), 'mafiaMessage', chatMessage);
+        });
+    }
+}
+
+function handleStartTraining(userId, data) {
+    // Create training room with bots
+    const config = {
+        mafia: 2,
+        police: 1,
+        doctor: 1,
+        citizen: data.botCount - 4
+    };
+
+    const code = generateRoomCode();
+    const room = new Room(code, config, userId);
+    const user = users.get(userId);
+    room.addPlayer(user);
+
+    // Add bots
+    for (let i = 1; i < data.botCount; i++) {
+        const bot = {
+            id: `bot_${i}`,
+            name: `Bot ${i}`,
+            photo: 'https://via.placeholder.com/50',
+            isBot: true
+        };
+        room.addPlayer(bot);
+    }
+
+    // Override user's role
+    rooms.set(code, room);
+    room.startGame();
+    room.roles[userId] = data.role;
+
+    const gameData = {
+        phase: room.phase,
+        day: room.day,
+        myRole: room.roles[userId],
+        alivePlayers: room.alivePlayers,
+        log: ['Məşq rejimi başladı']
+    };
+
+    sendToClient(connections.get(userId), 'gameStarted', gameData);
+
+    // Simulate bot actions
+    simulateBotActions(room);
+}
+
+function simulateBotActions(room) {
+    // Simple bot AI
+    setTimeout(() => {
+        if (room.phase === 'night') {
+            // Bots make random actions
+            room.alivePlayers.forEach(player => {
+                if (player.isBot) {
+                    const role = room.roles[player.id];
+                    const targets = room.alivePlayers.filter(p => p.id !== player.id);
+                    const randomTarget = targets[Math.floor(Math.random() * targets.length)];
+
+                    if (role === 'mafia') {
+                        room.mafiaVotes[player.id] = randomTarget.id;
+                    } else if (role === 'doctor') {
+                        room.doctorSave = randomTarget.id;
+                    }
+                }
+            });
+        } else if (room.phase === 'day') {
+            // Bots vote randomly
+            room.alivePlayers.forEach(player => {
+                if (player.isBot) {
+                    const targets = room.alivePlayers.filter(p => p.id !== player.id);
+                    const randomTarget = targets[Math.floor(Math.random() * targets.length)];
+                    room.votes[player.id] = randomTarget.id;
+                }
+            });
+        }
+    }, 5000);
+}
+
+function handleDisconnect(userId) {
+    const room = findUserRoom(userId);
+    if (room && room.gameStarted) {
+        // Save game state for reconnection
+        const userState = {
+            roomCode: room.code,
+            role: room.roles[userId],
+            timestamp: Date.now()
+        };
+        users.set(`${userId}_state`, userState);
+    }
+}
+
+function findUserRoom(userId) {
+    for (const room of rooms.values()) {
+        if (room.players.find(p => p.id === userId)) {
+            return room;
+        }
+    }
+    return null;
+}
+
+function getTotalPlayers(config) {
+    return config.mafia + config.police + config.doctor + config.citizen;
+}
+
+function generateRoomCode() {
+    return Math.random().toString(36).substring(2, 8).toUpperCase();
+}
+
+function sendToClient(ws, type, data) {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type, data }));
+    }
+}
+
+function sendError(userId, message) {
+    const ws = connections.get(userId);
+    if (ws) {
+        sendToClient(ws, 'error', { message });
+    }
+}
+
+function broadcastToRoom(room, type, data) {
+    room.players.forEach(player => {
+        const ws = connections.get(player.id);
+        if (ws) {
+            sendToClient(ws, type, data);
+        }
+    });
+}
+
+// Keep server awake
+setInterval(() => {
+    console.log('Server is alive:', new Date().toISOString());
+}, 30000);
+
+// Self-ping to prevent Render sleep
+if (process.env.RENDER) {
+    const https = require('https');
+    setInterval(() => {
+        https.get('https://saskioyunu-1.onrender.com/ping', (res) => {
+            console.log('Self-ping:', res.statusCode);
+        }).on('error', (err) => {
+            console.error('Self-ping error:', err);
+        });
+    }, 25000); // Every 25 seconds
+}
+
+server.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
 });
