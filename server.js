@@ -108,6 +108,25 @@ class Room {
         }
     }
 
+    resumeTimers() {
+        if (!this.gameStarted || !this.phaseEndTime) return;
+
+        const now = Date.now();
+        const delay = this.phaseEndTime - now;
+
+        if (delay <= 0) {
+            // If time already passed, move to next phase immediately
+            if (this.phase === 'night') startDayPhase(this);
+            else if (this.phase === 'day') endDayPhase(this);
+        } else {
+            this.clearPhaseTimeout();
+            this.phaseTimeoutId = setTimeout(() => {
+                if (this.phase === 'night') startDayPhase(this);
+                else if (this.phase === 'day') endDayPhase(this);
+            }, delay);
+        }
+    }
+
     addPlayer(player) {
         if (!this.players.find(p => p.id === player.id)) {
             this.players.push(player);
@@ -117,6 +136,7 @@ class Room {
     removePlayer(playerId) {
         this.players = this.players.filter(p => p.id !== playerId);
         if (this.players.length === 0) {
+            this.clearPhaseTimeout(); // IMPORTANT: Clear timers if room is empty
             return true; // Room should be deleted
         }
         if (this.host === playerId && this.players.length > 0) {
@@ -270,6 +290,11 @@ try {
                 const room = new Room(roomData.code, roomData.config, roomData.host, roomData.name, roomData.password);
                 Object.assign(room, roomData);
                 rooms.set(room.code, room);
+
+                // RESUME TIMERS FOR ACTIVE GAMES
+                if (room.gameStarted) {
+                    room.resumeTimers();
+                }
             });
         }
     }
@@ -461,6 +486,29 @@ function handleCreateRoom(userId, data) {
 function handleLeaveRoom(userId) {
     const room = findUserRoom(userId);
     if (room) {
+        if (room.gameStarted) {
+            // Mark as dead if game is running
+            const player = room.players.find(p => p.id === userId);
+            const isAlive = room.alivePlayers.find(p => p.id === userId);
+
+            if (isAlive) {
+                room.alivePlayers = room.alivePlayers.filter(p => p.id !== userId);
+                room.deadPlayers.push(player);
+
+                const logMsg = `${player.name} oyundan ayrıldığı üçün öldü.`;
+                broadcastToRoom(room, 'statusMessage', {
+                    message: logMsg,
+                    type: 'warning'
+                });
+
+                // Check win condition
+                const winner = room.checkWinCondition();
+                if (winner) {
+                    endGame(room, winner);
+                }
+            }
+        }
+
         const shouldDelete = room.removePlayer(userId);
         if (shouldDelete) {
             rooms.delete(room.code);
@@ -522,7 +570,8 @@ function startNightPhase(room) {
                 phase: 'night',
                 day: room.day,
                 myRole: room.roles[player.id],
-                alivePlayers: room.alivePlayers
+                alivePlayers: room.alivePlayers,
+                remainingTime: 60
             };
             sendToClient(connections.get(player.id), 'nightPhase', nightData);
         }
@@ -563,7 +612,8 @@ function startDayPhase(room) {
                 day: room.day,
                 myRole: room.roles[player.id],
                 alivePlayers: room.alivePlayers,
-                log: log
+                log: log,
+                remainingTime: 90
             };
             sendToClient(connections.get(player.id), 'dayPhase', dayData);
         }
@@ -818,7 +868,7 @@ function handleSyncState(userId) {
         const gameState = {
             phase: room.phase,
             day: room.day,
-            myRole: room.roles[userId],
+            myRole: room.roles[userId] || 'citizen',
             alivePlayers: room.alivePlayers,
             log: [],
             remainingTime: remainingTime
@@ -844,9 +894,41 @@ function handleDisconnect(userId) {
         const userState = {
             roomCode: room.code,
             role: room.roles[userId],
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            isAlive: !!room.alivePlayers.find(p => p.id === userId)
         };
         users.set(`${userId}_state`, userState);
+
+        // If they were alive, give them 10 seconds to reconnect or they die
+        if (userState.isAlive) {
+            setTimeout(() => {
+                // Check if they are still disconnected (no new connection for this userId)
+                if (!connections.has(userId)) {
+                    const currentRoom = findUserRoom(userId);
+                    if (currentRoom && currentRoom.gameStarted) {
+                        const isStillAlive = currentRoom.alivePlayers.find(p => p.id === userId);
+                        if (isStillAlive) {
+                            const player = currentRoom.players.find(p => p.id === userId);
+                            currentRoom.alivePlayers = currentRoom.alivePlayers.filter(p => p.id !== userId);
+                            currentRoom.deadPlayers.push(player);
+
+                            const logMsg = `${player.name} oyundan ayrıldığı üçün öldü.`;
+                            broadcastToRoom(currentRoom, 'statusMessage', {
+                                message: logMsg,
+                                type: 'warning'
+                            });
+
+                            // Check win condition
+                            const winner = currentRoom.checkWinCondition();
+                            if (winner) {
+                                endGame(currentRoom, winner);
+                            }
+                            saveState();
+                        }
+                    }
+                }
+            }, 10000); // 10 seconds grace period
+        }
     }
 }
 
@@ -881,10 +963,15 @@ function sendError(userId, message) {
 }
 
 function broadcastToRoom(room, type, data) {
+    if (!room || !room.players) return;
     room.players.forEach(player => {
         const ws = connections.get(player.id);
-        if (ws) {
-            sendToClient(ws, type, data);
+        if (ws && ws.readyState === WebSocket.OPEN) {
+            try {
+                sendToClient(ws, type, data);
+            } catch (e) {
+                console.error(`Broadcast error to ${player.id}:`, e);
+            }
         }
     });
 }
