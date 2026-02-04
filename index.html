@@ -1,255 +1,1589 @@
-<!-- index.html -->
 <!DOCTYPE html>
-<html lang="en">
+<html lang="tr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Saski Oyunu (Mafia)</title>
-    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <title>Mafia Oyunu</title>
     <style>
-        body { font-family: Arial, sans-serif; background: #f0f0f0; color: #333; margin: 0; padding: 20px; }
-        #main-menu { text-align: center; }
-        button { padding: 10px 20px; margin: 10px; background: #007bff; color: white; border: none; cursor: pointer; }
-        button:hover { background: #0056b3; }
-        #lobby { display: none; }
-        #game { display: none; }
-        #chat { border: 1px solid #ccc; padding: 10px; height: 200px; overflow-y: scroll; margin-top: 10px; }
-        #input-bar { margin-top: 10px; }
-        input { padding: 10px; width: 200px; }
-        #player-list { list-style: none; padding: 0; }
-        #player-list li { margin: 5px 0; display: flex; align-items: center; }
-        img.profile { width: 30px; height: 30px; border-radius: 50%; margin-right: 10px; }
-        #mafia-chat { display: none; }
-        #night-actions { display: none; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Auth Screen */
+        #authScreen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            text-align: center;
+        }
+
+        .auth-box {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .profile-pic {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 3px solid #4cc9f0;
+            object-fit: cover;
+        }
+
+        .username {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4cc9f0;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(67, 97, 238, 0.4);
+        }
+
+        /* Main Screen */
+        #mainScreen {
+            display: none;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .header-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header-pic {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 2px solid #4cc9f0;
+        }
+
+        /* Lobby */
+        #lobby {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 30px;
+        }
+
+        .rooms-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+        }
+
+        .rooms-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .room-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid transparent;
+        }
+
+        .room-card:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: #4361ee;
+            transform: translateY(-3px);
+        }
+
+        .room-card.active {
+            border-color: #4cc9f0;
+            background: rgba(76, 201, 240, 0.1);
+        }
+
+        .room-info {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            font-size: 14px;
+            color: #aaa;
+        }
+
+        /* Room Panel */
+        .room-panel {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+        }
+
+        .players-list {
+            margin: 20px 0;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .player-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .player-pic {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+        }
+
+        .player-role {
+            margin-left: auto;
+            font-size: 12px;
+            padding: 3px 8px;
+            border-radius: 5px;
+            background: #4361ee;
+        }
+
+        .player-role.mafia {
+            background: #f72585;
+        }
+
+        .player-role.police {
+            background: #4cc9f0;
+        }
+
+        .player-role.doctor {
+            background: #2ec4b6;
+        }
+
+        /* Game Screen */
+        #gameScreen {
+            display: none;
+        }
+
+        .game-container {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 30px;
+            height: calc(100vh - 150px);
+        }
+
+        .game-info {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .phase-indicator {
+            text-align: center;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .phase-night {
+            background: linear-gradient(135deg, #3a0ca3 0%, #7209b7 100%);
+            color: white;
+        }
+
+        .phase-day {
+            background: linear-gradient(135deg, #f48c06 0%, #dc2f02 100%);
+            color: white;
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .action-btn {
+            background: rgba(67, 97, 238, 0.2);
+            border: 2px solid #4361ee;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .action-btn:hover:not(:disabled) {
+            background: #4361ee;
+            transform: translateY(-2px);
+        }
+
+        .action-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .action-btn.mafia {
+            border-color: #f72585;
+            background: rgba(247, 37, 133, 0.2);
+        }
+
+        .action-btn.mafia:hover:not(:disabled) {
+            background: #f72585;
+        }
+
+        /* Chat */
+        .chat-container {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 15px;
+            padding-right: 10px;
+        }
+
+        .message {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+
+        .message-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 5px;
+            font-size: 12px;
+            color: #aaa;
+        }
+
+        .message-sender-pic {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+        }
+
+        .chat-input {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 12px;
+            border-radius: 8px;
+            border: none;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 16px;
+        }
+
+        .chat-input input:focus {
+            outline: 2px solid #4361ee;
+        }
+
+        /* Bottom Bar */
+        .bottom-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .room-join {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .room-join input {
+            padding: 12px;
+            border-radius: 8px;
+            border: none;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 16px;
+            width: 200px;
+        }
+
+        .create-room-btn {
+            background: linear-gradient(135deg, #f72585 0%, #b5179e 100%);
+        }
+
+        /* Role Cards */
+        .roles-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .role-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            border: 2px solid transparent;
+        }
+
+        .role-card.active {
+            border-color: #4cc9f0;
+            background: rgba(76, 201, 240, 0.1);
+        }
+
+        .role-icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            padding: 40px;
+            border-radius: 20px;
+            max-width: 500px;
+            width: 90%;
+            border: 2px solid #4361ee;
+        }
+
+        .modal h2 {
+            margin-bottom: 20px;
+            color: #4cc9f0;
+            text-align: center;
+        }
+
+        .role-selector {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .role-option {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .role-option:hover {
+            background: rgba(67, 97, 238, 0.2);
+            border-color: #4361ee;
+        }
+
+        .role-option.selected {
+            background: rgba(76, 201, 240, 0.2);
+            border-color: #4cc9f0;
+        }
+
+        /* Practice Mode */
+        #practiceModeScreen {
+            display: none;
+        }
+
+        .practice-controls {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .bot-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        /* Utility Classes */
+        .hidden {
+            display: none !important;
+        }
+
+        .visible {
+            display: block !important;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .mt-20 {
+            margin-top: 20px;
+        }
+
+        .mb-20 {
+            margin-bottom: 20px;
+        }
+
+        .online-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #2ec4b6;
+            display: inline-block;
+            margin-right: 5px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            #lobby, .game-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .rooms-list {
+                grid-template-columns: 1fr;
+            }
+            
+            .bottom-bar {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            
+            .room-join input {
+                width: 150px;
+            }
+        }
+
+        /* Animations */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #4361ee;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3a0ca3;
+        }
     </style>
 </head>
 <body>
-    <div id="main-menu">
-        <h1>Saski Oyunu (Mafia)</h1>
-        <button id="auto-join">Otomatik Katıl</button>
-        <button id="create-room">Oda Oluştur</button>
-        <div id="rooms-list"></div>
-        <div id="input-bar">
-            <input id="room-number" type="text" placeholder="Oda Numarası">
-            <button id="join-room">Gir</button>
+    <!-- Authentication Screen -->
+    <div id="authScreen" class="container">
+        <div class="auth-box">
+            <div class="user-info">
+                <img id="userProfilePic" class="profile-pic" src="" alt="Profile">
+                <div class="username" id="userName"></div>
+            </div>
+            <button onclick="enterLobby()" class="btn">Lobiye Gir</button>
+            <div class="mt-20">
+                <button onclick="enterPracticeMode()" class="btn" style="background: linear-gradient(135deg, #f48c06 0%, #dc2f02 100%);">
+                    Alıştırma Modu
+                </button>
+            </div>
         </div>
-        <button id="demo-mode">Demo Modu (Botlarla)</button>
     </div>
 
-    <div id="lobby">
-        <h2>Oda: <span id="room-id"></span></h2>
-        <ul id="player-list"></ul>
-        <div id="role-settings" style="display: none;">
-            <label>Mafia Sayısı: <input id="mafia-count" type="number" min="1" value="2"></label>
-            <label>Polis Sayısı: <input id="police-count" type="number" min="1" value="1"></label>
-            <label>Vatandaş Sayısı: <input id="citizen-count" type="number" min="1" value="4"></label>
-            <button id="start-game">Oyunu Başlat</button>
+    <!-- Main Screen -->
+    <div id="mainScreen" class="container">
+        <div class="header">
+            <div class="header-info">
+                <img id="headerProfilePic" class="header-pic" src="" alt="Profile">
+                <div>
+                    <div id="headerUserName" style="font-size: 18px; font-weight: bold;"></div>
+                    <div style="font-size: 14px; color: #aaa;" id="userRole"></div>
+                </div>
+            </div>
+            <button onclick="leaveRoom()" class="btn" id="leaveBtn" style="display: none;">Odadan Çık</button>
         </div>
-        <button id="kick-player" style="display: none;">Oyuncuyu At</button>
-        <div id="chat"></div>
-        <input id="chat-input" type="text" placeholder="Mesaj yaz...">
-        <button id="send-chat">Gönder</button>
+
+        <!-- Lobby Screen -->
+        <div id="lobbyScreen">
+            <div id="lobby">
+                <div class="rooms-section">
+                    <h2>Odalar</h2>
+                    <button onclick="createRoom()" class="btn create-room-btn mt-20">Oda Oluştur</button>
+                    <div class="rooms-list" id="roomsList"></div>
+                </div>
+                <div class="room-panel">
+                    <h2>Oda Bilgileri</h2>
+                    <div id="roomInfo" style="color: #aaa; font-style: italic;">
+                        Oda seçilmedi
+                    </div>
+                    <div class="players-list" id="playersList"></div>
+                    <div id="roomControls" style="display: none;">
+                        <button onclick="startGame()" class="btn" id="startBtn">Oyunu Başlat</button>
+                        <button onclick="kickPlayer()" class="btn" style="background: #f72585; margin-left: 10px;">
+                            Oyuncu At
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="gameScreen">
+            <div class="game-container">
+                <div>
+                    <div class="game-info">
+                        <div class="phase-indicator" id="phaseIndicator"></div>
+                        <div id="gameInfo"></div>
+                        <div class="action-buttons" id="actionButtons"></div>
+                        <div class="roles-container" id="rolesContainer"></div>
+                    </div>
+                    
+                    <div class="chat-container">
+                        <h3>Genel Sohbet</h3>
+                        <div class="chat-messages" id="generalChat"></div>
+                        <div class="chat-input">
+                            <input type="text" id="generalMessage" placeholder="Mesajınız...">
+                            <button onclick="sendGeneralMessage()" class="btn">Gönder</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="chat-container">
+                    <h3>Özel Sohbet <span id="privateChatTitle"></span></h3>
+                    <div class="chat-messages" id="privateChat"></div>
+                    <div class="chat-input">
+                        <input type="text" id="privateMessage" placeholder="Özel mesajınız...">
+                        <button onclick="sendPrivateMessage()" class="btn">Gönder</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Practice Mode Screen -->
+        <div id="practiceModeScreen">
+            <div class="text-center mb-20">
+                <h2>Alıştırma Modu</h2>
+                <p style="color: #aaa;">Farklı rolleri denemek için botlarla oyna</p>
+            </div>
+            
+            <div class="practice-controls">
+                <div class="role-selector">
+                    <div class="role-option selected" onclick="selectPracticeRole('citizen')">
+                        <div class="role-icon">👨‍🌾</div>
+                        <div>Vatandaş</div>
+                    </div>
+                    <div class="role-option" onclick="selectPracticeRole('mafia')">
+                        <div class="role-icon">🕵️</div>
+                        <div>Mafia</div>
+                    </div>
+                    <div class="role-option" onclick="selectPracticeRole('police')">
+                        <div class="role-icon">👮</div>
+                        <div>Polis</div>
+                    </div>
+                    <div class="role-option" onclick="selectPracticeRole('doctor')">
+                        <div class="role-icon">👨‍⚕️</div>
+                        <div>Doktor</div>
+                    </div>
+                </div>
+                
+                <div class="bot-controls">
+                    <button onclick="addBot('citizen')" class="action-btn">Vatandaş Bot Ekle</button>
+                    <button onclick="addBot('mafia')" class="action-btn mafia">Mafia Bot Ekle</button>
+                    <button onclick="addBot('police')" class="action-btn">Polis Bot Ekle</button>
+                    <button onclick="addBot('doctor')" class="action-btn">Doktor Bot Ekle</button>
+                </div>
+                
+                <button onclick="startPracticeGame()" class="btn mt-20">Alıştırma Oyununu Başlat</button>
+                <button onclick="exitPracticeMode()" class="btn mt-20" style="background: #f72585;">
+                    Alıştırma Modundan Çık
+                </button>
+            </div>
+        </div>
     </div>
 
-    <div id="game">
-        <h2>Oyun Devam Ediyor</h2>
-        <p id="phase-info"></p>
-        <ul id="game-players"></ul>
-        <div id="chat"></div>
-        <input id="chat-input" type="text" placeholder="Mesaj yaz...">
-        <button id="send-chat">Gönder</button>
-        <div id="mafia-chat">
-            <h3>Mafia Chat</h3>
-            <div id="mafia-messages"></div>
-            <input id="mafia-input" type="text" placeholder="Mafia mesajı...">
-            <button id="send-mafia">Gönder</button>
+    <!-- Bottom Bar -->
+    <div class="bottom-bar">
+        <div class="room-join">
+            <input type="text" id="roomCodeInput" placeholder="Oda Kodu">
+            <button onclick="joinRoomWithCode()" class="btn">Odaya Katıl</button>
         </div>
-        <div id="night-actions"></div>
+        <div>
+            <span class="online-indicator"></span>
+            <span id="connectionStatus">Bağlantı kuruluyor...</span>
+        </div>
+        <button onclick="toggleSound()" class="btn" id="soundBtn">🔊 Ses Açık</button>
+    </div>
+
+    <!-- Create Room Modal -->
+    <div id="createRoomModal" class="modal">
+        <div class="modal-content">
+            <h2>Oda Oluştur</h2>
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 10px;">Mafia Sayısı:</label>
+                <select id="mafiaCount" style="width: 100%; padding: 10px; border-radius: 8px; background: rgba(255, 255, 255, 0.1); color: white; border: none;">
+                    <option value="1">1 Mafia</option>
+                    <option value="2">2 Mafia</option>
+                    <option value="3">3 Mafia</option>
+                </select>
+            </div>
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 10px;">Polis Sayısı:</label>
+                <select id="policeCount" style="width: 100%; padding: 10px; border-radius: 8px; background: rgba(255, 255, 255, 0.1); color: white; border: none;">
+                    <option value="1">1 Polis</option>
+                    <option value="2">2 Polis</option>
+                </select>
+            </div>
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 10px;">Doktor Sayısı:</label>
+                <select id="doctorCount" style="width: 100%; padding: 10px; border-radius: 8px; background: rgba(255, 255, 255, 0.1); color: white; border: none;">
+                    <option value="1">1 Doktor</option>
+                    <option value="0">Yok</option>
+                </select>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button onclick="confirmCreateRoom()" class="btn" style="flex: 1;">Oluştur</button>
+                <button onclick="closeModal('createRoomModal')" class="btn" style="flex: 1; background: #f72585;">İptal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Role Assignment Modal -->
+    <div id="roleModal" class="modal">
+        <div class="modal-content">
+            <h2>Rolünüz</h2>
+            <div class="text-center" id="roleContent"></div>
+            <button onclick="closeModal('roleModal')" class="btn mt-20" style="width: 100%;">Tamam</button>
+        </div>
+    </div>
+
+    <!-- Vote Modal -->
+    <div id="voteModal" class="modal">
+        <div class="modal-content">
+            <h2 id="voteTitle">Oy Ver</h2>
+            <div id="voteOptions"></div>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button onclick="submitVote()" class="btn" style="flex: 1;">Onayla</button>
+                <button onclick="closeModal('voteModal')" class="btn" style="flex: 1; background: #f72585;">İptal</button>
+            </div>
+        </div>
     </div>
 
     <script>
-        const socket = io();
-        let user = null;
-        let roomId = null;
-        let isOwner = false;
-        let role = null;
-        let players = [];
+        // WebSocket bağlantısı
+        let socket = null;
+        let userId = null;
+        let currentRoom = null;
+        let userRole = null;
+        let currentPhase = null;
+        let selectedVote = null;
+        let practiceMode = false;
+        let practiceRole = 'citizen';
+        let soundEnabled = true;
+        let reconnectAttempts = 0;
+        const maxReconnectAttempts = 5;
+        const reconnectDelay = 3000;
 
-        // Telegram Init
-        window.Telegram.WebApp.ready();
-        user = window.Telegram.WebApp.initDataUnsafe.user;
-        if (!user) {
-            alert('Telegram üzerinden giriş yapın!');
-            return;
-        }
-        const { id: userId, first_name: name, photo_url: photo } = user;
-
-        socket.emit('login', { userId, name, photo });
-
-        // Auto Join
-        document.getElementById('auto-join').addEventListener('click', () => {
-            socket.emit('auto-join');
-        });
-
-        // Create Room
-        document.getElementById('create-room').addEventListener('click', () => {
-            socket.emit('create-room');
-        });
-
-        // Join Room
-        document.getElementById('join-room').addEventListener('click', () => {
-            const inputRoom = document.getElementById('room-number').value;
-            socket.emit('join-room', inputRoom);
-        });
-
-        // Demo Mode
-        document.getElementById('demo-mode').addEventListener('click', () => {
-            socket.emit('create-room', true); // Demo flag
-        });
-
-        // Socket Events
-        socket.on('room-created', (id) => {
-            roomId = id;
-            document.getElementById('room-id').textContent = id;
-            document.getElementById('main-menu').style.display = 'none';
-            document.getElementById('lobby').style.display = 'block';
-            isOwner = true;
-            document.getElementById('role-settings').style.display = 'block';
-            document.getElementById('kick-player').style.display = 'block';
-        });
-
-        socket.on('joined-room', (data) => {
-            roomId = data.roomId;
-            players = data.players;
-            updatePlayerList();
-            document.getElementById('main-menu').style.display = 'none';
-            document.getElementById('lobby').style.display = 'block';
-            if (data.isOwner) {
-                isOwner = true;
-                document.getElementById('role-settings').style.display = 'block';
-                document.getElementById('kick-player').style.display = 'block';
-            }
-        });
-
-        socket.on('player-list', (list) => {
-            players = list;
-            updatePlayerList();
-        });
-
-        socket.on('chat-message', (msg) => {
-            const chat = document.getElementById('chat');
-            chat.innerHTML += `<p>${msg}</p>`;
-            chat.scrollTop = chat.scrollHeight;
-        });
-
-        // Send Chat
-        document.getElementById('send-chat').addEventListener('click', () => {
-            const input = document.getElementById('chat-input');
-            socket.emit('chat', { roomId, message: input.value });
-            input.value = '';
-        });
-
-        // Start Game
-        document.getElementById('start-game').addEventListener('click', () => {
-            const mafia = parseInt(document.getElementById('mafia-count').value);
-            const police = parseInt(document.getElementById('police-count').value);
-            const citizen = parseInt(document.getElementById('citizen-count').value);
-            if (mafia + police + citizen !== players.length) return alert('Toplam oyuncu sayısı eşleşmiyor!');
-            socket.emit('start-game', { mafia, police, citizen });
-        });
-
-        socket.on('game-started', (assignedRole) => {
-            role = assignedRole;
-            alert(`Rolün: ${role}`);
-            document.getElementById('lobby').style.display = 'none';
-            document.getElementById('game').style.display = 'block';
-            startGameLoop();
-        });
-
-        // Game Phases
-        function startGameLoop() {
-            // Simplified phase management client-side, but sync with server
-        }
-
-        socket.on('phase-change', (phase) => {
-            document.getElementById('phase-info').textContent = `Faz: ${phase}`;
-            if (phase === 'gece') {
-                if (role === 'mafia') {
-                    document.getElementById('mafia-chat').style.display = 'block';
-                } else if (role === 'doktor') {
-                    showDoctorActions();
+        // Telegram Web App başlatma
+        function initTelegramWebApp() {
+            if (window.Telegram && window.Telegram.WebApp) {
+                const tg = window.Telegram.WebApp;
+                tg.expand();
+                
+                const user = tg.initDataUnsafe?.user;
+                if (user) {
+                    userId = user.id.toString();
+                    document.getElementById('userName').textContent = user.first_name || 'Kullanıcı';
+                    document.getElementById('headerUserName').textContent = user.first_name || 'Kullanıcı';
+                    
+                    if (user.photo_url) {
+                        document.getElementById('userProfilePic').src = user.photo_url;
+                        document.getElementById('headerProfilePic').src = user.photo_url;
+                    } else {
+                        const defaultPic = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.first_name || 'U')}&background=4361ee&color=fff&size=100`;
+                        document.getElementById('userProfilePic').src = defaultPic;
+                        document.getElementById('headerProfilePic').src = defaultPic;
+                    }
                 } else {
-                    document.getElementById('night-actions').innerHTML = '<p>Gece fazı: Bekle...</p>';
+                    // Test için demo kullanıcı
+                    userId = 'demo_' + Date.now();
+                    document.getElementById('userName').textContent = 'Demo Kullanıcı';
+                    document.getElementById('headerUserName').textContent = 'Demo Kullanıcı';
+                    const defaultPic = `https://ui-avatars.com/api/?name=Demo&background=4361ee&color=fff&size=100`;
+                    document.getElementById('userProfilePic').src = defaultPic;
+                    document.getElementById('headerProfilePic').src = defaultPic;
                 }
             } else {
-                document.getElementById('mafia-chat').style.display = 'none';
-                document.getElementById('night-actions').style.display = 'none';
+                // Telegram dışında test için
+                userId = 'test_' + Date.now();
+                document.getElementById('userName').textContent = 'Test Kullanıcı';
+                document.getElementById('headerUserName').textContent = 'Test Kullanıcı';
+                const defaultPic = `https://ui-avatars.com/api/?name=Test&background=4361ee&color=fff&size=100`;
+                document.getElementById('userProfilePic').src = defaultPic;
+                document.getElementById('headerProfilePic').src = defaultPic;
             }
-        });
+            
+            connectWebSocket();
+        }
 
-        // Mafia Send
-        document.getElementById('send-mafia').addEventListener('click', () => {
-            const input = document.getElementById('mafia-input');
-            socket.emit('mafia-chat', { roomId, message: input.value });
-            input.value = '';
-        });
-
-        socket.on('mafia-message', (msg) => {
-            const mafiaChat = document.getElementById('mafia-messages');
-            mafiaChat.innerHTML += `<p>${msg}</p>`;
-            mafiaChat.scrollTop = mafiaChat.scrollHeight;
-        });
-
-        // Doctor Actions
-        function showDoctorActions() {
-            const actions = document.getElementById('night-actions');
-            actions.style.display = 'block';
-            actions.innerHTML = '<h3>Bir kişiyi tedavi et</h3>';
-            players.forEach(p => {
-                if (p.alive) {
-                    const btn = document.createElement('button');
-                    btn.textContent = p.name;
-                    btn.onclick = () => socket.emit('doctor-save', { roomId, target: p.userId });
-                    actions.appendChild(btn);
+        // WebSocket bağlantısı
+        function connectWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}`;
+            
+            socket = new WebSocket(wsUrl);
+            
+            socket.onopen = () => {
+                console.log('WebSocket bağlantısı kuruldu');
+                updateConnectionStatus('Bağlı', '#2ec4b6');
+                reconnectAttempts = 0;
+                
+                // Kullanıcı bilgilerini gönder
+                const userData = {
+                    type: 'auth',
+                    userId: userId,
+                    userName: document.getElementById('userName').textContent,
+                    profilePic: document.getElementById('userProfilePic').src
+                };
+                socket.send(JSON.stringify(userData));
+                
+                // Lobi bilgilerini iste
+                socket.send(JSON.stringify({ type: 'get_lobby' }));
+            };
+            
+            socket.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                handleServerMessage(data);
+            };
+            
+            socket.onclose = () => {
+                console.log('WebSocket bağlantısı kapandı');
+                updateConnectionStatus('Bağlantı kesildi, yeniden bağlanılıyor...', '#f72585');
+                
+                // Yeniden bağlanmayı dene
+                if (reconnectAttempts < maxReconnectAttempts) {
+                    reconnectAttempts++;
+                    setTimeout(() => {
+                        console.log(`Yeniden bağlanma denemesi ${reconnectAttempts}/${maxReconnectAttempts}`);
+                        connectWebSocket();
+                    }, reconnectDelay * reconnectAttempts);
                 }
+            };
+            
+            socket.onerror = (error) => {
+                console.error('WebSocket hatası:', error);
+                updateConnectionStatus('Bağlantı hatası', '#f72585');
+            };
+        }
+
+        // Sunucu mesajlarını işle
+        function handleServerMessage(data) {
+            switch (data.type) {
+                case 'auth_success':
+                    console.log('Kimlik doğrulama başarılı');
+                    break;
+                    
+                case 'lobby_update':
+                    updateRoomsList(data.rooms);
+                    break;
+                    
+                case 'room_joined':
+                    currentRoom = data.room;
+                    showRoomInfo(data.room);
+                    break;
+                    
+                case 'room_update':
+                    updateRoomInfo(data.room);
+                    break;
+                    
+                case 'game_start':
+                    startGameUI(data.game);
+                    break;
+                    
+                case 'phase_change':
+                    changePhase(data.phase);
+                    break;
+                    
+                case 'role_assigned':
+                    showRoleAssignment(data.role);
+                    break;
+                    
+                case 'vote_request':
+                    showVoteModal(data);
+                    break;
+                    
+                case 'vote_result':
+                    showVoteResult(data);
+                    break;
+                    
+                case 'chat_message':
+                    receiveChatMessage(data);
+                    break;
+                    
+                case 'private_chat':
+                    receivePrivateMessage(data);
+                    break;
+                    
+                case 'game_over':
+                    showGameOver(data);
+                    break;
+                    
+                case 'player_kicked':
+                    if (data.playerId === userId) {
+                        alert('Odadan atıldınız!');
+                        leaveRoom();
+                    }
+                    break;
+            }
+        }
+
+        // Lobiye gir
+        function enterLobby() {
+            document.getElementById('authScreen').style.display = 'none';
+            document.getElementById('mainScreen').style.display = 'block';
+            document.getElementById('lobbyScreen').style.display = 'block';
+            document.getElementById('gameScreen').style.display = 'none';
+            document.getElementById('practiceModeScreen').style.display = 'none';
+        }
+
+        // Alıştırma moduna gir
+        function enterPracticeMode() {
+            practiceMode = true;
+            document.getElementById('authScreen').style.display = 'none';
+            document.getElementById('mainScreen').style.display = 'block';
+            document.getElementById('lobbyScreen').style.display = 'none';
+            document.getElementById('gameScreen').style.display = 'none';
+            document.getElementById('practiceModeScreen').style.display = 'block';
+        }
+
+        // Alıştırma modundan çık
+        function exitPracticeMode() {
+            practiceMode = false;
+            enterLobby();
+        }
+
+        // Alıştırma rolü seç
+        function selectPracticeRole(role) {
+            practiceRole = role;
+            document.querySelectorAll('.role-option').forEach(el => el.classList.remove('selected'));
+            event.target.closest('.role-option').classList.add('selected');
+        }
+
+        // Bot ekle
+        function addBot(role) {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({
+                    type: 'add_bot',
+                    role: role
+                }));
+            }
+        }
+
+        // Alıştırma oyununu başlat
+        function startPracticeGame() {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({
+                    type: 'start_practice',
+                    role: practiceRole
+                }));
+            }
+        }
+
+        // Oda listesini güncelle
+        function updateRoomsList(rooms) {
+            const roomsList = document.getElementById('roomsList');
+            roomsList.innerHTML = '';
+            
+            rooms.forEach(room => {
+                const roomCard = document.createElement('div');
+                roomCard.className = 'room-card';
+                if (currentRoom && currentRoom.id === room.id) {
+                    roomCard.classList.add('active');
+                }
+                
+                roomCard.innerHTML = `
+                    <div style="font-weight: bold; font-size: 18px;">Oda ${room.id}</div>
+                    <div style="color: #aaa; margin-top: 5px;">${room.players.length}/${room.maxPlayers} oyuncu</div>
+                    <div class="room-info">
+                        <span>Mafia: ${room.settings.mafiaCount}</span>
+                        <span>Polis: ${room.settings.policeCount}</span>
+                        <span>Durum: ${room.status}</span>
+                    </div>
+                `;
+                
+                roomCard.onclick = () => joinRoom(room.id);
+                roomsList.appendChild(roomCard);
             });
         }
 
-        socket.on('save-result', (result) => {
-            alert(result);
-        });
+        // Odaya katıl
+        function joinRoom(roomId) {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({
+                    type: 'join_room',
+                    roomId: roomId
+                }));
+            }
+        }
 
-        // Update Player List
-        function updatePlayerList() {
-            const list = document.getElementById('player-list');
-            list.innerHTML = '';
-            players.forEach(p => {
-                const li = document.createElement('li');
-                li.innerHTML = `<img class="profile" src="${p.photo || ''}" alt="profile"> ${p.name}`;
-                if (isOwner && p.userId !== userId) {
-                    const kickBtn = document.createElement('button');
-                    kickBtn.textContent = 'At';
-                    kickBtn.onclick = () => socket.emit('kick', { roomId, target: p.userId });
-                    li.appendChild(kickBtn);
+        // Kod ile odaya katıl
+        function joinRoomWithCode() {
+            const code = document.getElementById('roomCodeInput').value.trim();
+            if (code) {
+                joinRoom(code);
+                document.getElementById('roomCodeInput').value = '';
+            }
+        }
+
+        // Oda oluştur modal
+        function createRoom() {
+            document.getElementById('createRoomModal').style.display = 'flex';
+        }
+
+        // Oda oluştur
+        function confirmCreateRoom() {
+            const mafiaCount = parseInt(document.getElementById('mafiaCount').value);
+            const policeCount = parseInt(document.getElementById('policeCount').value);
+            const doctorCount = parseInt(document.getElementById('doctorCount').value);
+            
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({
+                    type: 'create_room',
+                    settings: {
+                        mafiaCount: mafiaCount,
+                        policeCount: policeCount,
+                        doctorCount: doctorCount,
+                        maxPlayers: mafiaCount + policeCount + doctorCount + 5 // Vatandaşlar için
+                    }
+                }));
+            }
+            
+            closeModal('createRoomModal');
+        }
+
+        // Oda bilgilerini göster
+        function showRoomInfo(room) {
+            document.getElementById('roomInfo').innerHTML = `
+                <div style="font-weight: bold; font-size: 20px;">Oda ${room.id}</div>
+                <div style="color: #aaa; margin-top: 5px;">
+                    Mafia: ${room.settings.mafiaCount} | 
+                    Polis: ${room.settings.policeCount} | 
+                    Doktor: ${room.settings.doctorCount}
+                </div>
+                <div style="margin-top: 10px;">
+                    Durum: <span style="color: ${room.status === 'waiting' ? '#4cc9f0' : '#f72585'}">${room.status === 'waiting' ? 'Bekleniyor' : 'Oyun Başladı'}</span>
+                </div>
+            `;
+            
+            updatePlayersList(room.players);
+            
+            // Odayı kuran kişi kontrolleri görebilir
+            if (room.ownerId === userId) {
+                document.getElementById('roomControls').style.display = 'block';
+            } else {
+                document.getElementById('roomControls').style.display = 'none';
+            }
+            
+            document.getElementById('leaveBtn').style.display = 'block';
+        }
+
+        // Oyuncu listesini güncelle
+        function updatePlayersList(players) {
+            const playersList = document.getElementById('playersList');
+            playersList.innerHTML = '';
+            
+            players.forEach(player => {
+                const playerItem = document.createElement('div');
+                playerItem.className = 'player-item';
+                
+                let roleText = '';
+                let roleClass = '';
+                if (player.role) {
+                    roleText = player.role === 'mafia' ? 'Mafia' : 
+                               player.role === 'police' ? 'Polis' :
+                               player.role === 'doctor' ? 'Doktor' : 'Vatandaş';
+                    roleClass = player.role;
                 }
-                list.appendChild(li);
+                
+                playerItem.innerHTML = `
+                    <img src="${player.profilePic}" class="player-pic" alt="${player.name}">
+                    <div>
+                        <div style="font-weight: bold;">${player.name}</div>
+                        <div style="font-size: 12px; color: #aaa;">${player.id === userId ? '(Siz)' : ''}</div>
+                    </div>
+                    ${roleText ? `<span class="player-role ${roleClass}">${roleText}</span>` : ''}
+                `;
+                
+                playersList.appendChild(playerItem);
             });
         }
 
-        // Reconnect Handling
-        socket.on('disconnect', () => {
-            console.log('Disconnected, reconnecting...');
-        });
+        // Oda bilgilerini güncelle
+        function updateRoomInfo(room) {
+            updatePlayersList(room.players);
+            
+            if (room.ownerId === userId) {
+                document.getElementById('startBtn').disabled = room.players.length < 4;
+            }
+        }
 
-        socket.on('reconnect', () => {
-            if (roomId) socket.emit('rejoin', roomId);
-        });
+        // Oyunu başlat
+        function startGame() {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({
+                    type: 'start_game'
+                }));
+            }
+        }
 
-        // Rooms List (optional, fetch from server if needed)
-        socket.on('rooms-update', (rooms) => {
-            const list = document.getElementById('rooms-list');
-            list.innerHTML = rooms.map(r => `<p>Oda ${r.id} (${r.players} oyuncu)</p>`).join('');
+        // Oyuncu at
+        function kickPlayer() {
+            const playerId = prompt('Atılacak oyuncunun ID\'sini girin:');
+            if (playerId && socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({
+                    type: 'kick_player',
+                    playerId: playerId
+                }));
+            }
+        }
+
+        // Odadan çık
+        function leaveRoom() {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({
+                    type: 'leave_room'
+                }));
+            }
+            
+            currentRoom = null;
+            document.getElementById('roomInfo').innerHTML = 'Oda seçilmedi';
+            document.getElementById('playersList').innerHTML = '';
+            document.getElementById('roomControls').style.display = 'none';
+            document.getElementById('leaveBtn').style.display = 'none';
+            document.querySelectorAll('.room-card').forEach(card => card.classList.remove('active'));
+        }
+
+        // Oyun UI başlat
+        function startGameUI(game) {
+            document.getElementById('lobbyScreen').style.display = 'none';
+            document.getElementById('gameScreen').style.display = 'block';
+            userRole = game.role;
+            
+            document.getElementById('userRole').textContent = 
+                userRole === 'mafia' ? 'Mafia' :
+                userRole === 'police' ? 'Polis' :
+                userRole === 'doctor' ? 'Doktor' : 'Vatandaş';
+            
+            updateRolesDisplay(game.players);
+            changePhase('day');
+        }
+
+        // Rolleri göster
+        function updateRolesDisplay(players) {
+            const container = document.getElementById('rolesContainer');
+            container.innerHTML = '';
+            
+            players.forEach(player => {
+                const roleCard = document.createElement('div');
+                roleCard.className = 'role-card';
+                if (player.id === userId) {
+                    roleCard.classList.add('active');
+                }
+                
+                let roleIcon = '👨‍🌾';
+                let roleName = 'Vatandaş';
+                
+                if (player.role === 'mafia') {
+                    roleIcon = '🕵️';
+                    roleName = 'Mafia';
+                } else if (player.role === 'police') {
+                    roleIcon = '👮';
+                    roleName = 'Polis';
+                } else if (player.role === 'doctor') {
+                    roleIcon = '👨‍⚕️';
+                    roleName = 'Doktor';
+                }
+                
+                roleCard.innerHTML = `
+                    <div class="role-icon">${roleIcon}</div>
+                    <div style="font-weight: bold; margin-bottom: 5px;">${player.name}</div>
+                    <div style="color: #aaa; font-size: 14px;">${roleName}</div>
+                    ${player.alive ? '' : '<div style="color: #f72585; font-size: 12px; margin-top: 5px;">Ölü</div>'}
+                `;
+                
+                container.appendChild(roleCard);
+            });
+        }
+
+        // Faz değişikliği
+        function changePhase(phase) {
+            currentPhase = phase;
+            const indicator = document.getElementById('phaseIndicator');
+            const gameInfo = document.getElementById('gameInfo');
+            const actionButtons = document.getElementById('actionButtons');
+            const privateChatTitle = document.getElementById('privateChatTitle');
+            
+            if (phase === 'night') {
+                indicator.className = 'phase-indicator phase-night';
+                indicator.textContent = '🌙 GECE FAZI 🌙';
+                gameInfo.textContent = 'Mafialar hedef seçiyor, özel roller görevlerini yapıyor...';
+                privateChatTitle.textContent = userRole === 'mafia' ? '(Mafia Sohbeti)' : '(Özel Sohbet)';
+                
+                // Aksiyon butonları
+                actionButtons.innerHTML = '';
+                
+                if (userRole === 'mafia' && isAlive()) {
+                    const button = document.createElement('button');
+                    button.className = 'action-btn mafia';
+                    button.textContent = 'Hedef Seç';
+                    button.onclick = () => requestVote('kill');
+                    actionButtons.appendChild(button);
+                }
+                
+                if (userRole === 'police' && isAlive()) {
+                    const button = document.createElement('button');
+                    button.className = 'action-btn';
+                    button.textContent = 'Araştır';
+                    button.onclick = () => requestVote('investigate');
+                    actionButtons.appendChild(button);
+                }
+                
+                if (userRole === 'doctor' && isAlive()) {
+                    const button = document.createElement('button');
+                    button.className = 'action-btn';
+                    button.textContent = 'Tedavi Et';
+                    button.onclick = () => requestVote('heal');
+                    actionButtons.appendChild(button);
+                }
+                
+            } else {
+                indicator.className = 'phase-indicator phase-day';
+                indicator.textContent = '☀️ GÜNDÜZ FAZI ☀️';
+                gameInfo.textContent = 'Herkes uyandı! Tartışma ve oylama zamanı...';
+                privateChatTitle.textContent = '';
+                
+                // Gündüz aksiyonları
+                actionButtons.innerHTML = '';
+                
+                if (isAlive()) {
+                    const button = document.createElement('button');
+                    button.className = 'action-btn';
+                    button.textContent = 'Oy Ver';
+                    button.onclick = () => requestVote('lynch');
+                    actionButtons.appendChild(button);
+                    
+                    const discussButton = document.createElement('button');
+                    discussButton.className = 'action-btn';
+                    discussButton.textContent = 'Konuşma Başlat';
+                    discussButton.onclick = () => startDiscussion();
+                    actionButtons.appendChild(discussButton);
+                }
+            }
+        }
+
+        // Canlı mı kontrolü
+        function isAlive() {
+            // Gerçek uygulamada sunucudan alınacak
+            return true;
+        }
+
+        // Rol atamasını göster
+        function showRoleAssignment(role) {
+            userRole = role;
+            
+            let roleText = '';
+            let description = '';
+            
+            switch(role) {
+                case 'mafia':
+                    roleText = '🕵️ MAFIA 🕵️';
+                    description = 'Geceleri diğer oyuncuları öldürmeye çalışın. Mafia takımıyla özel sohbette konuşabilirsiniz.';
+                    break;
+                case 'police':
+                    roleText = '👮 POLİS 👮';
+                    description = 'Geceleri bir oyuncunun mafia olup olmadığını araştırabilirsiniz.';
+                    break;
+                case 'doctor':
+                    roleText = '👨‍⚕️ DOKTOR 👨‍⚕️';
+                    description = 'Geceleri bir oyuncuyu tedavi edebilirsiniz. Tedavi edilen oyuncu o gece öldürülmez.';
+                    break;
+                default:
+                    roleText = '👨‍🌾 VATANDAŞ 👨‍🌾';
+                    description = 'Mafiaları bulup oylayarak öldürmeye çalışın. Özel gücünüz yok ama akıl gücünüzü kullanın!';
+            }
+            
+            document.getElementById('roleContent').innerHTML = `
+                <div style="font-size: 40px; margin-bottom: 20px;">${roleText}</div>
+                <div style="color: #aaa; font-size: 16px; line-height: 1.6;">${description}</div>
+            `;
+            
+            document.getElementById('roleModal').style.display = 'flex';
+            document.getElementById('userRole').textContent = role === 'mafia' ? 'Mafia' : 
+                                                           role === 'police' ? 'Polis' :
+                                                           role === 'doctor' ? 'Doktor' : 'Vatandaş';
+        }
+
+        // Oylama modal
+        function showVoteModal(data) {
+            selectedVote = null;
+            document.getElementById('voteTitle').textContent = data.title;
+            
+            const optionsDiv = document.getElementById('voteOptions');
+            optionsDiv.innerHTML = '';
+            
+            data.options.forEach(option => {
+                const optionDiv = document.createElement('div');
+                optionDiv.className = 'role-option';
+                optionDiv.innerHTML = `
+                    <div style="font-weight: bold;">${option.name}</div>
+                    ${option.role ? `<div style="font-size: 12px; color: #aaa;">${option.role}</div>` : ''}
+                `;
+                
+                optionDiv.onclick = () => {
+                    selectedVote = option.id;
+                    document.querySelectorAll('#voteOptions .role-option').forEach(el => {
+                        el.classList.remove('selected');
+                    });
+                    optionDiv.classList.add('selected');
+                };
+                
+                optionsDiv.appendChild(optionDiv);
+            });
+            
+            document.getElementById('voteModal').style.display = 'flex';
+        }
+
+        // Oy gönder
+        function submitVote() {
+            if (selectedVote && socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({
+                    type: 'vote',
+                    targetId: selectedVote,
+                    voteType: currentPhase === 'night' ? 'night' : 'lynch'
+                }));
+                closeModal('voteModal');
+            }
+        }
+
+        // Oylama sonucu
+        function showVoteResult(data) {
+            let message = '';
+            
+            if (data.voteType === 'kill') {
+                if (data.healed) {
+                    message = `Mafialar ${data.targetName} adlı oyuncuyu vurmaya çalıştı ama DOKTOR onu tedavi etti!`;
+                } else {
+                    message = `Mafialar ${data.targetName} adlı oyuncuyu vurdu!`;
+                }
+            } else if (data.voteType === 'lynch') {
+                message = `Oylama sonucu: ${data.targetName} asıldı!`;
+                if (data.revealedRole) {
+                    message += ` Rolü: ${data.revealedRole}`;
+                }
+            } else if (data.voteType === 'investigate') {
+                message = `Polis araştırdı: ${data.targetName} ${data.isMafia ? 'Mafia!' : 'Masum.'}`;
+            }
+            
+            addGameMessage(message);
+        }
+
+        // Tartışma başlat
+        function startDiscussion() {
+            const topic = prompt('Tartışma konusu girin:');
+            if (topic) {
+                sendGeneralMessage(topic, true);
+            }
+        }
+
+        // Genel sohbet mesajı gönder
+        function sendGeneralMessage() {
+            const input = document.getElementById('generalMessage');
+            const message = input.value.trim();
+            if (message && socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({
+                    type: 'chat',
+                    message: message,
+                    isDiscussion: false
+                }));
+                input.value = '';
+            }
+        }
+
+        // Özel mesaj gönder
+        function sendPrivateMessage() {
+            const input = document.getElementById('privateMessage');
+            const message = input.value.trim();
+            if (message && socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({
+                    type: 'private_chat',
+                    message: message,
+                    toRole: userRole === 'mafia' ? 'mafia' : null
+                }));
+                input.value = '';
+            }
+        }
+
+        // Sohbet mesajı al
+        function receiveChatMessage(data) {
+            const chat = document.getElementById('generalChat');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message fade-in';
+            
+            messageDiv.innerHTML = `
+                <div class="message-header">
+                    <img src="${data.profilePic}" class="message-sender-pic" alt="${data.name}">
+                    <span style="font-weight: bold;">${data.name}</span>
+                    ${data.isDiscussion ? '<span style="color: #f48c06;">[TARTIŞMA]</span>' : ''}
+                </div>
+                <div>${data.message}</div>
+            `;
+            
+            chat.appendChild(messageDiv);
+            chat.scrollTop = chat.scrollHeight;
+        }
+
+        // Özel mesaj al
+        function receivePrivateMessage(data) {
+            if ((userRole === 'mafia' && data.toRole === 'mafia') || data.toRole === userRole) {
+                const chat = document.getElementById('privateChat');
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message fade-in';
+                
+                messageDiv.innerHTML = `
+                    <div class="message-header">
+                        <img src="${data.profilePic}" class="message-sender-pic" alt="${data.name}">
+                        <span style="font-weight: bold;">${data.name}</span>
+                        <span style="color: #f72585; font-size: 12px;">[${data.toRole === 'mafia' ? 'Mafia' : 'Özel'}]</span>
+                    </div>
+                    <div>${data.message}</div>
+                `;
+                
+                chat.appendChild(messageDiv);
+                chat.scrollTop = chat.scrollHeight;
+            }
+        }
+
+        // Oyun bitti
+        function showGameOver(data) {
+            let message = '';
+            let title = '';
+            
+            if (data.winner === 'mafia') {
+                title = '🕵️ MAFİA KAZANDI! 🕵️';
+                message = 'Mafialar şehri ele geçirdi!';
+            } else {
+                title = '🎉 VATANDAŞLAR KAZANDI! 🎉';
+                message = 'Tüm mafialar temizlendi!';
+            }
+            
+            const modalContent = `
+                <h2 style="text-align: center; margin-bottom: 20px;">${title}</h2>
+                <div style="text-align: center; font-size: 18px; margin-bottom: 20px;">${message}</div>
+                <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+                    <h3 style="margin-bottom: 10px;">Oyuncu İstatistikleri:</h3>
+                    ${data.players.map(p => `
+                        <div style="display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                            <span>${p.name}</span>
+                            <span style="color: ${p.role === 'mafia' ? '#f72585' : '#4cc9f0'}">${p.role === 'mafia' ? 'Mafia' : p.role === 'police' ? 'Polis' : p.role === 'doctor' ? 'Doktor' : 'Vatandaş'}</span>
+                        </div>
+                    `).join('')}
+                </div>
+                <button onclick="returnToLobby()" class="btn" style="width: 100%;">Lobiye Dön</button>
+            `;
+            
+            document.getElementById('roleContent').innerHTML = modalContent;
+            document.getElementById('roleModal').style.display = 'flex';
+        }
+
+        // Lobıye dön
+        function returnToLobby() {
+            closeModal('roleModal');
+            document.getElementById('gameScreen').style.display = 'none';
+            document.getElementById('lobbyScreen').style.display = 'block';
+            userRole = null;
+            document.getElementById('userRole').textContent = '';
+        }
+
+        // Modal kapat
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        // Bağlantı durumunu güncelle
+        function updateConnectionStatus(text, color) {
+            const statusEl = document.getElementById('connectionStatus');
+            const indicator = document.querySelector('.online-indicator');
+            
+            statusEl.textContent = text;
+            if (color) {
+                indicator.style.background = color;
+            }
+        }
+
+        // Ses aç/kapa
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            const btn = document.getElementById('soundBtn');
+            btn.textContent = soundEnabled ? '🔊 Ses Açık' : '🔇 Ses Kapalı';
+        }
+
+        // Oyun mesajı ekle
+        function addGameMessage(message) {
+            const chat = document.getElementById('generalChat');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message fade-in';
+            messageDiv.style.background = 'rgba(247, 37, 133, 0.2)';
+            messageDiv.style.borderLeft = '3px solid #f72585';
+            
+            messageDiv.innerHTML = `
+                <div class="message-header">
+                    <span style="color: #f72585; font-weight: bold;">🏆 OYUN BİLDİRİMİ</span>
+                </div>
+                <div>${message}</div>
+            `;
+            
+            chat.appendChild(messageDiv);
+            chat.scrollTop = chat.scrollHeight;
+            
+            if (soundEnabled) {
+                // Ses efekti buraya eklenebilir
+            }
+        }
+
+        // Ping gönder (Render uyumasın)
+        function sendPing() {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({ type: 'ping' }));
+            }
+        }
+
+        // Sayfa yüklendiğinde
+        window.onload = function() {
+            initTelegramWebApp();
+            
+            // Her 30 saniyede bir ping gönder
+            setInterval(sendPing, 30000);
+            
+            // Bağlantı kontrolü
+            setInterval(() => {
+                if (!socket || socket.readyState !== WebSocket.OPEN) {
+                    updateConnectionStatus('Bağlantı kesildi', '#f72585');
+                }
+            }, 5000);
+        };
+
+        // Klavye kısayolları
+        document.addEventListener('keydown', (e) => {
+            // Enter ile mesaj gönder
+            if (e.key === 'Enter') {
+                if (document.getElementById('generalMessage') === document.activeElement) {
+                    sendGeneralMessage();
+                } else if (document.getElementById('privateMessage') === document.activeElement) {
+                    sendPrivateMessage();
+                }
+            }
+            
+            // Escape ile modal kapat
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal').forEach(modal => {
+                    modal.style.display = 'none';
+                });
+            }
         });
     </script>
 </body>
