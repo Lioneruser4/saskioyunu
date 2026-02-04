@@ -2,79 +2,208 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mafia Oyunu - Telegram</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🔫 Profesyonel Mafia Oyunu</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="/socket.io/socket.io.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        :root {
+            --primary: #667eea;
+            --primary-dark: #5a67d8;
+            --secondary: #764ba2;
+            --success: #48bb78;
+            --danger: #f56565;
+            --warning: #ed8936;
+            --info: #4299e1;
+            --dark: #2d3748;
+            --light: #f7fafc;
+            --gray: #a0aec0;
+            --dark-gray: #4a5568;
+            --mafia-red: #e53e3e;
+            --doctor-blue: #3182ce;
+            --police-green: #38a169;
+            --citizen-gray: #718096;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
-            color: white;
+            color: var(--light);
             min-height: 100vh;
             overflow-x: hidden;
+            position: relative;
         }
 
-        .container {
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(102, 126, 234, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(118, 75, 162, 0.1) 0%, transparent 50%);
+            z-index: -1;
+        }
+
+        /* Loading Screen */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--dark);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.3s;
+        }
+
+        .loading-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loader {
+            width: 80px;
+            height: 80px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        .loading-text {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--gray);
+            text-align: center;
+        }
+
+        .loading-subtext {
+            font-size: 14px;
+            color: var(--dark-gray);
+            margin-top: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* App Container */
+        .app-container {
             max-width: 100%;
             min-height: 100vh;
             padding: 20px;
             padding-bottom: 100px;
+            position: relative;
         }
 
+        /* Header */
+        .app-header {
+            text-align: center;
+            padding: 20px 0;
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .app-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 20%;
+            right: 20%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+            border-radius: 3px;
+        }
+
+        .logo {
+            font-size: 42px;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+            text-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo-subtitle {
+            color: var(--gray);
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        /* Screen System */
         .screen {
             display: none;
-            animation: fadeIn 0.3s ease;
+            animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .screen.active {
             display: block;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
-        .header {
-            text-align: center;
-            padding: 20px 0;
-            margin-bottom: 30px;
-        }
-
-        .logo {
-            font-size: 36px;
-            font-weight: bold;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 10px;
-        }
-
-        .subtitle {
-            color: #a0aec0;
-            font-size: 14px;
-        }
-
+        /* Cards */
         .card {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 20px;
             padding: 25px;
             margin-bottom: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            box-shadow: 
+                0 10px 40px rgba(0, 0, 0, 0.2),
+                0 1px 3px rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
         }
 
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 
+                0 15px 50px rgba(0, 0, 0, 0.3),
+                0 1px 3px rgba(255, 255, 255, 0.1);
+        }
+
+        .card-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--light);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Buttons */
         .btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
             color: white;
             border: none;
             padding: 18px 25px;
@@ -89,15 +218,32 @@
             align-items: center;
             justify-content: center;
             gap: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.6s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
         }
 
         .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
         }
 
         .btn:active {
-            transform: translateY(0);
+            transform: translateY(-1px);
         }
 
         .btn-secondary {
@@ -105,14 +251,40 @@
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
-        .btn-danger {
-            background: linear-gradient(135deg, #f56565 0%, #c53030 100%);
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 10px 25px rgba(255, 255, 255, 0.1);
         }
 
         .btn-success {
-            background: linear-gradient(135deg, #48bb78 0%, #2f855a 100%);
+            background: linear-gradient(135deg, var(--success) 0%, #2f855a 100%);
         }
 
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger) 0%, #c53030 100%);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, var(--warning) 0%, #dd6b20 100%);
+        }
+
+        .btn-info {
+            background: linear-gradient(135deg, var(--info) 0%, #2b6cb0 100%);
+        }
+
+        .btn-sm {
+            padding: 12px 20px;
+            font-size: 14px;
+        }
+
+        .btn-icon {
+            width: 50px;
+            height: 50px;
+            padding: 0;
+            border-radius: 50%;
+        }
+
+        /* Inputs */
         .input-group {
             margin: 20px 0;
         }
@@ -120,28 +292,119 @@
         .input-label {
             display: block;
             margin-bottom: 10px;
-            color: #a0aec0;
+            color: var(--gray);
             font-size: 14px;
+            font-weight: 500;
         }
 
-        input, select {
+        input, select, textarea {
             width: 100%;
             padding: 18px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 2px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.07);
+            border: 2px solid rgba(255, 255, 255, 0.1);
             border-radius: 15px;
-            color: white;
+            color: var(--light);
             font-size: 16px;
             transition: all 0.3s;
+            font-family: inherit;
         }
 
-        input:focus, select:focus {
+        input:focus, select:focus, textarea:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: var(--primary);
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
+            background: rgba(255, 255, 255, 0.1);
         }
 
-        .room-list {
+        .input-with-btn {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .input-with-btn input {
+            flex: 1;
+        }
+
+        .input-with-btn .btn {
+            width: auto;
+            padding: 15px 25px;
+        }
+
+        /* User Profile */
+        .user-profile {
+            text-align: center;
+            padding: 30px 0;
+        }
+
+        .user-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            border: 4px solid var(--primary);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+            object-fit: cover;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .user-name {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 5px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .user-status {
+            font-size: 14px;
+            color: var(--gray);
+            margin-top: 10px;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            display: inline-block;
+        }
+
+        /* Role Badges */
+        .role-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            margin: 5px;
+        }
+
+        .role-mafia {
+            background: rgba(229, 62, 62, 0.2);
+            color: var(--mafia-red);
+            border: 1px solid rgba(229, 62, 62, 0.3);
+        }
+
+        .role-doctor {
+            background: rgba(49, 130, 206, 0.2);
+            color: var(--doctor-blue);
+            border: 1px solid rgba(49, 130, 206, 0.3);
+        }
+
+        .role-police {
+            background: rgba(56, 161, 105, 0.2);
+            color: var(--police-green);
+            border: 1px solid rgba(56, 161, 105, 0.3);
+        }
+
+        .role-citizen {
+            background: rgba(113, 128, 150, 0.2);
+            color: var(--citizen-gray);
+            border: 1px solid rgba(113, 128, 150, 0.3);
+        }
+
+        /* Room List */
+        .rooms-grid {
             display: grid;
             gap: 15px;
             margin-top: 20px;
@@ -154,12 +417,24 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
             cursor: pointer;
             transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .room-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
         }
 
         .room-card:hover {
             background: rgba(255, 255, 255, 0.1);
-            border-color: #667eea;
-            transform: translateY(-2px);
+            border-color: var(--primary);
+            transform: translateY(-3px);
         }
 
         .room-header {
@@ -171,33 +446,44 @@
 
         .room-id {
             font-size: 28px;
-            font-weight: bold;
+            font-weight: 900;
             letter-spacing: 2px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
-        .room-info {
-            color: #a0aec0;
+        .room-stats {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--gray);
             font-size: 14px;
+        }
+
+        .room-owner {
+            font-size: 14px;
+            color: var(--gray);
+            margin-bottom: 10px;
         }
 
         .room-settings {
             display: flex;
-            gap: 10px;
+            gap: 8px;
             flex-wrap: wrap;
-            margin-top: 10px;
+            margin-top: 15px;
         }
 
-        .setting-badge {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 5px 12px;
-            border-radius: 20px;
+        .setting-tag {
+            padding: 4px 12px;
+            background: rgba(255, 255, 255, 0.07);
+            border-radius: 12px;
             font-size: 12px;
+            color: var(--gray);
         }
 
-        .player-list {
+        /* Player List */
+        .players-grid {
             display: grid;
             gap: 12px;
             margin-top: 20px;
@@ -210,6 +496,16 @@
             background: rgba(255, 255, 255, 0.05);
             border-radius: 15px;
             border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s;
+        }
+
+        .player-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .player-card.dead {
+            opacity: 0.6;
+            filter: grayscale(0.8);
         }
 
         .player-avatar {
@@ -218,7 +514,7 @@
             border-radius: 50%;
             margin-right: 15px;
             object-fit: cover;
-            border: 3px solid #667eea;
+            border: 2px solid var(--primary);
         }
 
         .player-info {
@@ -228,226 +524,440 @@
         .player-name {
             font-weight: 600;
             margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .player-status {
             font-size: 12px;
-            color: #a0aec0;
+            color: var(--gray);
         }
 
-        .alive {
-            color: #48bb78;
+        .player-alive {
+            color: var(--success);
         }
 
-        .dead {
-            color: #f56565;
+        .player-dead {
+            color: var(--danger);
             text-decoration: line-through;
         }
 
+        .player-role {
+            font-size: 12px;
+            padding: 3px 10px;
+            border-radius: 10px;
+            margin-left: auto;
+        }
+
+        /* Game Phase */
         .game-phase {
             text-align: center;
             padding: 30px 20px;
-            background: linear-gradient(135deg, #4c51bf 0%, #702459 100%);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
             border-radius: 20px;
             margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .game-phase::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
         }
 
         .phase-title {
-            font-size: 28px;
+            font-size: 32px;
+            font-weight: 900;
             margin-bottom: 10px;
-            font-weight: bold;
+            position: relative;
         }
 
         .phase-message {
             font-size: 18px;
             opacity: 0.9;
             margin-bottom: 20px;
+            position: relative;
         }
 
         .phase-timer {
             font-size: 72px;
-            font-weight: bold;
+            font-weight: 900;
             margin: 20px 0;
             font-family: 'Courier New', monospace;
+            text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            position: relative;
         }
 
+        .phase-day {
+            font-size: 18px;
+            opacity: 0.8;
+            position: relative;
+        }
+
+        /* Role Reveal */
         .role-reveal {
             text-align: center;
-            padding: 30px;
+            padding: 40px 30px;
             background: rgba(0, 0, 0, 0.3);
-            border-radius: 20px;
+            border-radius: 25px;
             margin-bottom: 30px;
             animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.02); }
+            border: 2px solid rgba(255, 255, 255, 0.1);
         }
 
         .role-title {
-            font-size: 32px;
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-
-        .role-mafia {
-            color: #f56565;
-        }
-
-        .role-doctor {
-            color: #4299e1;
-        }
-
-        .role-police {
-            color: #48bb78;
-        }
-
-        .role-citizen {
-            color: #a0aec0;
+            font-size: 48px;
+            font-weight: 900;
+            margin-bottom: 20px;
         }
 
         .role-description {
-            font-size: 16px;
-            line-height: 1.5;
+            font-size: 18px;
+            line-height: 1.6;
             margin: 20px 0;
+            color: var(--gray);
         }
 
         .role-abilities {
             list-style: none;
-            margin-top: 20px;
+            margin: 30px 0;
+            text-align: left;
         }
 
         .role-abilities li {
-            padding: 10px;
-            background: rgba(255, 255, 255, 0.1);
-            margin: 5px 0;
-            border-radius: 10px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            margin: 10px 0;
+            border-radius: 12px;
+            border-left: 4px solid var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
 
+        .role-abilities li::before {
+            content: '✓';
+            color: var(--success);
+            font-weight: bold;
+        }
+
+        /* Chat System */
         .chat-container {
-            height: 300px;
+            height: 350px;
             overflow-y: auto;
             background: rgba(0, 0, 0, 0.3);
             border-radius: 15px;
-            padding: 15px;
+            padding: 20px;
             margin-bottom: 20px;
             border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 10px;
         }
 
         .chat-message {
             margin-bottom: 15px;
-            padding: 12px;
+            padding: 15px;
             background: rgba(255, 255, 255, 0.05);
-            border-radius: 10px;
-            border-left: 4px solid #667eea;
+            border-radius: 12px;
+            border-left: 4px solid var(--primary);
+            animation: messageAppear 0.3s ease;
+        }
+
+        .chat-message.mafia {
+            border-left-color: var(--mafia-red);
+            background: rgba(229, 62, 62, 0.1);
+        }
+
+        .chat-message.doctor {
+            border-left-color: var(--doctor-blue);
+            background: rgba(49, 130, 206, 0.1);
+        }
+
+        .chat-message.police {
+            border-left-color: var(--police-green);
+            background: rgba(56, 161, 105, 0.1);
         }
 
         .message-header {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
             font-size: 12px;
-            color: #a0aec0;
+            color: var(--gray);
+        }
+
+        .message-sender {
+            font-weight: 600;
+            color: var(--light);
+        }
+
+        .message-time {
+            opacity: 0.7;
         }
 
         .message-content {
             word-break: break-word;
-            line-height: 1.4;
+            line-height: 1.5;
         }
 
-        .mafia-chat {
-            border-left-color: #f56565;
-            background: rgba(245, 101, 101, 0.1);
-        }
-
-        .chat-input-container {
+        .chat-input-area {
             display: flex;
             gap: 10px;
-            margin-top: 20px;
+            margin-top: 15px;
         }
 
         .chat-input {
             flex: 1;
             padding: 15px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            border-radius: 15px;
-            color: white;
+            background: rgba(255, 255, 255, 0.07);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: var(--light);
+            font-size: 15px;
         }
 
-        .chat-send {
-            background: #667eea;
+        .chat-send-btn {
+            background: var(--primary);
             color: white;
             border: none;
-            padding: 15px 25px;
-            border-radius: 15px;
+            width: 60px;
+            border-radius: 12px;
             cursor: pointer;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
         }
 
+        .chat-send-btn:hover {
+            background: var(--primary-dark);
+            transform: scale(1.05);
+        }
+
+        @keyframes messageAppear {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Voting Grid */
         .voting-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
             gap: 15px;
             margin-top: 20px;
         }
 
         .vote-card {
             text-align: center;
-            padding: 20px 10px;
+            padding: 20px 15px;
             background: rgba(255, 255, 255, 0.05);
             border-radius: 15px;
             border: 2px solid transparent;
             cursor: pointer;
             transition: all 0.3s;
+            position: relative;
         }
 
         .vote-card:hover {
-            border-color: #667eea;
-            transform: scale(1.05);
+            border-color: var(--primary);
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.1);
         }
 
         .vote-card.selected {
-            border-color: #48bb78;
+            border-color: var(--success);
             background: rgba(72, 187, 120, 0.1);
+            animation: pulse 1s infinite;
+        }
+
+        .vote-card.dead {
+            opacity: 0.4;
+            filter: grayscale(1);
+            cursor: not-allowed;
+        }
+
+        .vote-card.dead:hover {
+            transform: none;
+            border-color: transparent;
         }
 
         .vote-avatar {
-            width: 60px;
-            height: 60px;
+            width: 70px;
+            height: 70px;
             border-radius: 50%;
             margin: 0 auto 10px;
             object-fit: cover;
+            border: 3px solid var(--primary);
         }
 
         .vote-name {
-            font-size: 14px;
+            font-size: 16px;
             font-weight: 600;
+            margin-bottom: 5px;
         }
 
         .vote-role {
             font-size: 12px;
-            color: #a0aec0;
-            margin-top: 5px;
+            color: var(--gray);
+            padding: 3px 10px;
+            border-radius: 10px;
+            display: inline-block;
         }
 
+        /* Game Actions */
+        .game-actions {
+            display: grid;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .action-card {
+            padding: 25px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .action-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Results Display */
+        .result-card {
+            text-align: center;
+            padding: 30px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 20px;
+            margin-bottom: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            animation: resultAppear 0.6s ease;
+        }
+
+        @keyframes resultAppear {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .result-title {
+            font-size: 28px;
+            font-weight: 900;
+            margin-bottom: 15px;
+        }
+
+        .result-message {
+            font-size: 18px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            color: var(--gray);
+        }
+
+        .result-player {
+            font-size: 24px;
+            font-weight: 700;
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(26, 32, 44, 0.95);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 15px 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+            box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .nav-btn {
+            flex: 1;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border: none;
+            border-radius: 15px;
+            color: var(--gray);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .nav-btn.active {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .nav-icon {
+            font-size: 20px;
+        }
+
+        /* Notifications */
         .notification {
             position: fixed;
-            bottom: 20px;
+            bottom: 100px;
             left: 20px;
             right: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
             color: white;
             padding: 20px;
             border-radius: 15px;
             z-index: 1000;
-            animation: slideUp 0.3s ease;
+            animation: slideUp 0.3s ease, fadeOut 0.3s ease 2.7s forwards;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
             display: none;
-        }
-
-        @keyframes slideUp {
-            from { transform: translateY(100px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
         }
 
         .notification.show {
@@ -455,8 +965,9 @@
         }
 
         .notification-title {
-            font-weight: bold;
+            font-weight: 700;
             margin-bottom: 5px;
+            font-size: 16px;
         }
 
         .notification-message {
@@ -464,74 +975,53 @@
             opacity: 0.9;
         }
 
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: rgba(26, 32, 44, 0.95);
-            backdrop-filter: blur(10px);
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 15px 20px;
-            display: flex;
-            gap: 10px;
-            z-index: 100;
+        @keyframes slideUp {
+            from {
+                transform: translateY(100px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
         }
 
-        .nav-btn {
-            flex: 1;
-            padding: 15px;
-            background: rgba(255, 255, 255, 0.1);
-            border: none;
-            border-radius: 12px;
-            color: white;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
+        @keyframes fadeOut {
+            to {
+                opacity: 0;
+                transform: translateY(20px);
+            }
         }
 
-        .nav-btn.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
         }
 
-        .nav-btn:hover {
-            transform: translateY(-2px);
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
         }
 
-        .loading {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.8);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 10000;
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border-radius: 4px;
         }
 
-        .spinner {
-            width: 50px;
-            height: 50px;
-            border: 5px solid rgba(255, 255, 255, 0.1);
-            border-top-color: #667eea;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--secondary) 100%);
         }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* Responsive */
+        /* Responsive Design */
         @media (max-width: 768px) {
-            .container {
+            .app-container {
                 padding: 15px;
-                padding-bottom: 80px;
+                padding-bottom: 90px;
+            }
+            
+            .logo {
+                font-size: 32px;
             }
             
             .card {
@@ -542,291 +1032,584 @@
                 font-size: 48px;
             }
             
+            .role-title {
+                font-size: 36px;
+            }
+            
             .voting-grid {
-                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            }
+            
+            .bottom-nav {
+                padding: 12px 15px;
+            }
+            
+            .nav-btn {
+                padding: 12px;
+                font-size: 12px;
             }
         }
 
-        /* Custom scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
+        @media (max-width: 480px) {
+            .voting-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .btn {
+                padding: 16px;
+                font-size: 15px;
+            }
         }
 
-        ::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 4px;
+        /* Utility Classes */
+        .text-center { text-align: center; }
+        .mt-1 { margin-top: 10px; }
+        .mt-2 { margin-top: 20px; }
+        .mt-3 { margin-top: 30px; }
+        .mb-1 { margin-bottom: 10px; }
+        .mb-2 { margin-bottom: 20px; }
+        .mb-3 { margin-bottom: 30px; }
+        .hidden { display: none !important; }
+        .flex { display: flex; }
+        .flex-col { flex-direction: column; }
+        .items-center { align-items: center; }
+        .justify-center { justify-content: center; }
+        .gap-2 { gap: 10px; }
+        .gap-3 { gap: 15px; }
+        .w-full { width: 100%; }
+
+        /* Demo Mode Specific */
+        .demo-mode {
+            position: relative;
         }
 
-        ::-webkit-scrollbar-thumb {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 4px;
+        .demo-mode::before {
+            content: 'DEMO';
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: var(--warning);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            z-index: 1;
+        }
+
+        .role-selector {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .role-option {
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .role-option:hover {
+            transform: translateY(-3px);
+            border-color: var(--primary);
+        }
+
+        .role-option.selected {
+            border-color: var(--success);
+            background: rgba(72, 187, 120, 0.1);
+        }
+
+        .role-icon {
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+
+        .role-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .role-desc {
+            font-size: 12px;
+            color: var(--gray);
         }
     </style>
 </head>
 <body>
-    <div class="loading" id="loading">
-        <div class="spinner"></div>
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loader"></div>
+        <div class="loading-text" id="loadingText">Mafia Oyunu Yükleniyor...</div>
+        <div class="loading-subtext">Hazırlanıyor, lütfen bekleyin</div>
     </div>
 
-    <div class="container">
-        <!-- Login Screen -->
-        <div id="login-screen" class="screen">
-            <div class="header">
-                <div class="logo">🔫 MAFIA</div>
-                <div class="subtitle">Telegram WebApp Mafia Oyunu</div>
+    <!-- App Container -->
+    <div class="app-container" id="appContainer">
+        <!-- Welcome Screen -->
+        <div class="screen active" id="welcomeScreen">
+            <div class="app-header">
+                <div class="logo">🔫 MAFIA PRO</div>
+                <div class="logo-subtitle">Profesyonel Mafia Oyunu Deneyimi</div>
             </div>
-            
+
+            <div class="user-profile" id="userProfile">
+                <img src="" alt="Avatar" class="user-avatar" id="userAvatar">
+                <div class="user-name" id="userName">Misafir</div>
+                <div class="user-status" id="userStatus">Giriş yapılıyor...</div>
+            </div>
+
             <div class="card">
-                <div style="text-align: center; margin-bottom: 30px;">
-                    <img src="" alt="Avatar" id="user-avatar" style="width: 100px; height: 100px; border-radius: 50%; margin: 0 auto 20px; border: 4px solid #667eea; object-fit: cover;">
-                    <h2 id="user-name">Yükleniyor...</h2>
-                    <p id="user-status" style="color: #a0aec0; margin-top: 10px;">Telegram ile giriş yapılıyor...</p>
+                <div class="card-title">
+                    <i class="fas fa-play-circle"></i>
+                    Oyun Modu Seçin
                 </div>
                 
-                <button class="btn" id="btn-lobby" style="display: none;">
-                    <span>🎮 Lobiye Git</span>
+                <button class="btn btn-success" id="btnTelegramLogin">
+                    <i class="fab fa-telegram"></i>
+                    <span>Telegram ile Giriş</span>
                 </button>
                 
-                <button class="btn btn-secondary" id="btn-reconnect" style="display: none;">
-                    <span>↻ Son Odaya Dön</span>
+                <button class="btn btn-secondary" id="btnDemoMode">
+                    <i class="fas fa-robot"></i>
+                    <span>Demo Modu (Botsuz)</span>
                 </button>
+                
+                <button class="btn btn-info" id="btnSoloPlay">
+                    <i class="fas fa-user-secret"></i>
+                    <span>Solo Oyna (Botlarla)</span>
+                </button>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    <i class="fas fa-info-circle"></i>
+                    Hızlı Başlangıç
+                </div>
+                <div class="input-with-btn">
+                    <input type="text" id="quickJoinCode" placeholder="Oda Kodu (örn: ABC123)" maxlength="6">
+                    <button class="btn btn-sm" id="btnQuickJoin">
+                        <i class="fas fa-door-open"></i>
+                        <span>Katıl</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    <i class="fas fa-trophy"></i>
+                    Oyun Kuralları
+                </div>
+                <div style="color: var(--gray); line-height: 1.6;">
+                    <p>• 🌙 <strong>Gece:</strong> Mafialar kurban seçer, Doktor tedavi eder, Polis sorgular</p>
+                    <p>• ☀️ <strong>Gündüz:</strong> Tüm oyuncular tartışır ve şüphelileri konuşur</p>
+                    <p>• 🗳️ <strong>Oylama:</strong> En çok oy alan kişi asılır</p>
+                    <p>• 🎯 <strong>Kazanma:</strong> Tüm mafialar ölürse vatandaşlar, mafialar çoğunluk olursa mafialar kazanır</p>
+                </div>
             </div>
         </div>
 
         <!-- Lobby Screen -->
-        <div id="lobby-screen" class="screen">
-            <div class="header">
-                <div class="logo">🎮 LOBBY</div>
-                <div class="subtitle">Oda seç veya yeni oda kur</div>
+        <div class="screen" id="lobbyScreen">
+            <div class="app-header">
+                <div class="logo">🎮 OYUN LOBBY</div>
+                <div class="logo-subtitle">Oda seç veya yeni oda kur</div>
             </div>
-            
+
             <div class="card">
-                <button class="btn" id="btn-create-room">
-                    <span>➕ Yeni Oda Kur</span>
-                </button>
-                
-                <div class="input-group">
-                    <div class="input-label">Oda Numarası ile Katıl</div>
-                    <div style="display: flex; gap: 10px;">
-                        <input type="text" id="room-code" placeholder="Örn: ABC123" maxlength="6" style="flex: 1;">
-                        <button class="btn" id="btn-join-room" style="width: auto; padding: 15px 25px;">
-                            <span>Katıl</span>
-                        </button>
-                    </div>
+                <div class="input-with-btn">
+                    <input type="text" id="roomCodeInput" placeholder="Oda Kodu ile Katıl" maxlength="6">
+                    <button class="btn btn-sm" id="btnJoinRoom">
+                        <i class="fas fa-sign-in-alt"></i>
+                        <span>Katıl</span>
+                    </button>
                 </div>
             </div>
-            
+
             <div class="card">
-                <h3 style="margin-bottom: 20px;">🏠 Aktif Odalar</h3>
-                <div id="rooms-list" class="room-list">
-                    <!-- Odalar buraya gelecek -->
+                <div class="flex items-center justify-between mb-2">
+                    <div class="card-title">
+                        <i class="fas fa-plus-circle"></i>
+                        Yeni Oda Kur
+                    </div>
+                    <button class="btn btn-sm btn-secondary" id="btnCreateRoomOptions">
+                        <i class="fas fa-cog"></i>
+                        <span>Ayarlar</span>
+                    </button>
+                </div>
+                
+                <div class="game-actions">
+                    <button class="btn" id="btnCreateNormalRoom">
+                        <i class="fas fa-users"></i>
+                        <span>Normal Oda (Diğer Oyuncularla)</span>
+                    </button>
+                    
+                    <button class="btn btn-warning" id="btnCreateDemoRoom">
+                        <i class="fas fa-robot"></i>
+                        <span>Demo Oda (Botlarla Pratik)</span>
+                    </button>
+                    
+                    <button class="btn btn-info" id="btnCreateSoloRoom">
+                        <i class="fas fa-user-secret"></i>
+                        <span>Solo Oda (Seçtiğim Rolle)</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    <i class="fas fa-door-open"></i>
+                    Aktif Odalar
+                    <span class="user-status" id="roomsCount">0 oda</span>
+                </div>
+                <div id="roomsList" class="rooms-grid">
+                    <!-- Rooms will be loaded here -->
                 </div>
             </div>
         </div>
 
         <!-- Create Room Screen -->
-        <div id="create-room-screen" class="screen">
-            <div class="header">
-                <div class="logo">🛠️ ODA KUR</div>
-                <div class="subtitle">Oyun ayarlarını yapılandır</div>
+        <div class="screen" id="createRoomScreen">
+            <div class="app-header">
+                <div class="logo">🛠️ ODA AYARLARI</div>
+                <div class="logo-subtitle">Oyun ayarlarını özelleştir</div>
             </div>
-            
+
             <div class="card">
                 <div class="input-group">
-                    <div class="input-label">👤 Mafia Sayısı</div>
-                    <select id="mafia-count">
+                    <div class="input-label">
+                        <i class="fas fa-user-secret"></i>
+                        Mafia Sayısı
+                    </div>
+                    <select id="mafiaCount">
                         <option value="1">1 Mafia</option>
                         <option value="2" selected>2 Mafia</option>
                         <option value="3">3 Mafia</option>
                         <option value="4">4 Mafia</option>
                     </select>
                 </div>
-                
+
                 <div class="input-group">
-                    <div class="input-label">🏥 Doktor Sayısı</div>
-                    <select id="doctor-count">
+                    <div class="input-label">
+                        <i class="fas fa-user-md"></i>
+                        Doktor Sayısı
+                    </div>
+                    <select id="doctorCount">
                         <option value="0">Doktor Yok</option>
                         <option value="1" selected>1 Doktor</option>
                     </select>
                 </div>
-                
+
                 <div class="input-group">
-                    <div class="input-label">👮 Polis Sayısı</div>
-                    <select id="police-count">
+                    <div class="input-label">
+                        <i class="fas fa-shield-alt"></i>
+                        Polis Sayısı
+                    </div>
+                    <select id="policeCount">
                         <option value="0">Polis Yok</option>
                         <option value="1" selected>1 Polis</option>
                     </select>
                 </div>
-                
+
                 <div class="input-group">
-                    <div class="input-label">👥 Vatandaş Sayısı</div>
-                    <select id="citizen-count">
+                    <div class="input-label">
+                        <i class="fas fa-user-friends"></i>
+                        Vatandaş Sayısı
+                    </div>
+                    <select id="citizenCount">
                         <option value="3">3 Vatandaş</option>
                         <option value="4">4 Vatandaş</option>
                         <option value="5" selected>5 Vatandaş</option>
                         <option value="6">6 Vatandaş</option>
                         <option value="7">7 Vatandaş</option>
+                        <option value="8">8 Vatandaş</option>
                     </select>
                 </div>
-                
-                <div style="display: flex; gap: 10px; margin-top: 30px;">
-                    <button class="btn btn-secondary" id="btn-cancel-create">
-                        <span>❌ İptal</span>
+
+                <div id="soloRoleSelection" class="hidden">
+                    <div class="input-group">
+                        <div class="input-label">
+                            <i class="fas fa-user-tag"></i>
+                            Kendi Rolünü Seç (Solo Oyun için)
+                        </div>
+                        <div class="role-selector">
+                            <div class="role-option role-mafia" data-role="mafia">
+                                <div class="role-icon">😈</div>
+                                <div class="role-name">Mafia</div>
+                                <div class="role-desc">Öldür, gizlen, kazan</div>
+                            </div>
+                            <div class="role-option role-doctor" data-role="doctor">
+                                <div class="role-icon">👨‍⚕️</div>
+                                <div class="role-name">Doktor</div>
+                                <div class="role-desc">Tedavi et, kurtar</div>
+                            </div>
+                            <div class="role-option role-police" data-role="police">
+                                <div class="role-icon">👮</div>
+                                <div class="role-name">Polis</div>
+                                <div class="role-desc">Araştır, bul</div>
+                            </div>
+                            <div class="role-option role-citizen" data-role="citizen">
+                                <div class="role-icon">👤</div>
+                                <div class="role-name">Vatandaş</div>
+                                <div class="role-desc">Gözlemle, oy ver</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex gap-3 mt-3">
+                    <button class="btn btn-secondary" id="btnCancelCreate">
+                        <i class="fas fa-times"></i>
+                        <span>İptal</span>
                     </button>
-                    <button class="btn btn-success" id="btn-create-game">
-                        <span>✅ Oda Kur</span>
+                    <button class="btn btn-success" id="btnConfirmCreate">
+                        <i class="fas fa-check"></i>
+                        <span>Odayı Kur</span>
                     </button>
                 </div>
             </div>
         </div>
 
         <!-- Room Screen -->
-        <div id="room-screen" class="screen">
-            <div class="header">
-                <div class="logo" id="room-title">ODA: ---</div>
-                <div class="subtitle" id="room-status">Oyuncular bekleniyor...</div>
+        <div class="screen" id="roomScreen">
+            <div class="app-header">
+                <div class="logo" id="roomTitle">ODA: ---</div>
+                <div class="logo-subtitle" id="roomStatus">Yükleniyor...</div>
             </div>
-            
-            <div id="room-waiting" style="display: none;">
+
+            <div id="roomWaiting">
                 <div class="card">
-                    <h3 style="margin-bottom: 15px;">👥 Oyuncular</h3>
-                    <div id="room-players" class="player-list">
-                        <!-- Oyuncular buraya gelecek -->
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="card-title">
+                            <i class="fas fa-users"></i>
+                            Oyuncular
+                            <span class="user-status" id="playersCount">0/0</span>
+                        </div>
+                        <button class="btn btn-sm btn-danger" id="btnLeaveRoom">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Odadan Çık</span>
+                        </button>
                     </div>
-                    
-                    <div style="margin-top: 30px;">
-                        <button class="btn btn-success" id="btn-start-game" style="display: none;">
-                            <span>▶️ OYUNU BAŞLAT</span>
+
+                    <div id="roomPlayers" class="players-grid">
+                        <!-- Players will be loaded here -->
+                    </div>
+
+                    <div class="mt-3" id="roomControls">
+                        <button class="btn btn-success" id="btnStartGame" style="display: none;">
+                            <i class="fas fa-play"></i>
+                            <span>OYUNU BAŞLAT</span>
                         </button>
                         
-                        <div style="color: #a0aec0; font-size: 14px; text-align: center; margin-top: 20px;">
-                            Oyun başlatmak için odada en az 5 oyuncu olmalıdır.
+                        <div class="text-center mt-2">
+                            <small style="color: var(--gray);">
+                                Oyun başlatmak için odada yeterli oyuncu olmalıdır.
+                                <span id="demoNote" class="hidden">Demo modu: Botlar otomatik eklenecek.</span>
+                            </small>
                         </div>
                     </div>
                 </div>
+
+                <div class="card">
+                    <div class="card-title">
+                        <i class="fas fa-info-circle"></i>
+                        Oda Bilgileri
+                    </div>
+                    <div id="roomInfo" style="color: var(--gray);">
+                        Oda yükleniyor...
+                    </div>
+                </div>
             </div>
-            
-            <div id="room-playing" style="display: none;">
-                <!-- Oyun ekranı buraya gelecek -->
+
+            <div id="roomPlaying" class="hidden">
+                <!-- Game will be loaded here -->
             </div>
         </div>
 
         <!-- Game Screen -->
-        <div id="game-screen" class="screen">
-            <!-- Oyun arayüzü dinamik olarak oluşturulacak -->
+        <div class="screen" id="gameScreen">
+            <!-- Game content will be dynamically loaded -->
+        </div>
+
+        <!-- Game End Screen -->
+        <div class="screen" id="gameEndScreen">
+            <!-- Game end content will be dynamically loaded -->
         </div>
     </div>
 
     <!-- Bottom Navigation -->
-    <div class="bottom-nav" id="bottom-nav" style="display: none;">
+    <div class="bottom-nav" id="bottomNav" style="display: none;">
+        <button class="nav-btn" data-screen="welcome">
+            <div class="nav-icon">🏠</div>
+            <div>Ana Menü</div>
+        </button>
         <button class="nav-btn" data-screen="lobby">
-            <span>🏠</span>
-            <span>Lobi</span>
+            <div class="nav-icon">🎮</div>
+            <div>Lobi</div>
         </button>
         <button class="nav-btn" data-screen="room">
-            <span>🎮</span>
-            <span>Oda</span>
+            <div class="nav-icon">👥</div>
+            <div>Oda</div>
         </button>
         <button class="nav-btn" data-screen="game">
-            <span>🔫</span>
-            <span>Oyun</span>
+            <div class="nav-icon">🔫</div>
+            <div>Oyun</div>
         </button>
     </div>
 
     <!-- Notification -->
     <div class="notification" id="notification">
-        <div class="notification-title" id="notif-title">Bildirim</div>
-        <div class="notification-message" id="notif-message"></div>
+        <div class="notification-title" id="notifTitle">Bildirim</div>
+        <div class="notification-message" id="notifMessage">Mesaj içeriği</div>
     </div>
 
     <script>
-        // Telegram WebApp
-        const tg = window.Telegram.WebApp;
-        tg.expand();
-        tg.enableClosingConfirmation();
-        
         // Global state
-        let socket = null;
-        let currentUser = null;
-        let currentRoom = null;
-        let gameState = null;
-        let authToken = null;
-        let reconnectData = null;
-        
+        const AppState = {
+            socket: null,
+            user: null,
+            currentRoom: null,
+            gameState: null,
+            authToken: null,
+            isDemoMode: false,
+            isSoloPlay: false,
+            selectedRole: null,
+            reconnectData: null,
+            currentScreen: 'welcome',
+            timers: {},
+            notifications: []
+        };
+
         // DOM Elements
-        const loadingEl = document.getElementById('loading');
+        const loadingScreen = document.getElementById('loadingScreen');
+        const appContainer = document.getElementById('appContainer');
         const notificationEl = document.getElementById('notification');
-        const notifTitleEl = document.getElementById('notif-title');
-        const notifMessageEl = document.getElementById('notif-message');
-        
+        const notifTitle = document.getElementById('notifTitle');
+        const notifMessage = document.getElementById('notifMessage');
+
         // Screens
         const screens = {
-            login: document.getElementById('login-screen'),
-            lobby: document.getElementById('lobby-screen'),
-            createRoom: document.getElementById('create-room-screen'),
-            room: document.getElementById('room-screen'),
-            game: document.getElementById('game-screen')
+            welcome: document.getElementById('welcomeScreen'),
+            lobby: document.getElementById('lobbyScreen'),
+            createRoom: document.getElementById('createRoomScreen'),
+            room: document.getElementById('roomScreen'),
+            game: document.getElementById('gameScreen'),
+            gameEnd: document.getElementById('gameEndScreen')
         };
-        
+
+        // Telegram WebApp
+        const tg = window.Telegram.WebApp;
+
+        // Initialize
+        async function init() {
+            try {
+                showLoading('Uygulama başlatılıyor...');
+                
+                // Check if running in Telegram
+                if (tg.initData) {
+                    console.log('Running in Telegram WebApp');
+                    tg.expand();
+                    tg.enableClosingConfirmation();
+                    await initTelegramAuth();
+                } else {
+                    console.log('Running in browser');
+                    initDemoMode();
+                }
+                
+                initSocket();
+                setupEventListeners();
+                setupNavigation();
+                
+                // Check for reconnection
+                checkReconnection();
+                
+            } catch (error) {
+                console.error('Initialization error:', error);
+                showNotification('Başlatma Hatası', error.message, 5000);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Show loading screen
+        function showLoading(message = 'Yükleniyor...') {
+            document.getElementById('loadingText').textContent = message;
+            loadingScreen.classList.remove('hidden');
+        }
+
+        // Hide loading screen
+        function hideLoading() {
+            setTimeout(() => {
+                loadingScreen.classList.add('hidden');
+            }, 500);
+        }
+
         // Show notification
         function showNotification(title, message, duration = 3000) {
-            notifTitleEl.textContent = title;
-            notifMessageEl.textContent = message;
+            notifTitle.textContent = title;
+            notifMessage.textContent = message;
             notificationEl.classList.add('show');
             
             setTimeout(() => {
                 notificationEl.classList.remove('show');
             }, duration);
         }
-        
-        // Show loading
-        function showLoading() {
-            loadingEl.style.display = 'flex';
-        }
-        
-        // Hide loading
-        function hideLoading() {
-            loadingEl.style.display = 'none';
-        }
-        
+
         // Show screen
         function showScreen(screenName) {
+            if (AppState.currentScreen === screenName) return;
+            
             Object.values(screens).forEach(screen => {
                 screen.classList.remove('active');
             });
             
             if (screens[screenName]) {
                 screens[screenName].classList.add('active');
+                AppState.currentScreen = screenName;
             }
             
             // Update bottom nav
+            updateNavigation();
+        }
+
+        // Setup navigation
+        function setupNavigation() {
             document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.screen === screenName);
+                btn.addEventListener('click', () => {
+                    const screen = btn.dataset.screen;
+                    showScreen(screen);
+                });
             });
+        }
+
+        // Update navigation
+        function updateNavigation() {
+            const bottomNav = document.getElementById('bottomNav');
+            const currentScreen = AppState.currentScreen;
             
             // Show/hide bottom nav
-            const bottomNav = document.getElementById('bottom-nav');
-            if (screenName === 'lobby' || screenName === 'room' || screenName === 'game') {
+            if (currentScreen === 'welcome' || currentScreen === 'lobby' || 
+                currentScreen === 'room' || currentScreen === 'game') {
                 bottomNav.style.display = 'flex';
             } else {
                 bottomNav.style.display = 'none';
             }
+            
+            // Update active state
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.screen === currentScreen);
+            });
         }
-        
-        // Initialize Telegram authentication
+
+        // Telegram authentication
         async function initTelegramAuth() {
             try {
-                showLoading();
-                
-                // Get initData from Telegram
                 const initData = tg.initData;
                 
-                if (!initData) {
-                    throw new Error('Telegram verisi yüklenemedi');
-                }
-                
-                // Authenticate with server
-                const response = await fetch('/api/auth', {
+                const response = await fetch('/api/auth/telegram', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -836,74 +1619,145 @@
                 
                 const data = await response.json();
                 
-                if (!data.success) {
+                if (data.success) {
+                    AppState.authToken = data.token;
+                    AppState.user = data.user;
+                    AppState.isDemoMode = false;
+                    
+                    updateUserProfile();
+                    showNotification('Hoş geldiniz', `${data.user.username}, Telegram girişi başarılı!`);
+                    
+                    // Check for saved room
+                    const savedRoom = localStorage.getItem('lastRoom');
+                    if (savedRoom) {
+                        AppState.reconnectData = JSON.parse(savedRoom);
+                    }
+                    
+                } else {
                     throw new Error(data.error || 'Authentication failed');
                 }
                 
-                // Save token and user data
-                authToken = data.token;
-                currentUser = data.user;
-                
-                // Update UI
-                document.getElementById('user-avatar').src = currentUser.photoUrl || 'https://via.placeholder.com/100';
-                document.getElementById('user-name').textContent = currentUser.firstName || currentUser.username;
-                document.getElementById('user-status').textContent = 'Giriş başarılı!';
-                
-                // Check for reconnection
-                const savedRoom = localStorage.getItem('lastRoom');
-                if (savedRoom) {
-                    reconnectData = JSON.parse(savedRoom);
-                    document.getElementById('btn-reconnect').style.display = 'block';
-                }
-                
-                document.getElementById('btn-lobby').style.display = 'block';
-                hideLoading();
-                
             } catch (error) {
-                console.error('Auth error:', error);
-                document.getElementById('user-status').textContent = `Hata: ${error.message}`;
-                hideLoading();
-                
-                // Fallback: Allow manual lobby access
-                document.getElementById('btn-lobby').style.display = 'block';
-                document.getElementById('btn-lobby').textContent = 'Devam Et (Demo Modu)';
+                console.error('Telegram auth error:', error);
+                showNotification('Telegram Giriş Hatası', 'Demo moda geçiliyor...');
+                initDemoMode();
             }
         }
-        
-        // Initialize Socket.IO
+
+        // Demo mode initialization
+        function initDemoMode() {
+            const demoName = `Demo_${Math.floor(Math.random() * 1000)}`;
+            const demoAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(demoName)}&background=random&color=fff`;
+            
+            AppState.user = {
+                id: `demo_${Date.now()}`,
+                username: demoName,
+                firstName: demoName,
+                photoUrl: demoAvatar,
+                isDemo: true
+            };
+            
+            AppState.isDemoMode = true;
+            updateUserProfile();
+            showNotification('Demo Modu', `Hoş geldin ${demoName}! Botlarla pratik yapabilirsin.`);
+        }
+
+        // Solo play initialization
+        function initSoloPlay() {
+            AppState.isSoloPlay = true;
+            AppState.isDemoMode = true; // Solo play is also demo mode
+            
+            const soloName = `Solo_${Math.floor(Math.random() * 1000)}`;
+            const soloAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(soloName)}&background=random&color=fff`;
+            
+            AppState.user = {
+                id: `solo_${Date.now()}`,
+                username: soloName,
+                firstName: soloName,
+                photoUrl: soloAvatar,
+                isDemo: true
+            };
+            
+            updateUserProfile();
+            showNotification('Solo Oyun Modu', 'Botlarla oynayacaksın. Rolünü seç!');
+            
+            // Show role selection in create room screen
+            document.getElementById('soloRoleSelection').classList.remove('hidden');
+            
+            // Setup role selection
+            setupRoleSelection();
+        }
+
+        // Update user profile
+        function updateUserProfile() {
+            if (!AppState.user) return;
+            
+            document.getElementById('userAvatar').src = AppState.user.photoUrl;
+            document.getElementById('userName').textContent = AppState.user.username;
+            
+            if (AppState.isDemoMode) {
+                document.getElementById('userStatus').textContent = 'Demo Modu';
+                document.getElementById('userStatus').style.color = 'var(--warning)';
+            } else {
+                document.getElementById('userStatus').textContent = 'Telegram';
+                document.getElementById('userStatus').style.color = 'var(--info)';
+            }
+        }
+
+        // Setup role selection
+        function setupRoleSelection() {
+            document.querySelectorAll('.role-option').forEach(option => {
+                option.addEventListener('click', () => {
+                    // Remove selected class from all options
+                    document.querySelectorAll('.role-option').forEach(opt => {
+                        opt.classList.remove('selected');
+                    });
+                    
+                    // Add selected class to clicked option
+                    option.classList.add('selected');
+                    
+                    // Store selected role
+                    AppState.selectedRole = option.dataset.role;
+                    showNotification('Rol Seçildi', `${getRoleName(AppState.selectedRole)} rolünü seçtin!`);
+                });
+            });
+        }
+
+        // Initialize socket
         function initSocket() {
-            if (socket) {
-                socket.disconnect();
+            if (AppState.socket) {
+                AppState.socket.disconnect();
             }
             
-            socket = io({
+            // Connect to Render server
+            AppState.socket = io('https://saskioyunu-1.onrender.com', {
                 reconnection: true,
                 reconnectionAttempts: 10,
                 reconnectionDelay: 1000,
                 reconnectionDelayMax: 5000,
-                timeout: 20000
+                timeout: 20000,
+                transports: ['websocket', 'polling']
             });
             
-            // Connection events
+            setupSocketEvents();
+        }
+
+        // Setup socket events
+        function setupSocketEvents() {
+            const socket = AppState.socket;
+            
             socket.on('connect', () => {
-                console.log('Socket connected:', socket.id);
+                console.log('Connected to server');
+                showNotification('Bağlantı', 'Sunucuya bağlandı', 2000);
                 
-                // Authenticate with token
-                if (authToken && currentRoom) {
-                    socket.emit('authenticate', {
-                        token: authToken,
-                        roomId: currentRoom
-                    });
-                } else if (authToken) {
-                    socket.emit('authenticate', {
-                        token: authToken,
-                        roomId: null
-                    });
+                // Authenticate if we have a token
+                if (AppState.authToken || AppState.isDemoMode) {
+                    authenticateSocket();
                 }
             });
             
             socket.on('disconnect', (reason) => {
-                console.log('Socket disconnected:', reason);
+                console.log('Disconnected:', reason);
                 if (reason === 'io server disconnect') {
                     socket.connect();
                 }
@@ -911,21 +1765,21 @@
             
             socket.on('connect_error', (error) => {
                 console.error('Connection error:', error);
-                showNotification('Bağlantı Hatası', 'Sunucuya bağlanılamıyor. Yeniden deneniyor...', 5000);
+                showNotification('Bağlantı Hatası', 'Yeniden bağlanılıyor...', 5000);
             });
             
-            socket.on('pong', () => {
-                // Keep alive
+            socket.on('ping', () => {
+                socket.emit('pong');
             });
             
             // Authentication
             socket.on('auth-success', (data) => {
-                console.log('Authentication successful');
-                currentUser = data.user;
+                console.log('Authentication successful:', data);
+                AppState.user = data.user;
+                AppState.currentRoom = data.currentRoom;
                 
                 if (data.currentRoom) {
-                    currentRoom = data.currentRoom;
-                    joinRoom(currentRoom);
+                    joinRoom(data.currentRoom);
                 } else {
                     showScreen('lobby');
                 }
@@ -958,16 +1812,13 @@
                 showNotification('Oda Hatası', error);
             });
             
+            // Player events
             socket.on('player-joined', (player) => {
                 showNotification('Oyuncu Katıldı', `${player.username} odaya katıldı`);
             });
             
             socket.on('player-left', (player) => {
-                showNotification('Oyuncu Ayrıldı', `${player.username} odadan ayrıldı`);
-            });
-            
-            socket.on('player-kicked', (player) => {
-                showNotification('Oyuncu Atıldı', `${player.playerName} odadan atıldı`);
+                showNotification('Oyuncu Ayrıldı', `${player.playerName} odadan ayrıldı`);
             });
             
             socket.on('player-disconnected', (player) => {
@@ -980,7 +1831,7 @@
             
             socket.on('kicked', (message) => {
                 showNotification('Atıldınız', message);
-                currentRoom = null;
+                AppState.currentRoom = null;
                 localStorage.removeItem('lastRoom');
                 showScreen('lobby');
             });
@@ -1049,20 +1900,148 @@
                 showNotification('Hata', message);
             });
         }
-        
+
+        // Authenticate socket
+        function authenticateSocket() {
+            if (!AppState.socket || !AppState.socket.connected) return;
+            
+            if (AppState.authToken) {
+                AppState.socket.emit('authenticate', {
+                    token: AppState.authToken,
+                    roomId: AppState.currentRoom
+                });
+            } else if (AppState.isDemoMode && AppState.user) {
+                // For demo mode, we need to get a token first
+                fetch('/api/auth/demo', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: AppState.user.username,
+                        photoUrl: AppState.user.photoUrl
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        AppState.authToken = data.token;
+                        AppState.user = data.user;
+                        updateUserProfile();
+                        
+                        AppState.socket.emit('authenticate', {
+                            token: AppState.authToken,
+                            roomId: AppState.currentRoom
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Demo auth error:', error);
+                    showNotification('Demo Giriş Hatası', 'Lütfen tekrar deneyin');
+                });
+            }
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Welcome screen buttons
+            document.getElementById('btnTelegramLogin').addEventListener('click', () => {
+                if (tg.initData) {
+                    initTelegramAuth();
+                } else {
+                    showNotification('Telegram Gerekli', 'Bu özellik sadece Telegram üzerinden çalışır');
+                }
+            });
+            
+            document.getElementById('btnDemoMode').addEventListener('click', () => {
+                initDemoMode();
+                showScreen('lobby');
+            });
+            
+            document.getElementById('btnSoloPlay').addEventListener('click', () => {
+                initSoloPlay();
+                showScreen('lobby');
+            });
+            
+            document.getElementById('btnQuickJoin').addEventListener('click', () => {
+                const roomCode = document.getElementById('quickJoinCode').value.trim().toUpperCase();
+                if (roomCode.length === 6) {
+                    joinRoom(roomCode);
+                } else {
+                    showNotification('Hata', 'Geçerli bir oda kodu girin (6 karakter)');
+                }
+            });
+            
+            // Lobby screen buttons
+            document.getElementById('btnJoinRoom').addEventListener('click', () => {
+                const roomCode = document.getElementById('roomCodeInput').value.trim().toUpperCase();
+                if (roomCode.length === 6) {
+                    joinRoom(roomCode);
+                } else {
+                    showNotification('Hata', 'Geçerli bir oda kodu girin (6 karakter)');
+                }
+            });
+            
+            document.getElementById('btnCreateRoomOptions').addEventListener('click', () => {
+                showScreen('createRoom');
+            });
+            
+            document.getElementById('btnCreateNormalRoom').addEventListener('click', () => {
+                AppState.isDemoMode = false;
+                AppState.isSoloPlay = false;
+                showScreen('createRoom');
+            });
+            
+            document.getElementById('btnCreateDemoRoom').addEventListener('click', () => {
+                AppState.isDemoMode = true;
+                AppState.isSoloPlay = false;
+                showScreen('createRoom');
+            });
+            
+            document.getElementById('btnCreateSoloRoom').addEventListener('click', () => {
+                AppState.isDemoMode = true;
+                AppState.isSoloPlay = true;
+                showScreen('createRoom');
+            });
+            
+            // Create room screen buttons
+            document.getElementById('btnCancelCreate').addEventListener('click', () => {
+                showScreen('lobby');
+            });
+            
+            document.getElementById('btnConfirmCreate').addEventListener('click', () => {
+                createRoom();
+            });
+            
+            // Room screen buttons
+            document.getElementById('btnLeaveRoom').addEventListener('click', () => {
+                leaveRoom();
+            });
+            
+            document.getElementById('btnStartGame').addEventListener('click', () => {
+                startGameInRoom();
+            });
+        }
+
         // Update rooms list
         function updateRoomsList(rooms) {
-            const roomsList = document.getElementById('rooms-list');
-            roomsList.innerHTML = '';
+            const roomsList = document.getElementById('roomsList');
+            const roomsCount = document.getElementById('roomsCount');
+            
+            roomsCount.textContent = `${rooms.length} oda`;
             
             if (rooms.length === 0) {
                 roomsList.innerHTML = `
-                    <div style="text-align: center; padding: 30px; color: #a0aec0;">
-                        Aktif oda bulunamadı. İlk odayı sen kur!
+                    <div class="text-center" style="padding: 40px; color: var(--gray);">
+                        <i class="fas fa-door-closed" style="font-size: 48px; margin-bottom: 20px; opacity: 0.5;"></i>
+                        <div style="font-size: 18px; margin-bottom: 10px;">Aktif oda bulunamadı</div>
+                        <div>İlk odayı sen kur!</div>
                     </div>
                 `;
                 return;
             }
+            
+            roomsList.innerHTML = '';
             
             rooms.forEach(room => {
                 const roomEl = document.createElement('div');
@@ -1070,14 +2049,18 @@
                 roomEl.innerHTML = `
                     <div class="room-header">
                         <div class="room-id">${room.id}</div>
-                        <div class="room-info">${room.players}/${room.maxPlayers} 👥</div>
+                        <div class="room-stats">
+                            <span><i class="fas fa-user"></i> ${room.players}</span>
+                            ${room.botPlayers > 0 ? `<span><i class="fas fa-robot"></i> ${room.botPlayers}</span>` : ''}
+                            <span>/ ${room.maxPlayers}</span>
+                        </div>
                     </div>
-                    <div>Kurucu: ${room.owner}</div>
+                    <div class="room-owner">Kurucu: ${room.owner}</div>
                     <div class="room-settings">
-                        <span class="setting-badge">${room.settings.mafiaCount} Mafia</span>
-                        ${room.settings.doctorCount > 0 ? `<span class="setting-badge">${room.settings.doctorCount} Doktor</span>` : ''}
-                        ${room.settings.policeCount > 0 ? `<span class="setting-badge">${room.settings.policeCount} Polis</span>` : ''}
-                        <span class="setting-badge">${room.settings.citizenCount} Vatandaş</span>
+                        <span class="setting-tag">${room.settings.mafiaCount} Mafia</span>
+                        ${room.settings.doctorCount > 0 ? `<span class="setting-tag">${room.settings.doctorCount} Doktor</span>` : ''}
+                        ${room.settings.policeCount > 0 ? `<span class="setting-tag">${room.settings.policeCount} Polis</span>` : ''}
+                        <span class="setting-tag">${room.settings.citizenCount} Vatandaş</span>
                     </div>
                 `;
                 
@@ -1088,107 +2071,195 @@
                 roomsList.appendChild(roomEl);
             });
         }
-        
+
         // Join room
         function joinRoom(roomId) {
-            showLoading();
-            currentRoom = roomId.toUpperCase();
+            showLoading('Odaya katılıyor...');
+            
+            if (!AppState.socket || !AppState.socket.connected) {
+                showNotification('Hata', 'Sunucuya bağlı değilsiniz');
+                hideLoading();
+                return;
+            }
+            
+            AppState.currentRoom = roomId;
             
             // Save to localStorage for reconnection
             localStorage.setItem('lastRoom', JSON.stringify({
-                roomId: currentRoom,
+                roomId: roomId,
                 timestamp: Date.now()
             }));
             
-            socket.emit('join-room', roomId);
+            // Join room via socket
+            AppState.socket.emit('join-room', roomId);
             showScreen('room');
             hideLoading();
         }
-        
+
+        // Create room
+        function createRoom() {
+            const settings = {
+                mafiaCount: document.getElementById('mafiaCount').value,
+                doctorCount: document.getElementById('doctorCount').value,
+                policeCount: document.getElementById('policeCount').value,
+                citizenCount: document.getElementById('citizenCount').value,
+                isDemo: AppState.isDemoMode,
+                selectedRole: AppState.selectedRole
+            };
+            
+            showLoading('Oda kuruluyor...');
+            
+            if (!AppState.socket || !AppState.socket.connected) {
+                showNotification('Hata', 'Sunucuya bağlı değilsiniz');
+                hideLoading();
+                return;
+            }
+            
+            AppState.socket.emit('create-room', settings);
+        }
+
         // Update room info
         function updateRoomInfo(roomInfo) {
-            document.getElementById('room-title').textContent = `ODA: ${roomInfo.id}`;
-            document.getElementById('room-status').textContent = 
+            document.getElementById('roomTitle').textContent = `ODA: ${roomInfo.id}`;
+            document.getElementById('roomStatus').textContent = 
                 roomInfo.gameState === 'waiting' ? 'Oyuncular bekleniyor...' : 'Oyun devam ediyor...';
             
-            const waitingDiv = document.getElementById('room-waiting');
-            const playingDiv = document.getElementById('room-playing');
+            const waitingDiv = document.getElementById('roomWaiting');
+            const playingDiv = document.getElementById('roomPlaying');
+            const demoNote = document.getElementById('demoNote');
             
             if (roomInfo.gameState === 'waiting') {
-                waitingDiv.style.display = 'block';
-                playingDiv.style.display = 'none';
+                waitingDiv.classList.remove('hidden');
+                playingDiv.classList.add('hidden');
                 
                 // Update players list
-                const playersList = document.getElementById('room-players');
+                const playersList = document.getElementById('roomPlayers');
                 playersList.innerHTML = '';
                 
                 roomInfo.players.forEach(player => {
+                    if (!player) return;
+                    
                     const playerEl = document.createElement('div');
-                    playerEl.className = 'player-card';
+                    playerEl.className = `player-card ${player.isAlive === false ? 'dead' : ''}`;
                     playerEl.innerHTML = `
                         <img src="${player.photoUrl || 'https://via.placeholder.com/50'}" class="player-avatar">
                         <div class="player-info">
                             <div class="player-name">
                                 ${player.username}
                                 ${player.isOwner ? ' 👑' : ''}
+                                ${player.isBot ? ' 🤖' : ''}
+                                ${player.id === AppState.user?.id ? ' (Siz)' : ''}
                             </div>
-                            <div class="player-status">
-                                ${player.id === currentUser.id ? '(Siz)' : ''}
+                            <div class="player-status ${player.isAlive ? 'player-alive' : 'player-dead'}">
+                                ${player.isAlive ? 'Canlı' : 'Ölü'}
                             </div>
                         </div>
+                        ${player.role ? `<div class="player-role role-${player.role}">${getRoleName(player.role)}</div>` : ''}
                     `;
-                    
-                    // Add kick button for owner
-                    if (roomInfo.owner === currentUser.id && player.id !== currentUser.id) {
-                        const kickBtn = document.createElement('button');
-                        kickBtn.className = 'btn-danger';
-                        kickBtn.style.padding = '8px 15px';
-                        kickBtn.style.fontSize = '12px';
-                        kickBtn.textContent = 'At';
-                        kickBtn.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            socket.emit('kick-player', player.id);
-                        });
-                        playerEl.appendChild(kickBtn);
-                    }
                     
                     playersList.appendChild(playerEl);
                 });
                 
-                // Show/hide start button
-                const startBtn = document.getElementById('btn-start-game');
+                // Update players count
                 const totalPlayers = roomInfo.settings.mafiaCount + roomInfo.settings.doctorCount + 
                                    roomInfo.settings.policeCount + roomInfo.settings.citizenCount;
+                document.getElementById('playersCount').textContent = `${roomInfo.players.length}/${totalPlayers}`;
                 
-                if (roomInfo.owner === currentUser.id && roomInfo.players.length >= totalPlayers) {
+                // Show/hide start button
+                const startBtn = document.getElementById('btnStartGame');
+                const isOwner = roomInfo.owner === AppState.user?.id;
+                
+                if (isOwner) {
                     startBtn.style.display = 'block';
+                    
+                    if (roomInfo.isDemo) {
+                        demoNote.classList.remove('hidden');
+                        startBtn.innerHTML = `
+                            <i class="fas fa-robot"></i>
+                            <span>BOTLARLA OYUNU BAŞLAT</span>
+                        `;
+                    } else {
+                        demoNote.classList.add('hidden');
+                        startBtn.innerHTML = `
+                            <i class="fas fa-play"></i>
+                            <span>OYUNU BAŞLAT</span>
+                        `;
+                    }
                 } else {
                     startBtn.style.display = 'none';
                 }
                 
+                // Update room info
+                const roomInfoEl = document.getElementById('roomInfo');
+                roomInfoEl.innerHTML = `
+                    <p><strong>Kurucu:</strong> ${roomInfo.owner}</p>
+                    <p><strong>Oyun Ayarları:</strong></p>
+                    <ul style="margin-left: 20px;">
+                        <li>${roomInfo.settings.mafiaCount} Mafia</li>
+                        ${roomInfo.settings.doctorCount > 0 ? `<li>${roomInfo.settings.doctorCount} Doktor</li>` : ''}
+                        ${roomInfo.settings.policeCount > 0 ? `<li>${roomInfo.settings.policeCount} Polis</li>` : ''}
+                        <li>${roomInfo.settings.citizenCount} Vatandaş</li>
+                    </ul>
+                    ${roomInfo.isDemo ? '<p><strong>Mod:</strong> Demo</p>' : ''}
+                `;
+                
             } else {
-                waitingDiv.style.display = 'none';
-                playingDiv.style.display = 'block';
+                waitingDiv.classList.add('hidden');
+                playingDiv.classList.remove('hidden');
             }
         }
-        
+
+        // Leave room
+        function leaveRoom() {
+            if (AppState.socket && AppState.currentRoom) {
+                AppState.socket.emit('leave-room');
+                AppState.currentRoom = null;
+                localStorage.removeItem('lastRoom');
+                showScreen('lobby');
+            }
+        }
+
+        // Start game in room
+        function startGameInRoom() {
+            if (AppState.socket && AppState.currentRoom) {
+                if (AppState.isSoloPlay) {
+                    AppState.socket.emit('start-game', {
+                        withBots: true,
+                        selectedRole: AppState.selectedRole
+                    });
+                } else if (AppState.isDemoMode) {
+                    AppState.socket.emit('start-game', {
+                        withBots: true,
+                        selectedRole: null
+                    });
+                } else {
+                    AppState.socket.emit('start-game', {
+                        withBots: false,
+                        selectedRole: null
+                    });
+                }
+            }
+        }
+
         // Start game
         function startGame(data) {
             showScreen('game');
             
-            const gameScreen = document.getElementById('game-screen');
+            const gameScreen = document.getElementById('gameScreen');
             gameScreen.innerHTML = `
-                <div id="game-container"></div>
+                <div id="gamePhase"></div>
+                <div id="gameContent"></div>
+                <div id="gameChat"></div>
             `;
         }
-        
+
         // Show role reveal
         function showRoleReveal(data) {
-            const gameContainer = document.getElementById('game-container');
+            const gameContent = document.getElementById('gameContent');
             
-            gameContainer.innerHTML = `
+            gameContent.innerHTML = `
                 <div class="role-reveal">
-                    <div class="role-title ${'role-' + data.role}">
+                    <div class="role-title role-${data.role}">
                         ${getRoleName(data.role)}
                     </div>
                     <div class="role-description">
@@ -1197,35 +2268,37 @@
                     <ul class="role-abilities">
                         ${data.abilities.map(ability => `<li>${ability}</li>`).join('')}
                     </ul>
-                    <button class="btn" id="btn-continue" style="margin-top: 30px;">
-                        <span>Devam Et</span>
+                    <button class="btn btn-success mt-3" id="btnContinueGame">
+                        <i class="fas fa-forward"></i>
+                        <span>Oyuna Devam Et</span>
                     </button>
                 </div>
             `;
             
-            document.getElementById('btn-continue').addEventListener('click', () => {
-                gameContainer.innerHTML = `
-                    <div id="phase-container"></div>
-                    <div id="game-content"></div>
-                `;
+            document.getElementById('btnContinueGame').addEventListener('click', () => {
+                gameContent.innerHTML = '';
+                updateGameUI();
             });
         }
-        
+
         // Show mafia team
         function showMafiaTeam(mafias) {
             if (mafias.length > 1) {
-                const gameContainer = document.getElementById('game-container');
+                const gameContent = document.getElementById('gameContent');
                 
-                gameContainer.innerHTML += `
-                    <div class="card" style="margin-top: 20px;">
-                        <h3>👥 Mafia Takımı</h3>
-                        <div class="player-list">
+                gameContent.innerHTML += `
+                    <div class="card mt-2">
+                        <div class="card-title">
+                            <i class="fas fa-users"></i>
+                            Mafia Takımı
+                        </div>
+                        <div class="players-grid">
                             ${mafias.map(mafia => `
                                 <div class="player-card">
                                     <img src="${mafia.photoUrl || 'https://via.placeholder.com/50'}" class="player-avatar">
                                     <div class="player-info">
                                         <div class="player-name">${mafia.username}</div>
-                                        <div class="player-status">Mafia</div>
+                                        <div class="player-status player-alive">Mafia</div>
                                     </div>
                                 </div>
                             `).join('')}
@@ -1234,14 +2307,12 @@
                 `;
             }
         }
-        
+
         // Update game phase
         function updateGamePhase(data) {
-            const phaseContainer = document.getElementById('phase-container');
-            const gameContent = document.getElementById('game-content');
+            const gamePhase = document.getElementById('gamePhase');
             
-            // Update phase display
-            phaseContainer.innerHTML = `
+            gamePhase.innerHTML = `
                 <div class="game-phase">
                     <div class="phase-title">
                         ${data.phase === 'night' ? '🌙 GECE' : 
@@ -1249,336 +2320,214 @@
                           data.phase === 'voting' ? '🗳️ OYLAMA' : ''}
                     </div>
                     <div class="phase-message">${data.message}</div>
-                    <div class="phase-timer" id="phase-timer">${data.timer || '--'}</div>
-                    <div>Gün ${data.dayNumber}</div>
+                    <div class="phase-timer" id="phaseTimer">${data.timer || '--'}</div>
+                    <div class="phase-day">Gün ${data.dayNumber}</div>
                 </div>
             `;
-            
-            // Update game content based on phase
-            if (data.phase === 'night') {
-                showNightPhase();
-            } else if (data.phase === 'day') {
-                showDayPhase();
-            } else if (data.phase === 'voting') {
-                showVotingPhase();
-            }
             
             // Start timer
             if (data.timer) {
-                startTimer(data.timer);
+                startPhaseTimer(data.timer);
             }
+            
+            // Update game UI based on phase
+            updateGameUI(data);
         }
-        
-        // Show night phase
-        function showNightPhase() {
-            const gameContent = document.getElementById('game-content');
-            
-            // Get player role
-            // This would come from game state
-            const role = 'citizen'; // Placeholder
-            
-            if (role === 'mafia') {
-                gameContent.innerHTML = `
-                    <div class="card">
-                        <h3>🎯 Birini Öldür</h3>
-                        <div id="night-targets" class="voting-grid"></div>
-                        <div id="mafia-chat-container" style="margin-top: 30px;">
-                            <h3>💬 Mafia Sohbeti</h3>
-                            <div class="chat-container" id="mafia-chat"></div>
-                            <div class="chat-input-container">
-                                <input type="text" class="chat-input" id="mafia-chat-input" placeholder="Mafialarla konuş...">
-                                <button class="chat-send" id="mafia-chat-send">Gönder</button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                
-                // Load targets
-                loadNightTargets();
-                
-                // Setup mafia chat
-                document.getElementById('mafia-chat-send').addEventListener('click', () => {
-                    const input = document.getElementById('mafia-chat-input');
-                    const message = input.value.trim();
-                    if (message) {
-                        socket.emit('send-chat', { message, isMafiaChat: true });
-                        input.value = '';
-                    }
-                });
-                
-            } else if (role === 'doctor') {
-                gameContent.innerHTML = `
-                    <div class="card">
-                        <h3>🏥 Birini Tedavi Et</h3>
-                        <div id="doctor-targets" class="voting-grid"></div>
-                    </div>
-                `;
-                
-                loadDoctorTargets();
-                
-            } else if (role === 'police') {
-                gameContent.innerHTML = `
-                    <div class="card">
-                        <h3>👮 Birini Kontrol Et</h3>
-                        <div id="police-targets" class="voting-grid"></div>
-                    </div>
-                `;
-                
-                loadPoliceTargets();
-                
-            } else {
-                gameContent.innerHTML = `
-                    <div class="card">
-                        <h3>😴 Uyuyorsun</h3>
-                        <p style="text-align: center; padding: 30px; color: #a0aec0;">
-                            Gece vakti... Sabah olmasını bekliyorsun.
-                        </p>
-                    </div>
-                `;
+
+        // Start phase timer
+        function startPhaseTimer(seconds) {
+            if (AppState.timers.phaseTimer) {
+                clearInterval(AppState.timers.phaseTimer);
             }
-        }
-        
-        // Show day phase
-        function showDayPhase() {
-            const gameContent = document.getElementById('game-content');
             
-            gameContent.innerHTML = `
-                <div class="card">
-                    <h3>💬 Tartışma</h3>
-                    <div class="chat-container" id="day-chat"></div>
-                    <div class="chat-input-container">
-                        <input type="text" class="chat-input" id="day-chat-input" placeholder="Herkesle konuş...">
-                        <button class="chat-send" id="day-chat-send">Gönder</button>
-                    </div>
-                </div>
-            `;
+            let timeLeft = seconds;
+            const timerEl = document.getElementById('phaseTimer');
             
-            // Setup day chat
-            document.getElementById('day-chat-send').addEventListener('click', () => {
-                const input = document.getElementById('day-chat-input');
-                const message = input.value.trim();
-                if (message) {
-                    socket.emit('send-chat', { message, isMafiaChat: false });
-                    input.value = '';
+            if (!timerEl) return;
+            
+            AppState.timers.phaseTimer = setInterval(() => {
+                timeLeft--;
+                timerEl.textContent = timeLeft;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(AppState.timers.phaseTimer);
                 }
-            });
+            }, 1000);
         }
-        
-        // Show voting phase
-        function showVotingPhase() {
-            const gameContent = document.getElementById('game-content');
+
+        // Update game UI
+        function updateGameUI(phaseData) {
+            const gameContent = document.getElementById('gameContent');
             
+            // This would be filled based on the game state
+            // For now, just show a placeholder
             gameContent.innerHTML = `
                 <div class="card">
-                    <h3>🗳️ Kimden Şüpheleniyorsun?</h3>
-                    <div id="voting-targets" class="voting-grid"></div>
+                    <div class="card-title">
+                        <i class="fas fa-info-circle"></i>
+                        Oyun Devam Ediyor
+                    </div>
+                    <p style="color: var(--gray); text-align: center; padding: 20px;">
+                        Oyun durumu yükleniyor...
+                    </p>
                 </div>
             `;
-            
-            loadVotingTargets();
         }
-        
-        // Load night targets
-        function loadNightTargets() {
-            // This would load from game state
-            const targets = [
-                { id: '1', name: 'Player 1', photo: '' },
-                { id: '2', name: 'Player 2', photo: '' }
-            ];
-            
-            const container = document.getElementById('night-targets');
-            container.innerHTML = '';
-            
-            targets.forEach(target => {
-                const card = document.createElement('div');
-                card.className = 'vote-card';
-                card.innerHTML = `
-                    <img src="${target.photo || 'https://via.placeholder.com/60'}" class="vote-avatar">
-                    <div class="vote-name">${target.name}</div>
-                `;
-                
-                card.addEventListener('click', () => {
-                    socket.emit('mafia-vote', target.id);
-                    document.querySelectorAll('#night-targets .vote-card').forEach(c => {
-                        c.classList.remove('selected');
-                    });
-                    card.classList.add('selected');
-                });
-                
-                container.appendChild(card);
-            });
-        }
-        
-        // Load doctor targets
-        function loadDoctorTargets() {
-            // Similar to loadNightTargets but for doctor
-        }
-        
-        // Load police targets
-        function loadPoliceTargets() {
-            // Similar to loadNightTargets but for police
-        }
-        
-        // Load voting targets
-        function loadVotingTargets() {
-            // Similar to loadNightTargets but for voting
-        }
-        
+
         // Show night result
         function showNightResult(data) {
-            const gameContainer = document.getElementById('game-container');
+            const gameContent = document.getElementById('gameContent');
             
-            gameContainer.innerHTML += `
-                <div class="card" style="margin-top: 20px; animation: pulse 2s;">
-                    <h3>🌅 Sabah Sonuçları</h3>
-                    <p style="text-align: center; padding: 20px; font-size: 18px;">
-                        ${data.message}
-                    </p>
+            gameContent.innerHTML = `
+                <div class="result-card">
+                    <div class="result-title">🌅 Sabah Sonuçları</div>
+                    <div class="result-message">${data.message}</div>
                     ${data.killedPlayer ? `
-                        <div style="text-align: center; margin-top: 20px;">
-                            <div style="font-size: 24px; color: #f56565;">☠️ ${data.killedPlayer.name}</div>
-                            <div style="color: #a0aec0; margin-top: 10px;">Rolü: ${data.killedPlayer.role}</div>
+                        <div class="result-player role-${data.killedPlayer.role}">
+                            ☠️ ${data.killedPlayer.name}
+                            <div style="font-size: 14px; margin-top: 5px;">Rolü: ${getRoleName(data.killedPlayer.role)}</div>
                         </div>
                     ` : ''}
                     ${data.savedPlayer ? `
-                        <div style="text-align: center; margin-top: 20px;">
-                            <div style="font-size: 24px; color: #48bb78;">💉 ${data.savedPlayer.name}</div>
-                            <div style="color: #a0aec0; margin-top: 10px;">Doktor tarafından kurtarıldı!</div>
+                        <div class="result-player role-doctor">
+                            💉 ${data.savedPlayer.name}
+                            <div style="font-size: 14px; margin-top: 5px;">Doktor tarafından kurtarıldı!</div>
                         </div>
                     ` : ''}
                 </div>
             `;
         }
-        
+
         // Show vote result
         function showVoteResult(data) {
-            const gameContainer = document.getElementById('game-container');
+            const gameContent = document.getElementById('gameContent');
             
-            gameContainer.innerHTML += `
-                <div class="card" style="margin-top: 20px;">
-                    <h3>📊 Oylama Sonucu</h3>
-                    <p style="text-align: center; padding: 20px; font-size: 18px;">
-                        ${data.message}
-                    </p>
+            gameContent.innerHTML = `
+                <div class="result-card">
+                    <div class="result-title">📊 Oylama Sonucu</div>
+                    <div class="result-message">${data.message}</div>
                     ${data.executedPlayer ? `
-                        <div style="text-align: center; margin-top: 20px;">
-                            <div style="font-size: 24px; color: #f56565;">🪢 ${data.executedPlayer.name}</div>
-                            <div style="color: #a0aec0; margin-top: 10px;">Rolü: ${data.executedPlayer.role}</div>
+                        <div class="result-player role-${data.executedPlayer.role}">
+                            🪢 ${data.executedPlayer.name}
+                            <div style="font-size: 14px; margin-top: 5px;">Rolü: ${getRoleName(data.executedPlayer.role)}</div>
                         </div>
                     ` : ''}
                 </div>
             `;
         }
-        
+
         // Show police result
         function showPoliceResult(data) {
-            showNotification('Polis Sonucu', 
-                `${data.targetName} ${data.isMafia ? 'MAFIA!' : 'masum görünüyor.'}`);
+            showNotification('Polis Sorgusu', 
+                `${data.targetName} ${data.isMafia ? 'MAFIA çıktı! 🎯' : 'masum görünüyor. ✅'}`);
         }
-        
+
         // End game
         function endGame(data) {
-            const gameScreen = document.getElementById('game-screen');
+            showScreen('gameEnd');
             
-            gameScreen.innerHTML = `
-                <div class="game-phase" style="background: ${data.winner === 'citizens' ? 'linear-gradient(135deg, #48bb78 0%, #2f855a 100%)' : 'linear-gradient(135deg, #f56565 0%, #c53030 100%)'};">
-                    <div class="phase-title">${data.winner === 'citizens' ? '🎉 VATANDAŞLAR KAZANDI!' : '😈 MAFİALAR KAZANDI!'}</div>
-                    <div class="phase-message">${data.message}</div>
+            const container = document.getElementById('gameEndScreen');
+            container.innerHTML = `
+                <div class="app-header">
+                    <div class="logo">${data.winner === 'citizens' ? '🎉 VATANDAŞLAR KAZANDI!' : '😈 MAFİALAR KAZANDI!'}</div>
+                    <div class="logo-subtitle">Oyun Sonu</div>
+                </div>
+                
+                <div class="result-card">
+                    <div class="result-message">${data.message}</div>
+                    <div class="phase-day">Oyun ${data.dayNumber}. günde sona erdi</div>
                 </div>
                 
                 <div class="card">
-                    <h3>👥 Tüm Roller</h3>
-                    <div class="player-list">
+                    <div class="card-title">
+                        <i class="fas fa-users"></i>
+                        Tüm Oyuncular ve Rolleri
+                    </div>
+                    <div class="players-grid">
                         ${data.playerRoles.map(player => `
-                            <div class="player-card">
+                            <div class="player-card ${player.isAlive ? '' : 'dead'}">
                                 <img src="${player.photoUrl || 'https://via.placeholder.com/50'}" class="player-avatar">
                                 <div class="player-info">
-                                    <div class="player-name ${player.isAlive ? 'alive' : 'dead'}">
+                                    <div class="player-name">
                                         ${player.name}
-                                        ${player.isAlive ? ' ❤️' : ' ☠️'}
+                                        ${player.isBot ? ' 🤖' : ''}
                                     </div>
-                                    <div class="player-status ${'role-' + player.role}">
-                                        ${player.roleName}
+                                    <div class="player-status ${player.isAlive ? 'player-alive' : 'player-dead'}">
+                                        ${player.isAlive ? 'Canlı' : 'Ölü'}
                                     </div>
+                                </div>
+                                <div class="player-role role-${player.role}">
+                                    ${player.roleName}
                                 </div>
                             </div>
                         `).join('')}
                     </div>
                 </div>
                 
-                <div style="display: flex; gap: 10px; margin-top: 30px;">
-                    <button class="btn btn-secondary" id="btn-back-to-lobby">
-                        <span>🏠 Lobiye Dön</span>
+                <div class="flex gap-3 mt-3">
+                    <button class="btn btn-secondary" id="btnBackToLobby">
+                        <i class="fas fa-home"></i>
+                        <span>Lobiye Dön</span>
                     </button>
-                    <button class="btn" id="btn-play-again">
-                        <span>🔄 Tekrar Oyna</span>
+                    <button class="btn" id="btnPlayAgain">
+                        <i class="fas fa-redo"></i>
+                        <span>Tekrar Oyna</span>
                     </button>
                 </div>
             `;
             
-            document.getElementById('btn-back-to-lobby').addEventListener('click', () => {
-                currentRoom = null;
+            document.getElementById('btnBackToLobby').addEventListener('click', () => {
+                AppState.currentRoom = null;
                 localStorage.removeItem('lastRoom');
                 showScreen('lobby');
             });
             
-            document.getElementById('btn-play-again').addEventListener('click', () => {
+            document.getElementById('btnPlayAgain').addEventListener('click', () => {
                 showScreen('lobby');
             });
         }
-        
-        // Restore game state
-        function restoreGameState(state) {
-            // Implement game state restoration
-            console.log('Restoring game state:', state);
-        }
-        
-        // Start timer
-        function startTimer(seconds) {
-            let timeLeft = seconds;
-            const timerEl = document.getElementById('phase-timer');
-            
-            if (!timerEl) return;
-            
-            const interval = setInterval(() => {
-                timeLeft--;
-                timerEl.textContent = timeLeft;
-                
-                if (timeLeft <= 0) {
-                    clearInterval(interval);
-                }
-            }, 1000);
-        }
-        
+
         // Add chat message
         function addChatMessage(message, isMafiaChat) {
-            const chatId = isMafiaChat ? 'mafia-chat' : 'day-chat';
-            const chatEl = document.getElementById(chatId);
-            
-            if (!chatEl) return;
+            const chatContainer = document.getElementById('gameChat');
+            if (!chatContainer) return;
             
             const messageEl = document.createElement('div');
-            messageEl.className = `chat-message ${isMafiaChat ? 'mafia-chat' : ''}`;
+            messageEl.className = `chat-message ${isMafiaChat ? 'mafia' : ''}`;
             messageEl.innerHTML = `
                 <div class="message-header">
-                    <span>${message.username}</span>
-                    <span>${new Date(message.timestamp).toLocaleTimeString()}</span>
+                    <span class="message-sender">${message.username}</span>
+                    <span class="message-time">${new Date(message.timestamp).toLocaleTimeString()}</span>
                 </div>
                 <div class="message-content">${message.message}</div>
             `;
             
-            chatEl.appendChild(messageEl);
-            chatEl.scrollTop = chatEl.scrollHeight;
+            chatContainer.appendChild(messageEl);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
         }
-        
+
         // Show mafia chat
         function showMafiaChat() {
-            const mafiaChatEl = document.getElementById('mafia-chat-container');
-            if (mafiaChatEl) {
-                mafiaChatEl.style.display = 'block';
+            // This would enable mafia chat UI
+        }
+
+        // Restore game state
+        function restoreGameState(state) {
+            console.log('Restoring game state:', state);
+            // Implement game state restoration
+        }
+
+        // Check reconnection
+        function checkReconnection() {
+            const savedRoom = localStorage.getItem('lastRoom');
+            if (savedRoom) {
+                AppState.reconnectData = JSON.parse(savedRoom);
+                
+                // Show reconnection option
+                showNotification('Yeniden Bağlan', 'Son oynadığın odaya dönmek ister misin?');
             }
         }
-        
+
         // Get role name
         function getRoleName(role) {
             const names = {
@@ -1587,114 +2536,18 @@
                 police: 'Polis',
                 citizen: 'Vatandaş'
             };
-            return names[role] || role;
+            return names[role] || 'Bilinmeyen';
         }
-        
-        // Event Listeners
-        document.addEventListener('DOMContentLoaded', () => {
-            // Initialize
-            initSocket();
-            initTelegramAuth();
-            
-            // Bottom nav
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    showScreen(btn.dataset.screen);
-                });
-            });
-            
-            // Login screen buttons
-            document.getElementById('btn-lobby').addEventListener('click', () => {
-                showScreen('lobby');
-            });
-            
-            document.getElementById('btn-reconnect').addEventListener('click', async () => {
-                if (reconnectData) {
-                    showLoading();
-                    try {
-                        const response = await fetch('/api/reconnect', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({
-                                token: authToken,
-                                roomId: reconnectData.roomId
-                            })
-                        });
-                        
-                        const data = await response.json();
-                        
-                        if (data.success) {
-                            currentRoom = reconnectData.roomId;
-                            socket.emit('authenticate', {
-                                token: authToken,
-                                roomId: currentRoom
-                            });
-                        } else {
-                            throw new Error(data.error);
-                        }
-                    } catch (error) {
-                        showNotification('Hata', 'Yeniden bağlanılamadı: ' + error.message);
-                        hideLoading();
-                    }
-                }
-            });
-            
-            // Lobby screen buttons
-            document.getElementById('btn-create-room').addEventListener('click', () => {
-                showScreen('createRoom');
-            });
-            
-            document.getElementById('btn-join-room').addEventListener('click', () => {
-                const roomCode = document.getElementById('room-code').value.trim();
-                if (roomCode.length === 6) {
-                    joinRoom(roomCode);
-                } else {
-                    showNotification('Hata', 'Geçerli bir oda kodu girin (6 karakter)');
-                }
-            });
-            
-            // Create room screen buttons
-            document.getElementById('btn-cancel-create').addEventListener('click', () => {
-                showScreen('lobby');
-            });
-            
-            document.getElementById('btn-create-game').addEventListener('click', () => {
-                const settings = {
-                    mafiaCount: document.getElementById('mafia-count').value,
-                    doctorCount: document.getElementById('doctor-count').value,
-                    policeCount: document.getElementById('police-count').value,
-                    citizenCount: document.getElementById('citizen-count').value
-                };
-                
-                socket.emit('create-room', settings);
-            });
-            
-            // Room screen buttons
-            document.getElementById('btn-start-game').addEventListener('click', () => {
-                socket.emit('start-game');
-            });
-            
-            // Auto-focus room code input
-            document.getElementById('room-code')?.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    document.getElementById('btn-join-room').click();
-                }
-            });
-        });
-        
-        // Keep connection alive
-        setInterval(() => {
-            if (socket && socket.connected) {
-                socket.emit('ping');
-            }
-        }, 25000);
-        
+
         // Keep Render awake
         setInterval(() => {
-            fetch('/ping').catch(() => {});
-        }, 30000);
+            fetch('https://saskioyunu-1.onrender.com/ping')
+                .then(() => console.log('Keep-alive ping sent'))
+                .catch(() => console.log('Keep-alive ping failed'));
+        }, 25000);
+
+        // Initialize app
+        window.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
 </html>
