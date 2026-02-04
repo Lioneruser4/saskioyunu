@@ -840,31 +840,46 @@
 
         // Initialize Telegram WebApp
         function initTelegram() {
-            if (window.Telegram && window.Telegram.WebApp) {
-                const tg = window.Telegram.WebApp;
+            const tg = window.Telegram ? window.Telegram.WebApp : null;
+
+            if (tg) {
                 tg.ready();
                 tg.expand();
+            }
 
-                const user = tg.initDataUnsafe.user;
-                if (user) {
+            // Function to get user from URL (for iframes)
+            const getUrlParam = (name) => {
+                const results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
+                return results ? decodeURIComponent(results[1]) : null;
+            };
+
+            // Try to get data from SDK or URL
+            let user = tg ? tg.initDataUnsafe.user : null;
+
+            if (user) {
+                userData = {
+                    id: user.id,
+                    name: user.first_name + (user.last_name ? ' ' + user.last_name : ''),
+                    photo: user.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.first_name)}&background=random`
+                };
+            } else {
+                // FALLBACK: Check if params are passed via URL (typical for iframes)
+                const urlName = getUrlParam('tgName');
+                const urlId = getUrlParam('tgId');
+
+                if (urlName && urlId) {
                     userData = {
-                        id: user.id,
-                        name: user.first_name + (user.last_name ? ' ' + user.last_name : ''),
-                        photo: user.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.first_name)}&background=random`
+                        id: urlId,
+                        name: urlName,
+                        photo: `https://ui-avatars.com/api/?name=${encodeURIComponent(urlName)}&background=random`
                     };
                 } else {
                     userData = {
                         id: Math.floor(Math.random() * 1000000),
-                        name: 'Test İstifadəçi',
-                        photo: 'https://ui-avatars.com/api/?name=Test&background=random'
+                        name: 'Qonaq_' + Math.floor(Math.random() * 999),
+                        photo: 'https://ui-avatars.com/api/?name=Guest&background=random'
                     };
                 }
-            } else {
-                userData = {
-                    id: Math.floor(Math.random() * 1000000),
-                    name: 'Test İstifadəçi',
-                    photo: 'https://ui-avatars.com/api/?name=Test&background=random'
-                };
             }
 
             document.getElementById('userName').textContent = userData.name;
