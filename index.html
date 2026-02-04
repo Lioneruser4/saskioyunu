@@ -1,419 +1,54 @@
 <!DOCTYPE html>
-<html lang="az">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mafia Oyunu</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="/socket.io/socket.io.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: Arial, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e, #16213e);
-            color: white;
-            min-height: 100vh;
-            padding: 20px;
-        }
-        
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-            padding: 20px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 15px;
-        }
-        
-        .logo {
-            font-size: 36px;
-            font-weight: bold;
-            color: #ff6b6b;
-            margin-bottom: 10px;
-        }
-        
-        .screen {
-            display: none;
-        }
-        
-        .screen.active {
-            display: block;
-            animation: fadeIn 0.3s;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        
-        .card {
-            background: rgba(255,255,255,0.1);
-            border-radius: 15px;
-            padding: 25px;
-            margin-bottom: 20px;
-            border: 1px solid rgba(255,255,255,0.2);
-        }
-        
-        .btn {
-            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
-            color: white;
-            border: none;
-            padding: 15px 25px;
-            border-radius: 10px;
-            font-size: 16px;
-            cursor: pointer;
-            width: 100%;
-            margin: 10px 0;
-            transition: 0.3s;
-        }
-        
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(255,107,107,0.4);
-        }
-        
-        .btn-secondary {
-            background: rgba(255,255,255,0.2);
-        }
-        
-        .user-info {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        
-        .user-avatar {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            margin: 0 auto 15px;
-            background: #4ecdc4;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 36px;
-        }
-        
-        .user-name {
-            font-size: 24px;
-            margin-bottom: 5px;
-        }
-        
-        .user-status {
-            color: #aaa;
-            font-size: 14px;
-        }
-        
-        .room-list {
-            margin-top: 20px;
-        }
-        
-        .room-item {
-            background: rgba(255,255,255,0.05);
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 10px;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-        
-        .room-item:hover {
-            background: rgba(255,255,255,0.1);
-        }
-        
-        .room-id {
-            font-size: 24px;
-            font-weight: bold;
-            color: #4ecdc4;
-        }
-        
-        input {
-            width: 100%;
-            padding: 15px;
-            border: none;
-            border-radius: 10px;
-            background: rgba(255,255,255,0.1);
-            color: white;
-            font-size: 16px;
-            margin: 10px 0;
-        }
-        
-        input:focus {
-            outline: none;
-            background: rgba(255,255,255,0.15);
-        }
-        
-        .notification {
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            right: 20px;
-            background: #4ecdc4;
-            color: white;
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-            display: none;
-        }
-        
-        .notification.show {
-            display: block;
-            animation: slideUp 0.3s;
-        }
-        
-        @keyframes slideUp {
-            from {
-                transform: translateY(100px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-    </style>
+<meta charset="UTF-8">
+<title>Mafia Oyunu</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<style>
+body { background:#111;color:white;font-family:sans-serif }
+</style>
 </head>
+
 <body>
-    <div class="container">
-        <!-- Ana Ekran -->
-        <div id="main-screen" class="screen active">
-            <div class="header">
-                <div class="logo">🔫 MAFİA</div>
-                <div>Azerbaycan Mafia Oyunu</div>
-            </div>
-            
-            <div id="user-profile" class="user-info">
-                <div class="user-avatar" id="user-avatar">?</div>
-                <div class="user-name" id="user-name">Yüklenir...</div>
-                <div class="user-status" id="user-status"></div>
-            </div>
-            
-            <div class="card">
-                <button class="btn" id="btn-create-room">
-                    🎮 YENİ OTAQ YARAT
-                </button>
-                
-                <div style="margin: 20px 0; text-align: center; color: #aaa;">
-                    və ya
-                </div>
-                
-                <input type="text" id="room-code" placeholder="Otaq kodu daxil edin (məs: ABC123)" maxlength="6">
-                <button class="btn btn-secondary" id="btn-join-room">
-                    ➕ OTAQA QOŞUL
-                </button>
-            </div>
-        </div>
-        
-        <!-- Otaq Ekranı -->
-        <div id="room-screen" class="screen">
-            <div class="header">
-                <div class="logo" id="room-title">OTAQ: ---</div>
-                <div id="room-status">Gözlənilir...</div>
-            </div>
-            
-            <div class="card">
-                <div id="players-list" class="room-list">
-                    <!-- Oyunçular burada -->
-                </div>
-                
-                <button class="btn" id="btn-start-game" style="display: none;">
-                    ▶ OYUNU BAŞLAT
-                </button>
-                
-                <button class="btn btn-secondary" id="btn-leave-room">
-                    ← ÇIXIŞ ET
-                </button>
-            </div>
-        </div>
-    </div>
-    
-    <div class="notification" id="notification">
-        <div id="notification-text">Bildiriş</div>
-    </div>
-    
-    <script>
-        const tg = window.Telegram.WebApp;
-        let socket = null;
-        let currentUser = null;
-        let currentRoom = null;
-        
-        // Bildiriş göstər
-        function showNotification(text) {
-            const el = document.getElementById('notification');
-            document.getElementById('notification-text').textContent = text;
-            el.classList.add('show');
-            setTimeout(() => el.classList.remove('show'), 3000);
-        }
-        
-        // Ekran dəyiş
-        function showScreen(screenId) {
-            document.querySelectorAll('.screen').forEach(s => {
-                s.classList.remove('active');
-            });
-            document.getElementById(screenId).classList.add('active');
-        }
-        
-        // İstifadəçi girişi
-        async function authenticate() {
-            try {
-                const response = await fetch('/api/auth', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        initData: tg.initData || null
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    currentUser = data.user;
-                    
-                    // İstifadəçi məlumatlarını göstər
-                    document.getElementById('user-avatar').textContent = 
-                        currentUser.name.charAt(0).toUpperCase();
-                    document.getElementById('user-name').textContent = currentUser.name;
-                    document.getElementById('user-status').textContent = 
-                        currentUser.isGuest ? 'Qonaq Modu' : 'Telegram';
-                    document.getElementById('user-status').style.color = 
-                        currentUser.isGuest ? '#ff6b6b' : '#4ecdc4';
-                    
-                    // Socket bağlantısı
-                    socket = io();
-                    setupSocket();
-                    
-                } else {
-                    throw new Error('Giriş uğursuz');
-                }
-                
-            } catch (error) {
-                console.error('Auth error:', error);
-                // Hata olursa guest modda davam et
-                currentUser = {
-                    id: `guest_${Date.now()}`,
-                    name: `Qonaq_${Math.floor(Math.random() * 1000)}`,
-                    isGuest: true
-                };
-                
-                document.getElementById('user-avatar').textContent = 'G';
-                document.getElementById('user-name').textContent = currentUser.name;
-                document.getElementById('user-status').textContent = 'Qonaq Modu';
-                document.getElementById('user-status').style.color = '#ff6b6b';
-                
-                socket = io();
-                setupSocket();
-            }
-        }
-        
-        // Socket ayarları
-        function setupSocket() {
-            socket.on('connect', () => {
-                console.log('Socket bağlandı');
-                showNotification('Serverə bağlandı');
-            });
-            
-            socket.on('room-created', (roomId) => {
-                currentRoom = roomId;
-                showNotification(`Otaq yaradıldı: ${roomId}`);
-                joinRoom(roomId);
-            });
-            
-            socket.on('room-joined', (roomId) => {
-                showNotification(`Otağa qoşuldunuz: ${roomId}`);
-                updateRoomScreen();
-            });
-            
-            socket.on('disconnect', () => {
-                showNotification('Bağlantı kəsildi');
-            });
-        }
-        
-        // Otaq yarat
-        document.getElementById('btn-create-room').addEventListener('click', () => {
-            if (socket) {
-                socket.emit('create-room');
-                showNotification('Otaq yaradılır...');
-            }
-        });
-        
-        // Otağa qoşul
-        document.getElementById('btn-join-room').addEventListener('click', () => {
-            const roomCode = document.getElementById('room-code').value.trim().toUpperCase();
-            if (roomCode.length === 6 && socket) {
-                socket.emit('join-room', roomCode);
-                currentRoom = roomCode;
-                showNotification('Otağa qoşulur...');
-            } else {
-                showNotification('Düzgün otaq kodu daxil edin (6 hərf)');
-            }
-        });
-        
-        // Otaq ekranını yenilə
-        function updateRoomScreen() {
-            showScreen('room-screen');
-            document.getElementById('room-title').textContent = `OTAQ: ${currentRoom}`;
-            
-            // Oyunçu siyahısı (nümunə)
-            const playersList = document.getElementById('players-list');
-            playersList.innerHTML = `
-                <div class="room-item">
-                    <div class="room-id">${currentUser.name}</div>
-                    <div>Siz (Otaq sahibi)</div>
-                </div>
-                <div class="room-item">
-                    <div class="room-id">Bot_1</div>
-                    <div>Gözlənilir...</div>
-                </div>
-            `;
-            
-            document.getElementById('btn-start-game').style.display = 'block';
-        }
-        
-        // Oyunu başlat
-        document.getElementById('btn-start-game').addEventListener('click', () => {
-            showNotification('Oyun başladı! Tezliklə...');
-            // Burada oyun məntiqi başlayacaq
-        });
-        
-        // Otaqdan çıx
-        document.getElementById('btn-leave-room').addEventListener('click', () => {
-            currentRoom = null;
-            showScreen('main-screen');
-            showNotification('Otaqdan çıxdınız');
-        });
-        
-        // Enter ilə otağa qoşul
-        document.getElementById('room-code').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                document.getElementById('btn-join-room').click();
-            }
-        });
-        
-        // Render'i oyandır
-        setInterval(() => {
-            fetch('/ping').catch(() => {});
-        }, 25000);
-        
-        // Proqramı başlat
-        window.addEventListener('DOMContentLoaded', () => {
-            // Telegram varsa genişlət
-            if (tg.initData) {
-                tg.expand();
-            }
-            
-            authenticate();
-        });
-    </script>
+
+<h2 id="user"></h2>
+
+<input id="room" placeholder="Oda No">
+<button onclick="join()">GİR</button>
+
+<div id="lobby"></div>
+
+<script>
+const tg = window.Telegram.WebApp;
+tg.expand();
+
+const socket = io();
+
+const user = {
+  id: tg.initDataUnsafe.user.id,
+  name: tg.initDataUnsafe.user.first_name,
+  photo: tg.initDataUnsafe.user.photo_url
+};
+
+document.getElementById("user").innerText = user.name;
+
+function join(){
+  const roomId = document.getElementById("room").value;
+  socket.emit("joinRoom",{ roomId, user });
+}
+
+socket.on("roomUpdate", room=>{
+  document.getElementById("lobby").innerHTML =
+    Object.values(room.players).map(p=>`
+      <div>${p.name}</div>
+    `).join("");
+});
+
+socket.on("gameStarted", room=>{
+  alert("Oyun başladı! Rolün gizlidir.");
+});
+</script>
+
 </body>
 </html>
