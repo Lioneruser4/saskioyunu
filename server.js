@@ -97,6 +97,15 @@ class Room {
         this.policeCheck = null;
         this.doctorSave = null;
         this.mafiaChat = [];
+        this.phaseEndTime = null;
+        this.phaseTimeoutId = null;
+    }
+
+    clearPhaseTimeout() {
+        if (this.phaseTimeoutId) {
+            clearTimeout(this.phaseTimeoutId);
+            this.phaseTimeoutId = null;
+        }
     }
 
     addPlayer(player) {
@@ -319,7 +328,7 @@ wss.on('connection', (ws) => {
 
             case 'getRooms':
                 const roomList = Array.from(rooms.values())
-                    .filter(room => !room.gameStarted)
+                    .filter(room => !room.gameStarted && room.config)
                     .map(room => room.toJSON());
                 sendToClient(ws, 'roomList', roomList);
                 break;
@@ -384,9 +393,9 @@ wss.on('connection', (ws) => {
 });
 
 function handleAutoJoin(userId) {
-    // Find available room
+    // Find available room (skip password protected and full rooms)
     for (const room of rooms.values()) {
-        if (!room.gameStarted && room.players.length < getTotalPlayers(room.config)) {
+        if (!room.gameStarted && !room.password && room.players.length < getTotalPlayers(room.config)) {
             handleJoinRoom(userId, room.code);
             return;
         }
@@ -399,7 +408,7 @@ function handleAutoJoin(userId) {
         doctor: 1,
         citizen: 4
     };
-    handleCreateRoom(userId, config);
+    handleCreateRoom(userId, { config });
 }
 
 function handleJoinRoom(userId, code, password = null) {
@@ -435,7 +444,10 @@ function handleJoinRoom(userId, code, password = null) {
 
 function handleCreateRoom(userId, data) {
     const code = generateRoomCode();
-    const { config, name, password } = data;
+    const config = data.config || data; // Fallback if data is config itself
+    const name = data.name;
+    const password = data.password;
+
     const roomName = name || `Mafia Otağı ${roomCounter++}`;
     const room = new Room(code, config, userId, roomName, password);
     const user = users.get(userId);
@@ -523,7 +535,9 @@ function startNightPhase(room) {
 
     // Auto-advance after 60 seconds
     saveState();
-    setTimeout(() => {
+    room.phaseEndTime = Date.now() + 60000;
+    room.clearPhaseTimeout();
+    room.phaseTimeoutId = setTimeout(() => {
         if (room.phase === 'night') {
             startDayPhase(room);
         }
@@ -562,7 +576,9 @@ function startDayPhase(room) {
 
     // Auto-advance after 90 seconds
     saveState();
-    setTimeout(() => {
+    room.phaseEndTime = Date.now() + 90000;
+    room.clearPhaseTimeout();
+    room.phaseTimeoutId = setTimeout(() => {
         if (room.phase === 'day') {
             endDayPhase(room);
         }
@@ -658,6 +674,13 @@ function handleVote(userId, targetId) {
     const room = findUserRoom(userId);
     if (room && room.phase === 'day') {
         room.votes[userId] = targetId;
+
+        // If everyone voted, finish early
+        const votedCount = Object.keys(room.votes).length;
+        if (votedCount >= room.alivePlayers.length) {
+            room.clearPhaseTimeout();
+            endDayPhase(room);
+        }
     }
 }
 
@@ -787,12 +810,18 @@ function simulateBotActions(room) {
 function handleSyncState(userId) {
     const room = findUserRoom(userId);
     if (room) {
+        let remainingTime = 0;
+        if (room.phaseEndTime) {
+            remainingTime = Math.max(0, Math.floor((room.phaseEndTime - Date.now()) / 1000));
+        }
+
         const gameState = {
             phase: room.phase,
             day: room.day,
             myRole: room.roles[userId],
             alivePlayers: room.alivePlayers,
-            log: []
+            log: [],
+            remainingTime: remainingTime
         };
 
         sendToClient(connections.get(userId), 'gameStateSync', {
