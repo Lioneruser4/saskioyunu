@@ -408,6 +408,11 @@ function startNightPhase(room) {
         }
     });
 
+    // Simulate bot actions if training mode
+    if (room.isTraining) {
+        simulateBotActions(room);
+    }
+
     // Auto-advance after 60 seconds
     setTimeout(() => {
         if (room.phase === 'night') {
@@ -440,6 +445,11 @@ function startDayPhase(room) {
             sendToClient(connections.get(player.id), 'dayPhase', dayData);
         }
     });
+
+    // Simulate bot actions if training mode
+    if (room.isTraining) {
+        simulateBotActions(room);
+    }
 
     // Auto-advance after 90 seconds
     setTimeout(() => {
@@ -558,33 +568,48 @@ function handleMafiaChat(userId, message) {
 }
 
 function handleStartTraining(userId, data) {
-    // Create training room with bots
+    // Realistic bot names
+    const botNames = [
+        'Əli', 'Vəli', 'Aysel', 'Nigar', 'Rəşad', 'Elvin', 'Səbinə', 'Kamran',
+        'Leyla', 'Tural', 'Günay', 'Orxan', 'Aynur', 'Elçin', 'Sevda', 'Rauf',
+        'Məleykə', 'Fərid', 'Gül', 'Mübariz', 'Arzu', 'Ramil', 'Nərgiz', 'Elşad'
+    ];
+
+    // Shuffle bot names
+    const shuffledNames = [...botNames].sort(() => Math.random() - 0.5);
+
+    // Calculate config based on bot count
+    const totalPlayers = parseInt(data.botCount);
     const config = {
-        mafia: 2,
-        police: 1,
-        doctor: 1,
-        citizen: data.botCount - 4
+        mafia: Math.max(1, Math.floor(totalPlayers / 4)),
+        police: Math.max(0, Math.floor(totalPlayers / 8)),
+        doctor: Math.max(0, Math.floor(totalPlayers / 8)),
+        citizen: 0
     };
+    config.citizen = totalPlayers - config.mafia - config.police - config.doctor;
 
     const code = generateRoomCode();
     const room = new Room(code, config, userId);
     const user = users.get(userId);
     room.addPlayer(user);
+    room.isTraining = true; // Mark as training room
 
-    // Add bots
-    for (let i = 1; i < data.botCount; i++) {
+    // Add bots with realistic names
+    for (let i = 0; i < data.botCount - 1; i++) {
         const bot = {
-            id: `bot_${i}`,
-            name: `Bot ${i}`,
-            photo: 'https://via.placeholder.com/50',
+            id: `bot_${code}_${i}`,
+            name: shuffledNames[i] || `Bot ${i + 1}`,
+            photo: `https://ui-avatars.com/api/?name=${encodeURIComponent(shuffledNames[i] || 'Bot')}&background=random`,
             isBot: true
         };
         room.addPlayer(bot);
+        users.set(bot.id, bot); // Add bot to users map
     }
 
-    // Override user's role
     rooms.set(code, room);
     room.startGame();
+
+    // Override user's role
     room.roles[userId] = data.role;
 
     const gameData = {
@@ -597,39 +622,53 @@ function handleStartTraining(userId, data) {
 
     sendToClient(connections.get(userId), 'gameStarted', gameData);
 
-    // Simulate bot actions
-    simulateBotActions(room);
+    // Start night phase for training
+    setTimeout(() => {
+        startNightPhase(room);
+    }, 3000);
 }
 
 function simulateBotActions(room) {
-    // Simple bot AI
-    setTimeout(() => {
-        if (room.phase === 'night') {
-            // Bots make random actions
+    if (!room.isTraining) return;
+
+    // Simulate bot actions during night
+    if (room.phase === 'night') {
+        setTimeout(() => {
             room.alivePlayers.forEach(player => {
                 if (player.isBot) {
                     const role = room.roles[player.id];
-                    const targets = room.alivePlayers.filter(p => p.id !== player.id);
-                    const randomTarget = targets[Math.floor(Math.random() * targets.length)];
+                    const targets = room.alivePlayers.filter(p => p.id !== player.id && room.roles[p.id] !== 'mafia');
 
-                    if (role === 'mafia') {
-                        room.mafiaVotes[player.id] = randomTarget.id;
-                    } else if (role === 'doctor') {
-                        room.doctorSave = randomTarget.id;
+                    if (targets.length > 0) {
+                        const randomTarget = targets[Math.floor(Math.random() * targets.length)];
+
+                        if (role === 'mafia') {
+                            room.mafiaVotes[player.id] = randomTarget.id;
+                        } else if (role === 'doctor') {
+                            room.doctorSave = randomTarget.id;
+                        } else if (role === 'police') {
+                            room.policeCheck = randomTarget.id;
+                        }
                     }
                 }
             });
-        } else if (room.phase === 'day') {
-            // Bots vote randomly
+        }, 3000);
+    }
+
+    // Simulate bot actions during day
+    if (room.phase === 'day') {
+        setTimeout(() => {
             room.alivePlayers.forEach(player => {
                 if (player.isBot) {
                     const targets = room.alivePlayers.filter(p => p.id !== player.id);
-                    const randomTarget = targets[Math.floor(Math.random() * targets.length)];
-                    room.votes[player.id] = randomTarget.id;
+                    if (targets.length > 0) {
+                        const randomTarget = targets[Math.floor(Math.random() * targets.length)];
+                        room.votes[player.id] = randomTarget.id;
+                    }
                 }
             });
-        }
-    }, 5000);
+        }, 3000);
+    }
 }
 
 function handleDisconnect(userId) {
