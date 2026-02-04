@@ -1,54 +1,256 @@
+<!-- index.html -->
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Mafia Oyunu</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script src="/socket.io/socket.io.js"></script>
-<style>
-body { background:#111;color:white;font-family:sans-serif }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saski Oyunu (Mafia)</title>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f0f0f0; color: #333; margin: 0; padding: 20px; }
+        #main-menu { text-align: center; }
+        button { padding: 10px 20px; margin: 10px; background: #007bff; color: white; border: none; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        #lobby { display: none; }
+        #game { display: none; }
+        #chat { border: 1px solid #ccc; padding: 10px; height: 200px; overflow-y: scroll; margin-top: 10px; }
+        #input-bar { margin-top: 10px; }
+        input { padding: 10px; width: 200px; }
+        #player-list { list-style: none; padding: 0; }
+        #player-list li { margin: 5px 0; display: flex; align-items: center; }
+        img.profile { width: 30px; height: 30px; border-radius: 50%; margin-right: 10px; }
+        #mafia-chat { display: none; }
+        #night-actions { display: none; }
+    </style>
 </head>
-
 <body>
+    <div id="main-menu">
+        <h1>Saski Oyunu (Mafia)</h1>
+        <button id="auto-join">Otomatik Katıl</button>
+        <button id="create-room">Oda Oluştur</button>
+        <div id="rooms-list"></div>
+        <div id="input-bar">
+            <input id="room-number" type="text" placeholder="Oda Numarası">
+            <button id="join-room">Gir</button>
+        </div>
+        <button id="demo-mode">Demo Modu (Botlarla)</button>
+    </div>
 
-<h2 id="user"></h2>
+    <div id="lobby">
+        <h2>Oda: <span id="room-id"></span></h2>
+        <ul id="player-list"></ul>
+        <div id="role-settings" style="display: none;">
+            <label>Mafia Sayısı: <input id="mafia-count" type="number" min="1" value="2"></label>
+            <label>Polis Sayısı: <input id="police-count" type="number" min="1" value="1"></label>
+            <label>Vatandaş Sayısı: <input id="citizen-count" type="number" min="1" value="4"></label>
+            <button id="start-game">Oyunu Başlat</button>
+        </div>
+        <button id="kick-player" style="display: none;">Oyuncuyu At</button>
+        <div id="chat"></div>
+        <input id="chat-input" type="text" placeholder="Mesaj yaz...">
+        <button id="send-chat">Gönder</button>
+    </div>
 
-<input id="room" placeholder="Oda No">
-<button onclick="join()">GİR</button>
+    <div id="game">
+        <h2>Oyun Devam Ediyor</h2>
+        <p id="phase-info"></p>
+        <ul id="game-players"></ul>
+        <div id="chat"></div>
+        <input id="chat-input" type="text" placeholder="Mesaj yaz...">
+        <button id="send-chat">Gönder</button>
+        <div id="mafia-chat">
+            <h3>Mafia Chat</h3>
+            <div id="mafia-messages"></div>
+            <input id="mafia-input" type="text" placeholder="Mafia mesajı...">
+            <button id="send-mafia">Gönder</button>
+        </div>
+        <div id="night-actions"></div>
+    </div>
 
-<div id="lobby"></div>
+    <script>
+        const socket = io();
+        let user = null;
+        let roomId = null;
+        let isOwner = false;
+        let role = null;
+        let players = [];
 
-<script>
-const tg = window.Telegram.WebApp;
-tg.expand();
+        // Telegram Init
+        window.Telegram.WebApp.ready();
+        user = window.Telegram.WebApp.initDataUnsafe.user;
+        if (!user) {
+            alert('Telegram üzerinden giriş yapın!');
+            return;
+        }
+        const { id: userId, first_name: name, photo_url: photo } = user;
 
-const socket = io();
+        socket.emit('login', { userId, name, photo });
 
-const user = {
-  id: tg.initDataUnsafe.user.id,
-  name: tg.initDataUnsafe.user.first_name,
-  photo: tg.initDataUnsafe.user.photo_url
-};
+        // Auto Join
+        document.getElementById('auto-join').addEventListener('click', () => {
+            socket.emit('auto-join');
+        });
 
-document.getElementById("user").innerText = user.name;
+        // Create Room
+        document.getElementById('create-room').addEventListener('click', () => {
+            socket.emit('create-room');
+        });
 
-function join(){
-  const roomId = document.getElementById("room").value;
-  socket.emit("joinRoom",{ roomId, user });
-}
+        // Join Room
+        document.getElementById('join-room').addEventListener('click', () => {
+            const inputRoom = document.getElementById('room-number').value;
+            socket.emit('join-room', inputRoom);
+        });
 
-socket.on("roomUpdate", room=>{
-  document.getElementById("lobby").innerHTML =
-    Object.values(room.players).map(p=>`
-      <div>${p.name}</div>
-    `).join("");
-});
+        // Demo Mode
+        document.getElementById('demo-mode').addEventListener('click', () => {
+            socket.emit('create-room', true); // Demo flag
+        });
 
-socket.on("gameStarted", room=>{
-  alert("Oyun başladı! Rolün gizlidir.");
-});
-</script>
+        // Socket Events
+        socket.on('room-created', (id) => {
+            roomId = id;
+            document.getElementById('room-id').textContent = id;
+            document.getElementById('main-menu').style.display = 'none';
+            document.getElementById('lobby').style.display = 'block';
+            isOwner = true;
+            document.getElementById('role-settings').style.display = 'block';
+            document.getElementById('kick-player').style.display = 'block';
+        });
 
+        socket.on('joined-room', (data) => {
+            roomId = data.roomId;
+            players = data.players;
+            updatePlayerList();
+            document.getElementById('main-menu').style.display = 'none';
+            document.getElementById('lobby').style.display = 'block';
+            if (data.isOwner) {
+                isOwner = true;
+                document.getElementById('role-settings').style.display = 'block';
+                document.getElementById('kick-player').style.display = 'block';
+            }
+        });
+
+        socket.on('player-list', (list) => {
+            players = list;
+            updatePlayerList();
+        });
+
+        socket.on('chat-message', (msg) => {
+            const chat = document.getElementById('chat');
+            chat.innerHTML += `<p>${msg}</p>`;
+            chat.scrollTop = chat.scrollHeight;
+        });
+
+        // Send Chat
+        document.getElementById('send-chat').addEventListener('click', () => {
+            const input = document.getElementById('chat-input');
+            socket.emit('chat', { roomId, message: input.value });
+            input.value = '';
+        });
+
+        // Start Game
+        document.getElementById('start-game').addEventListener('click', () => {
+            const mafia = parseInt(document.getElementById('mafia-count').value);
+            const police = parseInt(document.getElementById('police-count').value);
+            const citizen = parseInt(document.getElementById('citizen-count').value);
+            if (mafia + police + citizen !== players.length) return alert('Toplam oyuncu sayısı eşleşmiyor!');
+            socket.emit('start-game', { mafia, police, citizen });
+        });
+
+        socket.on('game-started', (assignedRole) => {
+            role = assignedRole;
+            alert(`Rolün: ${role}`);
+            document.getElementById('lobby').style.display = 'none';
+            document.getElementById('game').style.display = 'block';
+            startGameLoop();
+        });
+
+        // Game Phases
+        function startGameLoop() {
+            // Simplified phase management client-side, but sync with server
+        }
+
+        socket.on('phase-change', (phase) => {
+            document.getElementById('phase-info').textContent = `Faz: ${phase}`;
+            if (phase === 'gece') {
+                if (role === 'mafia') {
+                    document.getElementById('mafia-chat').style.display = 'block';
+                } else if (role === 'doktor') {
+                    showDoctorActions();
+                } else {
+                    document.getElementById('night-actions').innerHTML = '<p>Gece fazı: Bekle...</p>';
+                }
+            } else {
+                document.getElementById('mafia-chat').style.display = 'none';
+                document.getElementById('night-actions').style.display = 'none';
+            }
+        });
+
+        // Mafia Send
+        document.getElementById('send-mafia').addEventListener('click', () => {
+            const input = document.getElementById('mafia-input');
+            socket.emit('mafia-chat', { roomId, message: input.value });
+            input.value = '';
+        });
+
+        socket.on('mafia-message', (msg) => {
+            const mafiaChat = document.getElementById('mafia-messages');
+            mafiaChat.innerHTML += `<p>${msg}</p>`;
+            mafiaChat.scrollTop = mafiaChat.scrollHeight;
+        });
+
+        // Doctor Actions
+        function showDoctorActions() {
+            const actions = document.getElementById('night-actions');
+            actions.style.display = 'block';
+            actions.innerHTML = '<h3>Bir kişiyi tedavi et</h3>';
+            players.forEach(p => {
+                if (p.alive) {
+                    const btn = document.createElement('button');
+                    btn.textContent = p.name;
+                    btn.onclick = () => socket.emit('doctor-save', { roomId, target: p.userId });
+                    actions.appendChild(btn);
+                }
+            });
+        }
+
+        socket.on('save-result', (result) => {
+            alert(result);
+        });
+
+        // Update Player List
+        function updatePlayerList() {
+            const list = document.getElementById('player-list');
+            list.innerHTML = '';
+            players.forEach(p => {
+                const li = document.createElement('li');
+                li.innerHTML = `<img class="profile" src="${p.photo || ''}" alt="profile"> ${p.name}`;
+                if (isOwner && p.userId !== userId) {
+                    const kickBtn = document.createElement('button');
+                    kickBtn.textContent = 'At';
+                    kickBtn.onclick = () => socket.emit('kick', { roomId, target: p.userId });
+                    li.appendChild(kickBtn);
+                }
+                list.appendChild(li);
+            });
+        }
+
+        // Reconnect Handling
+        socket.on('disconnect', () => {
+            console.log('Disconnected, reconnecting...');
+        });
+
+        socket.on('reconnect', () => {
+            if (roomId) socket.emit('rejoin', roomId);
+        });
+
+        // Rooms List (optional, fetch from server if needed)
+        socket.on('rooms-update', (rooms) => {
+            const list = document.getElementById('rooms-list');
+            list.innerHTML = rooms.map(r => `<p>Oda ${r.id} (${r.players} oyuncu)</p>`).join('');
+        });
+    </script>
 </body>
 </html>
