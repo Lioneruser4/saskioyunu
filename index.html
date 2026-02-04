@@ -880,7 +880,9 @@
             updateTimerDisplay();
 
             timerInterval = setInterval(() => {
-                timeRemaining--;
+                if (timeRemaining > 0) {
+                    timeRemaining--;
+                }
                 updateTimerDisplay();
 
                 if (timeRemaining <= 0) {
@@ -890,8 +892,9 @@
         }
 
         function updateTimerDisplay() {
-            const minutes = Math.floor(timeRemaining / 60);
-            const seconds = timeRemaining % 60;
+            const displayTime = Math.max(0, timeRemaining);
+            const minutes = Math.floor(displayTime / 60);
+            const seconds = displayTime % 60;
             document.getElementById('timerText').textContent =
                 `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
         }
@@ -924,30 +927,24 @@
             };
 
             ws.onmessage = (event) => {
-                const message = JSON.parse(event.data);
-                handleMessage(message);
+                try {
+                    const message = JSON.parse(event.data);
+                    handleMessage(message);
+                } catch (e) {
+                    console.error('Error parsing server message:', e);
+                }
             };
 
             ws.onclose = () => {
                 console.log('Bağlantı kəsildi');
                 document.getElementById('connectionStatus').classList.add('show');
                 document.getElementById('connectionStatus').textContent = 'Yenidən bağlanılır...';
-                attemptReconnect();
-            };
 
-            ws.onerror = (error) => {
-                console.error('WebSocket xətası:', error);
-            };
-        }
-
-        function attemptReconnect() {
-            if (reconnectAttempts < maxReconnectAttempts) {
+                // Exponential backoff for reconnection
+                const delay = Math.min(reconnectDelay * reconnectAttempts, 10000);
+                setTimeout(connectWebSocket, delay);
                 reconnectAttempts++;
-                console.log(`Yenidən bağlanılır... Cəhd ${reconnectAttempts}`);
-                setTimeout(connectWebSocket, reconnectDelay);
-            } else {
-                document.getElementById('connectionStatus').textContent = 'Bağlantı uğursuz oldu';
-            }
+            };
         }
 
         function handleMessage(message) {
@@ -1007,6 +1004,9 @@
                     break;
                 case 'gameEnd':
                     handleGameEnd(message.data);
+                    break;
+                case 'statusMessage':
+                    showStatusMessage(message.data.message, message.data.type);
                     break;
                 case 'error':
                     showError(message.data.message);
@@ -1451,6 +1451,14 @@
             setTimeout(() => {
                 logEl.style.display = 'none';
             }, 3000);
+        }
+
+        function showStatusMessage(message, type = 'info') {
+            const logEl = document.getElementById('gameLog');
+            logEl.style.display = 'block';
+            logEl.className = `status-message ${type}`;
+            const icon = type === 'warning' ? 'exclamation-triangle' : 'info-circle';
+            logEl.innerHTML = `<i class="fas fa-${icon}"></i> ${message}`;
         }
 
         function showError(message) {
