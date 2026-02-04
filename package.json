@@ -1,7 +1,7 @@
 {
-  "name": "online-durak",
+  "name": "telegram-mafia-game-pro",
   "version": "1.0.0",
-  "description": "Profesyonel Online Durak Oyunu",
+  "description": "Profesyonel Telegram Mafia Oyunu",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -10,11 +10,14 @@
   "dependencies": {
     "express": "^4.18.2",
     "socket.io": "^4.7.2",
-    "mongoose": "^7.5.0",
-    "crypto-js": "^4.1.1",
-    "node-cron": "^3.0.3"
+    "uuid": "^9.0.0",
+    "node-cache": "^5.1.2",
+    "sqlite3": "^5.1.6",
+    "helmet": "^7.0.0",
+    "compression": "^1.7.4",
+    "cors": "^2.8.5"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": "18.x"
   }
 }
