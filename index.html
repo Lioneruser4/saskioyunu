@@ -4,8 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mafia Oyunu</title>
+    <title>Mafia</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
             margin: 0;
@@ -72,6 +73,19 @@
             align-items: center;
             gap: 15px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            animation: slideDown 0.5s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .profile-pic {
@@ -110,11 +124,28 @@
             cursor: pointer;
             transition: all 0.3s ease;
             box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            animation: fadeInUp 0.5s ease;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .menu-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .menu-btn i {
+            margin-right: 10px;
         }
 
         .menu-btn.secondary {
@@ -125,6 +156,36 @@
             background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
         }
 
+        /* Timer */
+        .timer {
+            background: rgba(255, 107, 107, 0.2);
+            border: 2px solid #ff6b6b;
+            border-radius: 50px;
+            padding: 10px 20px;
+            text-align: center;
+            margin: 15px 0;
+            font-size: 24px;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        .timer i {
+            margin-right: 10px;
+            color: #ff6b6b;
+        }
+
         /* Room Join Section */
         .room-join {
             background: rgba(255, 255, 255, 0.05);
@@ -132,6 +193,17 @@
             border-radius: 15px;
             padding: 20px;
             margin-top: 20px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
         }
 
         .room-join h3 {
@@ -162,6 +234,11 @@
             color: white;
             font-weight: bold;
             cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .join-btn:hover {
+            transform: scale(1.05);
         }
 
         /* Room List */
@@ -178,6 +255,19 @@
             cursor: pointer;
             transition: all 0.3s ease;
             border: 2px solid transparent;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
         }
 
         .room-card:hover {
@@ -258,6 +348,7 @@
             margin: 8px 0;
             background: rgba(255, 255, 255, 0.05);
             border-radius: 10px;
+            animation: fadeIn 0.3s ease;
         }
 
         .player-item img {
@@ -265,16 +356,6 @@
             height: 40px;
             border-radius: 50%;
             border: 2px solid #667eea;
-        }
-
-        .kick-btn {
-            margin-left: auto;
-            padding: 6px 12px;
-            background: #ff6b6b;
-            border: none;
-            border-radius: 6px;
-            color: white;
-            cursor: pointer;
         }
 
         /* Game Screen */
@@ -298,11 +379,29 @@
             margin: 20px 0;
             text-align: center;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            animation: zoomIn 0.5s ease;
+        }
+
+        @keyframes zoomIn {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
         }
 
         .role-card h2 {
             font-size: 32px;
             margin-bottom: 10px;
+        }
+
+        .role-card i {
+            font-size: 64px;
+            margin-bottom: 15px;
         }
 
         .role-card.mafia {
@@ -331,6 +430,7 @@
 
         .mafia-chat {
             background: rgba(255, 107, 107, 0.1);
+            border: 2px solid rgba(255, 107, 107, 0.3);
             border-radius: 12px;
             padding: 15px;
             margin: 15px 0;
@@ -343,6 +443,11 @@
             border-radius: 8px;
             padding: 10px;
             margin: 8px 0;
+            animation: slideIn 0.3s ease;
+        }
+
+        .chat-message strong {
+            color: #ff6b6b;
         }
 
         .chat-input-group {
@@ -368,33 +473,83 @@
             color: white;
             font-weight: bold;
             cursor: pointer;
-        }
-
-        /* Action Buttons */
-        .action-buttons {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 10px;
-            margin: 20px 0;
-        }
-
-        .action-btn {
-            padding: 15px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
-            border-radius: 10px;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
             transition: all 0.3s ease;
         }
 
-        .action-btn:hover {
+        .send-btn:hover {
             transform: scale(1.05);
         }
 
-        .action-btn.danger {
-            background: linear-gradient(135deg, #ff6b6b 0%, #c92a2a 100%);
+        /* Selection Grid */
+        .selection-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .selection-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .selection-card:hover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.2);
+            transform: translateY(-5px);
+        }
+
+        .selection-card.selected {
+            border-color: #ff6b6b;
+            background: rgba(255, 107, 107, 0.3);
+            box-shadow: 0 0 20px rgba(255, 107, 107, 0.5);
+        }
+
+        .selection-card img {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            margin-bottom: 10px;
+            border: 2px solid #667eea;
+        }
+
+        .selection-card.selected img {
+            border-color: #ff6b6b;
+        }
+
+        .selection-card h4 {
+            font-size: 14px;
+            margin-top: 8px;
+        }
+
+        .selection-card i {
+            font-size: 48px;
+            margin-bottom: 10px;
+            color: #667eea;
+        }
+
+        .selection-card.selected i {
+            color: #ff6b6b;
+        }
+
+        /* Voting Section */
+        .voting-section {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .voting-section h3 {
+            margin-bottom: 20px;
+            text-align: center;
         }
 
         /* Training Mode */
@@ -410,46 +565,6 @@
             margin: 15px 0;
         }
 
-        /* Voting */
-        .voting-section {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 20px;
-            margin: 20px 0;
-        }
-
-        .vote-option {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 10px;
-            padding: 15px;
-            margin: 10px 0;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border: 2px solid transparent;
-        }
-
-        .vote-option:hover {
-            border-color: #667eea;
-            background: rgba(102, 126, 234, 0.2);
-        }
-
-        .vote-option.selected {
-            border-color: #ff6b6b;
-            background: rgba(255, 107, 107, 0.2);
-        }
-
-        /* Back Button */
-        .back-btn {
-            padding: 12px 25px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
-            color: white;
-            cursor: pointer;
-            margin-bottom: 20px;
-        }
-
         /* Status Messages */
         .status-message {
             background: rgba(255, 255, 255, 0.1);
@@ -457,6 +572,7 @@
             border-radius: 8px;
             padding: 15px;
             margin: 15px 0;
+            animation: slideIn 0.3s ease;
         }
 
         .status-message.warning {
@@ -471,60 +587,80 @@
             border-left-color: #38ef7d;
         }
 
-        /* Responsive */
-        @media (max-width: 480px) {
-            .container {
-                padding: 10px;
-            }
-
-            .header {
-                padding: 10px;
-            }
-
-            .menu-btn {
-                padding: 15px;
-                font-size: 14px;
-            }
-        }
-
-        /* Animations */
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .fade-in {
-            animation: fadeIn 0.5s ease;
-        }
-
         /* Connection Status */
         .connection-status {
             position: fixed;
             top: 10px;
             right: 10px;
             padding: 8px 15px;
-            background: rgba(56, 239, 125, 0.9);
+            background: rgba(255, 107, 107, 0.9);
             border-radius: 20px;
             font-size: 12px;
             z-index: 1000;
+            display: none;
         }
 
-        .connection-status.disconnected {
-            background: rgba(255, 107, 107, 0.9);
+        .connection-status.show {
+            display: block;
+            animation: shake 0.5s ease;
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-10px);
+            }
+
+            75% {
+                transform: translateX(10px);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 480px) {
+            .container {
+                padding: 10px;
+            }
+
+            .selection-grid {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+                gap: 10px;
+            }
+
+            .selection-card img {
+                width: 50px;
+                height: 50px;
+            }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 107, 107, 0.5);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 107, 107, 0.8);
         }
     </style>
 </head>
 
 <body>
     <!-- Connection Status -->
-    <div class="connection-status" id="connectionStatus">Bağlanıyor...</div>
+    <div class="connection-status" id="connectionStatus">Bağlantı kəsildi</div>
 
     <!-- Loading Screen -->
     <div id="loadingScreen">
@@ -535,7 +671,7 @@
     <div class="container">
         <!-- Header -->
         <div class="header" id="userHeader" style="display: none;">
-            <img src="" alt="Profile" class="profile-pic" id="profilePic">
+            <img src="" alt="Profil" class="profile-pic" id="profilePic">
             <div class="user-info">
                 <h3 id="userName">Oyunçu</h3>
                 <p id="userStatus">Onlayn</p>
@@ -544,17 +680,17 @@
 
         <!-- Main Menu -->
         <div id="mainMenu">
-            <h1 style="text-align: center; margin-bottom: 30px; font-size: 36px;">🎭 MAFIA</h1>
-            <button class="menu-btn" onclick="autoJoinRoom()">🎮 Avtomatik Qoşul</button>
-            <button class="menu-btn secondary" onclick="showRoomList()">🏠 Otaqlar</button>
-            <button class="menu-btn tertiary" onclick="showCreateRoom()">➕ Otaq Yarat</button>
+            <button class="menu-btn" onclick="autoJoinRoom()"><i class="fas fa-play"></i> Avtomatik Qoşul</button>
+            <button class="menu-btn secondary" onclick="showRoomList()"><i class="fas fa-door-open"></i>
+                Otaqlar</button>
+            <button class="menu-btn tertiary" onclick="showCreateRoom()"><i class="fas fa-plus"></i> Otaq Yarat</button>
             <button class="menu-btn" style="background: linear-gradient(135deg, #fa8231 0%, #f5576c 100%);"
-                onclick="showTrainingMode()">🤖 Məşq Rejimi</button>
+                onclick="showTrainingMode()"><i class="fas fa-robot"></i> Məşq Rejimi</button>
 
             <div class="room-join">
-                <h3>Otaq Nömrəsi ilə Qoşul</h3>
+                <h3><i class="fas fa-hashtag"></i> Otaq Nömrəsi ilə Qoşul</h3>
                 <div class="join-input-group">
-                    <input type="text" class="room-input" id="roomCodeInput" placeholder="Otaq kodu daxil edin">
+                    <input type="text" class="room-input" id="roomCodeInput" placeholder="Otaq kodu">
                     <button class="join-btn" onclick="joinRoomByCode()">GİR</button>
                 </div>
             </div>
@@ -562,30 +698,28 @@
 
         <!-- Room List -->
         <div id="roomList">
-            <button class="back-btn" onclick="showMainMenu()">⬅ Geri</button>
-            <h2 style="margin-bottom: 20px;">Mövcud Otaqlar</h2>
+            <h2 style="margin-bottom: 20px;"><i class="fas fa-list"></i> Mövcud Otaqlar</h2>
             <div id="roomsContainer"></div>
         </div>
 
         <!-- Create Room -->
         <div id="createRoom">
-            <button class="back-btn" onclick="showMainMenu()">⬅ Geri</button>
-            <h2 style="margin-bottom: 20px;">Otaq Yarat</h2>
+            <h2 style="margin-bottom: 20px;"><i class="fas fa-plus-circle"></i> Otaq Yarat</h2>
             <div class="create-form">
                 <div class="form-group">
-                    <label>Mafia Sayı</label>
+                    <label><i class="fas fa-user-secret"></i> Mafia Sayı</label>
                     <input type="number" id="mafiaCount" min="1" max="5" value="2">
                 </div>
                 <div class="form-group">
-                    <label>Polis Sayı</label>
+                    <label><i class="fas fa-shield-alt"></i> Polis Sayı</label>
                     <input type="number" id="policeCount" min="0" max="3" value="1">
                 </div>
                 <div class="form-group">
-                    <label>Doktor Sayı</label>
+                    <label><i class="fas fa-user-md"></i> Doktor Sayı</label>
                     <input type="number" id="doctorCount" min="0" max="2" value="1">
                 </div>
                 <div class="form-group">
-                    <label>Vətəndaş Sayı</label>
+                    <label><i class="fas fa-users"></i> Vətəndaş Sayı</label>
                     <input type="number" id="citizenCount" min="1" max="10" value="4">
                 </div>
                 <button class="menu-btn" onclick="createNewRoom()">Otaq Yarat</button>
@@ -594,21 +728,26 @@
 
         <!-- Game Room (Lobby) -->
         <div id="gameRoom">
-            <button class="back-btn" onclick="leaveRoom()">⬅ Otaqdan Çıx</button>
             <div class="room-header">
-                <h2 id="roomTitle">Otaq #<span id="roomCode"></span></h2>
+                <h2><i class="fas fa-door-open"></i> Otaq #<span id="roomCode"></span></h2>
                 <p id="roomConfig"></p>
             </div>
             <div class="players-list">
-                <h3>Oyunçular (<span id="playerCount">0</span>)</h3>
+                <h3><i class="fas fa-users"></i> Oyunçular (<span id="playerCount">0</span>)</h3>
                 <div id="playersContainer"></div>
             </div>
-            <button class="menu-btn" id="startGameBtn" style="display: none;" onclick="startGame()">Oyunu
-                Başlat</button>
+            <button class="menu-btn" id="startGameBtn" style="display: none;" onclick="startGame()"><i
+                    class="fas fa-play-circle"></i> Oyunu Başlat</button>
         </div>
 
         <!-- Game Screen -->
         <div id="gameScreen">
+            <!-- Timer -->
+            <div class="timer" id="gameTimer" style="display: none;">
+                <i class="fas fa-clock"></i>
+                <span id="timerText">00:00</span>
+            </div>
+
             <div class="game-info">
                 <h2 id="gamePhase">Gün 1</h2>
                 <p id="gameStatus">Oyun başlayır...</p>
@@ -616,49 +755,47 @@
 
             <!-- Role Card -->
             <div class="role-card" id="roleCard" style="display: none;">
+                <i id="roleIcon" class="fas fa-user"></i>
                 <h2 id="roleName">Rolunuz</h2>
                 <p id="roleDescription"></p>
             </div>
 
-            <!-- Night Phase (Mafia Chat) -->
+            <!-- Night Phase -->
             <div class="night-phase" id="nightPhase" style="display: none;">
-                <h3>🌙 Gecə Fazası</h3>
+                <h3><i class="fas fa-moon"></i> Gecə Fazası</h3>
                 <div id="nightContent"></div>
             </div>
 
             <!-- Voting Section -->
             <div class="voting-section" id="votingSection" style="display: none;">
-                <h3>Səsvermə</h3>
-                <div id="votingOptions"></div>
-                <button class="menu-btn" onclick="submitVote()">Səs Ver</button>
+                <h3><i class="fas fa-vote-yea"></i> Səsvermə</h3>
+                <div class="selection-grid" id="votingOptions"></div>
+                <button class="menu-btn" onclick="submitVote()" style="margin-top: 20px;"><i class="fas fa-check"></i>
+                    Səs Ver</button>
             </div>
 
-            <!-- Action Buttons -->
-            <div class="action-buttons" id="actionButtons"></div>
-
             <!-- Game Log -->
-            <div class="status-message" id="gameLog"></div>
+            <div class="status-message" id="gameLog" style="display: none;"></div>
         </div>
 
         <!-- Training Mode -->
         <div id="trainingMode">
-            <button class="back-btn" onclick="showMainMenu()">⬅ Geri</button>
-            <h2 style="margin-bottom: 20px;">Məşq Rejimi</h2>
+            <h2 style="margin-bottom: 20px;"><i class="fas fa-robot"></i> Məşq Rejimi</h2>
             <div class="bot-config">
                 <div class="form-group">
-                    <label>Rolunuzu Seçin</label>
+                    <label><i class="fas fa-user-tag"></i> Rolunuzu Seçin</label>
                     <select id="trainingRole">
-                        <option value="mafia">Mafia</option>
-                        <option value="police">Polis</option>
-                        <option value="doctor">Doktor</option>
-                        <option value="citizen">Vətəndaş</option>
+                        <option value="mafia">🔴 Mafia</option>
+                        <option value="police">🔵 Polis</option>
+                        <option value="doctor">💚 Doktor</option>
+                        <option value="citizen">⚪ Vətəndaş</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Bot Sayı</label>
-                    <input type="number" id="botCount" min="3" max="10" value="5">
+                    <label><i class="fas fa-robot"></i> Bot Sayı</label>
+                    <input type="number" id="botCount" min="4" max="10" value="6">
                 </div>
-                <button class="menu-btn" onclick="startTraining()">Məşqə Başla</button>
+                <button class="menu-btn" onclick="startTraining()"><i class="fas fa-play"></i> Məşqə Başla</button>
             </div>
         </div>
     </div>
@@ -676,6 +813,9 @@
         let currentRoom = null;
         let gameState = null;
         let selectedVote = null;
+        let selectedTarget = null;
+        let timerInterval = null;
+        let timeRemaining = 0;
 
         // Initialize Telegram WebApp
         function initTelegram() {
@@ -688,22 +828,20 @@
                     userData = {
                         id: user.id,
                         name: user.first_name + (user.last_name ? ' ' + user.last_name : ''),
-                        photo: user.photo_url || 'https://via.placeholder.com/50'
+                        photo: user.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.first_name)}&background=random`
                     };
                 } else {
-                    // Fallback for testing
                     userData = {
                         id: Math.floor(Math.random() * 1000000),
-                        name: 'Test User',
-                        photo: 'https://via.placeholder.com/50'
+                        name: 'Test İstifadəçi',
+                        photo: 'https://ui-avatars.com/api/?name=Test&background=random'
                     };
                 }
             } else {
-                // Fallback for testing outside Telegram
                 userData = {
                     id: Math.floor(Math.random() * 1000000),
-                    name: 'Test User',
-                    photo: 'https://via.placeholder.com/50'
+                    name: 'Test İstifadəçi',
+                    photo: 'https://ui-avatars.com/api/?name=Test&background=random'
                 };
             }
 
@@ -712,23 +850,51 @@
             document.getElementById('userHeader').style.display = 'flex';
         }
 
+        // Timer Functions
+        function startTimer(seconds) {
+            stopTimer();
+            timeRemaining = seconds;
+            document.getElementById('gameTimer').style.display = 'block';
+            updateTimerDisplay();
+
+            timerInterval = setInterval(() => {
+                timeRemaining--;
+                updateTimerDisplay();
+
+                if (timeRemaining <= 0) {
+                    stopTimer();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeRemaining / 60);
+            const seconds = timeRemaining % 60;
+            document.getElementById('timerText').textContent =
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function stopTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+        }
+
         // WebSocket Connection
         function connectWebSocket() {
             ws = new WebSocket(WS_URL);
 
             ws.onopen = () => {
-                console.log('Connected to server');
+                console.log('Serverə bağlandı');
                 reconnectAttempts = 0;
-                document.getElementById('connectionStatus').textContent = 'Bağlı';
-                document.getElementById('connectionStatus').classList.remove('disconnected');
+                document.getElementById('connectionStatus').classList.remove('show');
 
-                // Send user data
                 ws.send(JSON.stringify({
                     type: 'auth',
                     data: userData
                 }));
 
-                // Hide loading screen
                 setTimeout(() => {
                     document.getElementById('loadingScreen').style.display = 'none';
                     showMainMenu();
@@ -741,27 +907,26 @@
             };
 
             ws.onclose = () => {
-                console.log('Disconnected from server');
-                document.getElementById('connectionStatus').textContent = 'Bağlantı kəsildi';
-                document.getElementById('connectionStatus').classList.add('disconnected');
+                console.log('Bağlantı kəsildi');
+                document.getElementById('connectionStatus').classList.add('show');
                 attemptReconnect();
             };
 
             ws.onerror = (error) => {
-                console.error('WebSocket error:', error);
+                console.error('WebSocket xətası:', error);
             };
         }
 
         function attemptReconnect() {
             if (reconnectAttempts < maxReconnectAttempts) {
                 reconnectAttempts++;
-                console.log(`Reconnecting... Attempt ${reconnectAttempts}`);
+                console.log(`Yenidən bağlanılır... Cəhd ${reconnectAttempts}`);
                 setTimeout(connectWebSocket, reconnectDelay);
             }
         }
 
         function handleMessage(message) {
-            console.log('Received:', message);
+            console.log('Alındı:', message);
 
             switch (message.type) {
                 case 'roomList':
@@ -779,21 +944,26 @@
                     gameState = message.data;
                     showGameScreen();
                     break;
-                case 'gameUpdate':
-                    gameState = message.data;
-                    updateGameScreen();
-                    break;
                 case 'nightPhase':
                     handleNightPhase(message.data);
                     break;
                 case 'dayPhase':
                     handleDayPhase(message.data);
                     break;
+                case 'mafiaMessage':
+                    addMafiaMessage(message.data);
+                    break;
+                case 'policeResult':
+                    showPoliceResult(message.data);
+                    break;
+                case 'doctorConfirm':
+                    showDoctorConfirm(message.data);
+                    break;
                 case 'gameEnd':
                     handleGameEnd(message.data);
                     break;
                 case 'error':
-                    showError(message.message);
+                    showError(message.data.message);
                     break;
             }
         }
@@ -829,6 +999,7 @@
 
         function showGameScreen() {
             hideAllScreens();
+            stopTimer();
             document.getElementById('gameScreen').style.display = 'block';
             updateGameScreen();
         }
@@ -868,18 +1039,14 @@
             send('createRoom', config);
         }
 
-        function leaveRoom() {
-            send('leaveRoom');
-            currentRoom = null;
-            showMainMenu();
-        }
-
         function startGame() {
             send('startGame');
         }
 
-        function kickPlayer(playerId) {
-            send('kickPlayer', { playerId });
+        function startTraining() {
+            const role = document.getElementById('trainingRole').value;
+            const botCount = parseInt(document.getElementById('botCount').value);
+            send('startTraining', { role, botCount });
         }
 
         function updateRoomList(rooms) {
@@ -887,7 +1054,7 @@
             container.innerHTML = '';
 
             if (rooms.length === 0) {
-                container.innerHTML = '<p style="text-align: center; color: #aaa;">Mövcud otaq yoxdur</p>';
+                container.innerHTML = '<p style="text-align: center; color: #aaa;"><i class="fas fa-inbox"></i> Mövcud otaq yoxdur</p>';
                 return;
             }
 
@@ -896,9 +1063,9 @@
                 card.className = 'room-card';
                 card.onclick = () => send('joinRoom', { code: room.code });
                 card.innerHTML = `
-                    <h4>Otaq #${room.code}</h4>
-                    <p>Oyunçular: ${room.players.length}/${room.config.total}</p>
-                    <p>Mafia: ${room.config.mafia} | Polis: ${room.config.police} | Doktor: ${room.config.doctor} | Vətəndaş: ${room.config.citizen}</p>
+                    <h4><i class="fas fa-door-open"></i> Otaq #${room.code}</h4>
+                    <p><i class="fas fa-users"></i> Oyunçular: ${room.players.length}/${room.config.mafia + room.config.police + room.config.doctor + room.config.citizen}</p>
+                    <p><i class="fas fa-user-secret"></i> Mafia: ${room.config.mafia} | <i class="fas fa-shield-alt"></i> Polis: ${room.config.police} | <i class="fas fa-user-md"></i> Doktor: ${room.config.doctor} | <i class="fas fa-user"></i> Vətəndaş: ${room.config.citizen}</p>
                 `;
                 container.appendChild(card);
             });
@@ -908,8 +1075,9 @@
             if (!currentRoom) return;
 
             document.getElementById('roomCode').textContent = currentRoom.code;
+            const total = currentRoom.config.mafia + currentRoom.config.police + currentRoom.config.doctor + currentRoom.config.citizen;
             document.getElementById('roomConfig').textContent =
-                `Mafia: ${currentRoom.config.mafia} | Polis: ${currentRoom.config.police} | Doktor: ${currentRoom.config.doctor} | Vətəndaş: ${currentRoom.config.citizen}`;
+                `Mafia: ${currentRoom.config.mafia} | Polis: ${currentRoom.config.police} | Doktor: ${currentRoom.config.doctor} | Vətəndaş: ${currentRoom.config.citizen} | Cəmi: ${total}`;
 
             document.getElementById('playerCount').textContent = currentRoom.players.length;
 
@@ -921,14 +1089,11 @@
                 item.className = 'player-item';
                 item.innerHTML = `
                     <img src="${player.photo}" alt="${player.name}">
-                    <span>${player.name}</span>
-                    ${player.id === currentRoom.host && player.id !== userData.id ?
-                        `<button class="kick-btn" onclick="kickPlayer('${player.id}')">Çıxart</button>` : ''}
+                    <span><i class="fas fa-user"></i> ${player.name}</span>
                 `;
                 container.appendChild(item);
             });
 
-            // Show start button only for host
             if (currentRoom.host === userData.id) {
                 document.getElementById('startGameBtn').style.display = 'block';
             } else {
@@ -948,27 +1113,40 @@
                 roleCard.style.display = 'block';
                 roleCard.className = `role-card ${gameState.myRole}`;
 
-                const roleNames = {
-                    mafia: 'Mafia',
-                    police: 'Polis',
-                    doctor: 'Doktor',
-                    citizen: 'Vətəndaş'
+                const roleData = {
+                    mafia: {
+                        name: 'Mafia',
+                        icon: 'fa-user-secret',
+                        desc: 'Gecələr birlikdə bir oyunçunu öldürün'
+                    },
+                    police: {
+                        name: 'Polis',
+                        icon: 'fa-shield-alt',
+                        desc: 'Gecələr bir oyunçunun rolunu öyrənin'
+                    },
+                    doctor: {
+                        name: 'Doktor',
+                        icon: 'fa-user-md',
+                        desc: 'Gecələr bir oyunçunu qoruyun'
+                    },
+                    citizen: {
+                        name: 'Vətəndaş',
+                        icon: 'fa-users',
+                        desc: 'Gündüzlər səsvermə ilə mafianı tapın'
+                    }
                 };
 
-                const roleDescriptions = {
-                    mafia: 'Gecələr birlikdə bir oyunçunu öldürün',
-                    police: 'Gecələr bir oyunçunun rolunu öyrənin',
-                    doctor: 'Gecələr bir oyunçunu qoruyun',
-                    citizen: 'Gündüzlər səsvermə ilə mafianı tapın'
-                };
-
-                document.getElementById('roleName').textContent = roleNames[gameState.myRole];
-                document.getElementById('roleDescription').textContent = roleDescriptions[gameState.myRole];
+                const role = roleData[gameState.myRole];
+                document.getElementById('roleIcon').className = `fas ${role.icon}`;
+                document.getElementById('roleName').textContent = role.name;
+                document.getElementById('roleDescription').textContent = role.desc;
             }
 
             // Update game log
             if (gameState.log && gameState.log.length > 0) {
-                document.getElementById('gameLog').innerHTML = gameState.log.join('<br>');
+                const logEl = document.getElementById('gameLog');
+                logEl.style.display = 'block';
+                logEl.innerHTML = '<i class="fas fa-info-circle"></i> ' + gameState.log.join('<br><i class="fas fa-info-circle"></i> ');
             }
         }
 
@@ -977,35 +1155,42 @@
             document.getElementById('nightPhase').style.display = 'block';
             document.getElementById('votingSection').style.display = 'none';
 
+            // Start 60 second timer
+            startTimer(60);
+
             const nightContent = document.getElementById('nightContent');
             nightContent.innerHTML = '';
 
             if (gameState.myRole === 'mafia') {
-                // Mafia chat
                 nightContent.innerHTML = `
-                    <div class="mafia-chat" id="mafiaChat"></div>
-                    <div class="chat-input-group">
-                        <input type="text" class="chat-input" id="chatInput" placeholder="Mesaj yazın...">
-                        <button class="send-btn" onclick="sendMafiaMessage()">Göndər</button>
+                    <div class="mafia-chat" id="mafiaChat">
+                        <p style="text-align: center; color: #aaa;"><i class="fas fa-comments"></i> Mafia çatı</p>
                     </div>
-                    <h4 style="margin-top: 20px;">Hədəf seçin:</h4>
-                    <div id="mafiaTargets"></div>
+                    <div class="chat-input-group">
+                        <input type="text" class="chat-input" id="chatInput" placeholder="Mesaj yazın..." onkeypress="if(event.key==='Enter') sendMafiaMessage()">
+                        <button class="send-btn" onclick="sendMafiaMessage()"><i class="fas fa-paper-plane"></i></button>
+                    </div>
+                    <h4 style="margin-top: 20px;"><i class="fas fa-crosshairs"></i> Hədəf seçin:</h4>
+                    <div class="selection-grid" id="mafiaTargets"></div>
                 `;
                 updateMafiaTargets(data.alivePlayers);
             } else if (gameState.myRole === 'police') {
                 nightContent.innerHTML = `
-                    <p>Bir oyunçunun rolunu öyrənin:</p>
-                    <div id="policeTargets"></div>
+                    <p style="text-align: center; margin-bottom: 15px;"><i class="fas fa-search"></i> Bir oyunçunun rolunu öyrənin:</p>
+                    <div class="selection-grid" id="policeTargets"></div>
                 `;
                 updatePoliceTargets(data.alivePlayers);
             } else if (gameState.myRole === 'doctor') {
                 nightContent.innerHTML = `
-                    <p>Bir oyunçunu qoruyun:</p>
-                    <div id="doctorTargets"></div>
+                    <p style="text-align: center; margin-bottom: 15px;"><i class="fas fa-hand-holding-medical"></i> Bir oyunçunu qoruyun:</p>
+                    <div class="selection-grid" id="doctorTargets"></div>
                 `;
                 updateDoctorTargets(data.alivePlayers);
             } else {
-                nightContent.innerHTML = `<p style="text-align: center;">Gecə... Gözləyin...</p>`;
+                nightContent.innerHTML = `
+                    <p style="text-align: center;"><i class="fas fa-bed"></i> Gecə... Gözləyin...</p>
+                    <p style="text-align: center; color: #aaa; margin-top: 10px;">Mafia və xüsusi rollar hərəkət edir</p>
+                `;
             }
         }
 
@@ -1014,89 +1199,112 @@
             document.getElementById('nightPhase').style.display = 'none';
             document.getElementById('votingSection').style.display = 'block';
 
+            // Start 90 second timer
+            startTimer(90);
+
+            // Update log
+            if (data.log && data.log.length > 0) {
+                const logEl = document.getElementById('gameLog');
+                logEl.style.display = 'block';
+                logEl.className = 'status-message warning';
+                logEl.innerHTML = '<i class="fas fa-exclamation-triangle"></i> ' + data.log.join('<br><i class="fas fa-exclamation-triangle"></i> ');
+            }
+
             updateVotingOptions(data.alivePlayers);
         }
 
         function updateMafiaTargets(players) {
             const container = document.getElementById('mafiaTargets');
+            if (!container) return;
             container.innerHTML = '';
 
             players.filter(p => p.id !== userData.id).forEach(player => {
-                const option = document.createElement('div');
-                option.className = 'vote-option';
-                option.onclick = () => selectMafiaTarget(player.id, option);
-                option.innerHTML = `
-                    <img src="${player.photo}" style="width: 30px; height: 30px; border-radius: 50%; margin-right: 10px;">
-                    ${player.name}
+                const card = document.createElement('div');
+                card.className = 'selection-card';
+                card.onclick = () => selectMafiaTarget(player.id, card);
+                card.innerHTML = `
+                    <img src="${player.photo}" alt="${player.name}">
+                    <h4>${player.name}</h4>
                 `;
-                container.appendChild(option);
+                container.appendChild(card);
             });
         }
 
         function updatePoliceTargets(players) {
             const container = document.getElementById('policeTargets');
+            if (!container) return;
             container.innerHTML = '';
 
             players.filter(p => p.id !== userData.id).forEach(player => {
-                const option = document.createElement('div');
-                option.className = 'vote-option';
-                option.onclick = () => selectPoliceTarget(player.id);
-                option.innerHTML = `
-                    <img src="${player.photo}" style="width: 30px; height: 30px; border-radius: 50%; margin-right: 10px;">
-                    ${player.name}
+                const card = document.createElement('div');
+                card.className = 'selection-card';
+                card.onclick = () => selectPoliceTarget(player.id, card);
+                card.innerHTML = `
+                    <img src="${player.photo}" alt="${player.name}">
+                    <h4>${player.name}</h4>
                 `;
-                container.appendChild(option);
+                container.appendChild(card);
             });
         }
 
         function updateDoctorTargets(players) {
             const container = document.getElementById('doctorTargets');
+            if (!container) return;
             container.innerHTML = '';
 
             players.forEach(player => {
-                const option = document.createElement('div');
-                option.className = 'vote-option';
-                option.onclick = () => selectDoctorTarget(player.id);
-                option.innerHTML = `
-                    <img src="${player.photo}" style="width: 30px; height: 30px; border-radius: 50%; margin-right: 10px;">
-                    ${player.name}
+                const card = document.createElement('div');
+                card.className = 'selection-card';
+                card.onclick = () => selectDoctorTarget(player.id, card);
+                card.innerHTML = `
+                    <img src="${player.photo}" alt="${player.name}">
+                    <h4>${player.name}</h4>
                 `;
-                container.appendChild(option);
+                container.appendChild(card);
             });
         }
 
         function updateVotingOptions(players) {
             const container = document.getElementById('votingOptions');
+            if (!container) return;
             container.innerHTML = '';
 
             players.forEach(player => {
-                const option = document.createElement('div');
-                option.className = 'vote-option';
-                option.onclick = () => selectVoteOption(player.id, option);
-                option.innerHTML = `
-                    <img src="${player.photo}" style="width: 30px; height: 30px; border-radius: 50%; margin-right: 10px;">
-                    ${player.name}
+                const card = document.createElement('div');
+                card.className = 'selection-card';
+                card.onclick = () => selectVoteOption(player.id, card);
+                card.innerHTML = `
+                    <img src="${player.photo}" alt="${player.name}">
+                    <h4>${player.name}</h4>
                 `;
-                container.appendChild(option);
+                container.appendChild(card);
             });
         }
 
         function selectMafiaTarget(playerId, element) {
-            document.querySelectorAll('#mafiaTargets .vote-option').forEach(el => el.classList.remove('selected'));
+            document.querySelectorAll('#mafiaTargets .selection-card').forEach(el => el.classList.remove('selected'));
             element.classList.add('selected');
+            selectedTarget = playerId;
             send('mafiaVote', { targetId: playerId });
+            showNotification('✓ Hədəf seçildi');
         }
 
-        function selectPoliceTarget(playerId) {
+        function selectPoliceTarget(playerId, element) {
+            document.querySelectorAll('#policeTargets .selection-card').forEach(el => el.classList.remove('selected'));
+            element.classList.add('selected');
             send('policeCheck', { targetId: playerId });
+            showNotification('🔍 Yoxlanılır...');
         }
 
-        function selectDoctorTarget(playerId) {
+        function selectDoctorTarget(playerId, element) {
+            document.querySelectorAll('#doctorTargets .selection-card').forEach(el => el.classList.remove('selected'));
+            element.classList.add('selected');
             send('doctorSave', { targetId: playerId });
+            showNotification('✓ Qorundu');
         }
 
         function selectVoteOption(playerId, element) {
-            document.querySelectorAll('#votingOptions .vote-option').forEach(el => el.classList.remove('selected'));
+            document.querySelectorAll('#votingOptions .selection-card').forEach(el => el.classList.remove('selected'));
             element.classList.add('selected');
             selectedVote = playerId;
         }
@@ -1104,12 +1312,17 @@
         function submitVote() {
             if (selectedVote) {
                 send('vote', { targetId: selectedVote });
+                showNotification('✓ Səsiniz qeydə alındı');
                 selectedVote = null;
+            } else {
+                showError('Zəhmət olmasa bir oyunçu seçin');
             }
         }
 
         function sendMafiaMessage() {
             const input = document.getElementById('chatInput');
+            if (!input) return;
+
             const message = input.value.trim();
             if (message) {
                 send('mafiaChat', { message });
@@ -1117,19 +1330,62 @@
             }
         }
 
-        function handleGameEnd(data) {
-            alert(`Oyun bitdi! ${data.winner === 'mafia' ? 'Mafia qalib gəldi!' : 'Vətəndaşlar qalib gəldi!'}`);
-            showGameRoom();
+        function addMafiaMessage(data) {
+            const chatContainer = document.getElementById('mafiaChat');
+            if (!chatContainer) return;
+
+            const msgEl = document.createElement('div');
+            msgEl.className = 'chat-message';
+            msgEl.innerHTML = `<strong>${data.sender}:</strong> ${data.message}`;
+            chatContainer.appendChild(msgEl);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
         }
 
-        function startTraining() {
-            const role = document.getElementById('trainingRole').value;
-            const botCount = parseInt(document.getElementById('botCount').value);
-            send('startTraining', { role, botCount });
+        function showPoliceResult(data) {
+            const result = data.isMafia ?
+                `<i class="fas fa-exclamation-triangle"></i> ${data.target} MAFİADIR!` :
+                `<i class="fas fa-check-circle"></i> ${data.target} təmizdir`;
+
+            const logEl = document.getElementById('gameLog');
+            logEl.style.display = 'block';
+            logEl.className = data.isMafia ? 'status-message error' : 'status-message success';
+            logEl.innerHTML = result;
+        }
+
+        function showDoctorConfirm(data) {
+            showNotification(`✓ ${data.target} qorundu`);
+        }
+
+        function handleGameEnd(data) {
+            stopTimer();
+            const winner = data.winner === 'mafia' ? 'Mafia qalib gəldi! 🔴' : 'Vətəndaşlar qalib gəldi! ⚪';
+
+            const logEl = document.getElementById('gameLog');
+            logEl.style.display = 'block';
+            logEl.className = 'status-message success';
+            logEl.innerHTML = `<h3><i class="fas fa-trophy"></i> ${winner}</h3>`;
+
+            setTimeout(() => {
+                showGameRoom();
+            }, 5000);
+        }
+
+        function showNotification(message) {
+            const logEl = document.getElementById('gameLog');
+            logEl.style.display = 'block';
+            logEl.className = 'status-message success';
+            logEl.innerHTML = message;
+
+            setTimeout(() => {
+                logEl.style.display = 'none';
+            }, 3000);
         }
 
         function showError(message) {
-            alert(message);
+            const logEl = document.getElementById('gameLog');
+            logEl.style.display = 'block';
+            logEl.className = 'status-message error';
+            logEl.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${message}`;
         }
 
         // Initialize
