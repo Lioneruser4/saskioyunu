@@ -3,429 +3,199 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Telegram 3D Futbol</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.min.js"></script>
+    <title>Finans Takip</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            overflow: hidden;
-            font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-        }
-
-        #gameCanvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1;
-        }
-
-        /* UI Katmanları */
-        #uiLayer {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 2;
-        }
-
-        /* Giriş Ekranı */
-        #loginScreen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.9);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 100;
-            color: white;
-        }
-
-        .profile-container {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .profile-pic {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            border: 3px solid #4cc9f0;
-            margin-bottom: 15px;
-        }
-
-        .username {
-            font-size: 24px;
-            color: #4cc9f0;
-            font-weight: bold;
-        }
-
-        .menu-button {
-            background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            margin: 10px;
-            border-radius: 25px;
-            font-size: 18px;
-            cursor: pointer;
-            pointer-events: auto;
-            transition: transform 0.2s, box-shadow 0.2s;
-            min-width: 200px;
-            text-align: center;
-        }
-
-        .menu-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-        }
-
-        .menu-button.create-room {
-            background: linear-gradient(135deg, #f72585 0%, #b5179e 100%);
-        }
-
-        .time-selection {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 10px;
-            margin: 20px 0;
-            pointer-events: auto;
-        }
-
-        .time-option {
-            padding: 10px 20px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 2px solid transparent;
-            border-radius: 15px;
-            color: white;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .time-option.selected {
-            background: rgba(76, 201, 240, 0.3);
-            border-color: #4cc9f0;
-        }
-
-        /* Oda Seçim Ekranı */
-        #roomScreen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.95);
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 99;
-            color: white;
-        }
-
-        .team-selection {
-            display: flex;
-            width: 80%;
-            max-width: 800px;
-            height: 400px;
-            margin: 30px 0;
-            background: rgba(30, 30, 46, 0.8);
-            border-radius: 20px;
-            overflow: hidden;
-            pointer-events: auto;
-        }
-
-        .team {
-            flex: 1;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            transition: all 0.3s;
-        }
-
-        .team:hover {
-            background: rgba(255, 255, 255, 0.05);
-        }
-
-        .team.blue {
-            border-right: 2px solid #4361ee;
-        }
-
-        .team.red {
-            border-left: 2px solid #f72585;
-        }
-
-        .team-name {
-            font-size: 28px;
-            margin-bottom: 20px;
-        }
-
-        .team.blue .team-name {
-            color: #4361ee;
-        }
-
-        .team.red .team-name {
-            color: #f72585;
-        }
-
-        .players-list {
-            width: 100%;
-            flex: 1;
-            overflow-y: auto;
-        }
-
-        .player-slot {
-            padding: 10px;
-            margin: 5px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-
-        .player-slot:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        /* Mobil Kontroller */
-        #mobileControls {
-            position: fixed;
-            bottom: 20px;
-            width: 100%;
-            display: none;
-            justify-content: space-between;
-            padding: 0 20px;
-            z-index: 3;
-        }
-
-        .joystick-container {
-            width: 150px;
-            height: 150px;
-            position: relative;
-        }
-
-        .joystick-base {
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            border-radius: 50%;
-            position: absolute;
-        }
-
-        .joystick-thumb {
-            width: 70px;
-            height: 70px;
-            background: rgba(255, 255, 255, 0.9);
-            border-radius: 50%;
-            position: absolute;
-            top: 40px;
-            left: 40px;
-            touch-action: none;
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 20px;
-            align-items: flex-end;
-        }
-
-        .action-button {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            font-size: 14px;
-            user-select: none;
-            cursor: pointer;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-            pointer-events: auto;
-            border: none;
-        }
-
-        .action-button.shoot {
-            background: linear-gradient(135deg, #f72585 0%, #b5179e 100%);
-        }
-
-        /* Skor Tablosu */
-        #scoreboard {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.7);
-            color: white;
-            padding: 10px 30px;
-            border-radius: 20px;
-            display: flex;
-            gap: 30px;
-            font-size: 24px;
-            font-weight: bold;
-            z-index: 3;
-            pointer-events: none;
-        }
-
-        .score {
-            min-width: 50px;
-            text-align: center;
-        }
-
-        .blue-score {
-            color: #4361ee;
-        }
-
-        .red-score {
-            color: #f72585;
-        }
-
-        /* Geri sayım */
-        #countdown {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 100px;
-            color: white;
-            text-shadow: 0 0 20px rgba(76, 201, 240, 0.8);
-            z-index: 4;
-            pointer-events: none;
-            display: none;
-        }
-
-        /* Yükleme ekranı */
-        .loader {
-            width: 50px;
-            height: 50px;
-            border: 5px solid rgba(255, 255, 255, 0.1);
-            border-radius: 50%;
-            border-top-color: #4cc9f0;
-            animation: spin 1s ease-in-out infinite;
-            margin: 20px;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .menu-button {
-                min-width: 150px;
-                padding: 12px 20px;
-                font-size: 16px;
-            }
-            
-            .team-selection {
-                flex-direction: column;
-                height: 60vh;
-            }
-            
-            .team {
-                width: 100%;
-            }
-            
-            .team.blue {
-                border-right: none;
-                border-bottom: 2px solid #4361ee;
-            }
-            
-            .team.red {
-                border-left: none;
-                border-top: 2px solid #f72585;
-            }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        header { text-align: center; color: white; margin-bottom: 30px; padding: 20px; }
+        h1 { font-size: 2.5rem; margin-bottom: 10px; }
+        
+        .dashboard { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; }
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); text-align: center; }
+        .amount { font-size: 2rem; font-weight: bold; }
+        .income { color: #10b981; }
+        .expense { color: #ef4444; }
+        .balance { color: #3b82f6; }
+        
+        .quick-buttons { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 20px; }
+        .btn { padding: 12px 20px; border: none; border-radius: 10px; font-size: 1.2rem; font-weight: bold; cursor: pointer; color: white; }
+        .btn-income { background: #10b981; }
+        .btn-expense { background: #ef4444; }
+        
+        .manual-input { background: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; }
+        .input-group { display: flex; gap: 10px; margin-bottom: 15px; }
+        input { flex: 1; padding: 12px; border: 2px solid #e5e7eb; border-radius: 10px; }
+        .add-btn { background: #3b82f6; color: white; border: none; padding: 12px 25px; border-radius: 10px; cursor: pointer; }
+        
+        .transactions { background: white; padding: 20px; border-radius: 15px; }
+        .transaction { display: flex; justify-content: space-between; padding: 15px; border-bottom: 1px solid #e5e7eb; }
+        .transaction:last-child { border-bottom: none; }
+        
+        @media (max-width: 600px) {
+            .dashboard { grid-template-columns: 1fr; }
+            .input-group { flex-direction: column; }
         }
     </style>
 </head>
 <body>
-    <!-- Giriş Ekranı -->
-    <div id="loginScreen">
-        <div class="profile-container">
-            <img id="profilePic" src="" alt="Profil" class="profile-pic">
-            <div id="username" class="username"></div>
+    <div class="container">
+        <header>
+            <h1>💰 Finans Takip</h1>
+            <p>Bu ay: <span id="currentMonth">Aralık 2023</span></p>
+        </header>
+
+        <div class="dashboard">
+            <div class="card">
+                <p>Toplam Gelir</p>
+                <div class="amount income" id="totalIncome">0 ₺</div>
+            </div>
+            <div class="card">
+                <p>Toplam Gider</p>
+                <div class="amount expense" id="totalExpense">0 ₺</div>
+            </div>
+            <div class="card">
+                <p>Kalan</p>
+                <div class="amount balance" id="balance">0 ₺</div>
+            </div>
         </div>
+
+        <div class="quick-buttons">
+            <button class="btn btn-income" onclick="quickAdd(5, 'income')">+5 ₺</button>
+            <button class="btn btn-income" onclick="quickAdd(10, 'income')">+10 ₺</button>
+            <button class="btn btn-income" onclick="quickAdd(20, 'income')">+20 ₺</button>
+            <button class="btn btn-income" onclick="quickAdd(50, 'income')">+50 ₺</button>
+            <button class="btn btn-income" onclick="quickAdd(100, 'income')">+100 ₺</button>
+            <button class="btn btn-expense" onclick="quickAdd(5, 'expense')">-5 ₺</button>
+            <button class="btn btn-expense" onclick="quickAdd(10, 'expense')">-10 ₺</button>
+            <button class="btn btn-expense" onclick="quickAdd(20, 'expense')">-20 ₺</button>
+            <button class="btn btn-expense" onclick="quickAdd(50, 'expense')">-50 ₺</button>
+            <button class="btn btn-expense" onclick="quickAdd(100, 'expense')">-100 ₺</button>
+        </div>
+
+        <div class="manual-input">
+            <div class="input-group">
+                <input type="text" id="desc" placeholder="Açıklama">
+                <input type="number" id="amount" placeholder="Miktar">
+                <select id="type">
+                    <option value="income">Gelir</option>
+                    <option value="expense">Gider</option>
+                </select>
+                <button class="add-btn" onclick="addTransaction()">Ekle</button>
+            </div>
+        </div>
+
+        <div class="transactions" id="transactionList">
+            <h3>İşlemler</h3>
+            <!-- İşlemler buraya eklenecek -->
+        </div>
+    </div>
+
+    <script>
+        // localStorage'dan verileri al
+        let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
         
-        <button id="quickPlayBtn" class="menu-button">Hemen Oyna</button>
-        <button id="createRoomBtn" class="menu-button create-room">Oda Kur</button>
-        <button id="joinRoomBtn" class="menu-button">Odaya Katıl</button>
+        // Sayfa yüklendiğinde işlemleri göster
+        updateDisplay();
         
-        <div id="timeSelection" class="time-selection" style="display: none;">
-            <div class="time-option" data-time="5">5 Dakika</div>
-            <div class="time-option" data-time="10">10 Dakika</div>
-            <div class="time-option" data-time="15">15 Dakika</div>
-            <div class="time-option" data-time="25">25 Dakika</div>
-            <div class="time-option" data-time="30">30 Dakika</div>
-        </div>
-    </div>
-
-    <!-- Oda Seçim Ekranı -->
-    <div id="roomScreen">
-        <h2>Takım Seçimi</h2>
-        <div class="team-selection">
-            <div class="team blue" id="blueTeam">
-                <div class="team-name">⚽ MAVİ TAKIM</div>
-                <div class="players-list" id="bluePlayers"></div>
-            </div>
-            <div class="team red" id="redTeam">
-                <div class="team-name">⚽ KIRMIZI TAKIM</div>
-                <div class="players-list" id="redPlayers"></div>
-            </div>
-        </div>
-        <button id="startGameBtn" class="menu-button">Oyuna Başla</button>
-        <button id="backToMenuBtn" class="menu-button">Menüye Dön</button>
-    </div>
-
-    <!-- Oyun Canvas -->
-    <canvas id="gameCanvas"></canvas>
-
-    <!-- UI Katmanı -->
-    <div id="uiLayer">
-        <!-- Skor Tablosu -->
-        <div id="scoreboard" style="display: none;">
-            <div class="score blue-score" id="blueScore">0</div>
-            <div style="color: white">-</div>
-            <div class="score red-score" id="redScore">0</div>
-        </div>
-
-        <!-- Geri Sayım -->
-        <div id="countdown"></div>
-
-        <!-- Mobil Kontroller -->
-        <div id="mobileControls">
-            <div class="joystick-container">
-                <div class="joystick-base"></div>
-                <div class="joystick-thumb" id="joystickThumb"></div>
-            </div>
-            <div class="action-buttons">
-                <button class="action-button" id="jumpBtn">ZIPLA</button>
-                <button class="action-button" id="passBtn">PAS</button>
-                <button class="action-button shoot" id="shootBtn">ŞUT</button>
-            </div>
-        </div>
-    </div>
-
-    <script src="/game.js"></script>
+        function quickAdd(amount, type) {
+            const desc = type === 'income' ? 'Hızlı Gelir' : 'Hızlı Gider';
+            addTransactionToStorage(desc, amount, type);
+        }
+        
+        function addTransaction() {
+            const desc = document.getElementById('desc').value;
+            const amount = parseFloat(document.getElementById('amount').value);
+            const type = document.getElementById('type').value;
+            
+            if (!desc || !amount) {
+                alert('Lütfen tüm alanları doldurun!');
+                return;
+            }
+            
+            addTransactionToStorage(desc, amount, type);
+            
+            // Formu temizle
+            document.getElementById('desc').value = '';
+            document.getElementById('amount').value = '';
+        }
+        
+        function addTransactionToStorage(desc, amount, type) {
+            const transaction = {
+                id: Date.now(),
+                desc,
+                amount,
+                type,
+                date: new Date().toLocaleDateString('tr-TR')
+            };
+            
+            transactions.push(transaction);
+            localStorage.setItem('transactions', JSON.stringify(transactions));
+            updateDisplay();
+            
+            // Animasyon efekti
+            document.querySelector('.container').style.transform = 'scale(1.02)';
+            setTimeout(() => {
+                document.querySelector('.container').style.transform = 'scale(1)';
+            }, 100);
+        }
+        
+        function deleteTransaction(id) {
+            transactions = transactions.filter(t => t.id !== id);
+            localStorage.setItem('transactions', JSON.stringify(transactions));
+            updateDisplay();
+        }
+        
+        function updateDisplay() {
+            // Toplamları hesapla
+            let totalIncome = 0;
+            let totalExpense = 0;
+            
+            transactions.forEach(t => {
+                if (t.type === 'income') {
+                    totalIncome += t.amount;
+                } else {
+                    totalExpense += t.amount;
+                }
+            });
+            
+            // Güncelle
+            document.getElementById('totalIncome').textContent = totalIncome + ' ₺';
+            document.getElementById('totalExpense').textContent = totalExpense + ' ₺';
+            document.getElementById('balance').textContent = (totalIncome - totalExpense) + ' ₺';
+            
+            // İşlem listesini göster
+            const transactionList = document.getElementById('transactionList');
+            if (transactions.length === 0) {
+                transactionList.innerHTML = '<h3>İşlemler</h3><p style="text-align:center;padding:20px;color:#666;">Henüz işlem yok</p>';
+            } else {
+                let html = '<h3>İşlemler</h3>';
+                transactions.slice().reverse().forEach(t => {
+                    html += `
+                        <div class="transaction" style="background:${t.type === 'income' ? '#f0f9ff' : '#fef2f2'}">
+                            <div>
+                                <strong>${t.desc}</strong><br>
+                                <small>${t.date}</small>
+                            </div>
+                            <div>
+                                <span style="color:${t.type === 'income' ? '#10b981' : '#ef4444'};font-weight:bold;">
+                                    ${t.type === 'income' ? '+' : '-'}${t.amount} ₺
+                                </span><br>
+                                <button onclick="deleteTransaction(${t.id})" style="background:none;border:none;color:#999;cursor:pointer;">Sil</button>
+                            </div>
+                        </div>
+                    `;
+                });
+                transactionList.innerHTML = html;
+            }
+        }
+        
+        // Ay bilgisini güncelle
+        const now = new Date();
+        const months = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 
+                       'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+        document.getElementById('currentMonth').textContent = 
+            `${months[now.getMonth()]} ${now.getFullYear()}`;
+    </script>
 </body>
 </html>
