@@ -487,6 +487,14 @@
             transform: translateY(-3px);
             box-shadow: 0 8px 25px rgba(243, 156, 18, 0.3);
         }
+
+        .auto-desc {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 10px;
+            text-align: center;
+            font-style: italic;
+        }
     </style>
 </head>
 <body>
@@ -560,24 +568,37 @@
                 </button>
             </div>
 
+            <div class="auto-desc">
+                <i class="fas fa-info-circle"></i> Kateqoriya seçsəniz, təsvir avtomatik doldurulacaq
+            </div>
+
             <h2 class="section-title" style="margin-top: 30px;"><i class="fas fa-tags"></i> Kateqoriyalar</h2>
             <div class="category-buttons">
-                <button class="category-btn" onclick="setCategory('Benzin')">
+                <button class="category-btn" onclick="setCategory('Benzin', '⛽ Benzin')">
                     <i class="fas fa-gas-pump"></i> Benzin
                 </button>
-                <button class="category-btn" onclick="setCategory('Yemək')">
+                <button class="category-btn" onclick="setCategory('Yemək', '🍽️ Yemək')">
                     <i class="fas fa-utensils"></i> Yemək
                 </button>
-                <button class="category-btn" onclick="setCategory('Siqaret')">
+                <button class="category-btn" onclick="setCategory('Siqaret', '🚬 Siqaret')">
                     <i class="fas fa-smoking"></i> Siqaret
                 </button>
-                <button class="category-btn" onclick="setCategory('Göndərmək')">
+                <button class="category-btn" onclick="setCategory('Göndərmək', '✈️ Pul göndərmək')">
                     <i class="fas fa-paper-plane"></i> Göndərmək
                 </button>
-                <button class="category-btn" onclick="setCategory('Maşın Təmirinə')">
+                <button class="category-btn" onclick="setCategory('Maşın Təmirinə', '🔧 Maşın təmiri')">
                     <i class="fas fa-tools"></i> Maşın Təmirinə
                 </button>
-                <button class="category-btn" onclick="setCategory('Digər')">
+                <button class="category-btn" onclick="setCategory('Market', '🛒 Market alış-verişi')">
+                    <i class="fas fa-shopping-basket"></i> Market
+                </button>
+                <button class="category-btn" onclick="setCategory('İnternet', '🌐 İnternet/TV')">
+                    <i class="fas fa-wifi"></i> İnternet
+                </button>
+                <button class="category-btn" onclick="setCategory('Əyləncə', '🎬 Əyləncə')">
+                    <i class="fas fa-film"></i> Əyləncə
+                </button>
+                <button class="category-btn" onclick="setCategory('Digər', '📝 Digər')">
                     <i class="fas fa-ellipsis-h"></i> Digər
                 </button>
             </div>
@@ -586,19 +607,22 @@
         <div class="manual-section">
             <h2 class="section-title"><i class="fas fa-edit"></i> Əl ilə Əlavə Et</h2>
             <div class="input-group">
-                <input type="text" id="desc" class="input-field" placeholder="Təsvir">
+                <input type="text" id="desc" class="input-field" placeholder="Təsvir (boş buraxın - avtomatik doldurulacaq)">
                 <input type="number" id="amount" class="input-field" placeholder="Məbləğ (₼)">
-                <select id="type" class="input-field">
+                <select id="type" class="input-field" onchange="updateDescBasedOnCategory()">
                     <option value="income">Gəlir</option>
-                    <option value="expense">Xərc</option>
+                    <option value="expense" selected>Xərc</option>
                 </select>
-                <select id="category" class="input-field">
+                <select id="category" class="input-field" onchange="updateDescBasedOnCategory()">
                     <option value="">Kateqoriya seçin</option>
                     <option value="Benzin">Benzin</option>
                     <option value="Yemək">Yemək</option>
                     <option value="Siqaret">Siqaret</option>
                     <option value="Göndərmək">Göndərmək</option>
                     <option value="Maşın Təmirinə">Maşın Təmirinə</option>
+                    <option value="Market">Market</option>
+                    <option value="İnternet">İnternet</option>
+                    <option value="Əyləncə">Əyləncə</option>
                     <option value="Digər">Digər</option>
                 </select>
             </div>
@@ -625,6 +649,9 @@
             <button class="export-btn" onclick="exportData()">
                 <i class="fas fa-download"></i> Məlumatları İxrac Et
             </button>
+            <button class="export-btn" onclick="clearMonthData()" style="background: linear-gradient(135deg, #E74C3C, #CB4335); margin-left: 10px;">
+                <i class="fas fa-trash"></i> Cari Ayı Təmizlə
+            </button>
         </div>
 
         <footer>
@@ -637,10 +664,26 @@
         // localStorage-dan veriləri al
         let transactions = JSON.parse(localStorage.getItem('finansTransactions')) || [];
         
+        // Kateqoriya təsvirləri
+        const categoryDescriptions = {
+            'Benzin': '⛽ Benzin',
+            'Yemək': '🍽️ Yemək',
+            'Siqaret': '🚬 Siqaret',
+            'Göndərmək': '✈️ Pul göndərmək',
+            'Maşın Təmirinə': '🔧 Maşın təmiri',
+            'Market': '🛒 Market alış-verişi',
+            'İnternet': '🌐 İnternet/TV',
+            'Əyləncə': '🎬 Əyləncə',
+            'Digər': '📝 Digər'
+        };
+        
         // Sayfa yükləndikdə
         document.addEventListener('DOMContentLoaded', function() {
             updateDisplay();
             updateMonth();
+            
+            // Məbləğ daxil edildikdə təsviri avtomatik yenilə
+            document.getElementById('amount').addEventListener('input', updateDescBasedOnCategory);
         });
         
         // Ay göstəricisini yenilə
@@ -654,9 +697,9 @@
         
         // Sürətli əlavə et
         function quickAdd(amount, type) {
-            const categories = ['Benzin', 'Yemək', 'Siqaret', 'Göndərmək', 'Maşın Təmirinə', 'Digər'];
+            const categories = Object.keys(categoryDescriptions);
             const randomCategory = categories[Math.floor(Math.random() * categories.length)];
-            const desc = type === 'income' ? 'Sürətli gəlir' : `Sürətli xərc (${randomCategory})`;
+            const desc = type === 'income' ? '💰 Sürətli gəlir' : `${categoryDescriptions[randomCategory]}`;
             
             addTransactionToStorage(desc, amount, type, randomCategory);
             
@@ -665,9 +708,14 @@
         }
         
         // Kateqoriya təyin et
-        function setCategory(category) {
+        function setCategory(category, defaultDesc) {
             document.getElementById('category').value = category;
-            document.getElementById('desc').focus();
+            
+            // Təsviri avtomatik doldur
+            updateDescBasedOnCategory();
+            
+            // Fokusu məbləğ sahəsinə keçir
+            document.getElementById('amount').focus();
             
             // Kateqoriya buton animasiyası
             event.target.classList.add('pulse');
@@ -676,16 +724,54 @@
             }, 500);
         }
         
+        // Kateqoriyaya əsasən təsviri yenilə
+        function updateDescBasedOnCategory() {
+            const category = document.getElementById('category').value;
+            const amount = document.getElementById('amount').value;
+            const type = document.getElementById('type').value;
+            const descInput = document.getElementById('desc');
+            
+            // Əgər təsvir boşdursa və ya sadecə default dəyərdirsə, avtomatik doldur
+            if (!descInput.value || descInput.value.trim() === '' || 
+                Object.values(categoryDescriptions).includes(descInput.value)) {
+                
+                if (category && category in categoryDescriptions) {
+                    if (type === 'income') {
+                        descInput.value = '💰 Gəlir';
+                    } else {
+                        if (amount) {
+                            descInput.value = `${categoryDescriptions[category]} - ${amount} ₼`;
+                        } else {
+                            descInput.value = categoryDescriptions[category];
+                        }
+                    }
+                } else if (type === 'income') {
+                    descInput.value = '💰 Gəlir';
+                }
+            }
+        }
+        
         // Əməliyyat əlavə et
         function addTransaction() {
-            const desc = document.getElementById('desc').value.trim();
-            const amount = parseFloat(document.getElementById('amount').value);
+            const amountInput = document.getElementById('amount');
+            const amount = parseFloat(amountInput.value);
             const type = document.getElementById('type').value;
             const category = document.getElementById('category').value || 'Digər';
+            let desc = document.getElementById('desc').value.trim();
             
-            if (!desc || !amount || amount <= 0) {
-                alert('Xahiş edirik bütün sahələri düzgün doldurun!');
+            if (!amount || amount <= 0) {
+                alert('Xahiş edirik məbləği düzgün daxil edin!');
+                amountInput.focus();
                 return;
+            }
+            
+            // Əgər təsvir boşdursa, avtomatik yarat
+            if (!desc || desc === '') {
+                if (type === 'income') {
+                    desc = '💰 Gəlir';
+                } else {
+                    desc = categoryDescriptions[category] || '📝 Digər xərc';
+                }
             }
             
             addTransactionToStorage(desc, amount, type, category);
@@ -694,6 +780,7 @@
             document.getElementById('desc').value = '';
             document.getElementById('amount').value = '';
             document.getElementById('category').value = '';
+            document.getElementById('type').value = 'expense';
             
             // Animasiya effekti
             animateButton('add-btn');
@@ -708,7 +795,9 @@
                 type,
                 category,
                 date: new Date().toLocaleString('az-AZ'),
-                timestamp: Date.now()
+                timestamp: Date.now(),
+                month: new Date().getMonth(),
+                year: new Date().getFullYear()
             };
             
             transactions.push(transaction);
@@ -716,7 +805,7 @@
             updateDisplay();
             
             // Əlavə animasiyası
-            showNotification(`${type === 'income' ? 'Gəlir' : 'Xərc'} əlavə edildi: ${amount} ₼`);
+            showNotification(`${type === 'income' ? '💰 Gəlir' : '💸 Xərc'} əlavə edildi: ${amount} ₼`);
         }
         
         // Əməliyyatı sil
@@ -771,7 +860,7 @@
         
         // Buton animasiyası
         function animateButton(className) {
-            const btn = event.target.closest('.' + className);
+            const btn = event ? event.target.closest('.' + className) : null;
             if (btn) {
                 btn.style.transform = 'scale(0.95)';
                 setTimeout(() => {
@@ -786,8 +875,17 @@
             let totalIncome = 0;
             let totalExpense = 0;
             const categoryStats = {};
+            const currentMonth = new Date().getMonth();
+            const currentYear = new Date().getFullYear();
             
-            transactions.forEach(t => {
+            // Cari ayın əməliyyatlarını filtrlə
+            const currentMonthTransactions = transactions.filter(t => {
+                const transactionDate = new Date(t.timestamp);
+                return transactionDate.getMonth() === currentMonth && 
+                       transactionDate.getFullYear() === currentYear;
+            });
+            
+            currentMonthTransactions.forEach(t => {
                 if (t.type === 'income') {
                     totalIncome += t.amount;
                 } else {
@@ -803,24 +901,24 @@
             
             // Əməliyyatlar siyahısı
             const transactionList = document.getElementById('transactionList');
-            if (transactions.length === 0) {
+            if (currentMonthTransactions.length === 0) {
                 transactionList.innerHTML = `
                     <div class="empty-state">
                         <i class="fas fa-receipt"></i>
-                        <h3>Heç bir əməliyyat yoxdur</h3>
+                        <h3>Bu ay heç bir əməliyyat yoxdur</h3>
                         <p>İlk əməliyyatınızı əlavə edin</p>
                     </div>
                 `;
             } else {
                 let html = '';
-                transactions.slice().reverse().slice(0, 10).forEach(t => {
+                currentMonthTransactions.slice().reverse().forEach(t => {
                     html += `
                         <div class="transaction-item ${t.type}-item">
                             <div class="transaction-info">
                                 <strong>${t.desc}</strong>
                                 <div class="transaction-category">${t.category}</div>
                             </div>
-                            <div>${t.date}</div>
+                            <div>${formatDate(t.date)}</div>
                             <div class="transaction-amount">
                                 ${t.type === 'income' ? '+' : '-'}${t.amount.toFixed(2)} ₼
                             </div>
@@ -835,6 +933,24 @@
             
             // Statistikaları yenilə
             updateStatistics(categoryStats, totalExpense);
+        }
+        
+        // Tarixi formatla
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return dateString;
+            
+            const now = new Date();
+            const diffTime = Math.abs(now - date);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays === 1) return 'Dünən';
+            if (diffDays === 0) return 'Bugün';
+            
+            return date.toLocaleDateString('az-AZ', { 
+                day: '2-digit', 
+                month: 'short' 
+            });
         }
         
         // Statistikaları yenilə
@@ -852,23 +968,27 @@
             }
             
             let html = '<div class="stat-chart">';
-            const categories = ['Benzin', 'Yemək', 'Siqaret', 'Göndərmək', 'Maşın Təmirinə', 'Digər'];
+            const categories = Object.keys(categoryDescriptions);
             
-            categories.forEach(category => {
-                const amount = categoryStats[category] || 0;
+            // Məbləğə görə sırala
+            const sortedCategories = Object.entries(categoryStats)
+                .sort((a, b) => b[1] - a[1]);
+            
+            sortedCategories.forEach(([category, amount]) => {
                 const percentage = totalExpense > 0 ? (amount / totalExpense * 100) : 0;
+                const categoryName = categoryDescriptions[category] || category;
                 
-                if (amount > 0) {
-                    html += `
-                        <div class="stat-item">
-                            <span>${category}</span>
-                            <div class="stat-bar">
-                                <div class="stat-fill" style="width: ${percentage}%"></div>
-                            </div>
-                            <span>${amount.toFixed(2)} ₼ (${percentage.toFixed(1)}%)</span>
+                html += `
+                    <div class="stat-item">
+                        <span style="display: flex; align-items: center; gap: 8px;">
+                            ${getCategoryIcon(category)} ${category}
+                        </span>
+                        <div class="stat-bar">
+                            <div class="stat-fill" style="width: ${percentage}%"></div>
                         </div>
-                    `;
-                }
+                        <span>${amount.toFixed(2)} ₼ (${percentage.toFixed(1)}%)</span>
+                    </div>
+                `;
             });
             
             html += '</div>';
@@ -880,6 +1000,22 @@
                     bar.style.width = bar.style.width;
                 });
             }, 100);
+        }
+        
+        // Kateqoriya ikonlarını al
+        function getCategoryIcon(category) {
+            const icons = {
+                'Benzin': '⛽',
+                'Yemək': '🍽️',
+                'Siqaret': '🚬',
+                'Göndərmək': '✈️',
+                'Maşın Təmirinə': '🔧',
+                'Market': '🛒',
+                'İnternet': '🌐',
+                'Əyləncə': '🎬',
+                'Digər': '📝'
+            };
+            return icons[category] || '📝';
         }
         
         // Məlumatları ixrac et
@@ -895,14 +1031,24 @@
             showNotification('Məlumatlar ixrac edildi');
         }
         
-        // Aylıq məlumatları təmizlə (isteğe bağlı)
+        // Cari ayın məlumatlarını təmizlə
         function clearMonthData() {
-            if (confirm('Cari ayın bütün məlumatlarını silmək istədiyinizə əminsiniz?')) {
-                transactions = [];
-                localStorage.setItem('finansTransactions', JSON.stringify(transactions));
-                updateDisplay();
-                showNotification('Bütün məlumatlar silindi');
-            }
+            if (!confirm('Cari ayın BÜTÜN məlumatlarını silmək istədiyinizə əminsiniz?\n\nBu əməliyyat geri qaytarıla bilməz!')) return;
+            
+            const currentMonth = new Date().getMonth();
+            const currentYear = new Date().getFullYear();
+            
+            // Cari ayın əməliyyatlarını çıxart
+            transactions = transactions.filter(t => {
+                const transactionDate = new Date(t.timestamp);
+                return !(transactionDate.getMonth() === currentMonth && 
+                        transactionDate.getFullYear() === currentYear);
+            });
+            
+            localStorage.setItem('finansTransactions', JSON.stringify(transactions));
+            updateDisplay();
+            
+            showNotification('Cari ayın məlumatları silindi');
         }
     </script>
 </body>
