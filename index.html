@@ -1,1501 +1,431 @@
 <!DOCTYPE html>
-<html lang="az">
-
+<html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mafia</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telegram 3D Futbol</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.min.js"></script>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
         body {
+            overflow: hidden;
+            font-family: 'Arial', sans-serif;
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            color: #fff;
-            min-height: 100vh;
-            overflow-x: hidden;
         }
 
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        /* Loading Screen */
-        #loadingScreen {
+        #gameCanvas {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            z-index: 1;
+        }
+
+        /* UI Katmanları */
+        #uiLayer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        /* Giriş Ekranı */
+        #loginScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
             display: flex;
             flex-direction: column;
+            align-items: center;
             justify-content: center;
-            align-items: center;
-            z-index: 9999;
+            z-index: 100;
+            color: white;
         }
 
-        .loader {
-            width: 60px;
-            height: 60px;
-            border: 5px solid rgba(255, 255, 255, 0.1);
-            border-top: 5px solid #ff6b6b;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-
-            100% {
-                transform: rotate(360deg);
-            }
-        }
-
-        /* Header */
-        .header {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 15px;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            animation: slideDown 0.5s ease;
-        }
-
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .profile-container {
+            text-align: center;
+            margin-bottom: 30px;
         }
 
         .profile-pic {
-            width: 50px;
-            height: 50px;
+            width: 100px;
+            height: 100px;
             border-radius: 50%;
-            border: 3px solid #ff6b6b;
-            object-fit: cover;
-        }
-
-        .user-info h3 {
-            font-size: 18px;
-            margin-bottom: 5px;
-        }
-
-        .user-info p {
-            font-size: 12px;
-            color: #aaa;
-        }
-
-        /* Main Menu */
-        #mainMenu {
-            display: none;
-        }
-
-        .menu-btn {
-            width: 100%;
-            padding: 18px;
-            margin: 10px 0;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
-            border-radius: 12px;
-            color: white;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-            animation: fadeInUp 0.5s ease;
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .menu-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
-        }
-
-        .menu-btn i {
-            margin-right: 10px;
-        }
-
-        .menu-btn.secondary {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        }
-
-        .menu-btn.tertiary {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-        }
-
-        /* Timer */
-        .timer {
-            background: rgba(255, 107, 107, 0.2);
-            border: 2px solid #ff6b6b;
-            border-radius: 50px;
-            padding: 10px 20px;
-            text-align: center;
-            margin: 15px 0;
-            font-size: 24px;
-            font-weight: bold;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-
-            0%,
-            100% {
-                transform: scale(1);
-            }
-
-            50% {
-                transform: scale(1.05);
-            }
-        }
-
-        .timer i {
-            margin-right: 10px;
-            color: #ff6b6b;
-        }
-
-        /* Room Join Section */
-        .room-join {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 20px;
-            margin-top: 20px;
-            animation: fadeIn 0.5s ease;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-
-            to {
-                opacity: 1;
-            }
-        }
-
-        .room-join h3 {
+            border: 3px solid #4cc9f0;
             margin-bottom: 15px;
+        }
+
+        .username {
+            font-size: 24px;
+            color: #4cc9f0;
+            font-weight: bold;
+        }
+
+        .menu-button {
+            background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            margin: 10px;
+            border-radius: 25px;
+            font-size: 18px;
+            cursor: pointer;
+            pointer-events: auto;
+            transition: transform 0.2s, box-shadow 0.2s;
+            min-width: 200px;
             text-align: center;
         }
 
-        .join-input-group {
+        .menu-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .menu-button.create-room {
+            background: linear-gradient(135deg, #f72585 0%, #b5179e 100%);
+        }
+
+        .time-selection {
             display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
             gap: 10px;
+            margin: 20px 0;
+            pointer-events: auto;
         }
 
-        .room-input {
-            flex: 1;
-            padding: 12px;
+        .time-option {
+            padding: 10px 20px;
             background: rgba(255, 255, 255, 0.1);
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
-            color: white;
-            font-size: 16px;
-        }
-
-        .join-btn {
-            padding: 12px 30px;
-            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-            border: none;
-            border-radius: 8px;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .join-btn:hover {
-            transform: scale(1.05);
-        }
-
-        /* Room List */
-        #roomList {
-            display: none;
-        }
-
-        .room-card {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border-radius: 12px;
-            padding: 15px;
-            margin: 10px 0;
-            cursor: pointer;
-            transition: all 0.3s ease;
             border: 2px solid transparent;
-            animation: slideIn 0.5s ease;
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateX(-20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-        .room-card:hover {
-            border-color: #667eea;
-            transform: translateX(5px);
-        }
-
-        .room-card h4 {
-            margin-bottom: 8px;
-            color: #ff6b6b;
-        }
-
-        .room-card p {
-            font-size: 14px;
-            color: #aaa;
-        }
-
-        /* Create Room */
-        #createRoom {
-            display: none;
-        }
-
-        .create-form {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
             border-radius: 15px;
-            padding: 20px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: bold;
-            color: #ff6b6b;
-        }
-
-        .form-group input,
-        .form-group select {
-            width: 100%;
-            padding: 12px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
             color: white;
-            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
         }
 
-        /* Game Room */
-        #gameRoom {
+        .time-option.selected {
+            background: rgba(76, 201, 240, 0.3);
+            border-color: #4cc9f0;
+        }
+
+        /* Oda Seçim Ekranı */
+        #roomScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
             display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 99;
+            color: white;
         }
 
-        .room-header {
+        .team-selection {
+            display: flex;
+            width: 80%;
+            max-width: 800px;
+            height: 400px;
+            margin: 30px 0;
+            background: rgba(30, 30, 46, 0.8);
+            border-radius: 20px;
+            overflow: hidden;
+            pointer-events: auto;
+        }
+
+        .team {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: all 0.3s;
+        }
+
+        .team:hover {
             background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 15px;
+        }
+
+        .team.blue {
+            border-right: 2px solid #4361ee;
+        }
+
+        .team.red {
+            border-left: 2px solid #f72585;
+        }
+
+        .team-name {
+            font-size: 28px;
             margin-bottom: 20px;
+        }
+
+        .team.blue .team-name {
+            color: #4361ee;
+        }
+
+        .team.red .team-name {
+            color: #f72585;
         }
 
         .players-list {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-
-        .player-item {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            padding: 10px;
-            margin: 8px 0;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 10px;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .player-item img {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            border: 2px solid #667eea;
-        }
-
-        /* Game Screen */
-        #gameScreen {
-            display: none;
-        }
-
-        .game-info {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .role-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 15px;
-            padding: 30px;
-            margin: 20px 0;
-            text-align: center;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            animation: zoomIn 0.5s ease;
-        }
-
-        @keyframes zoomIn {
-            from {
-                opacity: 0;
-                transform: scale(0.8);
-            }
-
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
-
-        .role-card h2 {
-            font-size: 32px;
-            margin-bottom: 10px;
-        }
-
-        .role-card i {
-            font-size: 64px;
-            margin-bottom: 15px;
-        }
-
-        .role-card.mafia {
-            background: linear-gradient(135deg, #ff6b6b 0%, #c92a2a 100%);
-        }
-
-        .role-card.police {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-        }
-
-        .role-card.doctor {
-            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-        }
-
-        .role-card.citizen {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        }
-
-        /* Night Phase */
-        .night-phase {
-            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-            border-radius: 15px;
-            padding: 20px;
-            margin: 20px 0;
-        }
-
-        .mafia-chat {
-            background: rgba(255, 107, 107, 0.1);
-            border: 2px solid rgba(255, 107, 107, 0.3);
-            border-radius: 12px;
-            padding: 15px;
-            margin: 15px 0;
-            max-height: 300px;
+            width: 100%;
+            flex: 1;
             overflow-y: auto;
         }
 
-        .chat-message {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
+        .player-slot {
             padding: 10px;
-            margin: 8px 0;
-            animation: slideIn 0.3s ease;
-        }
-
-        .chat-message strong {
-            color: #ff6b6b;
-        }
-
-        .chat-input-group {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-        }
-
-        .chat-input {
-            flex: 1;
-            padding: 12px;
+            margin: 5px;
             background: rgba(255, 255, 255, 0.1);
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
-            color: white;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: background 0.3s;
         }
 
-        .send-btn {
-            padding: 12px 25px;
-            background: #ff6b6b;
-            border: none;
-            border-radius: 8px;
+        .player-slot:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Mobil Kontroller */
+        #mobileControls {
+            position: fixed;
+            bottom: 20px;
+            width: 100%;
+            display: none;
+            justify-content: space-between;
+            padding: 0 20px;
+            z-index: 3;
+        }
+
+        .joystick-container {
+            width: 150px;
+            height: 150px;
+            position: relative;
+        }
+
+        .joystick-base {
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 50%;
+            position: absolute;
+        }
+
+        .joystick-thumb {
+            width: 70px;
+            height: 70px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            position: absolute;
+            top: 40px;
+            left: 40px;
+            touch-action: none;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 20px;
+            align-items: flex-end;
+        }
+
+        .action-button {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
             color: white;
             font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .send-btn:hover {
-            transform: scale(1.05);
-        }
-
-        /* Selection Grid */
-        .selection-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: 15px;
-            margin: 20px 0;
-        }
-
-        .selection-card {
-            background: rgba(255, 255, 255, 0.05);
-            border: 3px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            padding: 15px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-align: center;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .selection-card:hover {
-            border-color: #667eea;
-            background: rgba(102, 126, 234, 0.2);
-            transform: translateY(-5px);
-        }
-
-        .selection-card.selected {
-            border-color: #ff6b6b;
-            background: rgba(255, 107, 107, 0.3);
-            box-shadow: 0 0 20px rgba(255, 107, 107, 0.5);
-        }
-
-        .selection-card img {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            margin-bottom: 10px;
-            border: 2px solid #667eea;
-        }
-
-        .selection-card.selected img {
-            border-color: #ff6b6b;
-        }
-
-        .selection-card h4 {
             font-size: 14px;
-            margin-top: 8px;
+            user-select: none;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            pointer-events: auto;
+            border: none;
         }
 
-        .selection-card i {
-            font-size: 48px;
-            margin-bottom: 10px;
-            color: #667eea;
+        .action-button.shoot {
+            background: linear-gradient(135deg, #f72585 0%, #b5179e 100%);
         }
 
-        .selection-card.selected i {
-            color: #ff6b6b;
+        /* Skor Tablosu */
+        #scoreboard {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px 30px;
+            border-radius: 20px;
+            display: flex;
+            gap: 30px;
+            font-size: 24px;
+            font-weight: bold;
+            z-index: 3;
+            pointer-events: none;
         }
 
-        /* Voting Section */
-        .voting-section {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 20px;
-            margin: 20px 0;
-        }
-
-        .voting-section h3 {
-            margin-bottom: 20px;
+        .score {
+            min-width: 50px;
             text-align: center;
         }
 
-        /* Training Mode */
-        #trainingMode {
-            display: none;
+        .blue-score {
+            color: #4361ee;
         }
 
-        .bot-config {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 20px;
-            margin: 15px 0;
+        .red-score {
+            color: #f72585;
         }
 
-        /* Status Messages */
-        .status-message {
-            background: rgba(255, 255, 255, 0.1);
-            border-left: 4px solid #667eea;
-            border-radius: 8px;
-            padding: 15px;
-            margin: 15px 0;
-            animation: slideIn 0.3s ease;
-        }
-
-        .status-message.warning {
-            border-left-color: #ffd93d;
-        }
-
-        .status-message.error {
-            border-left-color: #ff6b6b;
-        }
-
-        .status-message.success {
-            border-left-color: #38ef7d;
-        }
-
-        /* Connection Status */
-        .connection-status {
+        /* Geri sayım */
+        #countdown {
             position: fixed;
-            top: 10px;
-            right: 10px;
-            padding: 8px 15px;
-            background: rgba(255, 107, 107, 0.9);
-            border-radius: 20px;
-            font-size: 12px;
-            z-index: 1000;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 100px;
+            color: white;
+            text-shadow: 0 0 20px rgba(76, 201, 240, 0.8);
+            z-index: 4;
+            pointer-events: none;
             display: none;
         }
 
-        .connection-status.show {
-            display: block;
-            animation: shake 0.5s ease;
+        /* Yükleme ekranı */
+        .loader {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            border-top-color: #4cc9f0;
+            animation: spin 1s ease-in-out infinite;
+            margin: 20px;
         }
 
-        @keyframes shake {
-
-            0%,
-            100% {
-                transform: translateX(0);
-            }
-
-            25% {
-                transform: translateX(-10px);
-            }
-
-            75% {
-                transform: translateX(10px);
-            }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
 
         /* Responsive */
-        @media (max-width: 480px) {
-            .container {
-                padding: 10px;
+        @media (max-width: 768px) {
+            .menu-button {
+                min-width: 150px;
+                padding: 12px 20px;
+                font-size: 16px;
             }
-
-            .selection-grid {
-                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-                gap: 10px;
+            
+            .team-selection {
+                flex-direction: column;
+                height: 60vh;
             }
-
-            .selection-card img {
-                width: 50px;
-                height: 50px;
+            
+            .team {
+                width: 100%;
             }
-        }
-
-        /* Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.05);
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: rgba(255, 107, 107, 0.5);
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 107, 107, 0.8);
+            
+            .team.blue {
+                border-right: none;
+                border-bottom: 2px solid #4361ee;
+            }
+            
+            .team.red {
+                border-left: none;
+                border-top: 2px solid #f72585;
+            }
         }
     </style>
 </head>
-
 <body>
-    <!-- Connection Status -->
-    <div class="connection-status" id="connectionStatus">Bağlantı kəsildi</div>
-
-    <!-- Loading Screen -->
-    <div id="loadingScreen">
-        <div class="loader"></div>
-        <p style="margin-top: 20px;">Yüklənir...</p>
+    <!-- Giriş Ekranı -->
+    <div id="loginScreen">
+        <div class="profile-container">
+            <img id="profilePic" src="" alt="Profil" class="profile-pic">
+            <div id="username" class="username"></div>
+        </div>
+        
+        <button id="quickPlayBtn" class="menu-button">Hemen Oyna</button>
+        <button id="createRoomBtn" class="menu-button create-room">Oda Kur</button>
+        <button id="joinRoomBtn" class="menu-button">Odaya Katıl</button>
+        
+        <div id="timeSelection" class="time-selection" style="display: none;">
+            <div class="time-option" data-time="5">5 Dakika</div>
+            <div class="time-option" data-time="10">10 Dakika</div>
+            <div class="time-option" data-time="15">15 Dakika</div>
+            <div class="time-option" data-time="25">25 Dakika</div>
+            <div class="time-option" data-time="30">30 Dakika</div>
+        </div>
     </div>
 
-    <div class="container">
-        <!-- Header -->
-        <div class="header" id="userHeader" style="display: none;">
-            <img src="" alt="Profil" class="profile-pic" id="profilePic">
-            <div class="user-info">
-                <h3 id="userName">Oyunçu</h3>
-                <p id="userStatus">Onlayn</p>
+    <!-- Oda Seçim Ekranı -->
+    <div id="roomScreen">
+        <h2>Takım Seçimi</h2>
+        <div class="team-selection">
+            <div class="team blue" id="blueTeam">
+                <div class="team-name">⚽ MAVİ TAKIM</div>
+                <div class="players-list" id="bluePlayers"></div>
+            </div>
+            <div class="team red" id="redTeam">
+                <div class="team-name">⚽ KIRMIZI TAKIM</div>
+                <div class="players-list" id="redPlayers"></div>
             </div>
         </div>
+        <button id="startGameBtn" class="menu-button">Oyuna Başla</button>
+        <button id="backToMenuBtn" class="menu-button">Menüye Dön</button>
+    </div>
 
-        <!-- Main Menu -->
-        <div id="mainMenu">
-            <button class="menu-btn" onclick="autoJoinRoom()"><i class="fas fa-play"></i> Avtomatik Qoşul</button>
-            <button class="menu-btn secondary" onclick="showRoomList()"><i class="fas fa-door-open"></i>
-                Otaqlar</button>
-            <button class="menu-btn tertiary" onclick="showCreateRoom()"><i class="fas fa-plus"></i> Otaq Yarat</button>
-            <button class="menu-btn" style="background: linear-gradient(135deg, #fa8231 0%, #f5576c 100%);"
-                onclick="showTrainingMode()"><i class="fas fa-robot"></i> Məşq Rejimi</button>
+    <!-- Oyun Canvas -->
+    <canvas id="gameCanvas"></canvas>
 
-            <div class="room-join">
-                <h3><i class="fas fa-hashtag"></i> Otaq Nömrəsi ilə Qoşul</h3>
-                <div class="join-input-group" style="flex-direction: column; gap: 10px;">
-                    <input type="text" class="room-input" id="roomCodeInput" placeholder="Otaq kodu">
-                    <input type="password" class="room-input" id="roomPasswordInput" placeholder="Şifrə (əgər varsa)">
-                    <button class="join-btn" onclick="joinRoomByCode()" style="width: 100%;">GİR</button>
-                </div>
-            </div>
+    <!-- UI Katmanı -->
+    <div id="uiLayer">
+        <!-- Skor Tablosu -->
+        <div id="scoreboard" style="display: none;">
+            <div class="score blue-score" id="blueScore">0</div>
+            <div style="color: white">-</div>
+            <div class="score red-score" id="redScore">0</div>
         </div>
 
-        <!-- Room List -->
-        <div id="roomList">
-            <button class="menu-btn" onclick="showMainMenu()"
-                style="margin-bottom: 15px; background: rgba(255,255,255,0.1);"><i class="fas fa-arrow-left"></i>
-                Geri</button>
-            <h2 style="margin-bottom: 20px;"><i class="fas fa-list"></i> Mövcud Otaqlar</h2>
-            <div id="roomsContainer"></div>
-        </div>
+        <!-- Geri Sayım -->
+        <div id="countdown"></div>
 
-        <!-- Create Room -->
-        <div id="createRoom">
-            <button class="menu-btn" onclick="showMainMenu()"
-                style="margin-bottom: 15px; background: rgba(255,255,255,0.1);"><i class="fas fa-arrow-left"></i>
-                Geri</button>
-            <h2 style="margin-bottom: 20px;"><i class="fas fa-plus-circle"></i> Otaq Yarat</h2>
-            <div class="create-form">
-                <div class="form-group">
-                    <label><i class="fas fa-edit"></i> Otaq Adı (isteğe bağlı)</label>
-                    <input type="text" id="newRoomName" placeholder="Məsələn: Professional Mafia">
-                </div>
-                <div class="form-group">
-                    <label><i class="fas fa-lock"></i> Şifrə (isteğe bağlı)</label>
-                    <input type="password" id="newRoomPassword" placeholder="Şifrə qoymaq üçün yazın">
-                </div>
-                <div class="form-group">
-                    <label><i class="fas fa-user-secret"></i> Mafia Sayı</label>
-                    <input type="number" id="mafiaCount" min="1" max="5" value="2">
-                </div>
-                <div class="form-group">
-                    <label><i class="fas fa-shield-alt"></i> Polis Sayı</label>
-                    <input type="number" id="policeCount" min="0" max="3" value="1">
-                </div>
-                <div class="form-group">
-                    <label><i class="fas fa-user-md"></i> Doktor Sayı</label>
-                    <input type="number" id="doctorCount" min="0" max="2" value="1">
-                </div>
-                <div class="form-group">
-                    <label><i class="fas fa-users"></i> Vətəndaş Sayı</label>
-                    <input type="number" id="citizenCount" min="1" max="10" value="4">
-                </div>
-                <button class="menu-btn" onclick="createNewRoom()">Otaq Yarat</button>
+        <!-- Mobil Kontroller -->
+        <div id="mobileControls">
+            <div class="joystick-container">
+                <div class="joystick-base"></div>
+                <div class="joystick-thumb" id="joystickThumb"></div>
             </div>
-        </div>
-
-        <!-- Game Room (Lobby) -->
-        <div id="gameRoom">
-            <button class="menu-btn" onclick="leaveRoom()"
-                style="margin-bottom: 15px; background: rgba(255,107,107,0.3);"><i class="fas fa-sign-out-alt"></i>
-                Otaqdan Çıx</button>
-            <div class="room-header">
-                <h2><i class="fas fa-door-open"></i> Otaq #<span id="roomCode"></span></h2>
-                <p id="roomConfig"></p>
-            </div>
-            <div class="players-list">
-                <h3><i class="fas fa-users"></i> Oyunçular (<span id="playerCount">0</span>)</h3>
-                <div id="playersContainer"></div>
-            </div>
-            <button class="menu-btn" id="startGameBtn" style="display: none;" onclick="startGame()"><i
-                    class="fas fa-play-circle"></i> Oyunu Başlat</button>
-        </div>
-
-        <!-- Game Screen -->
-        <div id="gameScreen">
-            <!-- Timer -->
-            <div class="timer" id="gameTimer" style="display: none;">
-                <i class="fas fa-clock"></i>
-                <span id="timerText">00:00</span>
-            </div>
-
-            <div class="game-info">
-                <h2 id="gamePhase">Gün 1</h2>
-                <p id="gameStatus">Oyun başlayır...</p>
-            </div>
-
-            <!-- Role Card -->
-            <div class="role-card" id="roleCard" style="display: none;">
-                <i id="roleIcon" class="fas fa-user"></i>
-                <h2 id="roleName">Rolunuz</h2>
-                <p id="roleDescription"></p>
-            </div>
-
-            <!-- Night Phase -->
-            <div class="night-phase" id="nightPhase" style="display: none;">
-                <h3><i class="fas fa-moon"></i> Gecə Fazası</h3>
-                <div id="nightContent"></div>
-            </div>
-
-            <!-- Voting Section -->
-            <div class="voting-section" id="votingSection" style="display: none;">
-                <h3><i class="fas fa-vote-yea"></i> Səsvermə</h3>
-                <div class="selection-grid" id="votingOptions"></div>
-                <button class="menu-btn" onclick="submitVote()" style="margin-top: 20px;"><i class="fas fa-check"></i>
-                    Səs Ver</button>
-            </div>
-
-            <!-- Game Log -->
-            <div class="status-message" id="gameLog" style="display: none;"></div>
-        </div>
-
-        <!-- Training Mode -->
-        <div id="trainingMode">
-            <button class="menu-btn" onclick="showMainMenu()"
-                style="margin-bottom: 15px; background: rgba(255,255,255,0.1);"><i class="fas fa-arrow-left"></i>
-                Geri</button>
-            <h2 style="margin-bottom: 20px;"><i class="fas fa-robot"></i> Məşq Rejimi</h2>
-            <div class="bot-config">
-                <div class="form-group">
-                    <label><i class="fas fa-user-tag"></i> Rolunuzu Seçin</label>
-                    <select id="trainingRole">
-                        <option value="mafia">🔴 Mafia</option>
-                        <option value="police">🔵 Polis</option>
-                        <option value="doctor">💚 Doktor</option>
-                        <option value="citizen">⚪ Vətəndaş</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label><i class="fas fa-robot"></i> Bot Sayı</label>
-                    <input type="number" id="botCount" min="4" max="10" value="6">
-                </div>
-                <button class="menu-btn" onclick="startTraining()"><i class="fas fa-play"></i> Məşqə Başla</button>
+            <div class="action-buttons">
+                <button class="action-button" id="jumpBtn">ZIPLA</button>
+                <button class="action-button" id="passBtn">PAS</button>
+                <button class="action-button shoot" id="shootBtn">ŞUT</button>
             </div>
         </div>
     </div>
 
-    <script>
-        const WS_URL = window.location.hostname === 'localhost'
-            ? 'ws://localhost:3000'
-            : 'wss://saskioyunu-1.onrender.com';
-
-        let ws;
-        let reconnectAttempts = 0;
-        let maxReconnectAttempts = 10;
-        let reconnectDelay = 2000;
-        let userData = null;
-        let currentRoom = null;
-        let gameState = null;
-        let selectedVote = null;
-        let selectedTarget = null;
-        let timerInterval = null;
-        let timeRemaining = 0;
-
-        // Initialize Telegram WebApp
-        function initTelegram() {
-            const tg = window.Telegram ? window.Telegram.WebApp : null;
-
-            if (tg) {
-                tg.ready();
-                tg.expand();
-            }
-
-            // Function to get user from URL (for iframes)
-            const getUrlParam = (name) => {
-                const results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
-                return results ? decodeURIComponent(results[1]) : null;
-            };
-
-            // Try to get data from SDK or URL
-            let user = tg ? tg.initDataUnsafe.user : null;
-
-            if (user) {
-                userData = {
-                    id: user.id,
-                    name: user.first_name + (user.last_name ? ' ' + user.last_name : ''),
-                    photo: user.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.first_name)}&background=random`
-                };
-            } else {
-                // FALLBACK: Check if params are passed via URL (typical for iframes)
-                const urlName = getUrlParam('tgName');
-                const urlId = getUrlParam('tgId');
-
-                if (urlName && urlId) {
-                    userData = {
-                        id: urlId,
-                        name: urlName,
-                        photo: `https://ui-avatars.com/api/?name=${encodeURIComponent(urlName)}&background=random`
-                    };
-                } else {
-                    userData = {
-                        id: Math.floor(Math.random() * 1000000),
-                        name: 'Qonaq_' + Math.floor(Math.random() * 999),
-                        photo: 'https://ui-avatars.com/api/?name=Guest&background=random'
-                    };
-                }
-            }
-
-            document.getElementById('userName').textContent = userData.name;
-            document.getElementById('profilePic').src = userData.photo;
-            document.getElementById('userHeader').style.display = 'flex';
-        }
-
-        // Timer Functions
-        function startTimer(seconds) {
-            stopTimer();
-            timeRemaining = seconds;
-            document.getElementById('gameTimer').style.display = 'block';
-            updateTimerDisplay();
-
-            timerInterval = setInterval(() => {
-                if (timeRemaining > 0) {
-                    timeRemaining--;
-                }
-                updateTimerDisplay();
-
-                if (timeRemaining <= 0) {
-                    stopTimer();
-                }
-            }, 1000);
-        }
-
-        function updateTimerDisplay() {
-            const displayTime = Math.max(0, timeRemaining);
-            const minutes = Math.floor(displayTime / 60);
-            const seconds = displayTime % 60;
-            document.getElementById('timerText').textContent =
-                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-        }
-
-        function stopTimer() {
-            if (timerInterval) {
-                clearInterval(timerInterval);
-                timerInterval = null;
-            }
-        }
-
-        // WebSocket Connection
-        function connectWebSocket() {
-            ws = new WebSocket(WS_URL);
-
-            ws.onopen = () => {
-                console.log('Serverə bağlandı');
-                reconnectAttempts = 0;
-                document.getElementById('connectionStatus').classList.remove('show');
-
-                ws.send(JSON.stringify({
-                    type: 'auth',
-                    data: userData
-                }));
-
-                // Always request sync to restore state if previously in a game
-                setTimeout(() => {
-                    send('syncState');
-                }, 100);
-            };
-
-            ws.onmessage = (event) => {
-                try {
-                    const message = JSON.parse(event.data);
-                    handleMessage(message);
-                } catch (e) {
-                    console.error('Error parsing server message:', e);
-                }
-            };
-
-            ws.onclose = () => {
-                console.log('Bağlantı kəsildi');
-                document.getElementById('connectionStatus').classList.add('show');
-                document.getElementById('connectionStatus').textContent = 'Yenidən bağlanılır...';
-
-                // Exponential backoff for reconnection
-                const delay = Math.min(reconnectDelay * reconnectAttempts, 10000);
-                setTimeout(connectWebSocket, delay);
-                reconnectAttempts++;
-            };
-        }
-
-        function handleMessage(message) {
-            console.log('Alındı:', message);
-
-            switch (message.type) {
-                case 'roomList':
-                    updateRoomList(message.data);
-                    break;
-                case 'roomJoined':
-                    currentRoom = message.data;
-                    showGameRoom();
-                    break;
-                case 'roomUpdate':
-                    currentRoom = message.data;
-                    updateGameRoom();
-                    break;
-                case 'gameStarted':
-                    gameState = message.data;
-                    showGameScreen();
-                    break;
-                case 'gameStateSync':
-                    // Restore game state after reconnection
-                    if (message.data.room) {
-                        currentRoom = message.data.room;
-                        if (message.data.room.gameStarted) {
-                            gameState = message.data.gameState;
-                            showGameScreen();
-                            if (message.data.gameState.phase === 'night') {
-                                handleNightPhase(message.data.gameState);
-                            } else {
-                                handleDayPhase(message.data.gameState);
-                            }
-                        } else {
-                            showGameRoom();
-                        }
-                    } else {
-                        // No room found, go to main menu
-                        showMainMenu();
-                    }
-                    document.getElementById('loadingScreen').style.display = 'none';
-                    break;
-                case 'nightPhase':
-                    handleNightPhase(message.data);
-                    break;
-                case 'dayPhase':
-                    handleDayPhase(message.data);
-                    break;
-                case 'mafiaMessage':
-                    addMafiaMessage(message.data);
-                    break;
-                case 'policeResult':
-                    showPoliceResult(message.data);
-                    break;
-                case 'doctorConfirm':
-                    showDoctorConfirm(message.data);
-                    break;
-                case 'gameEnd':
-                    handleGameEnd(message.data);
-                    break;
-                case 'statusMessage':
-                    showStatusMessage(message.data.message, message.data.type);
-                    break;
-                case 'error':
-                    showError(message.data.message);
-                    break;
-            }
-        }
-
-        function send(type, data) {
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({ type, data }));
-            }
-        }
-
-        // UI Functions
-        function showMainMenu() {
-            hideAllScreens();
-            document.getElementById('mainMenu').style.display = 'block';
-        }
-
-        function showRoomList() {
-            hideAllScreens();
-            document.getElementById('roomList').style.display = 'block';
-            send('getRooms');
-        }
-
-        function showCreateRoom() {
-            hideAllScreens();
-            document.getElementById('createRoom').style.display = 'block';
-        }
-
-        function showGameRoom() {
-            hideAllScreens();
-            document.getElementById('gameRoom').style.display = 'block';
-            updateGameRoom();
-        }
-
-        function showGameScreen() {
-            hideAllScreens();
-            stopTimer();
-            document.getElementById('gameScreen').style.display = 'block';
-            updateGameScreen();
-        }
-
-        function showTrainingMode() {
-            hideAllScreens();
-            document.getElementById('trainingMode').style.display = 'block';
-        }
-
-        function hideAllScreens() {
-            document.getElementById('mainMenu').style.display = 'none';
-            document.getElementById('roomList').style.display = 'none';
-            document.getElementById('createRoom').style.display = 'none';
-            document.getElementById('gameRoom').style.display = 'none';
-            document.getElementById('gameScreen').style.display = 'none';
-            document.getElementById('trainingMode').style.display = 'none';
-        }
-
-        function autoJoinRoom() {
-            send('autoJoin');
-        }
-
-        function joinRoomByCode() {
-            const code = document.getElementById('roomCodeInput').value.trim();
-            const password = document.getElementById('roomPasswordInput').value.trim();
-            if (code) {
-                send('joinRoom', { code, password });
-            }
-        }
-
-        function createNewRoom() {
-            const config = {
-                mafia: parseInt(document.getElementById('mafiaCount').value),
-                police: parseInt(document.getElementById('policeCount').value),
-                doctor: parseInt(document.getElementById('doctorCount').value),
-                citizen: parseInt(document.getElementById('citizenCount').value)
-            };
-            const name = document.getElementById('newRoomName').value.trim();
-            const password = document.getElementById('newRoomPassword').value.trim();
-            send('createRoom', { config, name, password });
-        }
-
-        function startGame() {
-            send('startGame');
-        }
-
-        function startTraining() {
-            const role = document.getElementById('trainingRole').value;
-            const botCount = parseInt(document.getElementById('botCount').value);
-            send('startTraining', { role, botCount });
-        }
-
-        function leaveRoom() {
-            send('leaveRoom');
-            currentRoom = null;
-            showMainMenu();
-        }
-
-        function updateRoomList(rooms) {
-            const container = document.getElementById('roomsContainer');
-            container.innerHTML = '';
-
-            if (rooms.length === 0) {
-                container.innerHTML = '<p style="text-align: center; color: #aaa;"><i class="fas fa-inbox"></i> Mövcud otaq yoxdur</p>';
-                return;
-            }
-
-            rooms.forEach(room => {
-                const card = document.createElement('div');
-                card.className = 'room-card';
-                card.onclick = () => {
-                    if (room.hasPassword) {
-                        const pass = prompt('Bu otaq şifrlidir. Şifrəni daxil edin:');
-                        if (pass !== null) {
-                            send('joinRoom', { code: room.code, password: pass });
-                        }
-                    } else {
-                        send('joinRoom', { code: room.code });
-                    }
-                };
-                card.innerHTML = `
-                    <h4><i class="fas fa-door-open"></i> ${room.name} ${room.hasPassword ? '<i class="fas fa-lock" style="color: #ffd93d; font-size: 14px;"></i>' : ''}</h4>
-                    <p><i class="fas fa-hashtag"></i> Kod: ${room.code}</p>
-                    <p><i class="fas fa-users"></i> Oyunçular: ${room.players.length}/${room.config.mafia + room.config.police + room.config.doctor + room.config.citizen}</p>
-                    <p><i class="fas fa-user-secret"></i> Mafia: ${room.config.mafia} | <i class="fas fa-shield-alt"></i> Polis: ${room.config.police} | <i class="fas fa-user-md"></i> Doktor: ${room.config.doctor} | <i class="fas fa-user"></i> Vətəndaş: ${room.config.citizen}</p>
-                `;
-                container.appendChild(card);
-            });
-        }
-
-        function updateGameRoom() {
-            if (!currentRoom) return;
-
-            document.getElementById('roomCode').textContent = currentRoom.code;
-            const total = currentRoom.config.mafia + currentRoom.config.police + currentRoom.config.doctor + currentRoom.config.citizen;
-            document.getElementById('roomConfig').textContent =
-                `Mafia: ${currentRoom.config.mafia} | Polis: ${currentRoom.config.police} | Doktor: ${currentRoom.config.doctor} | Vətəndaş: ${currentRoom.config.citizen} | Cəmi: ${total}`;
-
-            document.getElementById('playerCount').textContent = currentRoom.players.length;
-
-            const container = document.getElementById('playersContainer');
-            container.innerHTML = '';
-
-            currentRoom.players.forEach(player => {
-                const item = document.createElement('div');
-                item.className = 'player-item';
-                item.innerHTML = `
-                    <img src="${player.photo}" alt="${player.name}">
-                    <span><i class="fas fa-user"></i> ${player.name}</span>
-                `;
-                container.appendChild(item);
-            });
-
-            if (currentRoom.host === userData.id) {
-                document.getElementById('startGameBtn').style.display = 'block';
-            } else {
-                document.getElementById('startGameBtn').style.display = 'none';
-            }
-        }
-
-        function updateGameScreen() {
-            if (!gameState) return;
-
-            document.getElementById('gamePhase').textContent =
-                `${gameState.phase === 'night' ? '🌙 Gecə' : '☀️ Gün'} ${gameState.day}`;
-
-            // Show role card
-            if (gameState.myRole) {
-                const roleCard = document.getElementById('roleCard');
-                roleCard.style.display = 'block';
-                roleCard.className = `role-card ${gameState.myRole}`;
-
-                const roleData = {
-                    mafia: {
-                        name: 'Mafia',
-                        icon: 'fa-user-secret',
-                        desc: 'Gecələr birlikdə bir oyunçunu öldürün'
-                    },
-                    police: {
-                        name: 'Polis',
-                        icon: 'fa-shield-alt',
-                        desc: 'Gecələr bir oyunçunun rolunu öyrənin'
-                    },
-                    doctor: {
-                        name: 'Doktor',
-                        icon: 'fa-user-md',
-                        desc: 'Gecələr bir oyunçunu qoruyun'
-                    },
-                    citizen: {
-                        name: 'Vətəndaş',
-                        icon: 'fa-users',
-                        desc: 'Gündüzlər səsvermə ilə mafianı tapın'
-                    }
-                };
-
-                const role = roleData[gameState.myRole];
-                document.getElementById('roleIcon').className = `fas ${role.icon}`;
-                document.getElementById('roleName').textContent = role.name;
-                document.getElementById('roleDescription').textContent = role.desc;
-            }
-
-            // Update game log
-            if (gameState.log && gameState.log.length > 0) {
-                const logEl = document.getElementById('gameLog');
-                logEl.style.display = 'block';
-                logEl.innerHTML = '<i class="fas fa-info-circle"></i> ' + gameState.log.join('<br><i class="fas fa-info-circle"></i> ');
-            }
-        }
-
-        function handleNightPhase(data) {
-            gameState = data;
-            document.getElementById('nightPhase').style.display = 'block';
-            document.getElementById('votingSection').style.display = 'none';
-
-            // Start timer
-            const remaining = (data.remainingTime !== undefined && data.remainingTime !== null) ? data.remainingTime : 60;
-            startTimer(remaining);
-
-            const nightContent = document.getElementById('nightContent');
-            nightContent.innerHTML = '';
-
-            if (gameState.myRole === 'mafia') {
-                nightContent.innerHTML = `
-                    <div class="mafia-chat" id="mafiaChat">
-                        <p style="text-align: center; color: #aaa;"><i class="fas fa-comments"></i> Mafia çatı</p>
-                    </div>
-                    <div class="chat-input-group">
-                        <input type="text" class="chat-input" id="chatInput" placeholder="Mesaj yazın..." onkeypress="if(event.key==='Enter') sendMafiaMessage()">
-                        <button class="send-btn" onclick="sendMafiaMessage()"><i class="fas fa-paper-plane"></i></button>
-                    </div>
-                    <h4 style="margin-top: 20px;"><i class="fas fa-crosshairs"></i> Hədəf seçin:</h4>
-                    <div class="selection-grid" id="mafiaTargets"></div>
-                `;
-                updateMafiaTargets(data.alivePlayers);
-            } else if (gameState.myRole === 'police') {
-                nightContent.innerHTML = `
-                    <p style="text-align: center; margin-bottom: 15px;"><i class="fas fa-search"></i> Bir oyunçunun rolunu öyrənin:</p>
-                    <div class="selection-grid" id="policeTargets"></div>
-                `;
-                updatePoliceTargets(data.alivePlayers);
-            } else if (gameState.myRole === 'doctor') {
-                nightContent.innerHTML = `
-                    <p style="text-align: center; margin-bottom: 15px;"><i class="fas fa-hand-holding-medical"></i> Bir oyunçunu qoruyun:</p>
-                    <div class="selection-grid" id="doctorTargets"></div>
-                `;
-                updateDoctorTargets(data.alivePlayers);
-            } else {
-                nightContent.innerHTML = `
-                    <p style="text-align: center;"><i class="fas fa-bed"></i> Gecə... Gözləyin...</p>
-                    <p style="text-align: center; color: #aaa; margin-top: 10px;">Mafia və xüsusi rollar hərəkət edir</p>
-                `;
-            }
-        }
-
-        function handleDayPhase(data) {
-            gameState = data;
-            document.getElementById('nightPhase').style.display = 'none';
-            document.getElementById('votingSection').style.display = 'block';
-
-            // Start timer
-            const remaining = (data.remainingTime !== undefined && data.remainingTime !== null) ? data.remainingTime : 90;
-            startTimer(remaining);
-
-            // Update log
-            if (data.log && data.log.length > 0) {
-                const logEl = document.getElementById('gameLog');
-                logEl.style.display = 'block';
-                logEl.className = 'status-message warning';
-                logEl.innerHTML = '<i class="fas fa-exclamation-triangle"></i> ' + data.log.join('<br><i class="fas fa-exclamation-triangle"></i> ');
-            }
-
-            updateVotingOptions(data.alivePlayers);
-
-            // Telegram Full Screen ensure
-            if (window.Telegram && Telegram.WebApp) {
-                Telegram.WebApp.expand();
-            }
-        }
-
-        function updateMafiaTargets(players) {
-            const container = document.getElementById('mafiaTargets');
-            if (!container) return;
-            container.innerHTML = '';
-
-            players.filter(p => p.id !== userData.id).forEach(player => {
-                const card = document.createElement('div');
-                card.className = 'selection-card';
-                card.onclick = () => selectMafiaTarget(player.id, card);
-                card.innerHTML = `
-                    <img src="${player.photo}" alt="${player.name}">
-                    <h4>${player.name}</h4>
-                `;
-                container.appendChild(card);
-            });
-        }
-
-        function updatePoliceTargets(players) {
-            const container = document.getElementById('policeTargets');
-            if (!container) return;
-            container.innerHTML = '';
-
-            players.filter(p => p.id !== userData.id).forEach(player => {
-                const card = document.createElement('div');
-                card.className = 'selection-card';
-                card.onclick = () => selectPoliceTarget(player.id, card);
-                card.innerHTML = `
-                    <img src="${player.photo}" alt="${player.name}">
-                    <h4>${player.name}</h4>
-                `;
-                container.appendChild(card);
-            });
-        }
-
-        function updateDoctorTargets(players) {
-            const container = document.getElementById('doctorTargets');
-            if (!container) return;
-            container.innerHTML = '';
-
-            players.forEach(player => {
-                const card = document.createElement('div');
-                card.className = 'selection-card';
-                card.onclick = () => selectDoctorTarget(player.id, card);
-                card.innerHTML = `
-                    <img src="${player.photo}" alt="${player.name}">
-                    <h4>${player.name}</h4>
-                `;
-                container.appendChild(card);
-            });
-        }
-
-        function updateVotingOptions(players) {
-            const container = document.getElementById('votingOptions');
-            if (!container) return;
-            container.innerHTML = '';
-
-            players.filter(p => p.id !== userData.id).forEach(player => {
-                const card = document.createElement('div');
-                card.className = 'selection-card';
-                card.onclick = () => selectVoteOption(player.id, card);
-                card.innerHTML = `
-                    <img src="${player.photo}" alt="${player.name}">
-                    <h4>${player.name}</h4>
-                `;
-                container.appendChild(card);
-            });
-        }
-
-        function selectMafiaTarget(playerId, element) {
-            document.querySelectorAll('#mafiaTargets .selection-card').forEach(el => el.classList.remove('selected'));
-            element.classList.add('selected');
-            selectedTarget = playerId;
-            send('mafiaVote', { targetId: playerId });
-            showNotification('✓ Hədəf seçildi');
-        }
-
-        function selectPoliceTarget(playerId, element) {
-            document.querySelectorAll('#policeTargets .selection-card').forEach(el => el.classList.remove('selected'));
-            element.classList.add('selected');
-            send('policeCheck', { targetId: playerId });
-            showNotification('🔍 Yoxlanılır...');
-        }
-
-        function selectDoctorTarget(playerId, element) {
-            document.querySelectorAll('#doctorTargets .selection-card').forEach(el => el.classList.remove('selected'));
-            element.classList.add('selected');
-            send('doctorSave', { targetId: playerId });
-            showNotification('✓ Qorundu');
-        }
-
-        function selectVoteOption(playerId, element) {
-            document.querySelectorAll('#votingOptions .selection-card').forEach(el => el.classList.remove('selected'));
-            element.classList.add('selected');
-            selectedVote = playerId;
-        }
-
-        function submitVote() {
-            if (selectedVote) {
-                send('vote', { targetId: selectedVote });
-                showNotification('✓ Səsiniz qeydə alındı');
-                selectedVote = null;
-            } else {
-                showError('Zəhmət olmasa bir oyunçu seçin');
-            }
-        }
-
-        function sendMafiaMessage() {
-            const input = document.getElementById('chatInput');
-            if (!input) return;
-
-            const message = input.value.trim();
-            if (message) {
-                send('mafiaChat', { message });
-                input.value = '';
-            }
-        }
-
-        function addMafiaMessage(data) {
-            const chatContainer = document.getElementById('mafiaChat');
-            if (!chatContainer) return;
-
-            const msgEl = document.createElement('div');
-            msgEl.className = 'chat-message';
-            msgEl.innerHTML = `<strong>${data.sender}:</strong> ${data.message}`;
-            chatContainer.appendChild(msgEl);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-        }
-
-        function showPoliceResult(data) {
-            const result = data.isMafia ?
-                `<i class="fas fa-exclamation-triangle"></i> ${data.target} MAFİADIR!` :
-                `<i class="fas fa-check-circle"></i> ${data.target} təmizdir`;
-
-            const logEl = document.getElementById('gameLog');
-            logEl.style.display = 'block';
-            logEl.className = data.isMafia ? 'status-message error' : 'status-message success';
-            logEl.innerHTML = result;
-        }
-
-        function showDoctorConfirm(data) {
-            showNotification(`✓ ${data.target} qorundu`);
-        }
-
-        function handleGameEnd(data) {
-            stopTimer();
-            const winner = data.winner === 'mafia' ? 'Mafia qalib gəldi! 🔴' : 'Vətəndaşlar qalib gəldi! ⚪';
-
-            const logEl = document.getElementById('gameLog');
-            logEl.style.display = 'block';
-            logEl.className = 'status-message success';
-            logEl.innerHTML = `<h3><i class="fas fa-trophy"></i> ${winner}</h3>`;
-
-            setTimeout(() => {
-                showGameRoom();
-            }, 5000);
-        }
-
-        function showNotification(message) {
-            const logEl = document.getElementById('gameLog');
-            logEl.style.display = 'block';
-            logEl.className = 'status-message success';
-            logEl.innerHTML = message;
-
-            setTimeout(() => {
-                logEl.style.display = 'none';
-            }, 3000);
-        }
-
-        function showStatusMessage(message, type = 'info') {
-            const logEl = document.getElementById('gameLog');
-            logEl.style.display = 'block';
-            logEl.className = `status-message ${type}`;
-            const icon = type === 'warning' ? 'exclamation-triangle' : 'info-circle';
-            logEl.innerHTML = `<i class="fas fa-${icon}"></i> ${message}`;
-        }
-
-        function showError(message) {
-            const logEl = document.getElementById('gameLog');
-            logEl.style.display = 'block';
-            logEl.className = 'status-message error';
-            logEl.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${message}`;
-        }
-
-        // Initialize
-        window.onload = () => {
-            initTelegram();
-            connectWebSocket();
-        };
-
-        // Keep connection alive
-        setInterval(() => {
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({ type: 'ping' }));
-            }
-        }, 30000);
-    </script>
+    <script src="/game.js"></script>
 </body>
-
 </html>
