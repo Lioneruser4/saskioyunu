@@ -77,6 +77,12 @@
 
             try {
                 const res = await fetch(`/search?q=${encodeURIComponent(query)}`);
+
+                // Yanıtın JSON olup olmadığını kontrol et
+                if (!res.headers.get('content-type')?.includes('application/json')) {
+                    throw new Error('Sunucu hatası: Geçersiz yanıt alındı (JSON değil)');
+                }
+
                 const data = await res.json();
 
                 if (data.error) {
