@@ -1,1055 +1,1210 @@
 <!DOCTYPE html>
-<html lang="az">
+<html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pul İdarəetmə</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Battle Arena 3D</title>
     <style>
-        :root {
-            --primary: #2E86C1;
-            --secondary: #1B4F72;
-            --success: #28B463;
-            --danger: #E74C3C;
-            --warning: #F39C12;
-            --light: #F8F9F9;
-            --dark: #1C2833;
-            --card-bg: #ffffff;
-            --shadow: rgba(46, 134, 193, 0.1);
-        }
-
+        @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;600;700&family=Orbitron:wght@400;700;900&display=swap');
+        
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', system-ui, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        :root {
+            --primary: #00ff88;
+            --secondary: #ff0055;
+            --accent: #00ccff;
+            --dark: #0a0e27;
+            --darker: #050814;
+            --light: #ffffff;
         }
 
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-            animation: gradientBG 15s ease infinite;
-            background-size: 400% 400%;
+            font-family: 'Rajdhani', sans-serif;
+            background: linear-gradient(135deg, var(--darker) 0%, var(--dark) 100%);
+            color: var(--light);
+            overflow: hidden;
+            touch-action: none;
+            position: fixed;
+            width: 100%;
+            height: 100%;
         }
 
-        @keyframes gradientBG {
-            0% { background-position: 0% 50% }
-            50% { background-position: 100% 50% }
-            100% { background-position: 0% 50% }
+        #gameCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            background: linear-gradient(180deg, #0a0e27 0%, #1a1e3f 100%);
+        }
+
+        .screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            background: radial-gradient(ellipse at center, rgba(10,14,39,0.95) 0%, rgba(5,8,20,0.98) 100%);
+        }
+
+        .screen.active {
+            display: flex;
         }
 
         .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            animation: fadeIn 0.8s ease-out;
+            max-width: 500px;
+            width: 90%;
+            padding: 40px 30px;
+            background: rgba(26,30,63,0.8);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            border: 2px solid rgba(0,255,136,0.2);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 100px rgba(0,255,136,0.1);
+            animation: slideIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        header {
-            text-align: center;
-            color: white;
-            margin-bottom: 40px;
-            padding: 30px 20px;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            animation: slideDown 0.6s ease-out;
-        }
-
-        @keyframes slideDown {
-            from { transform: translateY(-30px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
         }
 
         h1 {
-            font-size: 3.2rem;
-            margin-bottom: 15px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 48px;
+            font-weight: 900;
+            text-align: center;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 40px rgba(0,255,136,0.5);
+            letter-spacing: 2px;
         }
 
         .subtitle {
-            font-size: 1.3rem;
-            opacity: 0.9;
-        }
-
-        .dashboard {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 25px;
-            margin-bottom: 40px;
-        }
-
-        .card {
-            background: var(--card-bg);
-            padding: 30px;
-            border-radius: 25px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            position: relative;
-            overflow: hidden;
-            animation: cardAppear 0.8s ease-out;
-            animation-fill-mode: backwards;
-        }
-
-        .card:nth-child(1) { animation-delay: 0.2s; }
-        .card:nth-child(2) { animation-delay: 0.4s; }
-        .card:nth-child(3) { animation-delay: 0.6s; }
-
-        @keyframes cardAppear {
-            from { opacity: 0; transform: scale(0.8); }
-            to { opacity: 1; transform: scale(1); }
-        }
-
-        .card:hover {
-            transform: translateY(-10px) scale(1.02);
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
-        }
-
-        .card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 5px;
-            background: linear-gradient(90deg, var(--primary), var(--success));
-        }
-
-        .card-title {
-            font-size: 1.3rem;
-            color: var(--secondary);
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .card-title i {
-            font-size: 1.8rem;
-            color: var(--primary);
-        }
-
-        .amount {
-            font-size: 3.2rem;
-            font-weight: 800;
-            margin-bottom: 10px;
-        }
-
-        .income { color: var(--success); }
-        .expense { color: var(--danger); }
-        .balance { color: var(--primary); }
-
-        .stats {
-            font-size: 0.95rem;
-            color: #666;
-        }
-
-        .quick-section {
-            background: var(--card-bg);
-            padding: 30px;
-            border-radius: 25px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+            text-align: center;
+            color: var(--accent);
+            font-size: 14px;
             margin-bottom: 30px;
-            animation: slideUp 0.8s ease-out 0.8s both;
-        }
-
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(40px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .section-title {
-            font-size: 1.8rem;
-            color: var(--secondary);
-            margin-bottom: 25px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .quick-buttons {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 15px;
-            margin-bottom: 25px;
-        }
-
-        @media (max-width: 768px) {
-            .quick-buttons {
-                grid-template-columns: repeat(3, 1fr);
-            }
-        }
-
-        @media (max-width: 480px) {
-            .quick-buttons {
-                grid-template-columns: repeat(2, 1fr);
-            }
+            opacity: 0.8;
+            letter-spacing: 3px;
+            text-transform: uppercase;
         }
 
         .btn {
-            padding: 18px;
+            width: 100%;
+            padding: 18px 30px;
+            margin: 12px 0;
             border: none;
-            border-radius: 15px;
-            font-size: 1.3rem;
+            border-radius: 12px;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 18px;
             font-weight: 700;
             cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
         }
 
-        .btn-income {
-            background: linear-gradient(135deg, #28B463, #239B56);
-            color: white;
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s;
         }
 
-        .btn-expense {
-            background: linear-gradient(135deg, #E74C3C, #CB4335);
-            color: white;
+        .btn:active::before {
+            left: 100%;
         }
 
-        .btn:hover {
-            transform: translateY(-5px) scale(1.05);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            color: var(--dark);
+            box-shadow: 0 8px 24px rgba(0,255,136,0.4);
         }
 
-        .btn:active {
-            transform: translateY(0) scale(0.98);
+        .btn-primary:active {
+            transform: scale(0.95);
+            box-shadow: 0 4px 12px rgba(0,255,136,0.6);
         }
 
-        .btn-small {
-            font-size: 1.1rem;
-            padding: 12px;
+        .btn-secondary {
+            background: rgba(255,255,255,0.05);
+            color: var(--light);
+            border: 2px solid rgba(255,255,255,0.2);
         }
 
-        .category-buttons {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 15px;
-            margin-bottom: 25px;
-        }
-
-        .category-btn {
-            background: linear-gradient(135deg, #5DADE2, #3498DB);
-            color: white;
-            border: none;
-            padding: 15px;
-            border-radius: 15px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-
-        .category-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(52, 152, 219, 0.3);
-        }
-
-        .manual-section {
-            background: var(--card-bg);
-            padding: 30px;
-            border-radius: 25px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
-            margin-bottom: 30px;
-            animation: slideUp 0.8s ease-out 1s both;
+        .btn-secondary:active {
+            background: rgba(255,255,255,0.1);
+            transform: scale(0.95);
         }
 
         .input-group {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 25px;
+            margin: 20px 0;
         }
 
-        .input-field {
-            padding: 18px;
-            border: 2px solid #E5E7E9;
-            border-radius: 15px;
-            font-size: 1.1rem;
-            transition: all 0.3s ease;
-            background: var(--light);
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--primary);
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
-        .input-field:focus {
+        input {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid rgba(0,255,136,0.3);
+            border-radius: 10px;
+            background: rgba(10,14,39,0.5);
+            color: var(--light);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        input:focus {
             outline: none;
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(46, 134, 193, 0.2);
-            transform: translateY(-2px);
+            box-shadow: 0 0 20px rgba(0,255,136,0.3);
         }
 
-        .add-btn {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: white;
-            border: none;
-            padding: 18px 35px;
-            border-radius: 15px;
-            font-size: 1.2rem;
-            font-weight: 700;
+        .room-list {
+            max-height: 400px;
+            overflow-y: auto;
+            margin: 20px 0;
+        }
+
+        .room-item {
+            padding: 15px 20px;
+            margin: 10px 0;
+            background: rgba(10,14,39,0.6);
+            border: 2px solid rgba(0,255,136,0.2);
+            border-radius: 12px;
             cursor: pointer;
-            transition: all 0.3s ease;
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 15px;
-        }
-
-        .add-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 25px rgba(46, 134, 193, 0.3);
-        }
-
-        .transactions-section {
-            background: var(--card-bg);
-            padding: 30px;
-            border-radius: 25px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
-            animation: slideUp 0.8s ease-out 1.2s both;
-        }
-
-        .transaction-item {
-            display: grid;
-            grid-template-columns: 2fr 1fr 1fr auto;
-            gap: 20px;
-            align-items: center;
-            padding: 20px;
-            margin-bottom: 15px;
-            border-radius: 15px;
-            background: var(--light);
-            transition: all 0.3s ease;
-            animation: fadeInItem 0.5s ease-out;
-        }
-
-        @keyframes fadeInItem {
-            from { opacity: 0; transform: translateX(-20px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-
-        .transaction-item:hover {
-            transform: translateX(10px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-        }
-
-        .transaction-info {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-
-        .transaction-category {
-            font-size: 0.9rem;
-            color: var(--primary);
-            font-weight: 600;
-            background: rgba(46, 134, 193, 0.1);
-            padding: 5px 15px;
-            border-radius: 20px;
-            display: inline-block;
-            width: fit-content;
-        }
-
-        .transaction-amount {
-            font-size: 1.5rem;
-            font-weight: 700;
-        }
-
-        .income-item .transaction-amount {
-            color: var(--success);
-        }
-
-        .expense-item .transaction-amount {
-            color: var(--danger);
-        }
-
-        .delete-btn {
-            background: none;
-            border: none;
-            color: #999;
-            font-size: 1.3rem;
-            cursor: pointer;
-            transition: color 0.3s ease;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .delete-btn:hover {
-            color: var(--danger);
-            background: rgba(231, 76, 60, 0.1);
-        }
-
-        .statistics-section {
-            background: var(--card-bg);
-            padding: 30px;
-            border-radius: 25px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
-            margin-top: 30px;
-            animation: slideUp 0.8s ease-out 1.4s both;
-        }
-
-        .stat-chart {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            margin-top: 25px;
-        }
-
-        .stat-item {
+            transition: all 0.3s;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 15px;
-            background: var(--light);
-            border-radius: 15px;
         }
 
-        .stat-bar {
+        .room-item:active {
+            transform: scale(0.98);
+            background: rgba(0,255,136,0.1);
+            border-color: var(--primary);
+        }
+
+        .room-info {
             flex: 1;
-            height: 25px;
-            background: #E5E7E9;
-            border-radius: 12px;
-            margin: 0 20px;
+        }
+
+        .room-name {
+            font-weight: 700;
+            font-size: 18px;
+            color: var(--primary);
+            margin-bottom: 5px;
+        }
+
+        .room-players {
+            font-size: 14px;
+            color: var(--accent);
+            opacity: 0.8;
+        }
+
+        .room-lock {
+            color: var(--secondary);
+            font-size: 20px;
+        }
+
+        #hud {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+            display: none;
+        }
+
+        #hud.active {
+            display: block;
+        }
+
+        .health-bar {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 300px;
+            height: 40px;
+            background: rgba(10,14,39,0.8);
+            border: 2px solid var(--primary);
+            border-radius: 20px;
             overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+
+        .health-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--secondary) 0%, var(--primary) 100%);
+            transition: width 0.3s;
+            width: 100%;
+            box-shadow: 0 0 20px rgba(0,255,136,0.5);
+        }
+
+        .health-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-weight: 700;
+            font-size: 18px;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+            pointer-events: none;
+        }
+
+        .crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 30px;
+            height: 30px;
+            pointer-events: none;
+        }
+
+        .crosshair::before,
+        .crosshair::after {
+            content: '';
+            position: absolute;
+            background: var(--primary);
+            box-shadow: 0 0 10px var(--primary);
+        }
+
+        .crosshair::before {
+            top: 50%;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            transform: translateY(-50%);
+        }
+
+        .crosshair::after {
+            left: 50%;
+            top: 0;
+            width: 2px;
+            height: 100%;
+            transform: translateX(-50%);
+        }
+
+        .score-board {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(10,14,39,0.9);
+            padding: 15px 20px;
+            border-radius: 12px;
+            border: 2px solid rgba(0,255,136,0.3);
+            min-width: 150px;
+        }
+
+        .score-item {
+            margin: 5px 0;
+            font-size: 16px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .score-label {
+            color: var(--accent);
+            margin-right: 15px;
+        }
+
+        .score-value {
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        #chat {
+            position: absolute;
+            bottom: 90px;
+            left: 20px;
+            width: 300px;
+            pointer-events: all;
+        }
+
+        #chatMessages {
+            background: rgba(10,14,39,0.8);
+            border: 2px solid rgba(0,255,136,0.2);
+            border-radius: 12px;
+            padding: 10px;
+            height: 200px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            display: none;
+        }
+
+        #chatMessages.active {
+            display: block;
+        }
+
+        .chat-message {
+            margin: 5px 0;
+            font-size: 14px;
+            animation: messageSlide 0.3s ease-out;
+        }
+
+        @keyframes messageSlide {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .chat-username {
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        .chat-text {
+            color: var(--light);
+            margin-left: 5px;
+        }
+
+        #chatInput {
+            width: 100%;
+            padding: 12px;
+            background: rgba(10,14,39,0.9);
+            border: 2px solid rgba(0,255,136,0.3);
+            border-radius: 10px;
+            color: var(--light);
+            font-family: 'Rajdhani', sans-serif;
+            pointer-events: all;
+        }
+
+        .controls {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 15px;
+        }
+
+        .control-btn {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: rgba(10,14,39,0.8);
+            border: 3px solid var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: var(--primary);
+            pointer-events: all;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 20px rgba(0,255,136,0.3);
+        }
+
+        .control-btn:active {
+            transform: scale(0.9);
+            background: rgba(0,255,136,0.2);
+            box-shadow: 0 2px 10px rgba(0,255,136,0.5);
+        }
+
+        .joystick {
+            position: absolute;
+            bottom: 30px;
+            left: 30px;
+            width: 140px;
+            height: 140px;
+            pointer-events: all;
+        }
+
+        .joystick-base {
+            width: 100%;
+            height: 100%;
+            background: rgba(10,14,39,0.6);
+            border: 3px solid rgba(0,255,136,0.3);
+            border-radius: 50%;
             position: relative;
         }
 
-        .stat-fill {
-            height: 100%;
-            border-radius: 12px;
-            background: linear-gradient(90deg, var(--primary), var(--success));
-            transition: width 1s ease-out;
+        .joystick-stick {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 4px 20px rgba(0,255,136,0.5);
+            transition: transform 0.1s;
         }
 
-        .empty-state {
+        .death-screen {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             text-align: center;
-            padding: 50px 20px;
-            color: #666;
+            display: none;
+            animation: fadeIn 0.5s;
         }
 
-        .empty-state i {
-            font-size: 4rem;
+        .death-screen.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .death-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 60px;
+            color: var(--secondary);
             margin-bottom: 20px;
-            opacity: 0.3;
+            text-shadow: 0 0 30px var(--secondary);
         }
 
-        .pulse {
-            animation: pulse 2s infinite;
+        .respawn-timer {
+            font-size: 36px;
+            color: var(--primary);
+            font-weight: 700;
         }
 
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
-
-        footer {
-            text-align: center;
-            margin-top: 40px;
-            color: white;
-            opacity: 0.8;
-            font-size: 0.9rem;
-            padding: 20px;
-        }
-
-        .export-btn {
-            background: linear-gradient(135deg, #F39C12, #D68910);
-            color: white;
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 12px 24px;
+            background: rgba(255,0,85,0.8);
             border: none;
-            padding: 15px 30px;
-            border-radius: 15px;
-            font-size: 1.1rem;
-            font-weight: 600;
+            border-radius: 8px;
+            color: white;
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 700;
             cursor: pointer;
-            transition: all 0.3s ease;
-            margin-top: 20px;
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
+            pointer-events: all;
+            z-index: 20;
         }
 
-        .export-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(243, 156, 18, 0.3);
-        }
-
-        .auto-desc {
-            font-size: 0.9rem;
-            color: #666;
-            margin-top: 10px;
-            text-align: center;
-            font-style: italic;
+        @media (max-width: 600px) {
+            h1 { font-size: 36px; }
+            .container { padding: 30px 20px; }
+            #chat { width: 250px; }
+            .score-board { top: 10px; right: 10px; font-size: 14px; }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header class="pulse">
-            <h1><i class="fas fa-wallet"></i> Pul İdarəetmə</h1>
-            <p class="subtitle">Xərclərinizi idarə edin, gəlirlərinizi izləyin</p>
-            <p id="currentMonth">Dekabr 2023</p>
-        </header>
+    <canvas id="gameCanvas"></canvas>
 
-        <div class="dashboard">
-            <div class="card">
-                <h2 class="card-title"><i class="fas fa-money-bill-wave"></i> Ümumi Gəlir</h2>
-                <div class="amount income" id="totalIncome">0 ₼</div>
-                <p class="stats">Bu ay əlavə edildi</p>
-            </div>
-            <div class="card">
-                <h2 class="card-title"><i class="fas fa-shopping-cart"></i> Ümumi Xərc</h2>
-                <div class="amount expense" id="totalExpense">0 ₼</div>
-                <p class="stats">Bu ay xərcləndi</p>
-            </div>
-            <div class="card">
-                <h2 class="card-title"><i class="fas fa-chart-line"></i> Qalıq Balans</h2>
-                <div class="amount balance" id="balance">0 ₼</div>
-                <p class="stats">Cari balans</p>
-            </div>
+    <!-- Lobby Screen -->
+    <div id="lobbyScreen" class="screen active">
+        <div class="container">
+            <h1>BATTLE ARENA</h1>
+            <div class="subtitle">3D Multiplayer FPS</div>
+            <button class="btn btn-primary" onclick="joinRandomRoom()">🎮 Dünyaya Katıl</button>
+            <button class="btn btn-secondary" onclick="showRoomList()">📋 Oda Listesi</button>
+            <button class="btn btn-secondary" onclick="showCreateRoom()">➕ Oda Oluştur</button>
         </div>
-
-        <div class="quick-section">
-            <h2 class="section-title"><i class="fas fa-bolt"></i> Sürətli Əməliyyatlar</h2>
-            <div class="quick-buttons">
-                <button class="btn btn-income" onclick="quickAdd(5, 'income')">
-                    <span>+5 ₼</span>
-                    <small>Gəlir</small>
-                </button>
-                <button class="btn btn-income" onclick="quickAdd(10, 'income')">
-                    <span>+10 ₼</span>
-                    <small>Gəlir</small>
-                </button>
-                <button class="btn btn-income" onclick="quickAdd(20, 'income')">
-                    <span>+20 ₼</span>
-                    <small>Gəlir</small>
-                </button>
-                <button class="btn btn-income" onclick="quickAdd(50, 'income')">
-                    <span>+50 ₼</span>
-                    <small>Gəlir</small>
-                </button>
-                <button class="btn btn-income" onclick="quickAdd(100, 'income')">
-                    <span>+100 ₼</span>
-                    <small>Gəlir</small>
-                </button>
-                <button class="btn btn-expense" onclick="quickAdd(5, 'expense')">
-                    <span>-5 ₼</span>
-                    <small>Xərc</small>
-                </button>
-                <button class="btn btn-expense" onclick="quickAdd(10, 'expense')">
-                    <span>-10 ₼</span>
-                    <small>Xərc</small>
-                </button>
-                <button class="btn btn-expense" onclick="quickAdd(20, 'expense')">
-                    <span>-20 ₼</span>
-                    <small>Xərc</small>
-                </button>
-                <button class="btn btn-expense" onclick="quickAdd(50, 'expense')">
-                    <span>-50 ₼</span>
-                    <small>Xərc</small>
-                </button>
-                <button class="btn btn-expense" onclick="quickAdd(100, 'expense')">
-                    <span>-100 ₼</span>
-                    <small>Xərc</small>
-                </button>
-            </div>
-
-            <div class="auto-desc">
-                <i class="fas fa-info-circle"></i> Kateqoriya seçsəniz, təsvir avtomatik doldurulacaq
-            </div>
-
-            <h2 class="section-title" style="margin-top: 30px;"><i class="fas fa-tags"></i> Kateqoriyalar</h2>
-            <div class="category-buttons">
-                <button class="category-btn" onclick="setCategory('Benzin', '⛽ Benzin')">
-                    <i class="fas fa-gas-pump"></i> Benzin
-                </button>
-                <button class="category-btn" onclick="setCategory('Yemək', '🍽️ Yemək')">
-                    <i class="fas fa-utensils"></i> Yemək
-                </button>
-                <button class="category-btn" onclick="setCategory('Siqaret', '🚬 Siqaret')">
-                    <i class="fas fa-smoking"></i> Siqaret
-                </button>
-                <button class="category-btn" onclick="setCategory('Göndərmək', '✈️ Pul göndərmək')">
-                    <i class="fas fa-paper-plane"></i> Göndərmək
-                </button>
-                <button class="category-btn" onclick="setCategory('Maşın Təmirinə', '🔧 Maşın təmiri')">
-                    <i class="fas fa-tools"></i> Maşın Təmirinə
-                </button>
-                <button class="category-btn" onclick="setCategory('Market', '🛒 Market alış-verişi')">
-                    <i class="fas fa-shopping-basket"></i> Market
-                </button>
-                <button class="category-btn" onclick="setCategory('İnternet', '🌐 İnternet/TV')">
-                    <i class="fas fa-wifi"></i> İnternet
-                </button>
-                <button class="category-btn" onclick="setCategory('Əyləncə', '🎬 Əyləncə')">
-                    <i class="fas fa-film"></i> Əyləncə
-                </button>
-                <button class="category-btn" onclick="setCategory('Digər', '📝 Digər')">
-                    <i class="fas fa-ellipsis-h"></i> Digər
-                </button>
-            </div>
-        </div>
-
-        <div class="manual-section">
-            <h2 class="section-title"><i class="fas fa-edit"></i> Əl ilə Əlavə Et</h2>
-            <div class="input-group">
-                <input type="text" id="desc" class="input-field" placeholder="Təsvir (boş buraxın - avtomatik doldurulacaq)">
-                <input type="number" id="amount" class="input-field" placeholder="Məbləğ (₼)">
-                <select id="type" class="input-field" onchange="updateDescBasedOnCategory()">
-                    <option value="income">Gəlir</option>
-                    <option value="expense" selected>Xərc</option>
-                </select>
-                <select id="category" class="input-field" onchange="updateDescBasedOnCategory()">
-                    <option value="">Kateqoriya seçin</option>
-                    <option value="Benzin">Benzin</option>
-                    <option value="Yemək">Yemək</option>
-                    <option value="Siqaret">Siqaret</option>
-                    <option value="Göndərmək">Göndərmək</option>
-                    <option value="Maşın Təmirinə">Maşın Təmirinə</option>
-                    <option value="Market">Market</option>
-                    <option value="İnternet">İnternet</option>
-                    <option value="Əyləncə">Əyləncə</option>
-                    <option value="Digər">Digər</option>
-                </select>
-            </div>
-            <button class="add-btn" onclick="addTransaction()">
-                <i class="fas fa-plus-circle"></i> Əməliyyat Əlavə Et
-            </button>
-        </div>
-
-        <div class="transactions-section">
-            <h2 class="section-title"><i class="fas fa-history"></i> Son Əməliyyatlar</h2>
-            <div id="transactionList">
-                <!-- Əməliyyatlar buraya yüklənəcək -->
-            </div>
-        </div>
-
-        <div class="statistics-section">
-            <h2 class="section-title"><i class="fas fa-chart-pie"></i> Xərc Statistikası</h2>
-            <div id="statisticsChart">
-                <!-- Statistikalar buraya yüklənəcək -->
-            </div>
-        </div>
-
-        <div style="text-align: center; margin-top: 30px;">
-            <button class="export-btn" onclick="exportData()">
-                <i class="fas fa-download"></i> Məlumatları İxrac Et
-            </button>
-            <button class="export-btn" onclick="clearMonthData()" style="background: linear-gradient(135deg, #E74C3C, #CB4335); margin-left: 10px;">
-                <i class="fas fa-trash"></i> Cari Ayı Təmizlə
-            </button>
-        </div>
-
-        <footer>
-            <p>© 2023 Pul İdarəetmə Sistemi | Bütün məlumatlar cihazınızda saxlanılır</p>
-            <p>Telefon qapanıb açılsa belə məlumatlar qalır</p>
-        </footer>
     </div>
 
+    <!-- Room List Screen -->
+    <div id="roomListScreen" class="screen">
+        <div class="container">
+            <h1>ODALAR</h1>
+            <div class="subtitle">Bir Odaya Katıl</div>
+            <div class="room-list" id="roomList"></div>
+            <button class="btn btn-secondary" onclick="showLobby()">⬅ Geri Dön</button>
+        </div>
+    </div>
+
+    <!-- Create Room Screen -->
+    <div id="createRoomScreen" class="screen">
+        <div class="container">
+            <h1>ODA OLUŞTUR</h1>
+            <div class="subtitle">Yeni Savaş Alanı</div>
+            <div class="input-group">
+                <label>Oda Adı</label>
+                <input type="text" id="roomNameInput" placeholder="Oda ismini gir...">
+            </div>
+            <div class="input-group">
+                <label>Şifre (Opsiyonel)</label>
+                <input type="text" id="roomPasswordInput" placeholder="Şifre (boş bırakabilirsin)">
+            </div>
+            <button class="btn btn-primary" onclick="createRoom()">Oluştur</button>
+            <button class="btn btn-secondary" onclick="showLobby()">⬅ Geri Dön</button>
+        </div>
+    </div>
+
+    <!-- Join Room Screen -->
+    <div id="joinRoomScreen" class="screen">
+        <div class="container">
+            <h1>ODAYA KATIL</h1>
+            <div class="subtitle" id="joinRoomName"></div>
+            <div class="input-group" id="passwordInputGroup" style="display:none;">
+                <label>Şifre</label>
+                <input type="password" id="joinPasswordInput" placeholder="Oda şifresini gir...">
+            </div>
+            <button class="btn btn-primary" onclick="confirmJoinRoom()">Katıl</button>
+            <button class="btn btn-secondary" onclick="showRoomList()">⬅ Geri Dön</button>
+        </div>
+    </div>
+
+    <!-- Game HUD -->
+    <div id="hud">
+        <button class="back-btn" onclick="leaveGame()">⬅ Lobby</button>
+        
+        <div class="crosshair"></div>
+        
+        <div class="health-bar">
+            <div class="health-fill" id="healthFill"></div>
+            <div class="health-text" id="healthText">100</div>
+        </div>
+
+        <div class="score-board">
+            <div class="score-item">
+                <span class="score-label">KILLS</span>
+                <span class="score-value" id="killCount">0</span>
+            </div>
+            <div class="score-item">
+                <span class="score-label">DEATHS</span>
+                <span class="score-value" id="deathCount">0</span>
+            </div>
+        </div>
+
+        <div id="chat">
+            <div id="chatMessages"></div>
+            <input type="text" id="chatInput" placeholder="Mesaj yaz... (Enter)" onkeypress="sendMessage(event)">
+        </div>
+
+        <div class="death-screen" id="deathScreen">
+            <div class="death-title">ÖLDÜN!</div>
+            <div class="respawn-timer" id="respawnTimer">3</div>
+        </div>
+
+        <div class="joystick" id="joystick">
+            <div class="joystick-base">
+                <div class="joystick-stick" id="joystickStick"></div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="control-btn" id="jumpBtn">⬆</div>
+            <div class="control-btn" id="shootBtn">🎯</div>
+        </div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
-        // localStorage-dan veriləri al
-        let transactions = JSON.parse(localStorage.getItem('finansTransactions')) || [];
+        const SOCKET_URL = 'https://saskioyunu.onrender.com';
+        let socket = io(SOCKET_URL);
         
-        // Kateqoriya təsvirləri
-        const categoryDescriptions = {
-            'Benzin': '⛽ Benzin',
-            'Yemək': '🍽️ Yemək',
-            'Siqaret': '🚬 Siqaret',
-            'Göndərmək': '✈️ Pul göndərmək',
-            'Maşın Təmirinə': '🔧 Maşın təmiri',
-            'Market': '🛒 Market alış-verişi',
-            'İnternet': '🌐 İnternet/TV',
-            'Əyləncə': '🎬 Əyləncə',
-            'Digər': '📝 Digər'
-        };
-        
-        // Sayfa yükləndikdə
-        document.addEventListener('DOMContentLoaded', function() {
-            updateDisplay();
-            updateMonth();
-            
-            // Məbləğ daxil edildikdə təsviri avtomatik yenilə
-            document.getElementById('amount').addEventListener('input', updateDescBasedOnCategory);
-        });
-        
-        // Ay göstəricisini yenilə
-        function updateMonth() {
-            const now = new Date();
-            const months = ['Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'İyun', 
-                          'İyul', 'Avqust', 'Sentyabr', 'Oktyabr', 'Noyabr', 'Dekabr'];
-            document.getElementById('currentMonth').textContent = 
-                `${months[now.getMonth()]} ${now.getFullYear()}`;
+        let scene, camera, renderer, clock;
+        let players = new Map();
+        let localPlayer = null;
+        let currentRoomId = null;
+        let selectedRoomId = null;
+        let telegramData = null;
+
+        // Game state
+        let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
+        let canJump = true;
+        let velocity = new THREE.Vector3();
+        let direction = new THREE.Vector3();
+        let rotation = { x: 0, y: 0 };
+        let kills = 0, deaths = 0;
+
+        // Joystick
+        let joystickActive = false;
+        let joystickVector = { x: 0, y: 0 };
+
+        // Get Telegram data
+        if (window.Telegram && window.Telegram.WebApp) {
+            const tg = window.Telegram.WebApp;
+            tg.expand();
+            telegramData = {
+                id: tg.initDataUnsafe?.user?.id,
+                username: tg.initDataUnsafe?.user?.username || 'Player',
+                first_name: tg.initDataUnsafe?.user?.first_name || 'Guest'
+            };
         }
-        
-        // Sürətli əlavə et
-        function quickAdd(amount, type) {
-            const categories = Object.keys(categoryDescriptions);
-            const randomCategory = categories[Math.floor(Math.random() * categories.length)];
-            const desc = type === 'income' ? '💰 Sürətli gəlir' : `${categoryDescriptions[randomCategory]}`;
-            
-            addTransactionToStorage(desc, amount, type, randomCategory);
-            
-            // Animasiya effekti
-            animateButton(type === 'income' ? 'btn-income' : 'btn-expense');
+
+        // Initialize Three.js
+        function initGame() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0a0e27);
+            scene.fog = new THREE.Fog(0x0a0e27, 50, 200);
+
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.y = 1.6;
+
+            renderer = new THREE.WebGLRenderer({ 
+                canvas: document.getElementById('gameCanvas'),
+                antialias: true 
+            });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+            clock = new THREE.Clock();
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
+            scene.add(ambientLight);
+
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            dirLight.position.set(50, 100, 50);
+            dirLight.castShadow = true;
+            dirLight.shadow.camera.left = -100;
+            dirLight.shadow.camera.right = 100;
+            dirLight.shadow.camera.top = 100;
+            dirLight.shadow.camera.bottom = -100;
+            scene.add(dirLight);
+
+            // Ground
+            const groundGeometry = new THREE.PlaneGeometry(400, 400);
+            const groundMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0x1a1e3f,
+                roughness: 0.8,
+                metalness: 0.2
+            });
+            const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+            ground.rotation.x = -Math.PI / 2;
+            ground.receiveShadow = true;
+            scene.add(ground);
+
+            // Grid
+            const gridHelper = new THREE.GridHelper(400, 80, 0x00ff88, 0x003322);
+            gridHelper.material.opacity = 0.2;
+            gridHelper.material.transparent = true;
+            scene.add(gridHelper);
+
+            // Obstacles
+            for (let i = 0; i < 30; i++) {
+                const size = Math.random() * 3 + 2;
+                const height = Math.random() * 8 + 3;
+                const geometry = new THREE.BoxGeometry(size, height, size);
+                const material = new THREE.MeshStandardMaterial({ 
+                    color: Math.random() > 0.5 ? 0x2a2e5f : 0x1a1e3f,
+                    roughness: 0.7,
+                    metalness: 0.3
+                });
+                const obstacle = new THREE.Mesh(geometry, material);
+                obstacle.position.set(
+                    (Math.random() - 0.5) * 180,
+                    height / 2,
+                    (Math.random() - 0.5) * 180
+                );
+                obstacle.castShadow = true;
+                obstacle.receiveShadow = true;
+                scene.add(obstacle);
+            }
+
+            setupControls();
+            animate();
         }
-        
-        // Kateqoriya təyin et
-        function setCategory(category, defaultDesc) {
-            document.getElementById('category').value = category;
-            
-            // Təsviri avtomatik doldur
-            updateDescBasedOnCategory();
-            
-            // Fokusu məbləğ sahəsinə keçir
-            document.getElementById('amount').focus();
-            
-            // Kateqoriya buton animasiyası
-            event.target.classList.add('pulse');
-            setTimeout(() => {
-                event.target.classList.remove('pulse');
-            }, 500);
-        }
-        
-        // Kateqoriyaya əsasən təsviri yenilə
-        function updateDescBasedOnCategory() {
-            const category = document.getElementById('category').value;
-            const amount = document.getElementById('amount').value;
-            const type = document.getElementById('type').value;
-            const descInput = document.getElementById('desc');
-            
-            // Əgər təsvir boşdursa və ya sadecə default dəyərdirsə, avtomatik doldur
-            if (!descInput.value || descInput.value.trim() === '' || 
-                Object.values(categoryDescriptions).includes(descInput.value)) {
+
+        function setupControls() {
+            // Touch controls for joystick
+            const joystick = document.getElementById('joystick');
+            const stick = document.getElementById('joystickStick');
+
+            joystick.addEventListener('touchstart', (e) => {
+                joystickActive = true;
+                e.preventDefault();
+            });
+
+            joystick.addEventListener('touchmove', (e) => {
+                if (!joystickActive) return;
+                e.preventDefault();
                 
-                if (category && category in categoryDescriptions) {
-                    if (type === 'income') {
-                        descInput.value = '💰 Gəlir';
-                    } else {
-                        if (amount) {
-                            descInput.value = `${categoryDescriptions[category]} - ${amount} ₼`;
-                        } else {
-                            descInput.value = categoryDescriptions[category];
-                        }
+                const touch = e.touches[0];
+                const rect = joystick.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                
+                let deltaX = touch.clientX - centerX;
+                let deltaY = touch.clientY - centerY;
+                
+                const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+                const maxDistance = 40;
+                
+                if (distance > maxDistance) {
+                    deltaX = (deltaX / distance) * maxDistance;
+                    deltaY = (deltaY / distance) * maxDistance;
+                }
+                
+                stick.style.transform = `translate(calc(-50% + ${deltaX}px), calc(-50% + ${deltaY}px))`;
+                
+                joystickVector.x = deltaX / maxDistance;
+                joystickVector.y = deltaY / maxDistance;
+            });
+
+            joystick.addEventListener('touchend', () => {
+                joystickActive = false;
+                stick.style.transform = 'translate(-50%, -50%)';
+                joystickVector.x = 0;
+                joystickVector.y = 0;
+            });
+
+            // Jump button
+            document.getElementById('jumpBtn').addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if (canJump && localPlayer) {
+                    velocity.y = 8;
+                    canJump = false;
+                }
+            });
+
+            // Shoot button
+            document.getElementById('shootBtn').addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                shoot();
+            });
+
+            // Camera rotation
+            let touchStartX = 0, touchStartY = 0;
+            let lastTouchX = 0, lastTouchY = 0;
+
+            renderer.domElement.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 1) {
+                    touchStartX = lastTouchX = e.touches[0].clientX;
+                    touchStartY = lastTouchY = e.touches[0].clientY;
+                }
+            });
+
+            renderer.domElement.addEventListener('touchmove', (e) => {
+                if (e.touches.length === 1 && localPlayer) {
+                    const deltaX = e.touches[0].clientX - lastTouchX;
+                    const deltaY = e.touches[0].clientY - lastTouchY;
+                    
+                    rotation.y -= deltaX * 0.002;
+                    rotation.x -= deltaY * 0.002;
+                    rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, rotation.x));
+                    
+                    lastTouchX = e.touches[0].clientX;
+                    lastTouchY = e.touches[0].clientY;
+                }
+            });
+
+            // Chat
+            document.getElementById('chatInput').addEventListener('focus', () => {
+                document.getElementById('chatMessages').classList.add('active');
+            });
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+
+        function createPlayerMesh(character) {
+            const group = new THREE.Group();
+
+            // Body
+            const bodyGeometry = new THREE.BoxGeometry(0.8, 1.5, 0.4);
+            const bodyMaterial = new THREE.MeshStandardMaterial({ 
+                color: character.color,
+                roughness: 0.5,
+                metalness: 0.5
+            });
+            const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+            body.position.y = 0.75;
+            body.castShadow = true;
+            group.add(body);
+
+            // Head
+            const headGeometry = new THREE.SphereGeometry(0.35, 16, 16);
+            const head = new THREE.Mesh(headGeometry, bodyMaterial);
+            head.position.y = 1.8;
+            head.castShadow = true;
+            group.add(head);
+
+            // Name tag
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 64;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            ctx.fillRect(0, 0, 256, 64);
+            ctx.fillStyle = character.color;
+            ctx.font = 'bold 32px Rajdhani';
+            ctx.textAlign = 'center';
+            ctx.fillText(character.name, 128, 42);
+
+            const texture = new THREE.CanvasTexture(canvas);
+            const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
+            const sprite = new THREE.Sprite(spriteMaterial);
+            sprite.scale.set(2, 0.5, 1);
+            sprite.position.y = 2.5;
+            group.add(sprite);
+
+            return group;
+        }
+
+        function shoot() {
+            if (!localPlayer) return;
+            
+            socket.emit('player_shoot');
+            
+            // Visual effect
+            const flash = new THREE.PointLight(0xff0055, 2, 10);
+            flash.position.copy(camera.position);
+            scene.add(flash);
+            
+            setTimeout(() => scene.remove(flash), 100);
+
+            // Raycast for hit detection
+            const raycaster = new THREE.Raycaster();
+            raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+            
+            const intersects = raycaster.intersectObjects(
+                Array.from(players.values()).map(p => p.mesh).filter(Boolean)
+            );
+
+            if (intersects.length > 0) {
+                const hitPlayer = Array.from(players.entries()).find(
+                    ([id, p]) => p.mesh && intersects[0].object.parent === p.mesh
+                );
+                
+                if (hitPlayer) {
+                    socket.emit('player_hit', { 
+                        targetId: hitPlayer[0], 
+                        damage: 20 
+                    });
+                }
+            }
+        }
+
+        function updatePlayer(delta) {
+            if (!localPlayer) return;
+
+            const speed = 10;
+            velocity.x -= velocity.x * 10.0 * delta;
+            velocity.z -= velocity.z * 10.0 * delta;
+            velocity.y -= 9.8 * delta;
+
+            direction.z = joystickVector.y;
+            direction.x = -joystickVector.x;
+            direction.normalize();
+
+            if (joystickActive) {
+                velocity.x -= direction.x * speed * delta;
+                velocity.z -= direction.z * speed * delta;
+            }
+
+            // Apply rotation
+            camera.rotation.order = 'YXZ';
+            camera.rotation.y = rotation.y;
+            camera.rotation.x = rotation.x;
+
+            // Move
+            const moveVector = new THREE.Vector3();
+            moveVector.x = velocity.x * delta;
+            moveVector.y = velocity.y * delta;
+            moveVector.z = velocity.z * delta;
+            moveVector.applyQuaternion(camera.quaternion);
+
+            camera.position.add(moveVector);
+
+            // Ground collision
+            if (camera.position.y < 1.6) {
+                velocity.y = 0;
+                camera.position.y = 1.6;
+                canJump = true;
+            }
+
+            // Boundaries
+            const boundary = 190;
+            camera.position.x = Math.max(-boundary, Math.min(boundary, camera.position.x));
+            camera.position.z = Math.max(-boundary, Math.min(boundary, camera.position.z));
+
+            // Send position
+            if (socket && currentRoomId) {
+                socket.emit('player_move', {
+                    position: {
+                        x: camera.position.x,
+                        y: camera.position.y,
+                        z: camera.position.z
+                    },
+                    rotation: {
+                        x: camera.rotation.x,
+                        y: camera.rotation.y,
+                        z: camera.rotation.z
                     }
-                } else if (type === 'income') {
-                    descInput.value = '💰 Gəlir';
-                }
+                });
             }
         }
-        
-        // Əməliyyat əlavə et
-        function addTransaction() {
-            const amountInput = document.getElementById('amount');
-            const amount = parseFloat(amountInput.value);
-            const type = document.getElementById('type').value;
-            const category = document.getElementById('category').value || 'Digər';
-            let desc = document.getElementById('desc').value.trim();
+
+        function animate() {
+            requestAnimationFrame(animate);
             
-            if (!amount || amount <= 0) {
-                alert('Xahiş edirik məbləği düzgün daxil edin!');
-                amountInput.focus();
-                return;
-            }
-            
-            // Əgər təsvir boşdursa, avtomatik yarat
-            if (!desc || desc === '') {
-                if (type === 'income') {
-                    desc = '💰 Gəlir';
-                } else {
-                    desc = categoryDescriptions[category] || '📝 Digər xərc';
-                }
-            }
-            
-            addTransactionToStorage(desc, amount, type, category);
-            
-            // Formu təmizlə
-            document.getElementById('desc').value = '';
-            document.getElementById('amount').value = '';
-            document.getElementById('category').value = '';
-            document.getElementById('type').value = 'expense';
-            
-            // Animasiya effekti
-            animateButton('add-btn');
-        }
-        
-        // Storage-a əlavə et
-        function addTransactionToStorage(desc, amount, type, category) {
-            const transaction = {
-                id: Date.now(),
-                desc,
-                amount,
-                type,
-                category,
-                date: new Date().toLocaleString('az-AZ'),
-                timestamp: Date.now(),
-                month: new Date().getMonth(),
-                year: new Date().getFullYear()
-            };
-            
-            transactions.push(transaction);
-            localStorage.setItem('finansTransactions', JSON.stringify(transactions));
-            updateDisplay();
-            
-            // Əlavə animasiyası
-            showNotification(`${type === 'income' ? '💰 Gəlir' : '💸 Xərc'} əlavə edildi: ${amount} ₼`);
-        }
-        
-        // Əməliyyatı sil
-        function deleteTransaction(id) {
-            if (!confirm('Bu əməliyyatı silmək istədiyinizə əminsiniz?')) return;
-            
-            transactions = transactions.filter(t => t.id !== id);
-            localStorage.setItem('finansTransactions', JSON.stringify(transactions));
-            updateDisplay();
-            
-            showNotification('Əməliyyat silindi');
-        }
-        
-        // Bildiriş göstər
-        function showNotification(message) {
-            const notification = document.createElement('div');
-            notification.textContent = message;
-            notification.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                background: var(--primary);
-                color: white;
-                padding: 15px 25px;
-                border-radius: 10px;
-                box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-                z-index: 1000;
-                animation: slideInRight 0.3s ease-out;
-            `;
-            
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.style.animation = 'slideOutRight 0.3s ease-out';
-                setTimeout(() => notification.remove(), 300);
-            }, 3000);
-        }
-        
-        // Animasiya üçün CSS əlavə et
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes slideInRight {
-                from { transform: translateX(100%); opacity: 0; }
-                to { transform: translateX(0); opacity: 1; }
-            }
-            @keyframes slideOutRight {
-                from { transform: translateX(0); opacity: 1; }
-                to { transform: translateX(100%); opacity: 0; }
-            }
-        `;
-        document.head.appendChild(style);
-        
-        // Buton animasiyası
-        function animateButton(className) {
-            const btn = event ? event.target.closest('.' + className) : null;
-            if (btn) {
-                btn.style.transform = 'scale(0.95)';
-                setTimeout(() => {
-                    btn.style.transform = '';
-                }, 150);
-            }
-        }
-        
-        // Ekranı yenilə
-        function updateDisplay() {
-            // Ümumi hesablamalar
-            let totalIncome = 0;
-            let totalExpense = 0;
-            const categoryStats = {};
-            const currentMonth = new Date().getMonth();
-            const currentYear = new Date().getFullYear();
-            
-            // Cari ayın əməliyyatlarını filtrlə
-            const currentMonthTransactions = transactions.filter(t => {
-                const transactionDate = new Date(t.timestamp);
-                return transactionDate.getMonth() === currentMonth && 
-                       transactionDate.getFullYear() === currentYear;
-            });
-            
-            currentMonthTransactions.forEach(t => {
-                if (t.type === 'income') {
-                    totalIncome += t.amount;
-                } else {
-                    totalExpense += t.amount;
-                    categoryStats[t.category] = (categoryStats[t.category] || 0) + t.amount;
+            const delta = clock.getDelta();
+            updatePlayer(delta);
+
+            // Update other players
+            players.forEach((player, id) => {
+                if (player.mesh && id !== socket.id) {
+                    // Smooth interpolation
+                    player.mesh.position.lerp(
+                        new THREE.Vector3(player.position.x, player.position.y - 1.6, player.position.z),
+                        0.1
+                    );
                 }
             });
+
+            renderer.render(scene, camera);
+        }
+
+        // UI Functions
+        function showLobby() {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('lobbyScreen').classList.add('active');
+        }
+
+        function showRoomList() {
+            socket.emit('get_rooms');
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('roomListScreen').classList.add('active');
+        }
+
+        function showCreateRoom() {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('createRoomScreen').classList.add('active');
+        }
+
+        function createRoom() {
+            const roomName = document.getElementById('roomNameInput').value || 'Yeni Oda';
+            const password = document.getElementById('roomPasswordInput').value || null;
             
-            // Ümumi məbləğləri yenilə
-            document.getElementById('totalIncome').textContent = totalIncome.toFixed(2) + ' ₼';
-            document.getElementById('totalExpense').textContent = totalExpense.toFixed(2) + ' ₼';
-            document.getElementById('balance').textContent = (totalIncome - totalExpense).toFixed(2) + ' ₼';
-            
-            // Əməliyyatlar siyahısı
-            const transactionList = document.getElementById('transactionList');
-            if (currentMonthTransactions.length === 0) {
-                transactionList.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-receipt"></i>
-                        <h3>Bu ay heç bir əməliyyat yoxdur</h3>
-                        <p>İlk əməliyyatınızı əlavə edin</p>
-                    </div>
-                `;
+            socket.emit('create_room', { roomName, password, telegramData });
+        }
+
+        function joinRandomRoom() {
+            socket.emit('join_random_room', { telegramData });
+        }
+
+        function joinRoom(roomId, hasPassword) {
+            selectedRoomId = roomId;
+            if (hasPassword) {
+                document.getElementById('passwordInputGroup').style.display = 'block';
             } else {
-                let html = '';
-                currentMonthTransactions.slice().reverse().forEach(t => {
-                    html += `
-                        <div class="transaction-item ${t.type}-item">
-                            <div class="transaction-info">
-                                <strong>${t.desc}</strong>
-                                <div class="transaction-category">${t.category}</div>
-                            </div>
-                            <div>${formatDate(t.date)}</div>
-                            <div class="transaction-amount">
-                                ${t.type === 'income' ? '+' : '-'}${t.amount.toFixed(2)} ₼
-                            </div>
-                            <button class="delete-btn" onclick="deleteTransaction(${t.id})">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    `;
-                });
-                transactionList.innerHTML = html;
+                document.getElementById('passwordInputGroup').style.display = 'none';
             }
-            
-            // Statistikaları yenilə
-            updateStatistics(categoryStats, totalExpense);
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('joinRoomScreen').classList.add('active');
         }
-        
-        // Tarixi formatla
-        function formatDate(dateString) {
-            const date = new Date(dateString);
-            if (isNaN(date.getTime())) return dateString;
-            
-            const now = new Date();
-            const diffTime = Math.abs(now - date);
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            
-            if (diffDays === 1) return 'Dünən';
-            if (diffDays === 0) return 'Bugün';
-            
-            return date.toLocaleDateString('az-AZ', { 
-                day: '2-digit', 
-                month: 'short' 
+
+        function confirmJoinRoom() {
+            const password = document.getElementById('joinPasswordInput').value || null;
+            socket.emit('join_room', { 
+                roomId: selectedRoomId, 
+                password, 
+                telegramData 
             });
         }
-        
-        // Statistikaları yenilə
-        function updateStatistics(categoryStats, totalExpense) {
-            const statisticsChart = document.getElementById('statisticsChart');
-            
-            if (totalExpense === 0) {
-                statisticsChart.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-chart-bar"></i>
-                        <p>Xərc statistikası üçün məlumat yoxdur</p>
-                    </div>
-                `;
-                return;
+
+        function leaveGame() {
+            socket.emit('leave_room');
+            document.getElementById('hud').classList.remove('active');
+            currentRoomId = null;
+            localPlayer = null;
+            players.clear();
+            Array.from(scene.children).forEach(child => {
+                if (child.userData.isPlayer) {
+                    scene.remove(child);
+                }
+            });
+            showLobby();
+        }
+
+        function sendMessage(e) {
+            if (e.key === 'Enter') {
+                const input = document.getElementById('chatInput');
+                const message = input.value.trim();
+                if (message) {
+                    socket.emit('chat_message', { message });
+                    input.value = '';
+                }
             }
+        }
+
+        // Socket Events
+        socket.on('connect', () => {
+            console.log('Connected to server');
+            socket.emit('join_lobby', { telegramData });
+        });
+
+        socket.on('lobby_joined', (data) => {
+            localPlayer = data.player;
+        });
+
+        socket.on('rooms_list', (rooms) => {
+            const roomList = document.getElementById('roomList');
+            roomList.innerHTML = '';
             
-            let html = '<div class="stat-chart">';
-            const categories = Object.keys(categoryDescriptions);
-            
-            // Məbləğə görə sırala
-            const sortedCategories = Object.entries(categoryStats)
-                .sort((a, b) => b[1] - a[1]);
-            
-            sortedCategories.forEach(([category, amount]) => {
-                const percentage = totalExpense > 0 ? (amount / totalExpense * 100) : 0;
-                const categoryName = categoryDescriptions[category] || category;
+            rooms.forEach(room => {
+                const roomDiv = document.createElement('div');
+                roomDiv.className = 'room-item';
+                roomDiv.onclick = () => joinRoom(room.id, room.hasPassword);
                 
-                html += `
-                    <div class="stat-item">
-                        <span style="display: flex; align-items: center; gap: 8px;">
-                            ${getCategoryIcon(category)} ${category}
-                        </span>
-                        <div class="stat-bar">
-                            <div class="stat-fill" style="width: ${percentage}%"></div>
-                        </div>
-                        <span>${amount.toFixed(2)} ₼ (${percentage.toFixed(1)}%)</span>
+                roomDiv.innerHTML = `
+                    <div class="room-info">
+                        <div class="room-name">${room.id.split('_')[0]}</div>
+                        <div class="room-players">${room.playerCount}/${room.maxPlayers} oyuncu</div>
                     </div>
+                    ${room.hasPassword ? '<div class="room-lock">🔒</div>' : ''}
                 `;
+                
+                roomList.appendChild(roomDiv);
+            });
+        });
+
+        socket.on('room_created', (data) => {
+            socket.emit('join_room', { roomId: data.roomId, password: null, telegramData });
+        });
+
+        socket.on('room_joined', (data) => {
+            currentRoomId = data.roomId;
+            localPlayer = data.player;
+            
+            camera.position.set(data.player.position.x, data.player.position.y, data.player.position.z);
+            
+            // Add other players
+            data.players.forEach(player => {
+                if (player.id !== socket.id) {
+                    const mesh = createPlayerMesh(player.character);
+                    mesh.position.set(player.position.x, player.position.y - 1.6, player.position.z);
+                    mesh.userData.isPlayer = true;
+                    scene.add(mesh);
+                    
+                    players.set(player.id, { ...player, mesh });
+                }
             });
             
-            html += '</div>';
-            statisticsChart.innerHTML = html;
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('hud').classList.add('active');
+        });
+
+        socket.on('player_joined', (player) => {
+            const mesh = createPlayerMesh(player.character);
+            mesh.position.set(player.position.x, player.position.y - 1.6, player.position.z);
+            mesh.userData.isPlayer = true;
+            scene.add(mesh);
             
-            // Bar animasiyası
+            players.set(player.id, { ...player, mesh });
+        });
+
+        socket.on('player_moved', (data) => {
+            const player = players.get(data.id);
+            if (player) {
+                player.position = data.position;
+                player.rotation = data.rotation;
+            }
+        });
+
+        socket.on('player_left', (data) => {
+            const player = players.get(data.id);
+            if (player && player.mesh) {
+                scene.remove(player.mesh);
+            }
+            players.delete(data.id);
+        });
+
+        socket.on('player_damaged', (data) => {
+            if (data.id === socket.id) {
+                document.getElementById('healthFill').style.width = data.health + '%';
+                document.getElementById('healthText').textContent = Math.max(0, data.health);
+            }
+        });
+
+        socket.on('player_died', (data) => {
+            deaths++;
+            document.getElementById('deathCount').textContent = deaths;
+            document.getElementById('deathScreen').classList.add('active');
+            
+            let timer = 3;
+            const interval = setInterval(() => {
+                timer--;
+                document.getElementById('respawnTimer').textContent = timer;
+                if (timer <= 0) {
+                    clearInterval(interval);
+                }
+            }, 1000);
+        });
+
+        socket.on('player_respawned', (data) => {
+            if (data.id === socket.id) {
+                camera.position.set(data.position.x, data.position.y, data.position.z);
+                document.getElementById('healthFill').style.width = '100%';
+                document.getElementById('healthText').textContent = '100';
+                document.getElementById('deathScreen').classList.remove('active');
+            }
+        });
+
+        socket.on('chat_message', (msg) => {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'chat-message';
+            messageDiv.innerHTML = `
+                <span class="chat-username">${msg.username}:</span>
+                <span class="chat-text">${msg.message}</span>
+            `;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
             setTimeout(() => {
-                document.querySelectorAll('.stat-fill').forEach(bar => {
-                    bar.style.width = bar.style.width;
-                });
-            }, 100);
-        }
-        
-        // Kateqoriya ikonlarını al
-        function getCategoryIcon(category) {
-            const icons = {
-                'Benzin': '⛽',
-                'Yemək': '🍽️',
-                'Siqaret': '🚬',
-                'Göndərmək': '✈️',
-                'Maşın Təmirinə': '🔧',
-                'Market': '🛒',
-                'İnternet': '🌐',
-                'Əyləncə': '🎬',
-                'Digər': '📝'
-            };
-            return icons[category] || '📝';
-        }
-        
-        // Məlumatları ixrac et
-        function exportData() {
-            const dataStr = JSON.stringify(transactions, null, 2);
-            const dataBlob = new Blob([dataStr], {type: 'application/json'});
-            const url = URL.createObjectURL(dataBlob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `finans-verileri-${new Date().toISOString().split('T')[0]}.json`;
-            link.click();
-            
-            showNotification('Məlumatlar ixrac edildi');
-        }
-        
-        // Cari ayın məlumatlarını təmizlə
-        function clearMonthData() {
-            if (!confirm('Cari ayın BÜTÜN məlumatlarını silmək istədiyinizə əminsiniz?\n\nBu əməliyyat geri qaytarıla bilməz!')) return;
-            
-            const currentMonth = new Date().getMonth();
-            const currentYear = new Date().getFullYear();
-            
-            // Cari ayın əməliyyatlarını çıxart
-            transactions = transactions.filter(t => {
-                const transactionDate = new Date(t.timestamp);
-                return !(transactionDate.getMonth() === currentMonth && 
-                        transactionDate.getFullYear() === currentYear);
-            });
-            
-            localStorage.setItem('finansTransactions', JSON.stringify(transactions));
-            updateDisplay();
-            
-            showNotification('Cari ayın məlumatları silindi');
-        }
+                if (messageDiv.parentNode) {
+                    messageDiv.remove();
+                }
+            }, 10000);
+        });
+
+        socket.on('error', (data) => {
+            alert(data.message);
+        });
+
+        // Initialize
+        initGame();
     </script>
 </body>
 </html>
