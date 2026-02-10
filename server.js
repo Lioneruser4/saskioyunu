@@ -38,12 +38,10 @@ app.get('/search', async (req, res) => {
             };
         } else {
             // İsim ile arama yapılıyorsa
-            const filters1 = await ytsr.getFilters(query);
-            const filter1 = filters1.get('Type').get('Video');
-            const searchResults = await ytsr(filter1.url, { limit: 1 });
+            const searchResults = await ytsr(query, { limit: 10 });
+            const video = searchResults.items.find(item => item.type === 'video');
 
-            if (searchResults.items.length > 0) {
-                const video = searchResults.items[0];
+            if (video) {
                 videoData = {
                     title: video.title,
                     thumbnail: video.bestThumbnail.url,
