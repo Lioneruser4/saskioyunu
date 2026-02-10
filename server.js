@@ -12,7 +12,8 @@ app.use(cors());
 
 // DİKKAT: Tokeninizi buraya yazın (Eskisini iptal edip yenisini alın!)
 const token = '5246489165:AAGhMleCadeh3bhtje1EBPY95yn2rDKH7KE';
-const bot = new TelegramBot(token, { polling: true });
+// Polling'i kaldırdık çünkü bot başka sunucuda çalışıyor. Burası sadece gönderme yapacak.
+const bot = new TelegramBot(token);
 
 // Frontend dosyasını sun
 app.get('/', (req, res) => {
