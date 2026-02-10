@@ -1,26 +1,16 @@
 {
-  "name": "battle-arena-3d",
-  "version": "1.0.0",
-  "description": "Multiplayer 3D FPS game with Telegram WebView integration",
-  "main": "server.js",
-  "scripts": {
-    "start": "node server.js"
-  },
-  "keywords": [
-    "multiplayer",
-    "3d",
-    "fps",
-    "game",
-    "telegram",
-    "webview"
-  ],
-  "author": "",
-  "license": "MIT",
-  "dependencies": {
-    "express": "^4.18.2",
-    "socket.io": "^4.5.4"
-  },
-  "engines": {
-    "node": ">=14.0.0"
-  }
+    "name": "music-downloader",
+    "version": "1.0.0",
+    "main": "server.js",
+    "scripts": {
+        "start": "node server.js"
+    },
+    "dependencies": {
+        "express": "^4.18.2",
+        "cors": "^2.8.5",
+        "node-telegram-bot-api": "^0.61.0",
+        "@distube/ytdl-core": "^4.13.5",
+        "ytsr": "^3.8.4",
+        "fluent-ffmpeg": "^2.1.2"
+    }
 }
