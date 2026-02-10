@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="az">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Anonim Sohbet - Mobil</title>
+    <title>Among Us AZ - Telegram Oyunu</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
@@ -14,31 +14,31 @@
         }
 
         body {
-            background: linear-gradient(135deg, #ff6b6b, #ee5a52, #ff9ff3);
+            background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
             height: 100vh;
             overflow: hidden;
-            color: #333;
+            color: #fff;
         }
 
         .app-container {
             max-width: 500px;
             margin: 0 auto;
             height: 100vh;
-            background-color: rgba(255, 255, 255, 0.95);
-            box-shadow: 0 0 30px rgba(0, 0, 0, 0.2);
+            background-color: rgba(26, 26, 46, 0.95);
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
             position: relative;
             overflow: hidden;
             display: flex;
             flex-direction: column;
         }
 
-        /* Header Styles */
+        /* Header */
         .header {
-            background: linear-gradient(to right, #ff6b6b, #ee5a52);
+            background: linear-gradient(to right, #c51111, #8b0000);
             color: white;
             padding: 20px 15px;
             text-align: center;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
             position: relative;
             z-index: 10;
         }
@@ -68,124 +68,54 @@
             display: flex;
         }
 
-        /* Login Screen */
-        .login-container {
+        /* Loading Screen */
+        .loading-container {
             flex: 1;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
+            text-align: center;
             padding: 20px;
-            text-align: center;
         }
 
-        .logo {
+        .loading-logo {
             font-size: 80px;
-            color: #ff6b6b;
-            margin-bottom: 20px;
-            animation: pulse 2s infinite;
+            color: #c51111;
+            margin-bottom: 30px;
+            animation: float 3s ease-in-out infinite;
         }
 
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
         }
 
-        .login-form {
-            width: 100%;
-            max-width: 320px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-            text-align: left;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #555;
-        }
-
-        select, .gender-select, .country-select {
-            width: 100%;
-            padding: 15px;
-            border: 2px solid #ddd;
-            border-radius: 12px;
-            font-size: 16px;
-            background-color: white;
-            transition: all 0.3s;
-            appearance: none;
-        }
-
-        select:focus, .gender-select:focus, .country-select:focus {
-            border-color: #ff6b6b;
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.2);
-        }
-
-        .gender-options {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-        }
-
-        .gender-option {
-            flex: 1;
-            padding: 15px;
-            border: 2px solid #ddd;
-            border-radius: 12px;
-            text-align: center;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .gender-option.selected {
-            border-color: #ff6b6b;
-            background-color: rgba(255, 107, 107, 0.1);
-            color: #ff6b6b;
-        }
-
-        .gender-option i {
-            font-size: 24px;
-            margin-bottom: 8px;
-            display: block;
-        }
-
-        .btn {
-            background: linear-gradient(to right, #ff6b6b, #ee5a52);
-            color: white;
-            border: none;
-            padding: 18px;
-            border-radius: 12px;
+        .loading-text {
             font-size: 18px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s;
-            width: 100%;
-            letter-spacing: 0.5px;
-            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+            margin-bottom: 20px;
+            color: #ddd;
         }
 
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+        .loading-subtext {
+            font-size: 14px;
+            color: #888;
+            margin-top: 30px;
+            line-height: 1.5;
         }
 
-        .btn:active {
-            transform: translateY(0);
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 5px solid rgba(197, 17, 17, 0.2);
+            border-top-color: #c51111;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 20px 0;
         }
 
-        .btn-secondary {
-            background: linear-gradient(to right, #6c5ce7, #a29bfe);
-            box-shadow: 0 4px 15px rgba(108, 92, 231, 0.3);
-        }
-
-        .btn-secondary:hover {
-            box-shadow: 0 6px 20px rgba(108, 92, 231, 0.4);
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
 
         /* Lobby Screen */
@@ -193,277 +123,599 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            padding: 20px;
         }
 
-        .searching-animation {
-            margin-bottom: 30px;
-        }
-
-        .searching-dots {
+        .lobby-actions {
             display: flex;
-            justify-content: center;
-            margin-top: 20px;
+            gap: 10px;
+            margin-bottom: 20px;
         }
 
-        .dot {
-            width: 12px;
-            height: 12px;
-            background-color: #ff6b6b;
-            border-radius: 50%;
-            margin: 0 5px;
-            animation: bounce 1.4s infinite ease-in-out both;
-        }
-
-        .dot:nth-child(1) { animation-delay: -0.32s; }
-        .dot:nth-child(2) { animation-delay: -0.16s; }
-
-        @keyframes bounce {
-            0%, 80%, 100% { transform: scale(0); }
-            40% { transform: scale(1); }
-        }
-
-        .user-info {
-            background-color: white;
-            border-radius: 20px;
-            padding: 25px;
-            width: 100%;
-            max-width: 320px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            margin-bottom: 30px;
-            text-align: center;
-        }
-
-        .user-avatar {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            margin: 0 auto 20px;
-            overflow: hidden;
-            border: 5px solid #ff6b6b;
-            position: relative;
-        }
-
-        .user-avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .blurred {
-            filter: blur(10px);
-        }
-
-        .user-name {
-            font-size: 24px;
-            font-weight: 700;
-            margin-bottom: 10px;
-            color: #333;
-        }
-
-        .user-location {
+        .btn {
+            flex: 1;
+            background: linear-gradient(to right, #c51111, #8b0000);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 10px;
             font-size: 16px;
-            color: #777;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(197, 17, 17, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(197, 17, 17, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(to right, #132fd2, #0a1f8c);
+            box-shadow: 0 4px 10px rgba(19, 47, 210, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(to right, #117f2d, #0a5c1f);
+            box-shadow: 0 4px 10px rgba(17, 127, 45, 0.3);
+        }
+
+        .rooms-list {
+            flex: 1;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+
+        .room-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .room-card:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: #c51111;
+            transform: translateX(5px);
+        }
+
+        .room-icon {
+            font-size: 30px;
+            margin-right: 15px;
+            color: #c51111;
+        }
+
+        .room-info {
+            flex: 1;
+        }
+
+        .room-name {
+            font-size: 16px;
+            font-weight: 600;
             margin-bottom: 5px;
         }
 
-        .user-gender {
-            font-size: 14px;
-            color: #ff6b6b;
+        .room-details {
+            font-size: 12px;
+            color: #aaa;
+            display: flex;
+            gap: 10px;
+        }
+
+        .room-status {
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 10px;
             font-weight: 600;
         }
 
-        /* Chat Screen */
-        .chat-container {
+        .status-waiting { background: #117f2d; color: white; }
+        .status-ingame { background: #c51111; color: white; }
+        .status-starting { background: #ef7d0d; color: white; }
+
+        /* Create Room Screen */
+        .create-room-container {
             flex: 1;
             display: flex;
             flex-direction: column;
-            height: 100%;
+            padding: 10px;
         }
 
-        .chat-header {
-            display: flex;
-            align-items: center;
-            padding: 15px;
-            background-color: white;
-            border-bottom: 1px solid #eee;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        .form-group {
+            margin-bottom: 20px;
         }
 
-        .partner-avatar {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            overflow: hidden;
-            margin-right: 15px;
-            border: 3px solid #ff6b6b;
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #ddd;
         }
 
-        .partner-avatar img {
+        .form-control {
             width: 100%;
-            height: 100%;
-            object-fit: cover;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
         }
 
-        .partner-info {
-            flex: 1;
+        .form-control:focus {
+            outline: none;
+            border-color: #c51111;
         }
 
-        .partner-name {
-            font-size: 18px;
-            font-weight: 700;
-            color: #333;
+        .map-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 10px;
         }
 
-        .partner-status {
-            font-size: 14px;
-            color: #4cd964;
-        }
-
-        .chat-controls {
-            display: flex;
-            gap: 15px;
-        }
-
-        .chat-controls button {
-            background: none;
-            border: none;
-            font-size: 24px;
-            color: #ff6b6b;
+        .map-option {
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            text-align: center;
             cursor: pointer;
             transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .map-option.selected {
+            border-color: #c51111;
+            background: rgba(197, 17, 17, 0.2);
+        }
+
+        .map-icon {
+            font-size: 30px;
+            margin-bottom: 10px;
+            color: #c51111;
+        }
+
+        .color-options {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .color-option {
             width: 50px;
             height: 50px;
             border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.3s;
             display: flex;
             align-items: center;
             justify-content: center;
+            font-size: 20px;
         }
 
-        .chat-controls button:hover {
-            background-color: rgba(255, 107, 107, 0.1);
+        .color-option.selected {
+            border-color: white;
+            transform: scale(1.1);
         }
 
-        .chat-messages {
+        /* Room Screen */
+        .room-container {
             flex: 1;
-            overflow-y: auto;
-            padding: 20px;
-            background-color: #f8f9fa;
             display: flex;
             flex-direction: column;
-            gap: 15px;
         }
 
-        .message {
-            max-width: 75%;
+        .room-header {
+            background: rgba(0, 0, 0, 0.3);
             padding: 15px;
-            border-radius: 20px;
-            position: relative;
-            animation: fadeIn 0.3s ease-out;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+        .room-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 5px;
+            color: #c51111;
         }
 
-        .message.received {
-            align-self: flex-start;
-            background-color: white;
-            border-bottom-left-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-        }
-
-        .message.sent {
-            align-self: flex-end;
-            background: linear-gradient(to right, #ff6b6b, #ee5a52);
-            color: white;
-            border-bottom-right-radius: 5px;
-            box-shadow: 0 2px 5px rgba(255, 107, 107, 0.3);
-        }
-
-        .message-time {
-            font-size: 12px;
-            opacity: 0.7;
+        .room-code {
+            font-size: 14px;
+            color: #aaa;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 5px 10px;
+            border-radius: 5px;
+            display: inline-block;
             margin-top: 5px;
-            text-align: right;
         }
 
-        .chat-input-container {
-            display: flex;
-            padding: 15px;
-            background-color: white;
-            border-top: 1px solid #eee;
-            gap: 10px;
-        }
-
-        .chat-input {
+        .players-list {
             flex: 1;
-            padding: 15px;
-            border: 2px solid #ddd;
-            border-radius: 30px;
-            font-size: 16px;
-            outline: none;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+
+        .player-card {
+            display: flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 10px;
             transition: all 0.3s;
         }
 
-        .chat-input:focus {
-            border-color: #ff6b6b;
+        .player-color {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            margin-right: 15px;
+            border: 2px solid white;
         }
 
-        .send-button {
-            background: linear-gradient(to right, #ff6b6b, #ee5a52);
+        .player-info {
+            flex: 1;
+        }
+
+        .player-name {
+            font-weight: 600;
+            margin-bottom: 3px;
+        }
+
+        .player-status {
+            font-size: 12px;
+            color: #aaa;
+        }
+
+        .host-badge {
+            background: #c51111;
             color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            margin-left: 5px;
+        }
+
+        .bot-badge {
+            background: #132fd2;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            margin-left: 5px;
+        }
+
+        .room-controls {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: auto;
+        }
+
+        .control-btn {
+            background: rgba(255, 255, 255, 0.1);
             border: none;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
+            padding: 12px;
+            border-radius: 8px;
+            color: white;
             font-size: 20px;
             cursor: pointer;
             transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 10px rgba(255, 107, 107, 0.3);
         }
 
-        .send-button:hover {
+        .control-btn:hover {
+            background: rgba(197, 17, 17, 0.3);
             transform: scale(1.05);
         }
 
-        /* Reveal Profile Button */
-        .reveal-container {
-            padding: 20px;
-            text-align: center;
-            background-color: white;
-            border-top: 1px solid #eee;
+        /* Game Screen */
+        .game-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
         }
 
-        .reveal-btn {
-            background: linear-gradient(to right, #6c5ce7, #a29bfe);
+        .game-map {
+            flex: 1;
+            background: linear-gradient(135deg, #0a0a1a, #151530);
+            border-radius: 10px;
+            margin-bottom: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .player-character {
+            position: absolute;
+            width: 40px;
+            height: 60px;
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+
+        .character-body {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            position: absolute;
+            top: 0;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .character-legs {
+            position: absolute;
+            top: 35px;
+            width: 30px;
+            height: 20px;
+            background: inherit;
+            border-radius: 10px;
+            left: 5px;
+            animation: walk 1s ease-in-out infinite;
+        }
+
+        @keyframes walk {
+            0%, 100% { transform: rotate(0deg); }
+            50% { transform: rotate(10deg); }
+        }
+
+        .character-name {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.7);
             color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            white-space: nowrap;
+        }
+
+        .game-controls {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+        }
+
+        .game-btn {
+            background: rgba(255, 255, 255, 0.1);
             border: none;
-            padding: 18px;
-            border-radius: 12px;
-            font-size: 18px;
-            font-weight: 700;
+            border-radius: 8px;
+            color: white;
+            font-size: 24px;
+            height: 60px;
             cursor: pointer;
             transition: all 0.3s;
-            width: 100%;
-            letter-spacing: 0.5px;
-            box-shadow: 0 4px 15px rgba(108, 92, 231, 0.3);
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
         }
 
-        .reveal-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(108, 92, 231, 0.4);
+        .game-btn:hover {
+            background: rgba(197, 17, 17, 0.3);
+        }
+
+        .game-btn.kill {
+            background: rgba(197, 17, 17, 0.5);
+            color: white;
+        }
+
+        .game-btn.report {
+            background: rgba(17, 127, 45, 0.5);
+            color: white;
+        }
+
+        .game-btn.meeting {
+            background: rgba(239, 125, 13, 0.5);
+            color: white;
+        }
+
+        /* Tasks Screen */
+        .tasks-container {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 10px;
+        }
+
+        .task-item {
+            display: flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .task-checkbox {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid #aaa;
+            margin-right: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .task-checkbox.completed {
+            background: #117f2d;
+            border-color: #117f2d;
+        }
+
+        .task-checkbox.completed::after {
+            content: '✓';
+            color: white;
+            font-size: 12px;
+        }
+
+        .task-info {
+            flex: 1;
+        }
+
+        .task-name {
+            font-weight: 600;
+            margin-bottom: 3px;
+        }
+
+        .task-location {
+            font-size: 12px;
+            color: #aaa;
+        }
+
+        /* Meeting Screen */
+        .meeting-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(10, 10, 26, 0.95);
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            z-index: 100;
+        }
+
+        .meeting-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .meeting-title {
+            font-size: 24px;
+            color: #c51111;
+            margin-bottom: 10px;
+        }
+
+        .meeting-timer {
+            font-size: 18px;
+            color: #aaa;
+        }
+
+        .voting-grid {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            overflow-y: auto;
+        }
+
+        .vote-option {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .vote-option:hover {
+            border-color: #c51111;
+            transform: scale(1.05);
+        }
+
+        .vote-option.selected {
+            border-color: #c51111;
+            background: rgba(197, 17, 17, 0.2);
+        }
+
+        .vote-color {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin: 0 auto 10px;
+            border: 3px solid white;
+        }
+
+        .vote-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        /* Game End Screen */
+        .end-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(10, 10, 26, 0.98);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            z-index: 200;
+            text-align: center;
+        }
+
+        .end-title {
+            font-size: 36px;
+            margin-bottom: 20px;
+            animation: glow 2s ease-in-out infinite;
+        }
+
+        @keyframes glow {
+            0%, 100% { text-shadow: 0 0 10px currentColor; }
+            50% { text-shadow: 0 0 20px currentColor; }
+        }
+
+        .victory { color: #117f2d; }
+        .defeat { color: #c51111; }
+
+        .end-roles {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            width: 100%;
+            max-width: 400px;
+            margin: 20px 0;
+        }
+
+        .role-player {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .role-player:last-child {
+            border-bottom: none;
+        }
+
+        .role-badge {
+            padding: 5px 10px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .role-impostor { background: #c51111; color: white; }
+        .role-crewmate { background: #132fd2; color: white; }
+
+        /* Footer */
+        .footer {
+            padding: 10px;
+            text-align: center;
+            font-size: 12px;
+            color: #777;
+            background: rgba(0, 0, 0, 0.3);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         /* Notification */
@@ -472,11 +724,11 @@
             top: 20px;
             left: 50%;
             transform: translateX(-50%) translateY(-100px);
-            background-color: #6c5ce7;
+            background: #c51111;
             color: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
             z-index: 1000;
             max-width: 90%;
             text-align: center;
@@ -487,81 +739,7 @@
             to { transform: translateX(-50%) translateY(0); }
         }
 
-        .notification-btn {
-            background-color: white;
-            color: #6c5ce7;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 30px;
-            font-weight: 700;
-            margin-top: 15px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .notification-btn:hover {
-            background-color: #f8f9fa;
-        }
-
-        /* Profile Revealed Screen */
-        .profile-revealed {
-            text-align: center;
-            padding: 30px;
-            background-color: white;
-            border-radius: 20px;
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
-            margin: 20px;
-        }
-
-        .revealed-avatar {
-            width: 150px;
-            height: 150px;
-            border-radius: 50%;
-            margin: 0 auto 20px;
-            overflow: hidden;
-            border: 5px solid #ff6b6b;
-        }
-
-        .revealed-avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .revealed-name {
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 10px;
-            color: #333;
-        }
-
-        .revealed-telegram {
-            font-size: 18px;
-            color: #6c5ce7;
-            margin-bottom: 20px;
-        }
-
-        .revealed-telegram a {
-            color: #6c5ce7;
-            text-decoration: none;
-            font-weight: 600;
-        }
-
-        .revealed-telegram a:hover {
-            text-decoration: underline;
-        }
-
-        /* Footer */
-        .footer {
-            padding: 15px;
-            text-align: center;
-            font-size: 14px;
-            color: #777;
-            background-color: white;
-            border-top: 1px solid #eee;
-        }
-
-        /* Responsive adjustments */
+        /* Mobile Optimizations */
         @media (max-width: 500px) {
             .app-container {
                 border-radius: 0;
@@ -571,29 +749,27 @@
                 font-size: 20px;
             }
             
-            .logo {
+            .loading-logo {
                 font-size: 60px;
             }
             
-            .user-avatar, .revealed-avatar {
-                width: 100px;
-                height: 100px;
+            .map-options {
+                grid-template-columns: 1fr;
             }
-        }
-
-        /* Loading spinner */
-        .spinner {
-            width: 50px;
-            height: 50px;
-            border: 5px solid rgba(255, 107, 107, 0.2);
-            border-top-color: #ff6b6b;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+            
+            .color-options {
+                grid-template-columns: repeat(6, 1fr);
+            }
+            
+            .game-controls {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 5px;
+            }
+            
+            .game-btn {
+                height: 50px;
+                font-size: 20px;
+            }
         }
     </style>
 </head>
@@ -601,67 +777,26 @@
     <div class="app-container">
         <!-- Header -->
         <div class="header">
-            <h1>Anonim Sohbet</h1>
-            <p>Telegram ile giriş yap, rastgele eşleş, anonim sohbet et!</p>
+            <h1>Among Us AZ</h1>
+            <p>Telegram ilə oyna - Real oyunçular və botlar</p>
         </div>
 
-        <!-- Login Screen -->
-        <div id="loginScreen" class="screen active">
-            <div class="login-container">
-                <div class="logo">
-                    <i class="fas fa-comments"></i>
+        <!-- Loading Screen -->
+        <div id="loadingScreen" class="screen active">
+            <div class="loading-container">
+                <div class="loading-logo">
+                    <i class="fas fa-user-astronaut"></i>
                 </div>
-                <h2 style="margin-bottom: 30px; color: #333;">Telegram Bilgilerinizle Giriş Yapın</h2>
-                
-                <div class="login-form">
-                    <div class="form-group">
-                        <label for="gender">Cinsiyetiniz</label>
-                        <div class="gender-options">
-                            <div class="gender-option" data-value="male" onclick="selectGender('male')">
-                                <i class="fas fa-mars"></i>
-                                <div>Erkek</div>
-                            </div>
-                            <div class="gender-option" data-value="female" onclick="selectGender('female')">
-                                <i class="fas fa-venus"></i>
-                                <div>Kadın</div>
-                            </div>
-                            <div class="gender-option" data-value="other" onclick="selectGender('other')">
-                                <i class="fas fa-transgender-alt"></i>
-                                <div>Diğer</div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="country">Ülke</label>
-                        <select id="country" class="country-select" onchange="loadCities()">
-                            <option value="">Ülke Seçin</option>
-                            <option value="azerbaycan">Azerbaycan</option>
-                            <option value="turkiye">Türkiye</option>
-                            <option value="almanya">Almanya</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="city">Şehir</label>
-                        <select id="city" class="city-select">
-                            <option value="">Önce ülke seçin</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="telegramUsername">Telegram Kullanıcı Adı (İsteğe Bağlı)</label>
-                        <input type="text" id="telegramUsername" class="chat-input" placeholder="@kullaniciadi">
-                    </div>
-                    
-                    <button class="btn" onclick="simulateTelegramLogin()">
-                        <i class="fab fa-telegram" style="margin-right: 10px;"></i>
-                        Telegram ile Giriş Yap
-                    </button>
-                    
-                    <p style="margin-top: 20px; font-size: 14px; color: #777;">
-                        Telegram'dan otomatik olarak profil bilgileriniz alınacaktır. 
-                        Anonim kalabilmek için isminiz ve profil resminiz blurlu gösterilecektir.
+                <div class="spinner"></div>
+                <div class="loading-text">Telegram məlumatlarınız yüklənir...</div>
+                <div class="loading-subtext">
+                    <p>🎮 Among Us tipli çoxoyunçulu oyun</p>
+                    <p>🤖 Real oyunçularla və botlarla oynaya bilərsiniz</p>
+                    <p>🔒 Telegram məlumatlarınız avtomatik yüklənir</p>
+                    <p>🏆 Otaq yaradın və ya mövcud otağa qoşulun</p>
+                    <p style="margin-top: 20px; color: #c51111; font-weight: bold;">
+                        Tərtibatçı: @BTbots<br>
+                        Bütün hüquqlar qorunur © 2023
                     </p>
                 </div>
             </div>
@@ -670,516 +805,990 @@
         <!-- Lobby Screen -->
         <div id="lobbyScreen" class="screen">
             <div class="lobby-container">
-                <div class="user-info">
-                    <div class="user-avatar">
-                        <img id="userAvatar" src="" alt="Profil Resmi" class="blurred">
-                    </div>
-                    <div class="user-name" id="userName">Anonim</div>
-                    <div class="user-location" id="userLocation">Ülke, Şehir</div>
-                    <div class="user-gender" id="userGender">Cinsiyet</div>
-                </div>
-                
-                <div class="searching-animation">
-                    <h3 style="margin-bottom: 20px; color: #333;">Eşleşme Aranıyor...</h3>
-                    <div class="spinner"></div>
-                    <div class="searching-dots">
-                        <div class="dot"></div>
-                        <div class="dot"></div>
-                        <div class="dot"></div>
-                    </div>
-                </div>
-                
-                <p style="color: #777; margin-top: 30px; text-align: center;">
-                    Rastgele bir kullanıcı ile eşleşmeniz bekleniyor.<br>
-                    Eşleşme bulunduğunda anonim sohbete başlayacaksınız.
-                </p>
-            </div>
-        </div>
-
-        <!-- Chat Screen -->
-        <div id="chatScreen" class="screen">
-            <div class="chat-container">
-                <div class="chat-header">
-                    <div class="partner-avatar">
-                        <img id="partnerAvatar" src="" alt="Partner" class="blurred">
-                    </div>
-                    <div class="partner-info">
-                        <div class="partner-name" id="partnerName">Anonim</div>
-                        <div class="partner-status" id="partnerStatus">Çevrimiçi</div>
-                    </div>
-                    <div class="chat-controls">
-                        <button onclick="nextPartner()" title="Sonraki Partner">
-                            <i class="fas fa-forward"></i>
-                        </button>
-                        <button onclick="leaveChat()" title="Sohbetten Çık">
-                            <i class="fas fa-sign-out-alt"></i>
-                        </button>
-                    </div>
-                </div>
-                
-                <div class="chat-messages" id="chatMessages">
-                    <!-- Mesajlar buraya eklenecek -->
-                    <div class="message received">
-                        Merhaba! Nasılsın?
-                        <div class="message-time">12:30</div>
-                    </div>
-                    <div class="message sent">
-                        İyiyim, sen nasılsın?
-                        <div class="message-time">12:31</div>
-                    </div>
-                </div>
-                
-                <div class="reveal-container" id="revealContainer">
-                    <button class="reveal-btn" onclick="requestReveal()">
-                        <i class="fas fa-eye"></i>
-                        Profili Açmak İstiyorum
+                <div class="lobby-actions">
+                    <button class="btn" onclick="showScreen('createRoom')">
+                        <i class="fas fa-plus"></i> Otaq Yarat
+                    </button>
+                    <button class="btn btn-secondary" onclick="refreshRooms()">
+                        <i class="fas fa-sync-alt"></i> Yenilə
                     </button>
                 </div>
                 
-                <div class="chat-input-container">
-                    <input type="text" class="chat-input" id="messageInput" placeholder="Mesajınızı yazın..." onkeypress="handleKeyPress(event)">
-                    <button class="send-button" onclick="sendMessage()">
-                        <i class="fas fa-paper-plane"></i>
+                <h3 style="margin: 10px 0; color: #ddd;">Mövcud Otaqlar</h3>
+                <div class="rooms-list" id="roomsList">
+                    <!-- Otaqlar buraya yüklənəcək -->
+                    <div class="room-card">
+                        <div class="room-icon">
+                            <i class="fas fa-gamepad"></i>
+                        </div>
+                        <div class="room-info">
+                            <div class="room-name">Nümunə Otaq</div>
+                            <div class="room-details">
+                                <span><i class="fas fa-user"></i> 3/10</span>
+                                <span><i class="fas fa-map"></i> The Skeld</span>
+                                <span class="room-status status-waiting">GÖZLƏYİR</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: auto; padding: 10px 0;">
+                    <button class="btn btn-success" onclick="showScreen('profile')">
+                        <i class="fas fa-user"></i> Profilim
                     </button>
                 </div>
             </div>
         </div>
 
-        <!-- Profile Revealed Screen -->
-        <div id="profileRevealedScreen" class="screen">
-            <div class="profile-revealed">
-                <div class="revealed-avatar">
-                    <img id="revealedAvatar" src="" alt="Partner">
+        <!-- Create Room Screen -->
+        <div id="createRoomScreen" class="screen">
+            <div class="create-room-container">
+                <h2 style="margin-bottom: 20px; color: #c51111;">Yeni Otaq Yarad</h2>
+                
+                <div class="form-group">
+                    <label>Otaq Adı</label>
+                    <input type="text" id="roomName" class="form-control" placeholder="Mənim Otağım" value="Mənim Otağım">
                 </div>
-                <div class="revealed-name" id="revealedName">Partner İsmi</div>
-                <div class="revealed-telegram" id="revealedTelegram">
-                    Telegram: <a href="#" id="telegramLink" target="_blank">@kullaniciadi</a>
+                
+                <div class="form-group">
+                    <label>Xəritə Seç</label>
+                    <div class="map-options" id="mapOptions">
+                        <!-- Xəritələr JavaScript ilə yüklənəcək -->
+                    </div>
                 </div>
-                <p style="color: #777; margin-bottom: 30px;">
-                    Partnerinizin profili artık görünür durumda. Telegram'dan ekleşebilirsiniz.
-                </p>
-                <button class="btn" onclick="continueChat()">
-                    <i class="fas fa-comments" style="margin-right: 10px;"></i>
-                    Sohbete Devam Et
+                
+                <div class="form-group">
+                    <label>Maksimum Oyunçu Sayı</label>
+                    <select id="maxPlayers" class="form-control">
+                        <option value="4">4 Oyunçu</option>
+                        <option value="6">6 Oyunçu</option>
+                        <option value="8" selected>8 Oyunçu</option>
+                        <option value="10">10 Oyunçu</option>
+                        <option value="12">12 Oyunçu</option>
+                        <option value="15">15 Oyunçu</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Otaq Şifrəsi (İstəyə bağlı)</label>
+                    <input type="password" id="roomPassword" class="form-control" placeholder="Boş buraxın, şifrə olmasın">
+                </div>
+                
+                <div class="form-group">
+                    <label>Rənginizi Seçin</label>
+                    <div class="color-options" id="colorOptions">
+                        <!-- Rənglər JavaScript ilə yüklənəcək -->
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 10px; margin-top: auto;">
+                    <button class="btn btn-secondary" onclick="showScreen('lobby')">
+                        <i class="fas fa-arrow-left"></i> Geri
+                    </button>
+                    <button class="btn" onclick="createRoom()">
+                        <i class="fas fa-check"></i> Otaq Yarat
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Room Screen -->
+        <div id="roomScreen" class="screen">
+            <div class="room-container">
+                <div class="room-header">
+                    <div class="room-title" id="roomTitle">Otaq Adı</div>
+                    <div class="room-code" id="roomCode">Kod: Yüklənir...</div>
+                    <div id="roomStatus" class="room-status status-waiting" style="margin-top: 10px;">GÖZLƏYİR</div>
+                </div>
+                
+                <h3 style="margin: 10px 0; color: #ddd;">Oyunçular</h3>
+                <div class="players-list" id="playersList">
+                    <!-- Oyunçular buraya yüklənəcək -->
+                </div>
+                
+                <div style="margin: 10px 0;">
+                    <h4 style="color: #ddd; margin-bottom: 10px;">Oyun Nizamlamaları</h4>
+                    <div style="background: rgba(255, 255, 255, 0.1); padding: 10px; border-radius: 8px; font-size: 12px;">
+                        <div>İmpostor Sayı: <span id="impostorCount">1</span></div>
+                        <div>Qətllər üçün gözləmə: <span id="killCooldown">30s</span></div>
+                        <div>Təcili görüşlər: <span id="emergencyMeetings">1</span></div>
+                    </div>
+                </div>
+                
+                <div class="room-controls">
+                    <button class="control-btn" onclick="addBot()" title="Bot Əlavə Et">
+                        <i class="fas fa-robot"></i>
+                    </button>
+                    <button class="control-btn" onclick="removeBot()" title="Bot Sil">
+                        <i class="fas fa-user-minus"></i>
+                    </button>
+                    <button class="control-btn" onclick="leaveRoom()" title="Otaqdan Çıx">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                    <button class="control-btn" onclick="startGame()" title="Oyunu Başlat" style="grid-column: span 3; background: #117f2d;">
+                        <i class="fas fa-play"></i> OYUNU BAŞLAT
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="gameScreen" class="screen">
+            <div class="game-container">
+                <div class="game-map" id="gameMap">
+                    <!-- Oyun xəritəsi burada görünəcək -->
+                    <div id="playersContainer"></div>
+                </div>
+                
+                <div class="tasks-container" id="tasksContainer">
+                    <!-- Tapşırıqlar burada görünəcək -->
+                </div>
+                
+                <div class="game-controls" id="gameControls">
+                    <!-- Oyun idarə düymələri burada görünəcək -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Meeting Screen -->
+        <div id="meetingScreen" class="screen">
+            <div class="meeting-container">
+                <div class="meeting-header">
+                    <div class="meeting-title" id="meetingTitle">GÖRÜŞ</div>
+                    <div class="meeting-timer" id="meetingTimer">60 saniyə qaldı</div>
+                </div>
+                
+                <div class="voting-grid" id="votingGrid">
+                    <!-- Səsvermə seçimləri burada görünəcək -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Game End Screen -->
+        <div id="endScreen" class="screen">
+            <div class="end-screen">
+                <div class="end-title victory" id="endTitle">QALİB GƏLDİNİZ!</div>
+                <div class="end-roles" id="endRoles">
+                    <!-- Rollar burada görünəcək -->
+                </div>
+                <button class="btn" onclick="returnToLobby()" style="width: 200px;">
+                    <i class="fas fa-home"></i> Lobbyə Qayıt
                 </button>
             </div>
         </div>
 
         <!-- Footer -->
         <div class="footer">
-            <p>Anonim Sohbet Uygulaması &copy; 2023 - Tüm hakları saklıdır.</p>
+            <p>Among Us AZ - Telegram Oyunu | Tərtibatçı: @BTbots | Bütün hüquqlar qorunur © 2023</p>
         </div>
     </div>
 
     <!-- Notification Container -->
     <div id="notificationContainer"></div>
 
-    <!-- Socket.io and App Script -->
+    <!-- Socket.io and Game Script -->
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <script>
-        // Global değişkenler
+        // Global dəyişənlər
         let socket = null;
-        let currentUser = null;
-        let currentPartner = null;
-        let currentScreen = 'login';
-        let selectedGender = '';
-        let selectedCountry = '';
-        let selectedCity = '';
+        let currentPlayer = null;
+        let currentRoom = null;
+        let currentMap = null;
+        let gameState = 'lobby';
+        let selectedColor = null;
+        let selectedMap = 'skeld';
+        let playerCharacters = new Map();
+        let meetingTimer = null;
+        let votingTimer = null;
 
-        // Sayfa yüklendiğinde
+        // Səhifə yükləndikdə
         document.addEventListener('DOMContentLoaded', function() {
-            // Başlangıçta sadece login ekranı görünsün
-            showScreen('login');
+            // Telegram WebView yoxla
+            const isTelegram = window.Telegram && window.Telegram.WebApp;
             
-            // Socket.io bağlantısını başlat
-            initializeSocket();
+            if (isTelegram) {
+                // Telegram WebApp-dən məlumatları al
+                const tg = window.Telegram.WebApp;
+                tg.expand();
+                tg.ready();
+                
+                const user = tg.initDataUnsafe.user;
+                const userData = {
+                    telegramId: user.id,
+                    name: user.first_name || 'Oyunçu',
+                    photo: user.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.first_name || 'Oyunçu')}`,
+                    username: user.username
+                };
+                
+                // Socket bağlantısını başlat
+                initializeSocket(userData);
+            } else {
+                // Normal brauzerdə simulyasiya edək
+                const userData = {
+                    telegramId: 'web_' + Math.random().toString(36).substr(2, 9),
+                    name: 'Test Oyunçu',
+                    photo: 'https://ui-avatars.com/api/?name=Test+Oyunçu',
+                    username: null
+                };
+                
+                // 2 saniyə gözlə və socket bağlantısını başlat
+                setTimeout(() => {
+                    initializeSocket(userData);
+                }, 2000);
+            }
+            
+            // Rəng seçimlərini yüklə
+            loadColorOptions();
+            loadMapOptions();
         });
 
         // Socket.io bağlantısını başlat
-        function initializeSocket() {
-            // Render URL'sine bağlan
+        function initializeSocket(userData) {
+            // Render URL-sinə bağlan
             socket = io();
             
-            // Sunucudan gelen olayları dinle
+            // Serverdən gələn hadisələri dinlə
             socket.on('connect', () => {
-                console.log('Sunucuya bağlandı:', socket.id);
+                console.log('Serverə bağlandı:', socket.id);
+                
+                // Qeydiyyatdan keç
+                socket.emit('register', userData);
+                
+                // Loading ekranını gizlət
+                setTimeout(() => {
+                    showScreen('lobby');
+                }, 1000);
             });
             
             socket.on('registered', (data) => {
-                console.log('Kullanıcı kaydı tamamlandı:', data);
-                currentUser = data.user;
-                updateUserInfo();
-                showScreen('lobby');
-            });
-            
-            socket.on('matched', (data) => {
-                console.log('Eşleşme bulundu:', data);
-                currentPartner = data.partner;
-                currentPartner.id = data.partnerId;
-                updatePartnerInfo();
-                showScreen('chat');
+                console.log('Qeydiyyat tamamlandı:', data);
+                currentPlayer = data.player;
                 
-                // Chat ekranına hoş geldin mesajı ekle
-                addSystemMessage('Partnerinizle eşleştiniz! Anonim sohbete başlayabilirsiniz.');
-                addSystemMessage('Profilinizi açmak isterseniz "Profili Açmak İstiyorum" butonuna tıklayın.');
+                // Otaq siyahısını yenilə
+                refreshRooms();
+                
+                // Xəbərdarlıq göstər
+                showNotification('Oyunçu kimi qeydiyyatdan keçdiniz!', 3000);
             });
             
-            socket.on('newMessage', (data) => {
-                console.log('Yeni mesaj:', data);
-                addMessage(data.message, 'received', data.senderName, data.timestamp);
+            socket.on('roomListUpdated', (rooms) => {
+                updateRoomList(rooms);
             });
             
-            socket.on('revealRequest', (data) => {
-                console.log('Profil açma isteği:', data);
-                showNotification(
-                    'Partnerin profilini sana açmak istiyor. Sende istiyorsan dokun.',
-                    7000,
-                    () => {
-                        // Kullanıcı onaylarsa
-                        socket.emit('revealProfile', data.fromUserId);
-                    }
-                );
+            socket.on('roomCreated', (data) => {
+                currentRoom = data.room;
+                showScreen('room');
+                updateRoomUI();
             });
             
-            socket.on('profilesRevealed', (data) => {
-                console.log('Profiller açıldı:', data);
-                showRevealedProfile(data.partner);
+            socket.on('roomJoined', (data) => {
+                currentRoom = data.room;
+                showScreen('room');
+                updateRoomUI();
+                showNotification('Otağa qoşuldunuz!', 2000);
             });
             
-            socket.on('partnerLeft', (data) => {
-                console.log('Partner ayrıldı:', data);
+            socket.on('joinError', (data) => {
                 showNotification(data.message, 3000);
+            });
+            
+            socket.on('roomUpdated', (room) => {
+                currentRoom = room;
+                updateRoomUI();
+            });
+            
+            socket.on('playerJoined', (data) => {
+                showNotification(`${data.player.name} otağa qoşuldu!`, 2000);
+            });
+            
+            socket.on('playerLeft', (data) => {
+                showNotification('Oyunçu otaqdan çıxdı!', 2000);
+            });
+            
+            socket.on('gameStarted', (data) => {
+                showScreen('game');
+                gameState = 'ingame';
+                currentPlayer.role = data.role;
+                currentPlayer.tasks = data.tasks || [];
+                
+                // Tapşırıqları göstər
+                showTasks();
+                
+                // Oyun idarə düymələrini göstər
+                showGameControls();
+                
+                // Oyunçuları xəritədə yerləşdir
+                initializePlayers();
+                
+                showNotification(`Oyun başladı! Sizin rolunuz: ${data.role === 'impostor' ? 'İMPOSTOR' : 'KOMANDA ÜZVÜ'}`, 5000);
+            });
+            
+            socket.on('playerMoved', (data) => {
+                updatePlayerPosition(data.playerId, data.position, data.location);
+            });
+            
+            socket.on('taskCompleted', (data) => {
+                updateTask(data.taskId);
+                showNotification(`Tapşırıq tamamlandı! (${data.totalCompleted}/${data.totalTasks})`, 2000);
+            });
+            
+            socket.on('playerKilled', (data) => {
+                showNotification(`${getPlayerName(data.victimId)} öldürüldü!`, 3000);
+                if (playerCharacters.has(data.victimId)) {
+                    const character = playerCharacters.get(data.victimId);
+                    character.style.opacity = '0.5';
+                }
+            });
+            
+            socket.on('meetingStarted', (data) => {
+                showScreen('meeting');
+                startMeetingTimer(data.discussionTime, data.votingTime);
+                showNotification('Görüş başladı!', 2000);
+            });
+            
+            socket.on('startVoting', (data) => {
+                startVoting(data.votingTime);
+                showNotification('Səsvermə başladı!', 2000);
+            });
+            
+            socket.on('votingEnded', (data) => {
+                clearMeetingTimers();
+                showVotingResults(data);
+            });
+            
+            socket.on('meetingEnded', () => {
                 setTimeout(() => {
-                    showScreen('lobby');
-                    socket.emit('requestMatch');
-                }, 3000);
+                    if (gameState === 'ingame') {
+                        showScreen('game');
+                    }
+                }, 5000);
+            });
+            
+            socket.on('gameEnded', (data) => {
+                showScreen('end');
+                showGameResults(data);
             });
             
             socket.on('returnToLobby', () => {
+                currentRoom = null;
+                gameState = 'lobby';
                 showScreen('lobby');
-                socket.emit('requestMatch');
+                refreshRooms();
+                showNotification('Lobbyə qayıtdınız!', 2000);
             });
             
             socket.on('disconnect', () => {
-                console.log('Sunucu bağlantısı kesildi');
-                showNotification('Sunucu bağlantısı kesildi. Tekrar bağlanılıyor...', 3000);
+                showNotification('Server bağlantısı kəsildi. Yenidən bağlanılır...', 3000);
             });
         }
 
-        // Cinsiyet seçimi
-        function selectGender(gender) {
-            selectedGender = gender;
-            
-            // Tüm seçeneklerden seçili class'ını kaldır
-            document.querySelectorAll('.gender-option').forEach(option => {
-                option.classList.remove('selected');
-            });
-            
-            // Seçili olanı işaretle
-            document.querySelector(`.gender-option[data-value="${gender}"]`).classList.add('selected');
-        }
-
-        // Ülke seçildiğinde şehirleri yükle
-        function loadCities() {
-            const countrySelect = document.getElementById('country');
-            const citySelect = document.getElementById('city');
-            const country = countrySelect.value;
-            selectedCountry = country;
-            
-            if (!country) {
-                citySelect.innerHTML = '<option value="">Önce ülke seçin</option>';
-                return;
-            }
-            
-            // Basit bir şehir listesi (gerçek uygulamada API'den çekilecek)
-            const cities = {
-                'azerbaycan': ['Bakı', 'Sumqayıt', 'Xırdalan', 'Gəncə', 'Naxçıvan'],
-                'turkiye': ['İstanbul', 'Ankara', 'İzmir', 'Bursa', 'Antalya', 'Adana'],
-                'almanya': ['Berlin', 'Hamburg', 'Münih', 'Köln', 'Frankfurt']
-            };
-            
-            citySelect.innerHTML = '<option value="">Şehir Seçin</option>';
-            
-            if (cities[country]) {
-                cities[country].forEach(city => {
-                    const option = document.createElement('option');
-                    option.value = city;
-                    option.textContent = city;
-                    citySelect.appendChild(option);
-                });
-            }
-            
-            citySelect.onchange = function() {
-                selectedCity = this.value;
-            };
-        }
-
-        // Telegram giriş simülasyonu
-        function simulateTelegramLogin() {
-            const gender = selectedGender;
-            const country = document.getElementById('country').value;
-            const city = document.getElementById('city').value;
-            const telegramUsername = document.getElementById('telegramUsername').value;
-            
-            if (!gender) {
-                alert('Lütfen cinsiyetinizi seçin.');
-                return;
-            }
-            
-            if (!country || !city) {
-                alert('Lütfen ülke ve şehir seçin.');
-                return;
-            }
-            
-            // Rastgele Telegram verileri simülasyonu
-            const randomNames = ['Ahmet', 'Mehmet', 'Ayşe', 'Fatma', 'Ali', 'Zeynep', 'Can', 'Elif'];
-            const randomName = randomNames[Math.floor(Math.random() * randomNames.length)];
-            
-            const randomPhotos = [
-                'https://randomuser.me/api/portraits/men/32.jpg',
-                'https://randomuser.me/api/portraits/women/44.jpg',
-                'https://randomuser.me/api/portraits/men/67.jpg',
-                'https://randomuser.me/api/portraits/women/68.jpg'
-            ];
-            const randomPhoto = randomPhotos[Math.floor(Math.random() * randomPhotos.length)];
-            
-            const randomTelegramId = 'tg_' + Math.floor(Math.random() * 1000000);
-            
-            // Kullanıcı verilerini sunucuya gönder
-            socket.emit('register', {
-                telegramId: randomTelegramId,
-                name: randomName,
-                photo: randomPhoto,
-                gender: gender,
-                country: country,
-                city: city,
-                telegramUsername: telegramUsername || null
-            });
-        }
-
-        // Kullanıcı bilgilerini güncelle
-        function updateUserInfo() {
-            if (!currentUser) return;
-            
-            document.getElementById('userAvatar').src = currentUser.photo;
-            document.getElementById('userName').textContent = currentUser.isAnonymous ? 'Anonim' : currentUser.name;
-            document.getElementById('userLocation').textContent = `${currentUser.country}, ${currentUser.city}`;
-            document.getElementById('userGender').textContent = 
-                currentUser.gender === 'male' ? 'Erkek' : 
-                currentUser.gender === 'female' ? 'Kadın' : 'Diğer';
-        }
-
-        // Partner bilgilerini güncelle
-        function updatePartnerInfo() {
-            if (!currentPartner) return;
-            
-            document.getElementById('partnerAvatar').src = currentPartner.photo;
-            document.getElementById('partnerName').textContent = currentPartner.isAnonymous ? 'Anonim' : currentPartner.name;
-            
-            // Profil açma butonunu göster/gizle
-            const revealContainer = document.getElementById('revealContainer');
-            if (currentPartner.isAnonymous) {
-                revealContainer.style.display = 'block';
-            } else {
-                revealContainer.style.display = 'none';
-            }
-        }
-
-        // Ekranları değiştir
+        // Ekranları dəyiş
         function showScreen(screenName) {
-            currentScreen = screenName;
-            
-            // Tüm ekranları gizle
+            // Bütün ekranları gizlət
             document.querySelectorAll('.screen').forEach(screen => {
                 screen.classList.remove('active');
             });
             
-            // İstenen ekranı göster
+            // İstənilən ekranı göstər
             document.getElementById(screenName + 'Screen').classList.add('active');
-            
-            // Eğer lobi ekranına geçiliyorsa, eşleşme isteği gönder
-            if (screenName === 'lobby' && socket) {
-                setTimeout(() => {
-                    socket.emit('requestMatch');
-                }, 1000);
+        }
+
+        // Otaq siyahısını yenilə
+        function refreshRooms() {
+            if (socket) {
+                // Server avtomatik olaraq otaq siyahısını göndərir
             }
         }
 
-        // Mesaj gönder
-        function sendMessage() {
-            const input = document.getElementById('messageInput');
-            const message = input.value.trim();
+        // Otaq siyahısını yenilə
+        function updateRoomList(rooms) {
+            const roomsList = document.getElementById('roomsList');
             
-            if (!message || !currentPartner) return;
+            if (rooms.length === 0) {
+                roomsList.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #888;">
+                        <i class="fas fa-door-closed" style="font-size: 50px; margin-bottom: 20px;"></i>
+                        <p>Aktiv otaq yoxdur</p>
+                        <p>İlk otağı siz yaradın!</p>
+                    </div>
+                `;
+                return;
+            }
             
-            // Mesajı kendi ekranına ekle
-            addMessage(message, 'sent', 'Sen', new Date().toISOString());
+            roomsList.innerHTML = '';
             
-            // Mesajı partner'e gönder
-            socket.emit('sendMessage', {
-                to: currentPartner.id,
-                message: message
+            rooms.forEach(room => {
+                const roomElement = document.createElement('div');
+                roomElement.className = 'room-card';
+                roomElement.onclick = () => joinRoom(room.id);
+                
+                // Status üçün sinif
+                let statusClass = 'status-waiting';
+                let statusText = 'GÖZLƏYİR';
+                
+                if (room.status === 'ingame') {
+                    statusClass = 'status-ingame';
+                    statusText = 'OYUNDA';
+                } else if (room.status === 'starting') {
+                    statusClass = 'status-starting';
+                    statusText = 'BAŞLAYIR';
+                }
+                
+                roomElement.innerHTML = `
+                    <div class="room-icon">
+                        <i class="fas fa-gamepad"></i>
+                    </div>
+                    <div class="room-info">
+                        <div class="room-name">${room.name}</div>
+                        <div class="room-details">
+                            <span><i class="fas fa-user"></i> ${room.playerCount}/${room.maxPlayers}</span>
+                            <span><i class="fas fa-map"></i> ${room.map}</span>
+                            <span class="room-status ${statusClass}">${statusText}</span>
+                        </div>
+                    </div>
+                `;
+                
+                roomsList.appendChild(roomElement);
+            });
+        }
+
+        // Rəng seçimlərini yüklə
+        function loadColorOptions() {
+            const colorOptions = document.getElementById('colorOptions');
+            colorOptions.innerHTML = '';
+            
+            colors.forEach(color => {
+                const colorElement = document.createElement('div');
+                colorElement.className = 'color-option';
+                colorElement.style.backgroundColor = color.code;
+                colorElement.innerHTML = color.emoji;
+                colorElement.onclick = () => selectColor(color);
+                
+                colorOptions.appendChild(colorElement);
+            });
+        }
+
+        // Xəritə seçimlərini yüklə
+        function loadMapOptions() {
+            const mapOptions = document.getElementById('mapOptions');
+            mapOptions.innerHTML = '';
+            
+            maps.forEach(map => {
+                const mapElement = document.createElement('div');
+                mapElement.className = 'map-option';
+                mapElement.onclick = () => selectMap(map);
+                
+                let icon = 'fas fa-space-shuttle';
+                if (map.id === 'mira') icon = 'fas fa-satellite';
+                if (map.id === 'polus') icon = 'fas fa-mountain';
+                if (map.id === 'airship') icon = 'fas fa-plane';
+                
+                mapElement.innerHTML = `
+                    <div class="map-icon">
+                        <i class="${icon}"></i>
+                    </div>
+                    <div>${map.name}</div>
+                    <div style="font-size: 12px; color: #aaa;">${map.maxPlayers} oyunçu</div>
+                `;
+                
+                mapOptions.appendChild(mapElement);
             });
             
-            // Input'u temizle
-            input.value = '';
-            input.focus();
+            // İlk xəritəni seç
+            selectMap(maps[0]);
         }
 
-        // Klavyeden Enter tuşu ile mesaj gönder
-        function handleKeyPress(event) {
-            if (event.key === 'Enter') {
-                sendMessage();
+        // Rəng seç
+        function selectColor(color) {
+            selectedColor = color;
+            
+            // Bütün seçimlərdən seçili class-nı sil
+            document.querySelectorAll('.color-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            // Seçilmiş rəngi qeyd et
+            const colorElements = document.querySelectorAll('.color-option');
+            colors.forEach((c, index) => {
+                if (c.id === color.id) {
+                    colorElements[index].classList.add('selected');
+                }
+            });
+        }
+
+        // Xəritə seç
+        function selectMap(map) {
+            selectedMap = map.id;
+            currentMap = map;
+            
+            // Bütün seçimlərdən seçili class-nı sil
+            document.querySelectorAll('.map-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            // Seçilmiş xəritəni qeyd et
+            const mapElements = document.querySelectorAll('.map-option');
+            maps.forEach((m, index) => {
+                if (m.id === map.id) {
+                    mapElements[index].classList.add('selected');
+                }
+            });
+        }
+
+        // Otaq yarat
+        function createRoom() {
+            const roomName = document.getElementById('roomName').value;
+            const maxPlayers = document.getElementById('maxPlayers').value;
+            const password = document.getElementById('roomPassword').value;
+            
+            if (!roomName.trim()) {
+                showNotification('Otaq adı daxil edin!', 3000);
+                return;
+            }
+            
+            if (!selectedColor) {
+                selectColor(colors[0]); // İlk rəngi seç
+            }
+            
+            socket.emit('createRoom', {
+                name: roomName,
+                mapId: selectedMap,
+                maxPlayers: parseInt(maxPlayers),
+                password: password || null
+            });
+        }
+
+        // Otağa qoşul
+        function joinRoom(roomId) {
+            const password = prompt('Otaq şifrəsi varsa daxil edin (boş buraxın):');
+            socket.emit('joinRoom', {
+                roomId: roomId,
+                password: password
+            });
+        }
+
+        // Otaq UI-nı yenilə
+        function updateRoomUI() {
+            if (!currentRoom) return;
+            
+            document.getElementById('roomTitle').textContent = currentRoom.name;
+            document.getElementById('roomCode').textContent = `Kod: ${currentRoom.id}`;
+            
+            // Statusu güncəllə
+            const statusElement = document.getElementById('roomStatus');
+            statusElement.className = 'room-status';
+            
+            if (currentRoom.status === 'waiting') {
+                statusElement.classList.add('status-waiting');
+                statusElement.textContent = 'GÖZLƏYİR';
+            } else if (currentRoom.status === 'starting') {
+                statusElement.classList.add('status-starting');
+                statusElement.textContent = 'BAŞLAYIR';
+            } else if (currentRoom.status === 'ingame') {
+                statusElement.classList.add('status-ingame');
+                statusElement.textContent = 'OYUNDA';
+            }
+            
+            // Oyunçuları göstər
+            const playersList = document.getElementById('playersList');
+            playersList.innerHTML = '';
+            
+            // Host ilk gəlir
+            const host = currentRoom.players.find(p => p.id === currentRoom.hostId);
+            if (host) {
+                const playerElement = createPlayerElement(host, true);
+                playersList.appendChild(playerElement);
+            }
+            
+            // Digər oyunçular
+            currentRoom.players.forEach(player => {
+                if (player.id !== currentRoom.hostId) {
+                    const playerElement = createPlayerElement(player, false);
+                    playersList.appendChild(playerElement);
+                }
+            });
+            
+            // Botlar
+            currentRoom.bots.forEach(bot => {
+                const botElement = createPlayerElement(bot, false, true);
+                playersList.appendChild(botElement);
+            });
+            
+            // Oyun nizamlamalarını göstər
+            document.getElementById('impostorCount').textContent = currentRoom.settings.impostorCount;
+            document.getElementById('killCooldown').textContent = currentRoom.settings.killCooldown + 's';
+            document.getElementById('emergencyMeetings').textContent = currentRoom.settings.emergencyMeetings;
+        }
+
+        // Oyunçu elementini yarat
+        function createPlayerElement(player, isHost = false, isBot = false) {
+            const element = document.createElement('div');
+            element.className = 'player-card';
+            
+            const color = player.color || { code: '#ffffff', name: 'Ağ' };
+            const name = player.name || 'Oyunçu';
+            const status = player.isAlive === false ? 'ÖLÜ' : 'SAĞ';
+            
+            let badges = '';
+            if (isHost) badges += '<span class="host-badge">HOST</span>';
+            if (isBot) badges += '<span class="bot-badge">BOT</span>';
+            
+            element.innerHTML = `
+                <div class="player-color" style="background-color: ${color.code};"></div>
+                <div class="player-info">
+                    <div class="player-name">
+                        ${name} ${badges}
+                    </div>
+                    <div class="player-status">
+                        ${status}
+                    </div>
+                </div>
+            `;
+            
+            return element;
+        }
+
+        // Bot əlavə et
+        function addBot() {
+            socket.emit('addBot');
+        }
+
+        // Bot sil
+        function removeBot() {
+            socket.emit('removeBot');
+        }
+
+        // Otaqdan çıx
+        function leaveRoom() {
+            socket.emit('leaveRoom');
+            currentRoom = null;
+            showScreen('lobby');
+            refreshRooms();
+        }
+
+        // Oyunu başlat
+        function startGame() {
+            socket.emit('startGame');
+        }
+
+        // Oyunçuları başlat
+        function initializePlayers() {
+            const gameMap = document.getElementById('gameMap');
+            const playersContainer = document.getElementById('playersContainer');
+            playersContainer.innerHTML = '';
+            playerCharacters.clear();
+            
+            // Özümüzü yarat
+            createPlayerCharacter(currentPlayer.id, currentPlayer.name, currentPlayer.color || colors[0]);
+            
+            // Digər oyunçuları yarat
+            if (currentRoom) {
+                currentRoom.players.forEach(player => {
+                    if (player.id !== currentPlayer.id) {
+                        createPlayerCharacter(player.id, player.name, player.color || colors[1]);
+                    }
+                });
+                
+                // Botları yarat
+                currentRoom.bots.forEach(bot => {
+                    createPlayerCharacter(bot.id, bot.name, bot.color || colors[2], true);
+                });
             }
         }
 
-        // Mesaj ekle
-        function addMessage(text, type, sender, timestamp) {
-            const messagesContainer = document.getElementById('chatMessages');
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${type}`;
+        // Oyunçu xarakterini yarat
+        function createPlayerCharacter(playerId, playerName, color, isBot = false) {
+            const gameMap = document.getElementById('gameMap');
+            const playersContainer = document.getElementById('playersContainer');
             
-            const time = new Date(timestamp);
-            const timeString = `${time.getHours().toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')}`;
+            const character = document.createElement('div');
+            character.className = 'player-character';
+            character.id = `player-${playerId}`;
             
-            messageDiv.innerHTML = `
-                ${text}
-                <div class="message-time">${timeString}</div>
+            // Təsadüfi başlanğıc mövqeyi
+            const mapWidth = gameMap.clientWidth;
+            const mapHeight = gameMap.clientHeight;
+            const startX = Math.random() * (mapWidth - 40);
+            const startY = Math.random() * (mapHeight - 60);
+            
+            character.style.left = startX + 'px';
+            character.style.top = startY + 'px';
+            
+            character.innerHTML = `
+                <div class="character-body" style="background-color: ${color.code};"></div>
+                <div class="character-legs" style="background-color: ${color.code};"></div>
+                <div class="character-name">${playerName}${isBot ? ' 🤖' : ''}</div>
             `;
             
-            messagesContainer.appendChild(messageDiv);
-            
-            // En son mesaja scroll yap
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            playersContainer.appendChild(character);
+            playerCharacters.set(playerId, character);
         }
 
-        // Sistem mesajı ekle
-        function addSystemMessage(text) {
-            const messagesContainer = document.getElementById('chatMessages');
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'message received';
-            messageDiv.style.backgroundColor = '#f0f0f0';
-            messageDiv.style.color = '#666';
-            messageDiv.style.fontStyle = 'italic';
-            messageDiv.style.textAlign = 'center';
-            
-            const time = new Date();
-            const timeString = `${time.getHours().toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')}`;
-            
-            messageDiv.innerHTML = `
-                ${text}
-                <div class="message-time">${timeString}</div>
-            `;
-            
-            messagesContainer.appendChild(messageDiv);
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        // Oyunçu mövqeyini yenilə
+        function updatePlayerPosition(playerId, position, location) {
+            const character = playerCharacters.get(playerId);
+            if (character) {
+                character.style.left = position.x + 'px';
+                character.style.top = position.y + 'px';
+            }
         }
 
-        // Profil açma isteği gönder
-        function requestReveal() {
-            if (!currentPartner) return;
+        // Oyun idarə düymələrini göstər
+        function showGameControls() {
+            const gameControls = document.getElementById('gameControls');
+            gameControls.innerHTML = '';
             
-            socket.emit('revealProfile', currentPartner.id);
-            
-            // Butonu devre dışı bırak
-            const revealBtn = document.querySelector('.reveal-btn');
-            revealBtn.innerHTML = '<i class="fas fa-clock"></i> İstek Gönderildi';
-            revealBtn.disabled = true;
-        }
-
-        // Açılan profili göster
-        function showRevealedProfile(partner) {
-            document.getElementById('revealedAvatar').src = partner.photo;
-            document.getElementById('revealedName').textContent = partner.name;
-            
-            if (partner.telegramUsername) {
-                document.getElementById('telegramLink').textContent = '@' + partner.telegramUsername;
-                document.getElementById('telegramLink').href = partner.telegramLink;
-                document.getElementById('revealedTelegram').style.display = 'block';
+            if (currentPlayer.role === 'impostor') {
+                // İmpostor üçün düymələr
+                gameControls.innerHTML = `
+                    <button class="game-btn" onclick="movePlayer('up')">
+                        <i class="fas fa-arrow-up"></i>
+                    </button>
+                    <button class="game-btn kill" onclick="showKillMenu()">
+                        <i class="fas fa-skull-crossbones"></i>
+                    </button>
+                    <button class="game-btn" onclick="movePlayer('left')">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <button class="game-btn" onclick="movePlayer('down')">
+                        <i class="fas fa-arrow-down"></i>
+                    </button>
+                    <button class="game-btn" onclick="movePlayer('right')">
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                    <button class="game-btn meeting" onclick="callMeeting()">
+                        <i class="fas fa-bullhorn"></i>
+                    </button>
+                `;
             } else {
-                document.getElementById('revealedTelegram').style.display = 'none';
+                // Komanada üzvü üçün düymələr
+                gameControls.innerHTML = `
+                    <button class="game-btn" onclick="movePlayer('up')">
+                        <i class="fas fa-arrow-up"></i>
+                    </button>
+                    <button class="game-btn report" onclick="reportBody()">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </button>
+                    <button class="game-btn" onclick="movePlayer('left')">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <button class="game-btn" onclick="movePlayer('down')">
+                        <i class="fas fa-arrow-down"></i>
+                    </button>
+                    <button class="game-btn" onclick="movePlayer('right')">
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                    <button class="game-btn meeting" onclick="callMeeting()">
+                        <i class="fas fa-bullhorn"></i>
+                    </button>
+                `;
+            }
+        }
+
+        // Oyunçunu hərəkət etdir
+        function movePlayer(direction) {
+            const character = playerCharacters.get(currentPlayer.id);
+            if (!character) return;
+            
+            const currentLeft = parseInt(character.style.left) || 0;
+            const currentTop = parseInt(character.style.top) || 0;
+            const speed = 10;
+            
+            let newLeft = currentLeft;
+            let newTop = currentTop;
+            
+            switch(direction) {
+                case 'up': newTop = Math.max(0, currentTop - speed); break;
+                case 'down': newTop = Math.min(400, currentTop + speed); break;
+                case 'left': newLeft = Math.max(0, currentLeft - speed); break;
+                case 'right': newLeft = Math.min(400, currentLeft + speed); break;
             }
             
-            showScreen('profileRevealed');
+            character.style.left = newLeft + 'px';
+            character.style.top = newTop + 'px';
+            
+            // Serverə bildir
+            socket.emit('movePlayer', {
+                position: { x: newLeft, y: newTop },
+                location: 'map'
+            });
         }
 
-        // Sohbete devam et
-        function continueChat() {
-            // Partner artık anonim değil
-            if (currentPartner) {
-                currentPartner.isAnonymous = false;
-                updatePartnerInfo();
+        // Tapşırıqları göstər
+        function showTasks() {
+            const tasksContainer = document.getElementById('tasksContainer');
+            
+            if (!currentPlayer.tasks || currentPlayer.tasks.length === 0) {
+                tasksContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: #aaa;">Tapşırıq yoxdur</div>';
+                return;
             }
             
-            showScreen('chat');
+            tasksContainer.innerHTML = '<h4 style="margin-bottom: 10px; color: #ddd;">TAPŞIRIQLAR</h4>';
+            
+            currentPlayer.tasks.forEach(task => {
+                const taskElement = document.createElement('div');
+                taskElement.className = 'task-item';
+                
+                const completedClass = task.completed ? 'completed' : '';
+                
+                taskElement.innerHTML = `
+                    <div class="task-checkbox ${completedClass}" onclick="completeTask('${task.id}')"></div>
+                    <div class="task-info">
+                        <div class="task-name">${task.name}</div>
+                        <div class="task-location">${task.location}</div>
+                    </div>
+                `;
+                
+                tasksContainer.appendChild(taskElement);
+            });
         }
 
-        // Sonraki partner
-        function nextPartner() {
-            if (socket) {
-                socket.emit('nextPartner');
-                showScreen('lobby');
+        // Tapşırığı tamamla
+        function completeTask(taskId) {
+            socket.emit('completeTask', taskId);
+        }
+
+        // Tapşırığı yenilə
+        function updateTask(taskId) {
+            const task = currentPlayer.tasks.find(t => t.id === taskId);
+            if (task) {
+                task.completed = true;
+                showTasks();
             }
         }
 
-        // Sohbetten çık
-        function leaveChat() {
-            if (socket) {
-                socket.emit('nextPartner');
-                showScreen('lobby');
+        // Ölü bədəni bildir
+        function reportBody() {
+            socket.emit('reportBody', { x: 100, y: 100 });
+        }
+
+        // Görüş çağır
+        function callMeeting() {
+            socket.emit('callMeeting');
+        }
+
+        // Öldürmə menyusunu göstər
+        function showKillMenu() {
+            // Yaxın oyunçuları tap və öldürmə seçimini göstər
+            showNotification('Yaxın oyunçu yoxdur', 2000);
+        }
+
+        // Görüş sayğacını başlat
+        function startMeetingTimer(discussionTime, votingTime) {
+            let timeLeft = discussionTime;
+            meetingTimer = setInterval(() => {
+                timeLeft--;
+                document.getElementById('meetingTimer').textContent = `${timeLeft} saniyə qaldı`;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(meetingTimer);
+                }
+            }, 1000);
+        }
+
+        // Səsvermə sayğacını başlat
+        function startVoting(votingTime) {
+            let timeLeft = votingTime;
+            votingTimer = setInterval(() => {
+                timeLeft--;
+                document.getElementById('meetingTimer').textContent = `Səsvermə: ${timeLeft}s`;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(votingTimer);
+                }
+            }, 1000);
+        }
+
+        // Görüş sayğaclarını təmizlə
+        function clearMeetingTimers() {
+            if (meetingTimer) clearInterval(meetingTimer);
+            if (votingTimer) clearInterval(votingTimer);
+        }
+
+        // Səsvermə nəticələrini göstər
+        function showVotingResults(data) {
+            // Səsvermə nəticələrini göstər
+            showNotification(data.ejectedPlayerId ? 
+                `Oyunçu atıldı! Rol: ${data.role}` : 
+                'Heç kim atılmadı', 5000);
+        }
+
+        // Oyun nəticələrini göstər
+        function showGameResults(data) {
+            const endTitle = document.getElementById('endTitle');
+            const endRoles = document.getElementById('endRoles');
+            
+            if (data.winner === 'crewmates') {
+                endTitle.className = 'end-title victory';
+                endTitle.textContent = 'KOMANDA ÜZVLƏRİ QALİB GƏLDİ!';
+            } else {
+                endTitle.className = 'end-title defeat';
+                endTitle.textContent = 'İMPOSTORLAR QALİB GƏLDİ!';
+            }
+            
+            endRoles.innerHTML = '';
+            
+            if (currentRoom) {
+                currentRoom.players.forEach(player => {
+                    const roleElement = document.createElement('div');
+                    roleElement.className = 'role-player';
+                    
+                    const role = data.playerRoles[player.id] || 'crewmate';
+                    const roleClass = role === 'impostor' ? 'role-impostor' : 'role-crewmate';
+                    const roleText = role === 'impostor' ? 'İMPOSTOR' : 'KOMANDA ÜZVÜ';
+                    
+                    roleElement.innerHTML = `
+                        <div>${player.name}</div>
+                        <div class="role-badge ${roleClass}">${roleText}</div>
+                    `;
+                    
+                    endRoles.appendChild(roleElement);
+                });
             }
         }
 
-        // Bildirim göster
-        function showNotification(message, duration, callback) {
+        // Lobbyə qayıt
+        function returnToLobby() {
+            currentRoom = null;
+            gameState = 'lobby';
+            showScreen('lobby');
+            refreshRooms();
+        }
+
+        // Oyunçu adını al
+        function getPlayerName(playerId) {
+            if (playerId === currentPlayer.id) return 'Siz';
+            
+            if (currentRoom) {
+                const player = currentRoom.players.find(p => p.id === playerId);
+                if (player) return player.name;
+                
+                const bot = currentRoom.bots.find(b => b.id === playerId);
+                if (bot) return bot.name;
+            }
+            
+            return 'Oyunçu';
+        }
+
+        // Xəbərdarlıq göstər
+        function showNotification(message, duration = 3000) {
             const container = document.getElementById('notificationContainer');
             const notification = document.createElement('div');
             notification.className = 'notification';
-            
-            notification.innerHTML = `
-                <p>${message}</p>
-                ${callback ? '<button class="notification-btn" onclick="closeNotification(this, true)">Kabul Et</button>' : ''}
-                <button class="notification-btn" onclick="closeNotification(this)" style="margin-left: ${callback ? '10px' : '0'}">Kapat</button>
-            `;
+            notification.textContent = message;
             
             container.appendChild(notification);
             
-            // Callback fonksiyonunu global olarak kaydet
-            if (callback) {
-                window.notificationCallback = callback;
-            }
-            
-            // Süre dolunca otomatik kapat
-            if (duration) {
-                setTimeout(() => {
-                    if (notification.parentNode) {
-                        notification.style.animation = 'slideDown 0.5s ease-out reverse forwards';
-                        setTimeout(() => {
-                            if (notification.parentNode) {
-                                notification.parentNode.removeChild(notification);
-                            }
-                        }, 500);
-                    }
-                }, duration);
-            }
-        }
-
-        // Bildirimi kapat
-        function closeNotification(button, accept) {
-            const notification = button.closest('.notification');
-            notification.style.animation = 'slideDown 0.5s ease-out reverse forwards';
-            
             setTimeout(() => {
                 if (notification.parentNode) {
-                    notification.parentNode.removeChild(notification);
+                    notification.style.animation = 'slideDown 0.5s ease-out reverse forwards';
+                    setTimeout(() => {
+                        if (notification.parentNode) {
+                            notification.parentNode.removeChild(notification);
+                        }
+                    }, 500);
                 }
-                
-                // Eğer kabul edildiyse callback'i çağır
-                if (accept && window.notificationCallback) {
-                    window.notificationCallback();
-                    window.notificationCallback = null;
-                }
-            }, 500);
+            }, duration);
         }
     </script>
 </body>
