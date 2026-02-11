@@ -280,18 +280,18 @@
 
     <div class="container" id="main">
         <div class="card">
-            <div class="version-tag">V11.0 ULTRA</div>
+            <div class="version-tag">V13.0 ULTRA</div>
             <div class="header">
                 <p id="welcome" style="font-size: 14px; color: #a78bfa; margin-bottom: 8px; font-weight: 600;"></p>
                 <div class="logo">NexMusic</div>
                 <p style="font-size: 11px; color: var(--accent); font-weight: 600; opacity: 0.8; margin-top: 4px;">
-                    High-Performance Engine | Infinite Core</p>
+                    Hybrid Music Engine | Final Stable</p>
             </div>
 
             <div class="search-box">
-                <input type="text" id="searchInput" placeholder="Herhangi bir müzik ismi yazın...">
+                <input type="text" id="searchInput" placeholder="Sanatçı, şarkı veya link...">
             </div>
-            <button onclick="search()" id="searchBtn" class="btn btn-search">Hızlı Bul (V10)</button>
+            <button onclick="search()" id="searchBtn" class="btn btn-search">Buluş Başlat (V13)</button>
 
             <div id="result" class="result">
                 <div class="thumb-container">
@@ -373,42 +373,73 @@
             if (!userId) return alert('Kullanıcı ID hatası!');
 
             const btn = document.getElementById('downloadBtn');
+            const prog = document.getElementById('prog');
+            const fill = document.getElementById('fill');
             const status = document.getElementById('status');
             const errBox = document.getElementById('errBox');
-            const prog = document.getElementById('prog');
 
-            btn.disabled = true; btn.innerText = 'V12 MOTORU DEVREDE...';
-            status.innerText = 'V12 Ultra motoru çalışıyor. Motorlar arası geçiş yapılıyor, bota bakın! 🚀';
+            btn.disabled = true; btn.innerText = 'V13 AKTİF...';
+            prog.style.display = 'block'; fill.style.width = '0%';
+            status.innerText = 'Güvenli tünel kuruluyor...';
             errBox.style.display = 'none';
-            prog.style.display = 'none';
 
             try {
-                // V12: Dual-Engine Çekirdek (Local + Cloud Fallback)
-                const res = await fetch(`${API_URL}/download-v12`, {
+                // 1. Tünel Linki Al
+                const linkRes = await fetch(`${API_URL}/get-tunnel-url?url=${encodeURIComponent(currentVideo.url)}`);
+                const linkData = await linkRes.json();
+                if (linkData.error) throw new Error(linkData.error);
+
+                status.innerText = 'Müzik verisi tünelden çekiliyor...';
+
+                // 2. Tarayıcıda Tünel Üzerinden İndir (Bu sayede Render engellenmez)
+                const fileRes = await fetch(`${API_URL}${linkData.tunnelUrl}`);
+                if (!fileRes.ok) throw new Error('Yayın akışı kesildi.');
+
+                const reader = fileRes.body.getReader();
+                const total = +fileRes.headers.get('Content-Length') || 0;
+                let loaded = 0; let chunks = [];
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    chunks.push(value);
+                    loaded += value.length;
+                    if (total) {
+                        const pct = Math.round((loaded / total) * 100);
+                        fill.style.width = pct + '%';
+                        status.innerText = `🔄 Ultra İndirme: %${pct}`;
+                    }
+                }
+
+                status.innerText = 'Dosya bota müzik olarak fırlatılıyor...';
+                // Blob tipini audio/mp4 yapıyoruz (En uyumlu müzik formatı)
+                const blob = new Blob(chunks, { type: 'audio/mp4' });
+
+                // 3. Dosyayı Sunucuya, oradan da Bota Gönder
+                const form = new FormData();
+                form.append('music', blob, `music.m4a`);
+                form.append('userId', userId);
+                form.append('title', currentVideo.title);
+                form.append('author', currentVideo.author);
+
+                const upRes = await fetch(`${API_URL}/upload-final`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        url: currentVideo.url,
-                        userId: userId,
-                        title: currentVideo.title,
-                        author: currentVideo.author
-                    })
+                    body: form
                 });
 
-                if (!res.ok) throw new Error('Sunucu hattı meşgul.');
+                if (!upRes.ok) throw new Error('Bot aktarım hatası.');
 
                 status.style.color = '#10b981';
-                status.innerHTML = '✅ <b>V12 BAŞLATILDI!</b><br>Bot motorları şu an çalışıyor. Sayfayı kapatabilirsiniz.';
-
+                status.innerText = '🚀 V13 BAŞARILI! Müzik botunuzda.';
                 tg.HapticFeedback.notificationOccurred('success');
-                setTimeout(() => tg.close(), 4000);
+                setTimeout(() => tg.close(), 3000);
 
             } catch (e) {
                 console.error(e);
-                status.innerText = '❌ V12 MOTOR HATASI!';
-                errBox.innerText = `Hata: ${e.message}\n(Not: YouTube engelleri aşılıyor, lütfen birkaç saniye sonra tekrar deneyin.)`;
+                status.innerText = '❌ V13 HATASI!';
+                errBox.innerText = `🚨 YouTube bu tüneli reddetti.\nDetay: ${e.message}\nLütfen 10 saniye bekleyip tekrar deneyin.`;
                 errBox.style.display = 'block';
-                btn.disabled = false; btn.innerText = 'V12 İLE TEKRAR DENE';
+                btn.disabled = false; btn.innerText = 'TEKRAR DENE';
                 tg.HapticFeedback.notificationOccurred('error');
             }
         }
