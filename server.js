@@ -8,25 +8,28 @@ const fs = require('fs');
 const path = require('path');
 
 const app = express();
+
+// Uploads klasörü kontrolü
+const UPLOADS_DIR = path.join(__dirname, 'uploads');
+if (!fs.existsSync(UPLOADS_DIR)) {
+    fs.mkdirSync(UPLOADS_DIR);
+}
+
 const upload = multer({ dest: 'uploads/' });
 
 app.use(express.json());
 app.use(cors());
 
-// Bot Token
 const token = '5246489165:AAGhMleCadeh3bhtje1EBPY95yn2rDKH7KE';
 const bot = new TelegramBot(token);
-
-// Local yt-dlp path (postinstall ile indirilen)
 const YTDLP_PATH = path.join(__dirname, 'yt-dlp');
 
-app.get('/', (req, res) => res.send('NexMusic Proxy Server v2.0 - Active'));
+app.get('/', (req, res) => res.send('NexMusic Server is Live! ✅'));
 
 // Arama API
 app.get('/search', async (req, res) => {
     const query = req.query.q;
-    if (!query) return res.status(400).json({ error: 'Sorgu gerekli' });
-
+    if (!query) return res.status(400).json({ error: 'Sorgu yok' });
     try {
         const r = await yts(query);
         const video = r.videos[0];
@@ -35,72 +38,73 @@ app.get('/search', async (req, res) => {
                 title: video.title,
                 thumbnail: video.thumbnail,
                 url: video.url,
-                author: video.author.name,
-                duration: video.timestamp
+                author: video.author.name
             });
-        } else {
-            res.status(404).json({ error: 'Bulunamadı' });
-        }
-    } catch (err) {
-        res.status(500).json({ error: 'Arama hatası' });
-    }
+        } else res.status(404).json({ error: 'Bulunamadı' });
+    } catch (err) { res.status(500).json({ error: 'Arama hatası' }); }
 });
 
-// Stream URL API
+// Stream URL Alma
 app.get('/get-stream-url', async (req, res) => {
     const { url } = req.query;
-    if (!url) return res.status(400).json({ error: 'URL gerekli' });
-
     try {
-        console.log(`Stream alınıyor: ${url}`);
-
-        // binary path kontrolü
-        const executablePath = fs.existsSync(YTDLP_PATH) ? YTDLP_PATH : 'yt-dlp';
-
+        const execPath = fs.existsSync(YTDLP_PATH) ? YTDLP_PATH : 'yt-dlp';
         const output = await ytdlp(url, {
             getUrl: true,
             format: 'bestaudio',
             noCheckCertificates: true,
-            noWarnings: true,
-            // 2026 poToken ve Bot korumaları için ek parametreler
-            addHeader: [
-                'referer:youtube.com',
-                'user-agent:Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-            ]
-        }, {
-            binaryPath: executablePath
-        });
-
-        const streamUrl = output.trim().split('\n')[0];
-        res.json({ streamUrl });
-
+        }, { binaryPath: execPath });
+        res.json({ streamUrl: output.trim().split('\n')[0] });
     } catch (err) {
-        console.error('yt-dlp hatası:', err);
-        res.status(500).json({ error: 'YouTube bağlantısı sunucu tarafında başarısız oldu.' });
+        console.error('yt-dlp Error:', err);
+        res.status(500).json({ error: 'Link alınamadı.' });
     }
 });
 
+// Telegram'a Yükleme (Kritik Bölüm)
 app.post('/upload-to-telegram', upload.single('music'), async (req, res) => {
     const { userId, title, author } = req.body;
     const file = req.file;
 
-    if (!file || !userId) return res.status(400).json({ error: 'Dosya alınamadı.' });
+    if (!file || !userId) {
+        return res.status(400).json({ error: 'Dosya sunucuya ulaşmadı.' });
+    }
+
+    console.log(`--- Yükleme Başladı ---`);
+    console.log(`Kullanıcı: ${userId}`);
+    console.log(`Dosya: ${title}`);
 
     try {
-        await bot.sendAudio(userId, file.path, {
+        // Dosyayı Telegram'a bir stream olarak gönderiyoruz (Daha güvenli)
+        const fileStream = fs.createReadStream(file.path);
+
+        await bot.sendAudio(userId, fileStream, {
             title: title || 'Müzik',
             performer: author || 'YouTube',
-            caption: `✅ *${title}* başarıyla indirildi.`,
+            caption: `🎵 *${title}* hazır!\n\n@NexMusicBot`,
             parse_mode: 'Markdown'
+        }, {
+            filename: `${title || 'music'}.mp3`,
+            contentType: 'audio/mpeg'
         });
 
+        console.log(`✅ Telegram'a gönderildi: ${userId}`);
+
+        // Temizlik
         fs.unlinkSync(file.path);
         res.json({ success: true });
+
     } catch (err) {
+        console.error('🔴 TELEGRAM HATASI:', err.message);
         if (file) fs.unlinkSync(file.path);
-        res.status(500).json({ error: 'Bot gönderimi sırasında hata oluştu.' });
+
+        // Hatayı bota değil, siteye bildiriyoruz ki kullanıcı bilsin
+        res.status(500).json({
+            error: 'Bot gönderimi başarısız!',
+            details: err.message
+        });
     }
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`NexMusic v2.0 running on ${PORT}`));
+app.listen(PORT, () => console.log(`Sunucu aktif: ${PORT}`));
