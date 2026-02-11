@@ -7,7 +7,6 @@ const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
 const ytdlp = require('yt-dlp-exec');
-const ffmpeg = require('ffmpeg-static');
 
 const app = express();
 const UPLOADS_DIR = path.join(__dirname, 'uploads');
@@ -21,11 +20,11 @@ app.use(cors());
 const token = '5246489165:AAGhMleCadeh3bhtje1EBPY95yn2rDKH7KE';
 const bot = new TelegramBot(token);
 const YTDLP_PATH = path.join(__dirname, 'yt-dlp');
-const VERSION = "V12 ULTRA - UNSTOPPABLE";
+const VERSION = "V13 ULTRA - HYBRID FINAL";
 
 app.get('/', (req, res) => res.send(`NexMusic ${VERSION} is active! 🚀`));
 
-// 🔍 Search API
+// 🔍 Arama API
 app.get('/search', async (req, res) => {
     const query = req.query.q;
     if (!query) return res.status(400).json({ error: 'Sorgu yok' });
@@ -43,94 +42,73 @@ app.get('/search', async (req, res) => {
     } catch (err) { res.status(500).json({ error: 'Arama hatası' }); }
 });
 
-// 📥 V12: DUAL-ENGINE SMART DOWNLOAD (Local + External Fallback)
-app.post('/download-v12', async (req, res) => {
-    const { url, userId, title, author } = req.body;
-    if (!url || !userId) return res.status(400).json({ error: 'Eksik bilgi' });
+// �️ V13: RACING ENGINE (Prefer M4A for compatibility)
+app.get('/get-tunnel-url', async (req, res) => {
+    const { url } = req.query;
+    try {
+        const execPath = fs.existsSync(YTDLP_PATH) ? YTDLP_PATH : 'yt-dlp';
 
-    console.log(`[${VERSION}] İndirme hazırlatılıyor: ${title}`);
-    res.json({ status: 'started' }); // Tell site we started
+        // M4A formatı (140 itag) Telegram için en uyumlu "Müzik" formatıdır.
+        const output = await ytdlp(url, {
+            getUrl: true,
+            format: '140/bestaudio[ext=m4a]/bestaudio', // Önce M4A dene
+            noCheckCertificates: true,
+            addHeader: ['referer:youtube.com', 'user-agent:Mozilla/5.0']
+        }, { binaryPath: execPath });
 
-    const safeTitle = (title || 'music').replace(/[^a-z0-9]/gi, '_').substring(0, 50);
-    const filePath = path.join(UPLOADS_DIR, `${safeTitle}_${Date.now()}.mp3`);
+        const directUrl = output.trim().split('\n')[0];
+        res.json({ tunnelUrl: `/proxy?url=${encodeURIComponent(directUrl)}` });
+    } catch (err) {
+        res.status(500).json({ error: 'YouTube Linki Alınamadı.', details: err.message });
+    }
+});
+
+// ⚡ PROXY: Veriyi tarayıcıya tüneller
+app.get('/proxy', async (req, res) => {
+    const targetUrl = req.query.url;
+    if (!targetUrl) return res.status(400).send('No URL');
+    try {
+        const response = await axios({
+            method: 'get',
+            url: targetUrl,
+            responseType: 'stream',
+            headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://www.youtube.com/' }
+        });
+        // M4A olarak işaretle (Telegram'ın en sevdiği format)
+        res.setHeader('Content-Type', 'audio/mp4');
+        response.data.pipe(res);
+    } catch (err) {
+        res.status(500).send('Proxy hatası');
+    }
+});
+
+// 📤 BOT GÖNDERİMİ: Dosyayı gerçek müzik olarak işaretle
+app.post('/upload-final', upload.single('music'), async (req, res) => {
+    const { userId, title, author } = req.body;
+    const file = req.file;
+    if (!file) return res.status(400).json({ error: 'Dosya yok' });
 
     try {
-        await bot.sendMessage(userId, `🚀 *${title}* için V12 motoru çalıştırıldı...\nEn uygun hat seçiliyor.`, { parse_mode: 'Markdown' });
+        const safeTitle = (title || 'Music').replace(/[^a-z0-9]/gi, '_').substring(0, 50);
 
-        let success = false;
+        // sendAudio kullanarak "Müzik" olarak gitmesini sağlıyoruz
+        await bot.sendAudio(userId, fs.createReadStream(file.path), {
+            title: title || 'Müzik',
+            performer: author || 'YouTube',
+            caption: `✅ *Müziğiniz Hazır!* \n@NexMusicBot`,
+            parse_mode: 'Markdown'
+        }, {
+            filename: `${safeTitle}.m4a`, // Dosya adını m4a yapıyoruz
+            contentType: 'audio/mp4'     // İçeriği audio/mp4 yapıyoruz
+        });
 
-        // --- ENGINE 1: LOCAL HYBRID (With Fixed FFMPEG) ---
-        try {
-            console.log("Deneniyor: Motor 1 (Local Conversion)");
-            const execPath = fs.existsSync(YTDLP_PATH) ? YTDLP_PATH : 'yt-dlp';
-
-            await ytdlp(url, {
-                extractAudio: true,
-                audioFormat: 'mp3',
-                audioQuality: '0',
-                output: filePath,
-                ffmpegLocation: ffmpeg, // POINT TO FFMPEG-STATIC
-                noCheckCertificates: true,
-                addHeader: ['referer:youtube.com', 'user-agent:Mozilla/5.0']
-            }, { binaryPath: execPath });
-
-            if (fs.existsSync(filePath)) success = true;
-        } catch (err) {
-            console.log("Motor 1 Başarısız:", err.message);
-        }
-
-        // --- ENGINE 2: EXTERNAL CLOUD ENGINE (Cobalt Fallback) ---
-        if (!success) {
-            try {
-                console.log("Deneniyor: Motor 2 (Cloud Bypass)");
-                await bot.sendMessage(userId, `🟡 Yerel motor meşgul, Bulut motoruna (V12-Cloud) geçiliyor...`);
-
-                const cloudRes = await axios.post('https://api.cobalt.tools/api/json', {
-                    url: url,
-                    downloadMode: 'audio',
-                    audioFormat: 'mp3'
-                });
-
-                if (cloudRes.data && cloudRes.data.url) {
-                    const downloadRes = await axios({
-                        url: cloudRes.data.url,
-                        method: 'GET',
-                        responseType: 'stream'
-                    });
-                    const writer = fs.createWriteStream(filePath);
-                    downloadRes.data.pipe(writer);
-
-                    await new Promise((resolve, reject) => {
-                        writer.on('finish', resolve);
-                        writer.on('error', reject);
-                    });
-
-                    if (fs.existsSync(filePath)) success = true;
-                }
-            } catch (err) {
-                console.log("Motor 2 Başarısız:", err.message);
-            }
-        }
-
-        if (success) {
-            console.log(`[${VERSION}] Dosya hazır, gönderiliyor...`);
-            await bot.sendAudio(userId, fs.createReadStream(filePath), {
-                title: title,
-                performer: author,
-                caption: `✅ *Müziğiniz Hazır!* \n📦 V12 ULTRA motoru ile başarıyla kurtarıldı.`,
-                parse_mode: 'Markdown'
-            });
-            fs.unlinkSync(filePath);
-        } else {
-            throw new Error("Tüm motorlar YouTube engeline takıldı.");
-        }
-
+        fs.unlinkSync(file.path);
+        res.json({ success: true });
     } catch (err) {
-        console.error('V12 Hatası:', err.message);
-        bot.sendMessage(userId, `❌ *Kritik Hata:* YouTube bu müziği tamamen engelledi.\nSebep: ${err.message.substring(0, 100)}...\n\nLütfen 1-2 dakika sonra tekrar deneyin veya başka bir şarkı aratın.`).catch(() => { });
-        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+        if (file) fs.unlinkSync(file.path);
+        res.status(500).json({ error: 'Bot gönderim hatası' });
     }
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`${VERSION} System Online! 🚀`));
+app.listen(PORT, () => console.log(`${VERSION} Aktif!`));
