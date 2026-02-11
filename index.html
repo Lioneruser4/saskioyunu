@@ -3,16 +3,18 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexMusic V7 ULTRA - Multi Engine</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NexMusic V9 ULTRA - Global Search</title>
+    <!-- Cache busting by adding version to URL in your mind, but here we just update content -->
+    <script src="https://telegram.org/js/telegram-web-app.js?v=9"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #6366f1;
-            --bg: #0f172a;
-            --card: rgba(30, 41, 59, 0.8);
-            --text: #f1f5f9;
+            --primary: #8b5cf6;
+            --bg: #030712;
+            --card: rgba(17, 24, 39, 0.8);
+            --text: #f9fafb;
+            --accent: #10b981;
         }
 
         * {
@@ -20,6 +22,7 @@
             padding: 0;
             box-sizing: border-box;
             font-family: 'Outfit', sans-serif;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
@@ -30,29 +33,40 @@
             justify-content: center;
             align-items: center;
             padding: 20px;
-            overflow-x: hidden;
+            overflow: hidden;
+        }
+
+        /* Background Glow */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, transparent 70%);
+            z-index: -1;
         }
 
         #splash {
             position: fixed;
             inset: 0;
             background: var(--bg);
-            z-index: 999;
+            z-index: 1000;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            transition: 0.8s;
+            transition: 0.6s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .ring {
-            width: 50px;
-            height: 50px;
-            border: 3px solid rgba(99, 102, 241, 0.1);
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(139, 92, 246, 0.1);
             border-top-color: var(--primary);
             border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-bottom: 15px;
+            animation: spin 0.8s cubic-bezier(0.5, 0.1, 0.5, 0.9) infinite;
         }
 
         @keyframes spin {
@@ -63,109 +77,128 @@
 
         .container {
             width: 100%;
-            max-width: 440px;
-            transform: translateY(20px);
+            max-width: 420px;
+            transform: scale(0.95);
             opacity: 0;
-            transition: 0.8s;
+            transition: 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
         .container.active {
-            transform: translateY(0);
+            transform: scale(1);
             opacity: 1;
         }
 
         .card {
             background: var(--card);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 30px;
-            padding: 30px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 32px;
+            padding: 32px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
             position: relative;
+            overflow: hidden;
         }
 
-        .version {
+        .version-tag {
             position: absolute;
-            top: 15px;
-            right: 20px;
+            top: 18px;
+            right: 22px;
             font-size: 10px;
-            color: #6366f1;
+            color: var(--primary);
             font-weight: 800;
-            border: 1px solid #6366f1;
-            padding: 2px 6px;
-            border-radius: 5px;
+            letter-spacing: 1px;
+            background: rgba(139, 92, 246, 0.1);
+            padding: 4px 10px;
+            border-radius: 100px;
+            border: 1px solid rgba(139, 92, 246, 0.2);
         }
 
         .header {
             text-align: center;
-            margin-bottom: 25px;
+            margin-bottom: 30px;
         }
 
         .logo {
-            font-size: 32px;
+            font-size: 36px;
             font-weight: 800;
-            background: linear-gradient(to right, #818cf8, #c084fc);
+            background: linear-gradient(135deg, #a78bfa, #f472b6);
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
+            letter-spacing: -1px;
+        }
+
+        .search-box {
+            position: relative;
+            margin-bottom: 20px;
         }
 
         input {
             width: 100%;
-            padding: 18px;
-            background: rgba(0, 0, 0, 0.2);
-            border: 2px solid rgba(255, 255, 255, 0.05);
-            border-radius: 18px;
+            padding: 20px 24px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
             color: white;
-            margin-bottom: 15px;
+            font-size: 16px;
             outline: none;
             transition: 0.3s;
         }
 
         input:focus {
             border-color: var(--primary);
-            background: rgba(0, 0, 0, 0.4);
+            background: rgba(0, 0, 0, 0.6);
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.2);
         }
 
         .btn {
             width: 100%;
-            padding: 17px;
+            padding: 18px;
             border: none;
-            border-radius: 18px;
+            border-radius: 20px;
             color: white;
             font-weight: 700;
             cursor: pointer;
-            transition: 0.3s;
+            transition: 0.4s;
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
+            font-size: 16px;
         }
 
         .btn-search {
-            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            background: var(--primary);
+            box-shadow: 0 10px 20px -5px rgba(139, 92, 246, 0.4);
+        }
+
+        .btn-search:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px -5px rgba(139, 92, 246, 0.5);
         }
 
         .btn-download {
-            background: #10b981;
-            margin-top: 20px;
+            background: var(--accent);
+            margin-top: 24px;
+            box-shadow: 0 10px 20px -5px rgba(16, 185, 129, 0.3);
         }
 
         .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
+            opacity: 0.6;
+            cursor: wait;
+            transform: none !important;
         }
 
         .result {
-            margin-top: 25px;
+            margin-top: 32px;
             display: none;
-            animation: slideUp 0.5s ease;
+            animation: reveal 0.6s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        @keyframes slideUp {
+        @keyframes reveal {
             from {
                 opacity: 0;
-                transform: translateY(10px);
+                transform: translateY(20px);
             }
 
             to {
@@ -174,19 +207,27 @@
             }
         }
 
-        .thumb {
-            width: 100%;
-            border-radius: 20px;
-            margin-bottom: 10px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+        .thumb-container {
+            position: relative;
+            border-radius: 24px;
+            overflow: hidden;
+            margin-bottom: 18px;
+            aspect-ratio: 16/9;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
         }
 
-        .prog-bg {
+        .thumb {
             width: 100%;
-            height: 6px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            margin-top: 15px;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .prog-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 100px;
+            margin-top: 20px;
             display: none;
             overflow: hidden;
         }
@@ -194,27 +235,38 @@
         .prog-fill {
             width: 0%;
             height: 100%;
-            background: #10b981;
-            transition: 0.3s;
+            background: linear-gradient(90deg, var(--accent), #34d399);
+            border-radius: 100px;
+            transition: 0.4s cubic-bezier(0.1, 0.7, 0.1, 1);
         }
 
         .status {
             text-align: center;
-            font-size: 12px;
-            margin-top: 10px;
-            color: #94a3b8;
-            line-height: 1.5;
+            font-size: 13px;
+            margin-top: 12px;
+            color: #9ca3af;
+            font-weight: 500;
         }
 
         #errBox {
             display: none;
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid #ef4444;
-            border-radius: 12px;
-            padding: 10px;
-            margin-top: 15px;
-            font-size: 11px;
+            background: rgba(239, 68, 68, 0.08);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 16px;
+            padding: 14px;
+            margin-top: 20px;
+            font-size: 12px;
             color: #f87171;
+            text-align: center;
+        }
+
+        .refresh-hint {
+            text-align: center;
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.2);
+            margin-top: 24px;
+            cursor: pointer;
+            text-decoration: underline;
         }
     </style>
 </head>
@@ -222,34 +274,42 @@
 <body>
     <div id="splash">
         <div class="ring"></div>
-        <p>AKILLI MOTORLAR BAŞLATILIYOR...</p>
+        <p style="margin-top:20px; font-weight:600; font-size:14px; letter-spacing:1px; color:var(--primary);">GLOBAL
+            MUSIC NETWORK</p>
     </div>
 
     <div class="container" id="main">
         <div class="card">
-            <div class="version">V8.0 ULTRA</div>
+            <div class="version-tag">V9.0 ULTRA</div>
             <div class="header">
-                <p id="welcome" style="font-size: 14px; color: #818cf8; margin-bottom: 5px;"></p>
+                <p id="welcome" style="font-size: 14px; color: #a78bfa; margin-bottom: 8px; font-weight: 600;"></p>
                 <div class="logo">NexMusic</div>
-                <p style="font-size: 10px; color: #4ade80;">Intelligent Engine Fallback Active</p>
+                <p style="font-size: 11px; color: var(--accent); font-weight: 600; opacity: 0.8; margin-top: 4px;">
+                    Global Search & Audio Sync</p>
             </div>
 
-            <input type="text" id="searchInput" placeholder="Şarkı adı veya YouTube linki...">
-            <button onclick="search()" id="searchBtn" class="btn btn-search">Müziği Bul (V8)</button>
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Sanatçı, şarkı veya link...">
+            </div>
+            <button onclick="search()" id="searchBtn" class="btn btn-search">Müziği Ara</button>
 
             <div id="result" class="result">
-                <img id="thumb" class="thumb" src="" alt="">
-                <h3 id="title" style="font-size: 16px; margin-bottom: 5px;"></h3>
-                <p id="author" style="font-size: 13px; color: #94a3b8;"></p>
+                <div class="thumb-container">
+                    <img id="thumb" class="thumb" src="" alt="">
+                </div>
+                <h3 id="title" style="font-size: 18px; font-weight: 700; margin-bottom: 4px; line-height: 1.3;"></h3>
+                <p id="author" style="font-size: 14px; color: #9ca3af; font-weight: 500;"></p>
 
-                <button onclick="download()" id="downloadBtn" class="btn btn-download">⚡ AKILLI MOTOR İLE İNDİR</button>
+                <button onclick="download()" id="downloadBtn" class="btn btn-download">⚡ DOSYAYI AL VE BOTA AT</button>
 
-                <div id="prog" class="prog-bg">
+                <div id="prog" class="prog-bar">
                     <div id="fill" class="prog-fill"></div>
                 </div>
                 <p id="status" class="status"></p>
                 <div id="errBox"></div>
             </div>
+
+            <p class="refresh-hint" onclick="location.reload(true)">Sitede eski sürüm mü var? Buraya tıkla yenile.</p>
         </div>
     </div>
 
@@ -257,25 +317,32 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
         tg.ready();
+        tg.enableClosingConfirmation();
+
+        // API URL (Automatic Detection)
         const API_URL = 'https://saskioyunu-1.onrender.com';
         let currentVideo = null;
 
         window.onload = () => {
             const name = tg.initDataUnsafe?.user?.first_name || 'Müziksever';
-            document.getElementById('welcome').innerText = `Merhaba, ${name}!`;
+            document.getElementById('welcome').innerText = `Hoş geldin, ${name}`;
+
+            // Splash handling
             setTimeout(() => {
                 document.getElementById('splash').style.opacity = '0';
-                setTimeout(() => document.getElementById('splash').style.visibility = 'hidden', 800);
-                document.getElementById('main').classList.add('active');
-            }, 1200);
+                setTimeout(() => {
+                    document.getElementById('splash').style.display = 'none';
+                    document.getElementById('main').classList.add('active');
+                }, 600);
+            }, 1500);
         };
 
         async function search() {
-            const q = document.getElementById('searchInput').value;
+            const q = document.getElementById('searchInput').value.trim();
             if (!q) return;
 
             const btn = document.getElementById('searchBtn');
-            btn.disabled = true; btn.innerText = 'Aranıyor...';
+            btn.disabled = true; btn.innerText = 'Global Ağ Taranıyor...';
             document.getElementById('result').style.display = 'none';
             document.getElementById('errBox').style.display = 'none';
 
@@ -288,20 +355,21 @@
                     document.getElementById('title').innerText = data.title;
                     document.getElementById('author').innerText = data.author;
                     document.getElementById('result').style.display = 'block';
+                    tg.HapticFeedback.impactOccurred('medium');
                 } else {
-                    alert('Hata: Video bulunamadı.');
+                    alert('Hata: Müzik bulunamadı.');
                 }
             } catch (e) {
-                alert('Sunucu hatası! Render uyanıyor olabilir, bekleyin.');
+                alert('Sunucuya ulaşılamıyor. Lütfen az sonra tekrar deneyin.');
             } finally {
-                btn.disabled = false; btn.innerText = 'Müziği Bul (V7)';
+                btn.disabled = false; btn.innerText = 'Müziği Ara';
             }
         }
 
         async function download() {
             if (!currentVideo) return;
             const userId = tg.initDataUnsafe?.user?.id;
-            if (!userId) return alert('Lütfen Telegram kullanın!');
+            if (!userId) return alert('Kullanıcı ID hatası!');
 
             const btn = document.getElementById('downloadBtn');
             const prog = document.getElementById('prog');
@@ -309,22 +377,22 @@
             const status = document.getElementById('status');
             const errBox = document.getElementById('errBox');
 
-            btn.disabled = true; btn.innerText = 'MOTORLAR TARANIYOR...';
+            btn.disabled = true; btn.innerText = 'Ağdan Çekiliyor...';
             prog.style.display = 'block'; fill.style.width = '0%';
-            status.innerText = 'En uygun indirme motoru seçiliyor (V8 ULTRA)...';
+            status.innerText = 'Küresel müzik tüneli kuruluyor...';
             errBox.style.display = 'none';
 
             try {
-                // 1. Harici Motor Linki
+                // 1. Get Link
                 const linkRes = await fetch(`${API_URL}/get-external-link?url=${encodeURIComponent(currentVideo.url)}`);
                 const linkData = await linkRes.json();
                 if (linkData.error) throw new Error(linkData.error);
 
-                status.innerText = `Bağlantı Kuruldu: ${linkData.engine} motoru kullanılıyor...`;
+                status.innerText = `Bağlantı başarılı: [${linkData.engine}] üzerinden çekiliyor...`;
 
-                // 2. Proxy üzerinden indir
+                // 2. Fetch Sync
                 const fileRes = await fetch(`${API_URL}/proxy?url=${encodeURIComponent(linkData.downloadUrl)}`);
-                if (!fileRes.ok) throw new Error('Yayın motoru ile bağlantı koptu.');
+                if (!fileRes.ok) throw new Error('Veri akışı kesildi.');
 
                 const reader = fileRes.body.getReader();
                 const total = +fileRes.headers.get('Content-Length') || 0;
@@ -338,14 +406,14 @@
                     if (total) {
                         const pct = Math.round((loaded / total) * 100);
                         fill.style.width = pct + '%';
-                        status.innerText = `🔄 [V8] İndiriliyor: %${pct}`;
+                        status.innerText = `Hazırlanıyor: %${pct}`;
                     }
                 }
 
-                status.innerText = 'Sunucu bota fırlatıyor...';
+                status.innerText = 'Bot kanalına fırlatılıyor...';
                 const blob = new Blob(chunks, { type: 'audio/mpeg' });
 
-                // 3. Bot Gönderimi
+                // 3. Final Bot Push
                 const form = new FormData();
                 form.append('music', blob, `music.mp3`);
                 form.append('userId', userId);
@@ -353,19 +421,19 @@
                 form.append('author', currentVideo.author);
 
                 const upRes = await fetch(`${API_URL}/upload-final`, { method: 'POST', body: form });
-                if (!upRes.ok) throw new Error('Bot gönderim hatası (Dosya büyük olabilir).');
+                if (!upRes.ok) throw new Error('Sunucu bota dosyayı iletemedi.');
 
-                status.style.color = '#4ade80';
-                status.innerText = '🚀 V8 BAŞARILI! Botu kontrol et.';
+                status.style.color = '#10b981';
+                status.innerText = '✅ BAŞARILI! Hemen bota dönüp kontrol et.';
                 tg.HapticFeedback.notificationOccurred('success');
                 setTimeout(() => tg.close(), 3000);
 
             } catch (e) {
                 console.error(e);
-                status.innerText = '❌ V8 TÜM MOTORLAR BAŞARISIZ!';
-                errBox.innerText = `Hata: ${e.message}\n(Not: Lütfen 30 saniye sonra farklı bir şarkı deneyin.)`;
+                status.innerText = '❌ V9 AĞ HATASI!';
+                errBox.innerText = `Hata detayı: ${e.message}\n(Genellikle yoğunluktan olur, 10sn bekleyip tekrar basın.)`;
                 errBox.style.display = 'block';
-                btn.disabled = false; btn.innerText = 'V8 İLE TEKRAR DENE';
+                btn.disabled = false; btn.innerText = 'V9 İLE TEKRAR DENE';
                 tg.HapticFeedback.notificationOccurred('error');
             }
         }
