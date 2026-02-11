@@ -5,18 +5,13 @@ const cors = require('cors');
 const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
-const axios = require('axios');
 const ytdlp = require('yt-dlp-exec');
-const { PassThrough } = require('stream');
 
 const app = express();
 const UPLOADS_DIR = path.join(__dirname, 'uploads');
 if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR);
 
-const upload = multer({
-    dest: 'uploads/',
-    limits: { fileSize: 50 * 1024 * 1024 } // 50MB limit
-});
+const upload = multer({ dest: 'uploads/' });
 
 app.use(express.json());
 app.use(cors());
@@ -24,19 +19,11 @@ app.use(cors());
 const token = '5246489165:AAGhMleCadeh3bhtje1EBPY95yn2rDKH7KE';
 const bot = new TelegramBot(token);
 const YTDLP_PATH = path.join(__dirname, 'yt-dlp');
-const VERSION = "V10 ULTRA - INFINITE CORE";
+const VERSION = "V11 ULTRA - REAL MP3";
 
-// --- GLOBAL ENGINE REPOSITORY (API-FREE) ---
-const ENGINES = [
-    { name: 'Core Alpha (iOS Bypass)', type: 'ytdlp', client: 'ios' },
-    { name: 'Core Beta (Android Bypass)', type: 'ytdlp', client: 'android' },
-    { name: 'Core Gamma (Web Bypass)', type: 'ytdlp', client: 'web' },
-    { name: 'Tunnel Edge', type: 'invidious' }
-];
+app.get('/', (req, res) => res.send(`NexMusic ${VERSION} is Active! 🚀`));
 
-app.get('/', (req, res) => res.send(`NexMusic ${VERSION} is active! Running on High-Performance mode. ⚡`));
-
-// 🔍 SEARCH: Ultra-fast YouTube Search
+// 🔍 Arama
 app.get('/search', async (req, res) => {
     const query = req.query.q;
     if (!query) return res.status(400).json({ error: 'Sorgu yok' });
@@ -48,117 +35,59 @@ app.get('/search', async (req, res) => {
                 title: video.title,
                 thumbnail: video.thumbnail,
                 url: video.url,
-                author: video.author.name,
-                duration: video.timestamp
+                author: video.author.name
             });
         } else res.status(404).json({ error: 'Bulunamadı' });
     } catch (err) { res.status(500).json({ error: 'Arama hatası' }); }
 });
 
-// 🛠️ V10 INTELLIGENT ROUTER: Proactively races multiple local engines
-app.get('/get-external-link', async (req, res) => {
-    const { url } = req.query;
-    if (!url) return res.status(400).json({ error: 'URL gerekli' });
+// � V11: Doğrudan Sunucuda MP3 Üret ve Gönder
+app.post('/download-v11', async (req, res) => {
+    const { url, userId, title, author } = req.body;
+    if (!url || !userId) return res.status(400).json({ error: 'Eksik bilgi' });
 
-    console.log(`[${VERSION}] Request for ${url}`);
+    console.log(`[${VERSION}] Gerçek MP3 hazırlatılıyor: ${title}`);
 
-    const raceEngine = async (engine) => {
-        try {
-            if (engine.type === 'ytdlp') {
-                const execPath = fs.existsSync(YTDLP_PATH) ? YTDLP_PATH : 'yt-dlp';
-                const args = {
-                    getUrl: true,
-                    format: 'bestaudio',
-                    noCheckCertificates: true,
-                    addHeader: [
-                        `user-agent:${engine.client === 'ios' ? 'com.google.ios.youtube/19.01.1 (iPhone16,2; U; CPU iOS 17_2 like Mac OS X; en_US)' : 'Mozilla/5.0'}`,
-                        'referer:https://www.youtube.com/'
-                    ]
-                };
-                const output = await ytdlp(url, args, { binaryPath: execPath });
-                const link = output.trim().split('\n')[0];
-                if (link.startsWith('http')) return { downloadUrl: link, engine: engine.name };
-            } else if (engine.type === 'invidious') {
-                const videoId = url.split('v=')[1]?.split('&')[0] || url.split('/').pop();
-                const instance = 'https://invidious.projectsegfau.lt';
-                const testUrl = `${instance}/latest_version?id=${videoId}&itag=140`;
-                return { downloadUrl: testUrl, engine: engine.name };
-            }
-        } catch (e) { throw e; }
-    };
+    // İşlemi başlatıp hemen cevap veriyoruz (site bekleyip hata vermesin diye)
+    res.json({ status: 'started' });
+
+    const safeTitle = (title || 'music').replace(/[^a-z0-9]/gi, '_').substring(0, 50);
+    const filePath = path.join(UPLOADS_DIR, `${safeTitle}_${Date.now()}.mp3`);
 
     try {
-        // V10 MAGIC: Start all engines and take the first one that works
-        const result = await Promise.any(ENGINES.map(raceEngine));
-        res.json(result);
-    } catch (err) {
-        console.error('All engines failed:', err.message);
-        res.status(500).json({ error: 'Tüm hatlar dolu. Lütfen farklı bir müzik deneyin.' });
-    }
-});
+        await bot.sendMessage(userId, `🛠️ *${title}* için MP3 tüneli kuruluyor...\n(Gerçek MP3 formatına çevriliyor, lütfen bekleyin.)`, { parse_mode: 'Markdown' });
 
-// ⚡ HIGH-SPEED PROXY: Transparent piping for concurrency
-app.get('/proxy', async (req, res) => {
-    const targetUrl = req.query.url;
-    if (!targetUrl) return res.status(400).send('No URL');
+        const execPath = fs.existsSync(YTDLP_PATH) ? YTDLP_PATH : 'yt-dlp';
 
-    try {
-        const response = await axios({
-            method: 'get',
-            url: targetUrl,
-            responseType: 'stream',
-            timeout: 120000, // 2 mins timeout for slow downloads
-            headers: { 'User-Agent': 'Mozilla/5.0' }
-        });
+        // V11: --extract-audio ve --audio-format mp3 ile GERÇEK MP3 üretiyoruz
+        await ytdlp(url, {
+            extractAudio: true,
+            audioFormat: 'mp3',
+            audioQuality: '0', // En yüksek kalite
+            output: filePath,
+            noCheckCertificates: true,
+            addHeader: ['referer:youtube.com', 'user-agent:Mozilla/5.0']
+        }, { binaryPath: execPath });
 
-        res.setHeader('Content-Type', 'audio/mpeg');
-        if (response.headers['content-length']) {
-            res.setHeader('Content-Length', response.headers['content-length']);
+        if (fs.existsSync(filePath)) {
+            console.log(`[${VERSION}] Dönüştürme Bitti. Gönderiliyor...`);
+
+            await bot.sendAudio(userId, fs.createReadStream(filePath), {
+                title: title,
+                performer: author,
+                caption: `✅ *Müziğiniz Hazır!* \n📦 Gerçek MP3 formatında (V11 ULTRA) gönderildi.`,
+                parse_mode: 'Markdown'
+            });
+
+            fs.unlinkSync(filePath);
+            console.log(`[${VERSION}] Başarılı!`);
         }
-
-        response.data.pipe(res);
     } catch (err) {
-        res.status(500).send('Proxy Stream Error');
-    }
-});
-
-// 📤 HIGH-VOLUME SENDER: Handles multiple uploads with low memory footprint
-app.post('/upload-final', upload.single('music'), async (req, res) => {
-    const { userId, title, author } = req.body;
-    const file = req.file;
-
-    if (!file || !userId) {
-        console.log("Upload failed: Missing file or userId");
-        return res.status(400).json({ error: 'Dosya bota ulaştırılamadı.' });
-    }
-
-    try {
-        console.log(`[${VERSION}] Sending ${title} to ${userId}`);
-
-        // Use stream for memory efficiency
-        const stream = fs.createReadStream(file.path);
-
-        await bot.sendAudio(userId, stream, {
-            title: title || 'Müzik',
-            performer: author || 'Global Ağ',
-            caption: `✅ *İşlem Başarılı!* \n📦 ${VERSION} altyapısı ile saniyeler içinde indirildi.`,
-            parse_mode: 'Markdown'
-        }, {
-            filename: `${title.substring(0, 30)}.mp3`,
-            contentType: 'audio/mpeg'
-        });
-
-        res.json({ success: true });
-
-        // Clean up after response
-        fs.unlink(file.path, (err) => { if (err) console.error("File delete error:", err); });
-
-    } catch (err) {
-        console.error('Bot Send Error:', err.message);
-        if (file) fs.unlinkSync(file.path);
-        res.status(500).json({ error: 'Bot katmanında bir sorun oluştu.' });
+        console.error('V11 Hatası:', err.message);
+        bot.sendMessage(userId, `❌ *Dönüştürme Hatası:* YouTube engeline takıldık veya dosya çok büyük.\nLütfen biraz sonra tekrar deneyin.`).catch(() => { });
+        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
     }
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`${VERSION} System Online on Port ${PORT} 🚀`));
+app.listen(PORT, () => console.log(`${VERSION} Aktif!`));
