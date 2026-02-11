@@ -69,7 +69,7 @@ app.get('/get-external-link', async (req, res) => {
                 const execPath = fs.existsSync(YTDLP_PATH) ? YTDLP_PATH : 'yt-dlp';
                 const args = {
                     getUrl: true,
-                    format: 'bestaudio[ext=m4a]/bestaudio',
+                    format: '140/bestaudio[ext=m4a]/bestaudio',
                     noCheckCertificates: true,
                     addHeader: [
                         `user-agent:${engine.client === 'ios' ? 'com.google.ios.youtube/19.01.1 (iPhone16,2; U; CPU iOS 17_2 like Mac OS X; en_US)' : 'Mozilla/5.0'}`,
@@ -124,7 +124,7 @@ app.get('/proxy', async (req, res) => {
             headers: { 'User-Agent': 'Mozilla/5.0' }
         });
 
-        res.setHeader('Content-Type', 'audio/mp4');
+        res.setHeader('Content-Type', 'audio/x-m4a');
         if (response.headers['content-length']) {
             res.setHeader('Content-Length', response.headers['content-length']);
         }
@@ -151,14 +151,15 @@ app.post('/upload-final', upload.single('music'), async (req, res) => {
         // Use stream for memory efficiency
         const stream = fs.createReadStream(file.path);
 
+        const safeTitle = (title || 'muzik').replace(/[^a-z0-9]/gi, '_').substring(0, 30);
         await bot.sendAudio(userId, stream, {
             title: title || 'Müzik',
             performer: author || 'Global Ağ',
             caption: `✅ *İşlem Başarılı!* \n📦 ${VERSION} altyapısı ile saniyeler içinde indirildi.`,
             parse_mode: 'Markdown'
         }, {
-            filename: `${title.substring(0, 30)}.m4a`,
-            contentType: 'audio/mp4'
+            filename: `${safeTitle}.m4a`,
+            contentType: 'audio/x-m4a'
         });
 
         res.json({ success: true });
