@@ -1,97 +1,169 @@
 const express = require('express');
-const TelegramBot = require('node-telegram-bot-api');
-const ytdl = require('@distube/ytdl-core');
-const ytsr = require('ytsr');
 const cors = require('cors');
-const path = require('path');
+const { Telegraf } = require('telegraf');
+const ytdl = require('ytdl-core');
+const ytSearch = require('yt-search');
 const fs = require('fs');
+const path = require('path');
+const axios = require('axios');
+const ffmpeg = require('fluent-ffmpeg');
+const ffmpegStatic = require('ffmpeg-static');
 
+// ========== KONFİG ==========
+const BOT_TOKEN = '5246489165:AAGhMleCadeh3bhtje1EBPY95yn2rDKH7KE';
 const app = express();
-app.use(express.json());
+const bot = new Telegraf(BOT_TOKEN);
+
+// ========== FFMPEG AYARI ==========
+ffmpeg.setFfmpegPath(ffmpegStatic);
+
+// ========== MIDDLEWARE ==========
 app.use(cors());
+app.use(express.json());
 
-// DİKKAT: Tokeninizi buraya yazın (Eskisini iptal edip yenisini alın!)
-const token = '5246489165:AAGhMleCadeh3bhtje1EBPY95yn2rDKH7KE';
-// Polling'i kaldırdık çünkü bot başka sunucuda çalışıyor. Burası sadece gönderme yapacak.
-const bot = new TelegramBot(token);
+// ========== DOWNLOAD KLASÖRÜ ==========
+const DOWNLOAD_DIR = path.join(__dirname, 'downloads');
+if (!fs.existsSync(DOWNLOAD_DIR)) {
+    fs.mkdirSync(DOWNLOAD_DIR);
+}
 
-// Frontend dosyasını sun
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
+// ========== API ENDPOINTS ==========
 
-// Arama API'si
+// 🔍 YOUTUBE ARAMA - İLK SONUCU DÖNDÜR
 app.get('/search', async (req, res) => {
     const query = req.query.q;
-    if (!query) return res.status(400).json({ error: 'Arama metni girilmedi' });
-
+    
+    if (!query) {
+        return res.status(400).json({ error: 'Arama kelimesi gerekli' });
+    }
+    
     try {
-        let videoData = null;
-
-        // Eğer direkt link ise
-        if (ytdl.validateURL(query)) {
-            const info = await ytdl.getBasicInfo(query);
-            videoData = {
+        // YouTube linki mi kontrol et
+        if (query.includes('youtube.com') || query.includes('youtu.be')) {
+            const info = await ytdl.getInfo(query);
+            return res.json([{
+                id: info.videoDetails.videoId,
                 title: info.videoDetails.title,
-                thumbnail: info.videoDetails.thumbnails[0].url,
-                url: info.videoDetails.video_url
-            };
-        } else {
-            // İsim ile arama yapılıyorsa
-            const searchResults = await ytsr(query, { limit: 10 });
-            const video = searchResults.items.find(item => item.type === 'video');
-
-            if (video) {
-                videoData = {
-                    title: video.title,
-                    thumbnail: video.bestThumbnail.url,
-                    url: video.url
-                };
-            }
+                url: query,
+                duration: parseInt(info.videoDetails.lengthSeconds),
+                thumbnail: info.videoDetails.thumbnails[0]?.url
+            }]);
         }
-
-        if (videoData) {
-            res.json(videoData);
-        } else {
-            res.status(404).json({ error: 'Bulunamadı' });
-        }
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: err.message });
+        
+        // Normal arama
+        const result = await ytSearch(query);
+        const videos = result.videos.slice(0, 5).map(video => ({
+            id: video.videoId,
+            title: video.title,
+            url: video.url,
+            duration: video.duration.seconds,
+            thumbnail: video.thumbnail
+        }));
+        
+        res.json(videos);
+        
+    } catch (error) {
+        console.error('Arama hatası:', error);
+        res.status(500).json({ error: error.message });
     }
 });
 
-// İndirme ve Gönderme API'si
+// ⬇️ MP3 İNDİR ve TELEGRAM'A GÖNDER
 app.post('/download', async (req, res) => {
-    const { url, userId } = req.body;
-    if (!url || !userId) return res.status(400).send('Eksik bilgi');
-
-    // Frontend'e hemen cevap ver, işlemi arkada yap
-    res.send({ status: 'started' });
-
+    const { url, userId, userName, userUsername } = req.body;
+    
+    if (!url || !userId) {
+        return res.status(400).json({ error: 'URL ve User ID gerekli' });
+    }
+    
     try {
+        // YouTube video bilgilerini al
         const info = await ytdl.getInfo(url);
         const title = info.videoDetails.title;
-        // Dosya ismini temizle
-        const safeTitle = title.replace(/[^a-z0-9]/gi, '_').substring(0, 50);
-        const filePath = path.join(__dirname, `${safeTitle}.mp3`);
-
-        await bot.sendMessage(userId, `⏳ "${title}" indiriliyor, lütfen bekleyin...`);
-
-        const stream = ytdl(url, { quality: 'highestaudio', filter: 'audioonly' });
-        const fileStream = fs.createWriteStream(filePath);
-
-        stream.pipe(fileStream);
-
-        fileStream.on('finish', async () => {
-            await bot.sendAudio(userId, filePath, { title: title, performer: info.videoDetails.author.name });
-            fs.unlinkSync(filePath); // Dosyayı sil
+        const safeTitle = title.replace(/[^\w\s]/gi, '_');
+        const fileName = `${safeTitle}-${Date.now()}.mp3`;
+        const filePath = path.join(DOWNLOAD_DIR, fileName);
+        
+        console.log(`📥 İndirme başladı: ${title}`);
+        
+        // MP3 indir ve dönüştür
+        const audioStream = ytdl(url, { quality: 'highestaudio' });
+        
+        await new Promise((resolve, reject) => {
+            ffmpeg(audioStream)
+                .audioBitrate(128)
+                .audioCodec('libmp3lame')
+                .format('mp3')
+                .on('end', resolve)
+                .on('error', reject)
+                .save(filePath);
         });
-
+        
+        console.log(`✅ MP3 hazır: ${fileName}`);
+        
+        // TELEGRAM'A GÖNDER
+        try {
+            await bot.telegram.sendAudio(
+                parseInt(userId),
+                { source: filePath },
+                {
+                    title: title,
+                    performer: 'YouTube Music',
+                    caption: `🎵 **${title}**\n\n` +
+                            `✅ Merhaba ${userName || 'Müzik Sever'}! Müziğin hazır.\n` +
+                            `📥 YouTube'dan indirildi.\n\n` +
+                            `🎧 Keyifli dinlemeler!`
+                }
+            );
+            
+            console.log(`📱 Telegram'a gönderildi: ${userId}`);
+            
+            // Dosyayı sil
+            fs.unlinkSync(filePath);
+            console.log(`🗑️ Dosya silindi: ${fileName}`);
+            
+            res.json({
+                success: true,
+                title: title
+            });
+            
+        } catch (telegramError) {
+            console.error('Telegram gönderme hatası:', telegramError);
+            
+            // Dosyayı temizle
+            if (fs.existsSync(filePath)) {
+                fs.unlinkSync(filePath);
+            }
+            
+            res.status(500).json({ error: 'Telegram\'a gönderilemedi: ' + telegramError.message });
+        }
+        
     } catch (error) {
-        bot.sendMessage(userId, '❌ Hata oluştu: ' + error.message);
+        console.error('İndirme hatası:', error);
+        res.status(500).json({ error: error.message });
     }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// 🔋 SAĞLIK KONTROLÜ
+app.get('/health', (req, res) => {
+    res.json({ 
+        status: 'active', 
+        service: 'Music Downloader API',
+        time: new Date().toISOString()
+    });
+});
+
+// ========== BOTU BAŞLAT ==========
+bot.launch()
+    .then(() => console.log('🤖 Telegram bot aktif!'))
+    .catch(err => console.error('Bot hatası:', err));
+
+// ========== SUNUCUYU BAŞLAT ==========
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+    console.log(`🚀 Server çalışıyor: http://localhost:${PORT}`);
+});
+
+// Graceful shutdown
+process.once('SIGINT', () => bot.stop('SIGINT'));
+process.once('SIGTERM', () => bot.stop('SIGTERM'));
