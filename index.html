@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexMusic v2.0 - Proxy</title>
+    <title>NexMusic V7 ULTRA - Multi Engine</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
@@ -106,6 +106,7 @@
             font-weight: 800;
             background: linear-gradient(to right, #818cf8, #c084fc);
             -webkit-background-clip: text;
+            background-clip: text;
             color: transparent;
         }
 
@@ -205,7 +206,6 @@
             line-height: 1.5;
         }
 
-        /* Error details box */
         #errBox {
             display: none;
             background: rgba(239, 68, 68, 0.1);
@@ -215,26 +215,27 @@
             margin-top: 15px;
             font-size: 11px;
             color: #f87171;
+        }
     </style>
 </head>
 
 <body>
     <div id="splash">
         <div class="ring"></div>
-        <p>ULTRA MOD AKTİF EDİLİYOR...</p>
+        <p>ULTRA MOTOR HAZIRLANIYOR...</p>
     </div>
 
     <div class="container" id="main">
         <div class="card">
-            <div class="version">V3.0 ULTRA</div>
+            <div class="version">V7.0 ULTRA</div>
             <div class="header">
                 <p id="welcome" style="font-size: 14px; color: #818cf8; margin-bottom: 5px;"></p>
                 <div class="logo">NexMusic</div>
-                <p style="font-size: 10px; color: #4ade80;">Bypass Bot Detection Enabled</p>
+                <p style="font-size: 10px; color: #4ade80;">Multi-Engine Bypass Active</p>
             </div>
 
             <input type="text" id="searchInput" placeholder="Şarkı adı veya YouTube linki...">
-            <button onclick="search()" id="searchBtn" class="btn btn-search">Buluş Başlat (V3)</button>
+            <button onclick="search()" id="searchBtn" class="btn btn-search">Müziği Bul (V7)</button>
 
             <div id="result" class="result">
                 <img id="thumb" class="thumb" src="" alt="">
@@ -250,16 +251,13 @@
                 <p id="status" class="status"></p>
                 <div id="errBox"></div>
             </div>
-
-            <p style="text-align:center; font-size:10px; color:rgba(255,255,255,0.2); margin-top:20px;">
-                Eğer indirme %0'da kalırsa sayfayı yenileyip tekrar deneyin.
-            </p>
         </div>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
+        tg.ready();
         const API_URL = 'https://saskioyunu-1.onrender.com';
         let currentVideo = null;
 
@@ -295,16 +293,16 @@
                     alert('Hata: Video bulunamadı.');
                 }
             } catch (e) {
-                alert('Sunucu hatası! Render uyanıyor olabilir, lütfen 10 saniye sonra tekrar deneyin.');
+                alert('Sunucu hatası! Render uyanıyor olabilir, bekleyin.');
             } finally {
-                btn.disabled = false; btn.innerText = 'Buluş Başlat';
+                btn.disabled = false; btn.innerText = 'Müziği Bul (V7)';
             }
         }
 
         async function download() {
             if (!currentVideo) return;
             const userId = tg.initDataUnsafe?.user?.id;
-            if (!userId) return alert('Kullanıcı ID alınamadı!');
+            if (!userId) return alert('Lütfen Telegram kullanın!');
 
             const btn = document.getElementById('downloadBtn');
             const prog = document.getElementById('prog');
@@ -312,22 +310,22 @@
             const status = document.getElementById('status');
             const errBox = document.getElementById('errBox');
 
-            btn.disabled = true; btn.innerText = 'V7 MOTORU AKTİF...';
+            btn.disabled = true; btn.innerText = 'MOTOR ÇALIŞIYOR...';
             prog.style.display = 'block'; fill.style.width = '0%';
-            status.innerText = 'Harici indirme motorları (y2mate/cobalt) sorgulanıyor...';
+            status.innerText = 'Harici motorlar üzerinden veri çekiliyor (V7 ULTRA)...';
             errBox.style.display = 'none';
 
             try {
-                // 1. Harici Motorlardan (y2mate alternatifi) Link Al
+                // 1. Harici Motor Linki
                 const linkRes = await fetch(`${API_URL}/get-external-link?url=${encodeURIComponent(currentVideo.url)}`);
                 const linkData = await linkRes.json();
                 if (linkData.error) throw new Error(linkData.error);
 
-                status.innerText = 'Harici motor üzerinden veri çekiliyor...';
+                status.innerText = 'Müzik tünelleniyor...';
 
-                // 2. Proxy üzerinden indir (Engelleri %100 aşar)
+                // 2. Proxy üzerinden indir
                 const fileRes = await fetch(`${API_URL}/proxy?url=${encodeURIComponent(linkData.downloadUrl)}`);
-                if (!fileRes.ok) throw new Error('Harici motor bağlantısı koptu.');
+                if (!fileRes.ok) throw new Error('Bağlantı koptu.');
 
                 const reader = fileRes.body.getReader();
                 const total = +fileRes.headers.get('Content-Length') || 0;
@@ -341,39 +339,34 @@
                     if (total) {
                         const pct = Math.round((loaded / total) * 100);
                         fill.style.width = pct + '%';
-                        status.innerText = `🔄 V7 Çoklu Motor İndirme: %${pct}`;
+                        status.innerText = `🔄 İndiriliyor: %${pct}`;
                     }
                 }
 
-                status.innerText = 'Dosya bota iletiliyor...';
+                status.innerText = 'Bota aktarılıyor...';
                 const blob = new Blob(chunks, { type: 'audio/mpeg' });
 
-                // 3. Botu Gönder
+                // 3. Bot Gönderimi
                 const form = new FormData();
                 form.append('music', blob, `music.mp3`);
                 form.append('userId', userId);
                 form.append('title', currentVideo.title);
                 form.append('author', currentVideo.author);
 
-                const upRes = await fetch(`${API_URL}/upload-final`, {
-                    method: 'POST',
-                    body: form
-                });
-
-                if (!upRes.ok) throw new Error('Bot gönderimi başarısız.');
+                const upRes = await fetch(`${API_URL}/upload-final`, { method: 'POST', body: form });
+                if (!upRes.ok) throw new Error('Bot gönderim hatası.');
 
                 status.style.color = '#4ade80';
-                status.innerText = '🚀 V7 BAŞARILI! Müzik botunuzda.';
+                status.innerText = '🚀 V7 BAŞARILI! Botu kontrol et.';
                 tg.HapticFeedback.notificationOccurred('success');
                 setTimeout(() => tg.close(), 3000);
 
             } catch (e) {
                 console.error(e);
                 status.innerText = '❌ V7 MOTOR HATASI!';
-                errBox.innerText = `🚨 Harici servisler cevap vermiyor.\nDetay: ${e.message}\nLütfen farklı bir şarkı veya link deneyin.`;
+                errBox.innerText = `Hata: ${e.message}`;
                 errBox.style.display = 'block';
-                btn.disabled = false; btn.innerText = 'V7 İLE TEKRAR DENE';
-                tg.HapticFeedback.notificationOccurred('error');
+                btn.disabled = false; btn.innerText = 'TEKRAR DENE';
             }
         }
     </script>
