@@ -1,15 +1,19 @@
-FROM python:3.10-slim
+FROM node:18
 
-# FFmpeg kur (Müzik indirmek için şart)
-RUN apt-get update && apt-get install -y ffmpeg && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
+    ffmpeg \
+    && pip3 install yt-dlp \
+    && ln -s /usr/local/bin/yt-dlp /usr/bin/yt-dlp
 
 WORKDIR /app
 
-# Kütüphaneleri kur
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY package*.json ./
+RUN npm install
 
 COPY . .
 
-# Uygulamayı başlat (Port 10000 Render için standarttır)
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "10000"]
+EXPOSE 5000
+
+CMD ["node", "server.js"]
