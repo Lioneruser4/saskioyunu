@@ -300,7 +300,7 @@
         async function download() {
             if (!currentVideo) return;
             const userId = tg.initDataUnsafe?.user?.id;
-            if (!userId) return alert('Lütfen Telegram kullanın!');
+            if (!userId) return alert('Kullanıcı ID alınamadı! Lütfen Telegram içinden açın.');
 
             const btn = document.getElementById('downloadBtn');
             const prog = document.getElementById('prog');
@@ -308,25 +308,21 @@
             const status = document.getElementById('status');
             const errBox = document.getElementById('errBox');
 
-            btn.disabled = true; btn.innerText = 'Sıraya Alındı...';
+            btn.disabled = true; btn.innerText = 'İşleniyor...';
             prog.style.display = 'block'; fill.style.width = '0%';
-            status.innerText = 'YouTube ile bağlantı kuruluyor...';
+            status.innerText = 'YouTube bağlantısı kuruluyor...';
             errBox.style.display = 'none';
 
             try {
-                // 1. Get Stream URL
+                // 1. Stream Linkini Al
                 const linkRes = await fetch(`${API_URL}/get-stream-url?url=${encodeURIComponent(currentVideo.url)}`);
                 const linkData = await linkRes.json();
-
                 if (linkData.error) throw new Error(linkData.error);
-                const streamUrl = linkData.streamUrl;
 
-                status.innerText = 'Cihazınıza güvenle indiriliyor...';
+                status.innerText = 'Dosya indiriliyor...';
 
-                // 2. Fetch data (CORS Proxy logic)
-                const fileRes = await fetch(streamUrl);
-                if (!fileRes.ok) throw new Error('YouTube dosyayı göndermeyi reddetti (CORS error).');
-
+                // 2. Tarayıcıda İndir
+                const fileRes = await fetch(linkData.streamUrl);
                 const reader = fileRes.body.getReader();
                 const total = +fileRes.headers.get('Content-Length') || 0;
                 let loaded = 0; let chunks = [];
@@ -343,27 +339,35 @@
                     }
                 }
 
-                status.innerText = 'Botunuza aktarılıyor, lütfen bekleyin...';
+                status.innerText = 'Bota gönderiliyor (Lütfen bekleyin)...';
                 const blob = new Blob(chunks, { type: 'audio/mpeg' });
 
-                // 3. Upload to Bot
+                // 3. Dosyayı Sunucuya Gönder (Bot burada devreye girer)
                 const form = new FormData();
-                form.append('music', blob, `${currentVideo.title}.mp3`);
+                form.append('music', blob, `music.mp3`);
                 form.append('userId', userId);
                 form.append('title', currentVideo.title);
                 form.append('author', currentVideo.author);
 
-                const upRes = await fetch(`${API_URL}/upload-to-telegram`, { method: 'POST', body: form });
-                if (!upRes.ok) throw new Error('Bot gönderimi başarısız oldu.');
+                const upRes = await fetch(`${API_URL}/upload-to-telegram`, {
+                    method: 'POST',
+                    body: form
+                });
 
-                status.innerText = '🚀 Müzik başarıyla gönderildi! Kapatılıyor...';
+                const upResult = await upRes.json();
+
+                if (!upRes.ok) {
+                    throw new Error(upResult.details || upResult.error || 'Dosya bota ulaştı ama gönderilemedi.');
+                }
+
+                status.innerText = '🚀 Müzik başarıyla gönderildi!';
                 tg.HapticFeedback.notificationOccurred('success');
-                setTimeout(() => tg.close(), 2500);
+                setTimeout(() => tg.close(), 3000);
 
             } catch (e) {
                 console.error(e);
-                status.innerText = '❌ Hata oluştu!';
-                errBox.innerText = `Detay: ${e.message}\n(Not: Bu hata genellikle YouTube'un site bazlı indirmeyi engellemesinden kaynaklanır.)`;
+                status.innerText = '❌ BİR HATA OLUŞTU!';
+                errBox.innerText = `⚠️ Hata Detayı: ${e.message}\n\n(Not: Eğer her şey tamamsa ama bot mesaj atmıyorsa, bota /start vermiş olduğunuzdan emin olun.)`;
                 errBox.style.display = 'block';
                 btn.disabled = false; btn.innerText = 'TEKRAR DENE';
                 tg.HapticFeedback.notificationOccurred('error');
