@@ -4,18 +4,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexMusic - YouTube Downloader</title>
+    <title>NexMusic v2.0 - Proxy</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary: #6366f1;
-            --primary-light: #818cf8;
             --bg: #0f172a;
-            --card-bg: rgba(30, 41, 59, 0.7);
+            --card: rgba(30, 41, 59, 0.8);
             --text: #f1f5f9;
-            --text-muted: #94a3b8;
-            --glow: rgba(99, 102, 241, 0.3);
         }
 
         * {
@@ -26,54 +23,36 @@
         }
 
         body {
-            background-color: var(--bg);
-            background-image:
-                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
-                radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.15) 0px, transparent 50%);
+            background: var(--bg);
             color: var(--text);
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
             padding: 20px;
-            overflow: hidden;
+            overflow-x: hidden;
         }
 
-        /* --- SPLASH SCREEN --- */
         #splash {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            inset: 0;
             background: var(--bg);
-            z-index: 9999;
+            z-index: 999;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            transition: opacity 0.8s ease, visibility 0.8s;
+            transition: 0.8s;
         }
 
-        .loader-ring {
-            width: 80px;
-            height: 80px;
-            border: 4px solid rgba(99, 102, 241, 0.1);
-            border-top: 4px solid var(--primary);
+        .ring {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(99, 102, 241, 0.1);
+            border-top-color: var(--primary);
             border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin-bottom: 20px;
-        }
-
-        .splash-text {
-            font-size: 20px;
-            font-weight: 600;
-            background: linear-gradient(to right, #818cf8, #c084fc);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            letter-spacing: 2px;
-            animation: pulse 1.5s ease-in-out infinite;
+            margin-bottom: 15px;
         }
 
         @keyframes spin {
@@ -82,263 +61,194 @@
             }
         }
 
-        @keyframes pulse {
-
-            0%,
-            100% {
-                opacity: 0.5;
-            }
-
-            50% {
-                opacity: 1;
-            }
-        }
-
-        /* --- MAIN CONTENT --- */
         .container {
             width: 100%;
-            max-width: 450px;
-            perspective: 1000px;
-            opacity: 0;
+            max-width: 440px;
             transform: translateY(20px);
-            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+            opacity: 0;
+            transition: 0.8s;
         }
 
-        .container.visible {
-            opacity: 1;
+        .container.active {
             transform: translateY(0);
+            opacity: 1;
         }
 
-        .glass-card {
-            background: var(--card-bg);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
+        .card {
+            background: var(--card);
+            backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 28px;
-            padding: 32px;
+            border-radius: 30px;
+            padding: 30px;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            position: relative;
+        }
+
+        .version {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 10px;
+            color: #6366f1;
+            font-weight: 800;
+            border: 1px solid #6366f1;
+            padding: 2px 6px;
+            border-radius: 5px;
         }
 
         .header {
             text-align: center;
-            margin-bottom: 32px;
-        }
-
-        .welcome-msg {
-            font-size: 14px;
-            color: var(--primary-light);
-            margin-bottom: 8px;
-            font-weight: 500;
-            opacity: 0;
-            transform: translateY(-10px);
-            animation: slideDown 0.5s forwards 1s;
-        }
-
-        @keyframes slideDown {
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            margin-bottom: 25px;
         }
 
         .logo {
-            font-size: 34px;
+            font-size: 32px;
             font-weight: 800;
             background: linear-gradient(to right, #818cf8, #c084fc);
             -webkit-background-clip: text;
-            background-clip: text;
             color: transparent;
-            margin-bottom: 4px;
-        }
-
-        .subtitle {
-            font-size: 13px;
-            color: var(--text-muted);
-            letter-spacing: 0.5px;
-        }
-
-        .search-box {
-            position: relative;
-            margin-bottom: 24px;
         }
 
         input {
             width: 100%;
-            padding: 18px 24px;
-            background: rgba(15, 23, 42, 0.5);
+            padding: 18px;
+            background: rgba(0, 0, 0, 0.2);
             border: 2px solid rgba(255, 255, 255, 0.05);
-            border-radius: 20px;
+            border-radius: 18px;
             color: white;
-            font-size: 16px;
-            transition: all 0.3s ease;
+            margin-bottom: 15px;
             outline: none;
+            transition: 0.3s;
         }
 
         input:focus {
             border-color: var(--primary);
-            box-shadow: 0 0 25px var(--glow);
-            background: rgba(15, 23, 42, 0.8);
+            background: rgba(0, 0, 0, 0.4);
         }
 
-        .btn-search {
+        .btn {
             width: 100%;
-            padding: 18px;
-            background: linear-gradient(135deg, var(--primary), #8b5cf6);
+            padding: 17px;
             border: none;
-            border-radius: 20px;
-            color: white;
-            font-weight: 600;
-            font-size: 16px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 12px;
-            box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.4);
-        }
-
-        .btn-search:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 20px 25px -5px rgba(99, 102, 241, 0.5);
-        }
-
-        .result-container {
-            margin-top: 32px;
-            display: none;
-            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        @keyframes popIn {
-            from {
-                opacity: 0;
-                transform: scale(0.9) translateY(20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: scale(1) translateY(0);
-            }
-        }
-
-        .result-card {
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 24px;
-            overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-        }
-
-        .thumbnail-container {
-            position: relative;
-            width: 100%;
-            padding-top: 56.25%;
-        }
-
-        .thumbnail-container img {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .result-info {
-            padding: 24px;
-        }
-
-        .result-title {
-            font-size: 17px;
-            font-weight: 600;
-            margin-bottom: 6px;
-            line-height: 1.4;
-        }
-
-        .result-author {
-            font-size: 14px;
-            color: var(--text-muted);
-            margin-bottom: 24px;
-        }
-
-        .btn-download {
-            width: 100%;
-            padding: 16px;
-            background: #10b981;
-            border: none;
-            border-radius: 16px;
+            border-radius: 18px;
             color: white;
             font-weight: 700;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: 0.3s;
             display: flex;
             justify-content: center;
             align-items: center;
             gap: 10px;
         }
 
-        .btn-download:hover {
-            background: #059669;
-            transform: scale(1.02);
+        .btn-search {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
         }
 
-        .spinner {
-            width: 22px;
-            height: 22px;
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            border-top-color: white;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            display: none;
-        }
-
-        .status-msg {
+        .btn-download {
+            background: #10b981;
             margin-top: 20px;
-            text-align: center;
-            font-size: 14px;
-            color: #10b981;
-            font-weight: 500;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .result {
+            margin-top: 25px;
             display: none;
+            animation: slideUp 0.5s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .thumb {
+            width: 100%;
+            border-radius: 20px;
+            margin-bottom: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .prog-bg {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            margin-top: 15px;
+            display: none;
+            overflow: hidden;
+        }
+
+        .prog-fill {
+            width: 0%;
+            height: 100%;
+            background: #10b981;
+            transition: 0.3s;
+        }
+
+        .status {
+            text-align: center;
+            font-size: 12px;
+            margin-top: 10px;
+            color: #94a3b8;
+            line-height: 1.5;
+        }
+
+        /* Error details box */
+        #errBox {
+            display: none;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid #ef4444;
+            border-radius: 12px;
+            padding: 10px;
+            margin-top: 15px;
+            font-size: 11px;
+            color: #f87171;
         }
     </style>
 </head>
 
 <body>
     <div id="splash">
-        <div class="loader-ring"></div>
-        <div class="splash-text">BAGLANILIYOR...</div>
+        <div class="ring"></div>
+        <p>SİSTEM HAZIRLANIYOR...</p>
     </div>
 
-    <div class="container" id="mainContainer">
-        <div class="glass-card">
+    <div class="container" id="main">
+        <div class="card">
+            <div class="version">V2.0 PROXY</div>
             <div class="header">
-                <div id="welcomeMsg" class="welcome-msg">Hoş geldin!</div>
+                <p id="welcome" style="font-size: 14px; color: #818cf8; margin-bottom: 5px;"></p>
                 <div class="logo">NexMusic</div>
-                <div class="subtitle">YouTube MP3 Downloader</div>
             </div>
 
-            <div class="search-box">
-                <input type="text" id="searchInput" placeholder="Şarkı ismi veya Link girin..." autocomplete="off">
-            </div>
+            <input type="text" id="searchInput" placeholder="Şarkı adı veya YouTube linki...">
+            <button onclick="search()" id="searchBtn" class="btn btn-search">Buluş Başlat</button>
 
-            <button onclick="search()" id="searchBtn" class="btn-search">
-                <div class="spinner" id="btnSpinner"></div>
-                <span id="btnText">Bul ve Hazırla</span>
-            </button>
+            <div id="result" class="result">
+                <img id="thumb" class="thumb" src="" alt="">
+                <h3 id="title" style="font-size: 16px;"></h3>
+                <p id="author" style="font-size: 13px; color: #94a3b8;"></p>
 
-            <div id="result" class="result-container">
-                <div class="result-card">
-                    <div class="thumbnail-container">
-                        <img id="thumb" src="" alt="Thumbnail">
-                    </div>
-                    <div class="result-info">
-                        <div id="title" class="result-title"></div>
-                        <div id="author" class="result-author"></div>
-                        <button onclick="download()" id="downloadBtn" class="btn-download">
-                            <span>⬇️ MP3 OLARAK İNDİR</span>
-                        </button>
-                    </div>
+                <button onclick="download()" id="downloadBtn" class="btn btn-download">⬇️ MP3 OLARAK İNDİR VE
+                    GÖNDER</button>
+
+                <div id="prog" class="prog-bg">
+                    <div id="fill" class="prog-fill"></div>
                 </div>
-                <div id="statusMsg" class="status-msg">İndirme başlatıldı! Botu kontrol et. 🚀</div>
+                <p id="status" class="status"></p>
+                <div id="errBox"></div>
             </div>
         </div>
     </div>
@@ -346,107 +256,119 @@
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
-        tg.ready();
-
         const API_URL = 'https://saskioyunu-1.onrender.com';
-        let currentUrl = '';
+        let currentVideo = null;
 
-        // Handle splash and greeting
-        window.addEventListener('load', () => {
-            const firstName = tg.initDataUnsafe?.user?.first_name || 'Müziksever';
-            document.getElementById('welcomeMsg').innerText = `Hoş geldin, ${firstName}! 👋`;
-
+        window.onload = () => {
+            const name = tg.initDataUnsafe?.user?.first_name || 'Müziksever';
+            document.getElementById('welcome').innerText = `Merhaba, ${name}!`;
             setTimeout(() => {
-                const splash = document.getElementById('splash');
-                const main = document.getElementById('mainContainer');
-                splash.style.opacity = '0';
-                splash.style.visibility = 'hidden';
-                main.classList.add('visible');
-            }, 2000);
-        });
+                document.getElementById('splash').style.opacity = '0';
+                setTimeout(() => document.getElementById('splash').style.visibility = 'hidden', 800);
+                document.getElementById('main').classList.add('active');
+            }, 1200);
+        };
 
         async function search() {
-            const query = document.getElementById('searchInput').value;
-            if (!query) return;
+            const q = document.getElementById('searchInput').value;
+            if (!q) return;
 
-            const btnText = document.getElementById('btnText');
-            const btnSpinner = document.getElementById('btnSpinner');
-            const resultDiv = document.getElementById('result');
-
-            btnText.innerText = 'Aranıyor...';
-            btnSpinner.style.display = 'block';
-            resultDiv.style.display = 'none';
+            const btn = document.getElementById('searchBtn');
+            btn.disabled = true; btn.innerText = 'Aranıyor...';
+            document.getElementById('result').style.display = 'none';
+            document.getElementById('errBox').style.display = 'none';
 
             try {
-                const res = await fetch(`${API_URL}/search?q=${encodeURIComponent(query)}`);
+                const res = await fetch(`${API_URL}/search?q=${encodeURIComponent(q)}`);
                 const data = await res.json();
-
-                if (data.error) {
-                    alert('Sonuç bulunamadı.');
-                } else {
-                    resultDiv.style.display = 'block';
+                if (data.url) {
+                    currentVideo = data;
                     document.getElementById('thumb').src = data.thumbnail;
                     document.getElementById('title').innerText = data.title;
                     document.getElementById('author').innerText = data.author;
-                    currentUrl = data.url;
-
-                    // Auto-scroll to result
-                    setTimeout(() => {
-                        resultDiv.scrollIntoView({ behavior: 'smooth' });
-                    }, 300);
+                    document.getElementById('result').style.display = 'block';
+                } else {
+                    alert('Hata: Video bulunamadı.');
                 }
             } catch (e) {
-                alert('Sunucuya bağlanılamadı. Tekrar deneyin.');
+                alert('Sunucu hatası! Render uyanıyor olabilir, lütfen 10 saniye sonra tekrar deneyin.');
             } finally {
-                btnText.innerText = 'Bul ve Hazırla';
-                btnSpinner.style.display = 'none';
+                btn.disabled = false; btn.innerText = 'Buluş Başlat';
             }
         }
 
         async function download() {
-            if (!currentUrl) return;
+            if (!currentVideo) return;
             const userId = tg.initDataUnsafe?.user?.id;
+            if (!userId) return alert('Lütfen Telegram kullanın!');
 
-            if (!userId) {
-                tg.showAlert("Hata: Kullanıcı ID alınamadı!");
-                return;
-            }
+            const btn = document.getElementById('downloadBtn');
+            const prog = document.getElementById('prog');
+            const fill = document.getElementById('fill');
+            const status = document.getElementById('status');
+            const errBox = document.getElementById('errBox');
 
-            const downloadBtn = document.getElementById('downloadBtn');
-            const statusMsg = document.getElementById('statusMsg');
-
-            downloadBtn.disabled = true;
-            downloadBtn.style.opacity = '0.5';
-            downloadBtn.innerText = '⌛ Bot Hazırlıyor...';
+            btn.disabled = true; btn.innerText = 'Sıraya Alındı...';
+            prog.style.display = 'block'; fill.style.width = '0%';
+            status.innerText = 'YouTube ile bağlantı kuruluyor...';
+            errBox.style.display = 'none';
 
             try {
-                await fetch(`${API_URL}/download`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ url: currentUrl, userId: userId })
-                });
+                // 1. Get Stream URL
+                const linkRes = await fetch(`${API_URL}/get-stream-url?url=${encodeURIComponent(currentVideo.url)}`);
+                const linkData = await linkRes.json();
 
-                statusMsg.style.display = 'block';
+                if (linkData.error) throw new Error(linkData.error);
+                const streamUrl = linkData.streamUrl;
+
+                status.innerText = 'Cihazınıza güvenle indiriliyor...';
+
+                // 2. Fetch data (CORS Proxy logic)
+                const fileRes = await fetch(streamUrl);
+                if (!fileRes.ok) throw new Error('YouTube dosyayı göndermeyi reddetti (CORS error).');
+
+                const reader = fileRes.body.getReader();
+                const total = +fileRes.headers.get('Content-Length') || 0;
+                let loaded = 0; let chunks = [];
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    chunks.push(value);
+                    loaded += value.length;
+                    if (total) {
+                        const pct = Math.round((loaded / total) * 100);
+                        fill.style.width = pct + '%';
+                        status.innerText = `İndiriliyor: %${pct}`;
+                    }
+                }
+
+                status.innerText = 'Botunuza aktarılıyor, lütfen bekleyin...';
+                const blob = new Blob(chunks, { type: 'audio/mpeg' });
+
+                // 3. Upload to Bot
+                const form = new FormData();
+                form.append('music', blob, `${currentVideo.title}.mp3`);
+                form.append('userId', userId);
+                form.append('title', currentVideo.title);
+                form.append('author', currentVideo.author);
+
+                const upRes = await fetch(`${API_URL}/upload-to-telegram`, { method: 'POST', body: form });
+                if (!upRes.ok) throw new Error('Bot gönderimi başarısız oldu.');
+
+                status.innerText = '🚀 Müzik başarıyla gönderildi! Kapatılıyor...';
                 tg.HapticFeedback.notificationOccurred('success');
-
-                setTimeout(() => {
-                    tg.close();
-                }, 3500);
+                setTimeout(() => tg.close(), 2500);
 
             } catch (e) {
-                alert('Hata oluştu.');
-                downloadBtn.disabled = false;
-                downloadBtn.style.opacity = '1';
-                downloadBtn.innerText = '⬇️ MP3 OLARAK İNDİR';
+                console.error(e);
+                status.innerText = '❌ Hata oluştu!';
+                errBox.innerText = `Detay: ${e.message}\n(Not: Bu hata genellikle YouTube'un site bazlı indirmeyi engellemesinden kaynaklanır.)`;
+                errBox.style.display = 'block';
+                btn.disabled = false; btn.innerText = 'TEKRAR DENE';
+                tg.HapticFeedback.notificationOccurred('error');
             }
         }
-
-        document.getElementById('searchInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                search();
-                tg.HapticFeedback.impactOccurred('light');
-            }
-        });
     </script>
 </body>
 
