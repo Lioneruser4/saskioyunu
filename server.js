@@ -92,12 +92,16 @@ app.get('/get-external-link', async (req, res) => {
                     throw new Error('Invalid output format');
                 }
             } else if (engine.type === 'invidious') {
-                const videoId = url.split('v=')[1]?.split('&')[0] || url.split('/').pop();
+                const videoId = url.split('v=')[1]?.split('&')[0] || url.split('/').pop().split('?')[0];
                 const instance = engine.instance || 'https://invidious.projectsegfau.lt';
-                const testUrl = `${instance}/latest_version?id=${videoId}&itag=140`;
+                // Using itag 140 (M4A) or itag 22 (720p) often provides more stable direct links on Invidious
+                const testUrl = `${instance}/latest_version?id=${videoId}&itag=140&local=true`;
                 return { downloadUrl: testUrl, engine: engine.name };
             }
-        } catch (e) { throw e; }
+        } catch (e) {
+            console.error(`[Engine ${engine.name}] Error:`, e.message);
+            throw e;
+        }
     };
 
     try {
@@ -120,8 +124,12 @@ app.get('/proxy', async (req, res) => {
             method: 'get',
             url: targetUrl,
             responseType: 'stream',
-            timeout: 120000, // 2 mins timeout for slow downloads
-            headers: { 'User-Agent': 'Mozilla/5.0' }
+            timeout: 120000,
+            maxRedirects: 10,
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Referer': 'https://www.youtube.com/'
+            }
         });
 
         res.setHeader('Content-Type', 'audio/mpeg');
