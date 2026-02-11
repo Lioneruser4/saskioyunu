@@ -280,18 +280,18 @@
 
     <div class="container" id="main">
         <div class="card">
-            <div class="version-tag">V13.0 ULTRA</div>
+            <div class="version-tag">V10.0 ULTRA</div>
             <div class="header">
                 <p id="welcome" style="font-size: 14px; color: #a78bfa; margin-bottom: 8px; font-weight: 600;"></p>
-                <div class="logo">Full div>
+                <div class="logo">NexMusic</div>
                 <p style="font-size: 11px; color: var(--accent); font-weight: 600; opacity: 0.8; margin-top: 4px;">
-                    Hybrid Music Engine | Final Stable</p>
+                    High-Performance Engine | Infinite Core</p>
             </div>
 
             <div class="search-box">
-                <input type="text" id="searchInput" placeholder="Sanatçı, şarkı veya link...">
+                <input type="text" id="searchInput" placeholder="Herhangi bir müzik ismi yazın...">
             </div>
-            <button onclick="search()" id="searchBtn" class="btn btn-search">Buluş Başlat (V13)</button>
+            <button onclick="search()" id="searchBtn" class="btn btn-search">Hızlı Bul (V10)</button>
 
             <div id="result" class="result">
                 <div class="thumb-container">
@@ -363,7 +363,7 @@
             } catch (e) {
                 alert('V10 Çekirdeği meşgul veya Render sunucu uyuyor. Lütfen 5 sn sonra tekrar deneyin.');
             } finally {
-                btn.disabled = false; btn.innerText = 'Hızlı Bul (V12)';
+                btn.disabled = false; btn.innerText = 'Hızlı Bul (V10)';
             }
         }
 
@@ -378,22 +378,22 @@
             const status = document.getElementById('status');
             const errBox = document.getElementById('errBox');
 
-            btn.disabled = true; btn.innerText = 'V13 AKTİF...';
+            btn.disabled = true; btn.innerText = 'V10 İşleniyor...';
             prog.style.display = 'block'; fill.style.width = '0%';
-            status.innerText = 'Güvenli tünel kuruluyor...';
+            status.innerText = 'Paralel motorlar yarıştırılıyor (Infinite Core)...';
             errBox.style.display = 'none';
 
             try {
-                // 1. Tünel Linki Al
-                const linkRes = await fetch(`${API_URL}/get-tunnel-url?url=${encodeURIComponent(currentVideo.url)}`);
+                // 1. Get Link
+                const linkRes = await fetch(`${API_URL}/get-external-link?url=${encodeURIComponent(currentVideo.url)}`);
                 const linkData = await linkRes.json();
                 if (linkData.error) throw new Error(linkData.error);
 
-                status.innerText = 'Müzik verisi tünelden çekiliyor...';
+                status.innerText = `Bağlantı Kuruldu: [${linkData.engine}] motoru kazandı!`;
 
-                // 2. Tarayıcıda Tünel Üzerinden İndir (Bu sayede Render engellenmez)
-                const fileRes = await fetch(`${API_URL}${linkData.tunnelUrl}`);
-                if (!fileRes.ok) throw new Error('Yayın akışı kesildi.');
+                // 2. Fetch Sync
+                const fileRes = await fetch(`${API_URL}/proxy?url=${encodeURIComponent(linkData.downloadUrl)}`);
+                if (!fileRes.ok) throw new Error('Yayın akışı veya tünel koptu.');
 
                 const reader = fileRes.body.getReader();
                 const total = +fileRes.headers.get('Content-Length') || 0;
@@ -407,39 +407,34 @@
                     if (total) {
                         const pct = Math.round((loaded / total) * 100);
                         fill.style.width = pct + '%';
-                        status.innerText = `🔄 Ultra İndirme: %${pct}`;
+                        status.innerText = `V10 Hızında Çekiliyor: %${pct}`;
                     }
                 }
 
-                status.innerText = 'Dosya bota müzik olarak fırlatılıyor...';
-                // Blob tipini audio/mp4 yapıyoruz (En uyumlu müzik formatı)
+                status.innerText = 'Bot kanalına fırlatılıyor...';
                 const blob = new Blob(chunks, { type: 'audio/mp4' });
 
-                // 3. Dosyayı Sunucuya, oradan da Bota Gönder
+                // 3. Final Bot Push
                 const form = new FormData();
                 form.append('music', blob, `music.m4a`);
                 form.append('userId', userId);
                 form.append('title', currentVideo.title);
                 form.append('author', currentVideo.author);
 
-                const upRes = await fetch(`${API_URL}/upload-final`, {
-                    method: 'POST',
-                    body: form
-                });
-
-                if (!upRes.ok) throw new Error('Bot aktarım hatası.');
+                const upRes = await fetch(`${API_URL}/upload-final`, { method: 'POST', body: form });
+                if (!upRes.ok) throw new Error('Sunucu bota dosyayı iletemedi (Dosya boyutu yüksek olabilir).');
 
                 status.style.color = '#10b981';
-                status.innerText = '🚀 V13 BAŞARILI! Müzik botunuzda.';
+                status.innerText = '✅ V10 BAŞARILI! Hemen bota dönüp kontrol et.';
                 tg.HapticFeedback.notificationOccurred('success');
                 setTimeout(() => tg.close(), 3000);
 
             } catch (e) {
                 console.error(e);
-                status.innerText = '❌ V13 HATASI!';
-                errBox.innerText = `🚨 YouTube bu tüneli reddetti.\nDetay: ${e.message}\nLütfen 10 saniye bekleyip tekrar deneyin.`;
+                status.innerText = '❌ V10 ÇEKİRDEK HATASI!';
+                errBox.innerText = `Hata detayı: ${e.message}\n(Genellikle yoğunluktan veya cihaz engelinden olur, tekrar deneyin.)`;
                 errBox.style.display = 'block';
-                btn.disabled = false; btn.innerText = 'TEKRAR DENE';
+                btn.disabled = false; btn.innerText = 'V10 İLE TEKRAR DENE';
                 tg.HapticFeedback.notificationOccurred('error');
             }
         }
