@@ -28,11 +28,11 @@ const VERSION = "V10 ULTRA - INFINITE CORE";
 
 // --- GLOBAL ENGINE REPOSITORY (API-FREE) ---
 const ENGINES = [
+    { name: 'Primary Invidious', type: 'invidious', instance: 'https://invidious.flokinet.is' },
+    { name: 'Secondary Invidious', type: 'invidious', instance: 'https://inv.vern.cc' },
     { name: 'Core Alpha (iOS)', type: 'ytdlp', client: 'ios' },
     { name: 'Core Beta (Android)', type: 'ytdlp', client: 'android' },
-    { name: 'Core Gamma (Web)', type: 'ytdlp', client: 'web' },
-    { name: 'Secondary Invidious', type: 'invidious', instance: 'https://invidious.flokinet.is' },
-    { name: 'Tertiary Invidious', type: 'invidious', instance: 'https://inv.vern.cc' }
+    { name: 'Core Gamma (Web)', type: 'ytdlp', client: 'web' }
 ];
 
 app.get('/', (req, res) => res.send(`NexMusic ${VERSION} is active! Running on High-Performance mode. ⚡`));
@@ -94,8 +94,7 @@ app.get('/get-external-link', async (req, res) => {
             } else if (engine.type === 'invidious') {
                 const videoId = url.split('v=')[1]?.split('&')[0] || url.split('/').pop().split('?')[0];
                 const instance = engine.instance || 'https://invidious.projectsegfau.lt';
-                // Using itag 140 (M4A) or itag 22 (720p) often provides more stable direct links on Invidious
-                const testUrl = `${instance}/latest_version?id=${videoId}&itag=140&local=true`;
+                const testUrl = `${instance}/latest_version?id=${videoId}&itag=140`;
                 return { downloadUrl: testUrl, engine: engine.name };
             }
         } catch (e) {
