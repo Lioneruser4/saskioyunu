@@ -274,24 +274,24 @@
 <body>
     <div id="splash">
         <div class="ring"></div>
-        <p style="margin-top:20px; font-weight:600; font-size:14px; letter-spacing:1px; color:var(--primary);">GLOBAL
-            MUSIC NETWORK</p>
+        <p style="margin-top:20px; font-weight:600; font-size:14px; letter-spacing:1px; color:var(--primary);">V10
+            INFINITE CORE AKTİF EDİLİYOR...</p>
     </div>
 
     <div class="container" id="main">
         <div class="card">
-            <div class="version-tag">V9.0 ULTRA</div>
+            <div class="version-tag">V10.0 ULTRA</div>
             <div class="header">
                 <p id="welcome" style="font-size: 14px; color: #a78bfa; margin-bottom: 8px; font-weight: 600;"></p>
                 <div class="logo">NexMusic</div>
                 <p style="font-size: 11px; color: var(--accent); font-weight: 600; opacity: 0.8; margin-top: 4px;">
-                    Global Search & Audio Sync</p>
+                    High-Performance Engine | Infinite Core</p>
             </div>
 
             <div class="search-box">
-                <input type="text" id="searchInput" placeholder="Sanatçı, şarkı veya link...">
+                <input type="text" id="searchInput" placeholder="Herhangi bir müzik ismi yazın...">
             </div>
-            <button onclick="search()" id="searchBtn" class="btn btn-search">Müziği Ara</button>
+            <button onclick="search()" id="searchBtn" class="btn btn-search">Hızlı Bul (V10)</button>
 
             <div id="result" class="result">
                 <div class="thumb-container">
@@ -300,7 +300,8 @@
                 <h3 id="title" style="font-size: 18px; font-weight: 700; margin-bottom: 4px; line-height: 1.3;"></h3>
                 <p id="author" style="font-size: 14px; color: #9ca3af; font-weight: 500;"></p>
 
-                <button onclick="download()" id="downloadBtn" class="btn btn-download">⚡ DOSYAYI AL VE BOTA AT</button>
+                <button onclick="download()" id="downloadBtn" class="btn btn-download">⚡ ULTRA HIZDA İNDİR VE BOTA
+                    AT</button>
 
                 <div id="prog" class="prog-bar">
                     <div id="fill" class="prog-fill"></div>
@@ -342,7 +343,7 @@
             if (!q) return;
 
             const btn = document.getElementById('searchBtn');
-            btn.disabled = true; btn.innerText = 'Global Ağ Taranıyor...';
+            btn.disabled = true; btn.innerText = 'V10 Ağ Taranıyor...';
             document.getElementById('result').style.display = 'none';
             document.getElementById('errBox').style.display = 'none';
 
@@ -360,9 +361,9 @@
                     alert('Hata: Müzik bulunamadı.');
                 }
             } catch (e) {
-                alert('Sunucuya ulaşılamıyor. Lütfen az sonra tekrar deneyin.');
+                alert('V10 Çekirdeği meşgul veya Render sunucu uyuyor. Lütfen 5 sn sonra tekrar deneyin.');
             } finally {
-                btn.disabled = false; btn.innerText = 'Müziği Ara';
+                btn.disabled = false; btn.innerText = 'Hızlı Bul (V10)';
             }
         }
 
@@ -377,9 +378,9 @@
             const status = document.getElementById('status');
             const errBox = document.getElementById('errBox');
 
-            btn.disabled = true; btn.innerText = 'Ağdan Çekiliyor...';
+            btn.disabled = true; btn.innerText = 'V10 İşleniyor...';
             prog.style.display = 'block'; fill.style.width = '0%';
-            status.innerText = 'Küresel müzik tüneli kuruluyor...';
+            status.innerText = 'Paralel motorlar yarıştırılıyor (Infinite Core)...';
             errBox.style.display = 'none';
 
             try {
@@ -388,11 +389,11 @@
                 const linkData = await linkRes.json();
                 if (linkData.error) throw new Error(linkData.error);
 
-                status.innerText = `Bağlantı başarılı: [${linkData.engine}] üzerinden çekiliyor...`;
+                status.innerText = `Bağlantı Kuruldu: [${linkData.engine}] motoru kazandı!`;
 
                 // 2. Fetch Sync
                 const fileRes = await fetch(`${API_URL}/proxy?url=${encodeURIComponent(linkData.downloadUrl)}`);
-                if (!fileRes.ok) throw new Error('Veri akışı kesildi.');
+                if (!fileRes.ok) throw new Error('Yayın akışı veya tünel koptu.');
 
                 const reader = fileRes.body.getReader();
                 const total = +fileRes.headers.get('Content-Length') || 0;
@@ -406,7 +407,7 @@
                     if (total) {
                         const pct = Math.round((loaded / total) * 100);
                         fill.style.width = pct + '%';
-                        status.innerText = `Hazırlanıyor: %${pct}`;
+                        status.innerText = `V10 Hızında Çekiliyor: %${pct}`;
                     }
                 }
 
@@ -421,19 +422,19 @@
                 form.append('author', currentVideo.author);
 
                 const upRes = await fetch(`${API_URL}/upload-final`, { method: 'POST', body: form });
-                if (!upRes.ok) throw new Error('Sunucu bota dosyayı iletemedi.');
+                if (!upRes.ok) throw new Error('Sunucu bota dosyayı iletemedi (Dosya boyutu yüksek olabilir).');
 
                 status.style.color = '#10b981';
-                status.innerText = '✅ BAŞARILI! Hemen bota dönüp kontrol et.';
+                status.innerText = '✅ V10 BAŞARILI! Hemen bota dönüp kontrol et.';
                 tg.HapticFeedback.notificationOccurred('success');
                 setTimeout(() => tg.close(), 3000);
 
             } catch (e) {
                 console.error(e);
-                status.innerText = '❌ V9 AĞ HATASI!';
-                errBox.innerText = `Hata detayı: ${e.message}\n(Genellikle yoğunluktan olur, 10sn bekleyip tekrar basın.)`;
+                status.innerText = '❌ V10 ÇEKİRDEK HATASI!';
+                errBox.innerText = `Hata detayı: ${e.message}\n(Genellikle yoğunluktan veya cihaz engelinden olur, tekrar deneyin.)`;
                 errBox.style.display = 'block';
-                btn.disabled = false; btn.innerText = 'V9 İLE TEKRAR DENE';
+                btn.disabled = false; btn.innerText = 'V10 İLE TEKRAR DENE';
                 tg.HapticFeedback.notificationOccurred('error');
             }
         }
