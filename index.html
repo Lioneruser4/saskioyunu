@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexMusic v4.0 - Proxy</title>
+    <title>NexMusic v2.0 - Proxy</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
@@ -312,21 +312,20 @@
             const status = document.getElementById('status');
             const errBox = document.getElementById('errBox');
 
-            btn.disabled = true; btn.innerText = 'TÜNEL KURULUYOR...';
+            btn.disabled = true; btn.innerText = 'V6 ULTRA AKTİF...';
             prog.style.display = 'block'; fill.style.width = '0%';
-            status.innerText = 'YouTube engeli aşılıyor (Tünel modu)...';
+            status.innerText = 'YouTube mobil hattı üzerinden bağlanılıyor...';
             errBox.style.display = 'none';
 
             try {
-                // 1. Get the Tunnel URL from Server
+                // 1. Sunucudan Mobil Stream Tüneli Al
                 const linkRes = await fetch(`${API_URL}/get-tunnel-url?url=${encodeURIComponent(currentVideo.url)}`);
                 const linkData = await linkRes.json();
                 if (linkData.error) throw new Error(linkData.error);
 
-                status.innerText = 'Müzik sunucu tünelinden çekiliyor...';
+                status.innerText = 'Sınırsız tünel üzerinden indiriliyor...';
 
-                // 2. Fetch through our Proxy (Same domain = NO CORS ERROR)
-                // linkData.tunnelUrl is something like "/proxy?url=..."
+                // 2. Tünel üzerinden indir (CORS ve IP engelini aşar)
                 const fileRes = await fetch(`${API_URL}${linkData.tunnelUrl}`);
                 if (!fileRes.ok) throw new Error('Tünel bağlantısı koptu.');
 
@@ -342,14 +341,14 @@
                     if (total) {
                         const pct = Math.round((loaded / total) * 100);
                         fill.style.width = pct + '%';
-                        status.innerText = `🔄 Güvenli İndirme: %${pct}`;
+                        status.innerText = `🔄 V6 ULTRA İndirme: %${pct}`;
                     }
                 }
 
-                status.innerText = 'Bota aktarılıyor, son adım...';
+                status.innerText = 'Sunucu bota aktarıyor, sayfayı kapatabilirsiniz...';
                 const blob = new Blob(chunks, { type: 'audio/mpeg' });
 
-                // 3. Send final file to Bot
+                // 3. Dosyayı Sunucuya, oradan da Bota Gönder
                 const form = new FormData();
                 form.append('music', blob, `music.mp3`);
                 form.append('userId', userId);
@@ -361,19 +360,19 @@
                     body: form
                 });
 
-                if (!upRes.ok) throw new Error('Bot gönderimi başarısız oldu.');
+                if (!upRes.ok) throw new Error('Bot aktarım hatası.');
 
                 status.style.color = '#4ade80';
-                status.innerText = '🚀 BAŞARILI! Müzik botta.';
+                status.innerText = '🚀 BAŞARILI! Botunu kontrol et.';
                 tg.HapticFeedback.notificationOccurred('success');
                 setTimeout(() => tg.close(), 3000);
 
             } catch (e) {
                 console.error(e);
-                status.innerText = '❌ TÜNEL HATASI!';
-                errBox.innerText = `🚨 YouTube bu yöntemi de fark etti veya sunucu çok yoğun.\nHata: ${e.message}`;
+                status.innerText = '❌ V6 HATASI!';
+                errBox.innerText = `🚨 YouTube bu tüneli de kapattı.\nDetay: ${e.message}\nLütfen 1 dakika bekleyip tekrar deneyin.`;
                 errBox.style.display = 'block';
-                btn.disabled = false; btn.innerText = 'TEKRAR DENE';
+                btn.disabled = false; btn.innerText = 'V6 İLE TEKRAR DENE';
                 tg.HapticFeedback.notificationOccurred('error');
             }
         }
