@@ -1,313 +1,372 @@
 <!DOCTYPE html>
-<html>
+<html lang="tr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎵 YouTube MP3 İndirici</title>
+    <title>NexMusic - YouTube Downloader</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #6366f1;
+            --primary-light: #818cf8;
+            --bg: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --glow: rgba(99, 102, 241, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', sans-serif;
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #0a0c10;
-            color: white;
-            padding: 20px;
-        }
-        .container {
-            max-width: 500px;
-            margin: 0 auto;
-            background: #161c22;
-            border-radius: 24px;
-            padding: 24px;
-        }
-        h1 { text-align: center; margin-bottom: 24px; color: #fff; }
-        .user-info {
-            background: #1e262e;
-            border-radius: 16px;
-            padding: 16px;
-            margin-bottom: 24px;
+            background-color: var(--bg);
+            background-image:
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.15) 0px, transparent 50%);
+            color: var(--text);
+            min-height: 100vh;
             display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        .avatar {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            background: #2b86ff;
-            display: flex;
-            align-items: center;
             justify-content: center;
-            font-size: 24px;
+            align-items: center;
+            padding: 20px;
+            overflow-x: hidden;
         }
+
+        .container {
+            width: 100%;
+            max-width: 450px;
+            perspective: 1000px;
+        }
+
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 32px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(30px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .logo {
+            font-size: 32px;
+            font-weight: 800;
+            background: linear-gradient(to right, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
+        }
+
         .search-box {
-            background: #1e262e;
-            border-radius: 16px;
-            display: flex;
-            margin-bottom: 16px;
+            position: relative;
+            margin-bottom: 24px;
         }
+
         input {
-            flex: 1;
-            background: transparent;
-            border: none;
-            padding: 16px;
+            width: 100%;
+            padding: 16px 20px;
+            background: rgba(15, 23, 42, 0.5);
+            border: 2px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
             color: white;
             font-size: 16px;
+            transition: all 0.3s ease;
             outline: none;
         }
-        .btn {
-            background: #2b86ff;
-            border: none;
-            border-radius: 14px;
+
+        input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 20px var(--glow);
+            background: rgba(15, 23, 42, 0.8);
+        }
+
+        .btn-search {
+            width: 100%;
             padding: 16px;
+            background: linear-gradient(135deg, var(--primary), #8b5cf6);
+            border: none;
+            border-radius: 16px;
             color: white;
             font-weight: 600;
-            width: 100%;
+            font-size: 16px;
             cursor: pointer;
-            margin-bottom: 10px;
-        }
-        .btn-green { background: #00b09b; }
-        .result {
-            background: #1e262e;
-            border-radius: 16px;
-            padding: 20px;
-            margin-top: 20px;
-            display: none;
-        }
-        .result.active { display: block; }
-        .video-info {
+            transition: all 0.3s ease;
             display: flex;
-            gap: 16px;
-            margin-bottom: 16px;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.4);
         }
-        .thumb {
-            width: 80px;
-            height: 80px;
-            border-radius: 12px;
-            background: #2a3440;
+
+        .btn-search:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 25px -5px rgba(99, 102, 241, 0.5);
         }
-        .thumb img {
+
+        .btn-search:active {
+            transform: translateY(0);
+        }
+
+        .result-container {
+            margin-top: 32px;
+            display: none;
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .result-card {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .thumbnail-container {
+            position: relative;
+            width: 100%;
+            padding-top: 56.25%;
+            /* 16:9 Aspect Ratio */
+        }
+
+        .thumbnail-container img {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
-            border-radius: 12px;
             object-fit: cover;
         }
-        .loading {
-            text-align: center;
-            padding: 30px;
-            display: none;
+
+        .result-info {
+            padding: 20px;
         }
-        .loading.active { display: block; }
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid #2a3440;
-            border-top: 3px solid #2b86ff;
+
+        .result-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .result-author {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+
+        .btn-download {
+            width: 100%;
+            padding: 14px;
+            background: #10b981;
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-download:hover {
+            background: #059669;
+            transform: scale(1.02);
+        }
+
+        .loading-spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
             border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 16px;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .success {
-            background: rgba(0, 176, 155, 0.1);
-            border-radius: 16px;
-            padding: 24px;
-            text-align: center;
-            margin-top: 20px;
+            animation: spin 0.8s linear infinite;
             display: none;
         }
-        .success.active { display: block; }
-        .success-icon { font-size: 48px; margin-bottom: 12px; }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .status-msg {
+            margin-top: 16px;
+            text-align: center;
+            font-size: 13px;
+            color: #10b981;
+            display: none;
+        }
     </style>
 </head>
+
 <body>
     <div class="container">
-        <h1>🎵 MP3 İndirici</h1>
-        
-        <div id="userInfo" class="user-info">
-            <div id="avatar" class="avatar">👤</div>
-            <div>
-                <div id="userName" style="font-weight: 600;">Yüklənir...</div>
-                <div id="userId" style="color: #8e9aaf; font-size: 13px;"></div>
+        <div class="glass-card">
+            <div class="header">
+                <div class="logo">NexMusic</div>
+                <div class="subtitle">YouTube MP3 Downloader v2026</div>
             </div>
-        </div>
-        
-        <div class="search-box">
-            <input type="text" id="query" placeholder="Mahnı adı və ya YouTube linki..." autofocus>
-        </div>
-        
-        <button class="btn" onclick="searchMusic()">🔍 YouTube'da Axtar</button>
-        
-        <div id="loading" class="loading">
-            <div class="spinner"></div>
-            <div id="loadingText">Axtarılır...</div>
-        </div>
-        
-        <div id="result" class="result">
-            <div class="video-info">
-                <div id="thumbnail" class="thumb">🎵</div>
-                <div style="flex: 1;">
-                    <div id="videoTitle" style="font-weight: 600; margin-bottom: 5px;"></div>
-                    <div id="videoChannel" style="color: #8e9aaf; font-size: 14px;"></div>
-                    <div id="videoDuration" style="color: #8e9aaf; font-size: 12px; margin-top: 5px;"></div>
+
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Şarkı ismi veya Link girin..." autocomplete="off">
+            </div>
+
+            <button onclick="search()" id="searchBtn" class="btn-search">
+                <span class="loading-spinner" id="btnSpinner"></span>
+                <span id="btnText">Müziği Bul</span>
+            </button>
+
+            <div id="result" class="result-container">
+                <div class="result-card">
+                    <div class="thumbnail-container">
+                        <img id="thumb" src="" alt="Thumbnail">
+                    </div>
+                    <div class="result-info">
+                        <div id="title" class="result-title"></div>
+                        <div id="author" class="result-author"></div>
+                        <button onclick="download()" id="downloadBtn" class="btn-download">
+                            <span>⬇️ MP3 Olarak İndir</span>
+                        </button>
+                    </div>
                 </div>
+                <div id="statusMsg" class="status-msg">İşlem başlatıldı! Bot üzerinden takip edin.</div>
             </div>
-            <button class="btn btn-green" onclick="downloadMP3()">📥 MP3 İndir və Göndər</button>
-        </div>
-        
-        <div id="success" class="success">
-            <div class="success-icon">✅</div>
-            <div style="font-size: 18px; font-weight: 600; margin-bottom: 5px;">MP3 Göndərildi!</div>
-            <div id="successMessage" style="color: #b0c4de;">Telegram'ı yoxlayın 📲</div>
         </div>
     </div>
 
     <script>
-        let telegramId = null;
-        let currentVideo = null;
-        
-        // Telegram WebApp
-        try {
-            if (window.Telegram && Telegram.WebApp) {
-                Telegram.WebApp.ready();
-                Telegram.WebApp.expand();
-                const user = Telegram.WebApp.initDataUnsafe?.user;
-                if (user) {
-                    telegramId = user.id;
-                    const name = user.first_name || 'İstifadəçi';
-                    document.getElementById('userName').innerText = name;
-                    document.getElementById('userId').innerText = `ID: ${user.id}`;
-                    document.getElementById('avatar').innerText = name.charAt(0).toUpperCase();
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.ready();
+
+        const API_URL = 'https://saskioyunu-1.onrender.com';
+        let currentUrl = '';
+
+        async function search() {
+            const query = document.getElementById('searchInput').value;
+            if (!query) return;
+
+            const btnText = document.getElementById('btnText');
+            const btnSpinner = document.getElementById('btnSpinner');
+            const resultDiv = document.getElementById('result');
+
+            btnText.innerText = 'Aranıyor...';
+            btnSpinner.style.display = 'block';
+            resultDiv.style.display = 'none';
+
+            try {
+                const res = await fetch(`${API_URL}/search?q=${encodeURIComponent(query)}`);
+                const data = await res.json();
+
+                if (data.error) {
+                    alert('Maalesef bir sonuç bulunamadı.');
+                } else {
+                    resultDiv.style.display = 'block';
+                    document.getElementById('thumb').src = data.thumbnail;
+                    document.getElementById('title').innerText = data.title;
+                    document.getElementById('author').innerText = data.author;
+                    currentUrl = data.url;
                 }
+            } catch (e) {
+                console.error(e);
+                alert('Sunucuya bağlanılamadı. Lütfen Render sunucusunun çalıştığından emin olun.');
+            } finally {
+                btnText.innerText = 'Müziği Bul';
+                btnSpinner.style.display = 'none';
             }
-        } catch(e) {
-            console.log('Telegram error:', e);
         }
 
-        // ========== YOUTUBE API KULLANIMI ==========
-        const API_KEY = 'AIzaSyBOtbH8qQ_9t0rUz2mI_8ZUARY7rx46rUc'; // ÜCRETSİZ YOUTUBE API KEY
-        
-        async function searchMusic() {
-            const query = document.getElementById('query').value.trim();
-            if (!query) {
-                alert('Mahnı adı yazın!');
+        async function download() {
+            if (!currentUrl) return;
+            const userId = tg.initDataUnsafe?.user?.id;
+
+            if (!userId) {
+                alert("Hata: Kullanıcı ID alınamadı. Lütfen uygulamayı Telegram içinden açın.");
                 return;
             }
-            
-            document.getElementById('loading').classList.add('active');
-            document.getElementById('result').classList.remove('active');
-            document.getElementById('success').classList.remove('active');
-            document.getElementById('loadingText').innerText = 'YouTube axtarılır...';
-            
+
+            const downloadBtn = document.getElementById('downloadBtn');
+            const statusMsg = document.getElementById('statusMsg');
+
+            downloadBtn.disabled = true;
+            downloadBtn.style.opacity = '0.5';
+            downloadBtn.innerText = '⏳ Hazırlanıyor...';
+
             try {
-                // YouTube API ile arama
-                const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=1&q=${encodeURIComponent(query)}&type=video&key=${API_KEY}`;
-                const searchRes = await fetch(searchUrl);
-                const searchData = await searchRes.json();
-                
-                if (searchData.items && searchData.items.length > 0) {
-                    const video = searchData.items[0];
-                    const videoId = video.id.videoId;
-                    const videoTitle = video.snippet.title;
-                    const videoChannel = video.snippet.channelTitle;
-                    const thumbnail = video.snippet.thumbnails.high.url;
-                    
-                    // Video detaylarını al
-                    const detailsUrl = `https://www.googleapis.com/youtube/v3/videos?part=contentDetails&id=${videoId}&key=${API_KEY}`;
-                    const detailsRes = await fetch(detailsUrl);
-                    const detailsData = await detailsRes.json();
-                    
-                    // Süreyi formatla
-                    let duration = '';
-                    if (detailsData.items && detailsData.items[0]) {
-                        const isoDuration = detailsData.items[0].contentDetails.duration;
-                        duration = isoDuration.replace('PT', '').replace('H', ':').replace('M', ':').replace('S', '');
-                    }
-                    
-                    currentVideo = {
-                        id: videoId,
-                        title: videoTitle,
-                        url: `https://www.youtube.com/watch?v=${videoId}`,
-                        channel: videoChannel,
-                        thumbnail: thumbnail,
-                        duration: duration
-                    };
-                    
-                    document.getElementById('videoTitle').innerText = videoTitle;
-                    document.getElementById('videoChannel').innerText = videoChannel;
-                    document.getElementById('videoDuration').innerText = duration ? `⏱️ ${duration}` : '';
-                    document.getElementById('thumbnail').innerHTML = `<img src="${thumbnail}" alt="thumbnail">`;
-                    
-                    document.getElementById('loading').classList.remove('active');
-                    document.getElementById('result').classList.add('active');
-                } else {
-                    throw new Error('Video tapılmadı');
-                }
-            } catch(e) {
-                alert('Xəta: ' + e.message);
-                document.getElementById('loading').classList.remove('active');
-            }
-        }
-        
-        async function downloadMP3() {
-            if (!telegramId) {
-                alert('Telegram ID tapılmadı! Bot üzərindən açın.');
-                return;
-            }
-            
-            if (!currentVideo) {
-                alert('Əvvəlcə musiqi axtarın!');
-                return;
-            }
-            
-            document.getElementById('result').classList.remove('active');
-            document.getElementById('loading').classList.add('active');
-            document.getElementById('loadingText').innerText = 'Bot hazırlayır...';
-            
-            try {
-                // BOTA MESAJ GÖNDƏR
-                const botToken = "5246489165:AAGhMleCadeh3bhtje1EBPY95yn2rDKH7KE";
-                const telegramUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
-                
-                const message = `🎵 *Yeni MP3 istəyi!*\n\n` +
-                              `📌 *Başlıq:* ${currentVideo.title}\n` +
-                              `📺 *Kanal:* ${currentVideo.channel}\n` +
-                              `🔗 *Link:* ${currentVideo.url}\n\n` +
-                              `⏳ Bot hazırlayıb göndərəcək...`;
-                
-                const response = await fetch(telegramUrl, {
+                await fetch(`${API_URL}/download`, {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        chat_id: telegramId,
-                        text: message,
-                        parse_mode: 'Markdown'
-                    })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: currentUrl, userId: userId })
                 });
-                
-                const result = await response.json();
-                
-                if (result.ok) {
-                    document.getElementById('loading').classList.remove('active');
-                    document.getElementById('successMessage').innerHTML = `"${currentVideo.title.substring(0, 50)}..."<br>✅ Bot hazırlayır, birazdan gələr!`;
-                    document.getElementById('success').classList.add('active');
-                    document.getElementById('query').value = '';
-                } else {
-                    throw new Error('Telegram xətası');
-                }
-            } catch(e) {
-                alert('Xəta: ' + e.message);
-                document.getElementById('loading').classList.remove('active');
-                document.getElementById('result').classList.add('active');
+
+                statusMsg.style.display = 'block';
+
+                // Close after some time or keep open
+                setTimeout(() => {
+                    tg.close();
+                }, 3000);
+
+            } catch (e) {
+                alert('İndirme başlatılamadı.');
+                downloadBtn.disabled = false;
+                downloadBtn.style.opacity = '1';
+                downloadBtn.innerText = '⬇️ MP3 Olarak İndir';
             }
         }
-        
-        // Enter tuşu
-        document.getElementById('query').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                searchMusic();
-            }
+
+        // Enter key search support
+        document.getElementById('searchInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') search();
         });
     </script>
 </body>
+
 </html>
