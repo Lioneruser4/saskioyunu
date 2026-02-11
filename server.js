@@ -28,10 +28,11 @@ const VERSION = "V10 ULTRA - INFINITE CORE";
 
 // --- GLOBAL ENGINE REPOSITORY (API-FREE) ---
 const ENGINES = [
-    { name: 'Core Alpha (iOS Bypass)', type: 'ytdlp', client: 'ios' },
-    { name: 'Core Beta (Android Bypass)', type: 'ytdlp', client: 'android' },
-    { name: 'Core Gamma (Web Bypass)', type: 'ytdlp', client: 'web' },
-    { name: 'Tunnel Edge', type: 'invidious' }
+    { name: 'Core Alpha (iOS)', type: 'ytdlp', client: 'ios' },
+    { name: 'Core Beta (Android)', type: 'ytdlp', client: 'android' },
+    { name: 'Core Gamma (Web)', type: 'ytdlp', client: 'web' },
+    { name: 'Secondary Invidious', type: 'invidious', instance: 'https://invidious.flokinet.is' },
+    { name: 'Tertiary Invidious', type: 'invidious', instance: 'https://inv.vern.cc' }
 ];
 
 app.get('/', (req, res) => res.send(`NexMusic ${VERSION} is active! Running on High-Performance mode. ⚡`));
@@ -75,12 +76,24 @@ app.get('/get-external-link', async (req, res) => {
                         'referer:https://www.youtube.com/'
                     ]
                 };
-                const output = await ytdlp(url, args, { binaryPath: execPath });
-                const link = output.trim().split('\n')[0];
-                if (link.startsWith('http')) return { downloadUrl: link, engine: engine.name };
+                let output;
+                try {
+                    output = await ytdlp(url, args, { binaryPath: execPath });
+                } catch (execError) {
+                    console.error(`[Engine ${engine.name}] Exec Error:`, execError.message);
+                    throw execError;
+                }
+
+                const link = output.toString().trim().split('\n')[0];
+                if (link && link.startsWith('http')) {
+                    return { downloadUrl: link, engine: engine.name };
+                } else {
+                    console.error(`[Engine ${engine.name}] Invalid Output:`, output.substring(0, 100));
+                    throw new Error('Invalid output format');
+                }
             } else if (engine.type === 'invidious') {
                 const videoId = url.split('v=')[1]?.split('&')[0] || url.split('/').pop();
-                const instance = 'https://invidious.projectsegfau.lt';
+                const instance = engine.instance || 'https://invidious.projectsegfau.lt';
                 const testUrl = `${instance}/latest_version?id=${videoId}&itag=140`;
                 return { downloadUrl: testUrl, engine: engine.name };
             }
