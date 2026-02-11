@@ -1,169 +1,144 @@
 const express = require('express');
-const cors = require('cors');
-const { Telegraf } = require('telegraf');
+const axios = require('axios');
 const ytdl = require('ytdl-core');
-const ytSearch = require('yt-search');
 const fs = require('fs');
 const path = require('path');
-const axios = require('axios');
-const ffmpeg = require('fluent-ffmpeg');
-const ffmpegStatic = require('ffmpeg-static');
-
-// ========== KONFİG ==========
-const BOT_TOKEN = '5246489165:AAGhMleCadeh3bhtje1EBPY95yn2rDKH7KE';
+const { spawn } = require('child_process');
+const FormData = require('form-data');
 const app = express();
-const bot = new Telegraf(BOT_TOKEN);
+const PORT = process.env.PORT || 5000;
 
-// ========== FFMPEG AYARI ==========
-ffmpeg.setFfmpegPath(ffmpegStatic);
-
-// ========== MIDDLEWARE ==========
-app.use(cors());
 app.use(express.json());
+app.use(express.static('public'));
 
-// ========== DOWNLOAD KLASÖRÜ ==========
-const DOWNLOAD_DIR = path.join(__dirname, 'downloads');
-if (!fs.existsSync(DOWNLOAD_DIR)) {
-    fs.mkdirSync(DOWNLOAD_DIR);
-}
+// ========== TELEGRAM BOT ==========
+const BOT_TOKEN = "5246489165:AAGhMleCadeh3bhtje1EBPY95yn2rDKH7KE";
 
-// ========== API ENDPOINTS ==========
+// ========== ANA SAYFA ==========
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
 
-// 🔍 YOUTUBE ARAMA - İLK SONUCU DÖNDÜR
+// ========== YOUTUBE ARAMA ==========
 app.get('/search', async (req, res) => {
-    const query = req.query.q;
-    
-    if (!query) {
-        return res.status(400).json({ error: 'Arama kelimesi gerekli' });
-    }
-    
     try {
-        // YouTube linki mi kontrol et
-        if (query.includes('youtube.com') || query.includes('youtu.be')) {
-            const info = await ytdl.getInfo(query);
-            return res.json([{
-                id: info.videoDetails.videoId,
-                title: info.videoDetails.title,
-                url: query,
-                duration: parseInt(info.videoDetails.lengthSeconds),
-                thumbnail: info.videoDetails.thumbnails[0]?.url
-            }]);
+        const query = req.query.q;
+        if (!query) {
+            return res.status(400).json({ error: 'Sorgu gerekli' });
         }
+
+        // YouTube arama (ytdl-core ile)
+        const searchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
+        const response = await axios.get(searchUrl);
         
-        // Normal arama
-        const result = await ytSearch(query);
-        const videos = result.videos.slice(0, 5).map(video => ({
-            id: video.videoId,
-            title: video.title,
-            url: video.url,
-            duration: video.duration.seconds,
-            thumbnail: video.thumbnail
-        }));
+        // Video ID'yi regex ile bul
+        const videoIdMatch = response.data.match(/watch\?v=([a-zA-Z0-9_-]{11})/);
         
-        res.json(videos);
+        if (!videoIdMatch) {
+            return res.status(404).json({ error: 'Video bulunamadı' });
+        }
+
+        const videoId = videoIdMatch[1];
+        const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
         
+        // Video bilgilerini al
+        const info = await ytdl.getInfo(videoUrl);
+        
+        res.json({
+            success: true,
+            title: info.videoDetails.title,
+            url: videoUrl,
+            channel: info.videoDetails.author.name,
+            thumbnail: info.videoDetails.thumbnails[info.videoDetails.thumbnails.length - 1].url,
+            video_id: videoId,
+            duration: info.videoDetails.lengthSeconds
+        });
+
     } catch (error) {
         console.error('Arama hatası:', error);
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: 'Arama başarısız: ' + error.message });
     }
 });
 
-// ⬇️ MP3 İNDİR ve TELEGRAM'A GÖNDER
+// ========== MP3 İNDİR VE TELEGRAM'A GÖNDER ==========
 app.post('/download', async (req, res) => {
-    const { url, userId, userName, userUsername } = req.body;
-    
-    if (!url || !userId) {
-        return res.status(400).json({ error: 'URL ve User ID gerekli' });
-    }
-    
     try {
-        // YouTube video bilgilerini al
-        const info = await ytdl.getInfo(url);
-        const title = info.videoDetails.title;
-        const safeTitle = title.replace(/[^\w\s]/gi, '_');
-        const fileName = `${safeTitle}-${Date.now()}.mp3`;
-        const filePath = path.join(DOWNLOAD_DIR, fileName);
+        const { url, chat_id, title } = req.body;
         
-        console.log(`📥 İndirme başladı: ${title}`);
-        
-        // MP3 indir ve dönüştür
-        const audioStream = ytdl(url, { quality: 'highestaudio' });
-        
-        await new Promise((resolve, reject) => {
-            ffmpeg(audioStream)
-                .audioBitrate(128)
-                .audioCodec('libmp3lame')
-                .format('mp3')
-                .on('end', resolve)
-                .on('error', reject)
-                .save(filePath);
-        });
-        
-        console.log(`✅ MP3 hazır: ${fileName}`);
-        
-        // TELEGRAM'A GÖNDER
-        try {
-            await bot.telegram.sendAudio(
-                parseInt(userId),
-                { source: filePath },
-                {
-                    title: title,
-                    performer: 'YouTube Music',
-                    caption: `🎵 **${title}**\n\n` +
-                            `✅ Merhaba ${userName || 'Müzik Sever'}! Müziğin hazır.\n` +
-                            `📥 YouTube'dan indirildi.\n\n` +
-                            `🎧 Keyifli dinlemeler!`
-                }
-            );
-            
-            console.log(`📱 Telegram'a gönderildi: ${userId}`);
-            
-            // Dosyayı sil
-            fs.unlinkSync(filePath);
-            console.log(`🗑️ Dosya silindi: ${fileName}`);
-            
-            res.json({
-                success: true,
-                title: title
-            });
-            
-        } catch (telegramError) {
-            console.error('Telegram gönderme hatası:', telegramError);
-            
-            // Dosyayı temizle
-            if (fs.existsSync(filePath)) {
-                fs.unlinkSync(filePath);
-            }
-            
-            res.status(500).json({ error: 'Telegram\'a gönderilemedi: ' + telegramError.message });
+        if (!url || !chat_id) {
+            return res.status(400).json({ error: 'URL ve chat_id gerekli' });
         }
-        
+
+        console.log(`İndirme başladı: ${title} - Kullanıcı: ${chat_id}`);
+
+        // Geçici dosya adı
+        const fileName = `music_${Date.now()}.mp3`;
+        const filePath = path.join('/tmp', fileName);
+
+        // yt-dlp ile MP3 indir (ffmpeg gerekmez)
+        const ytDlp = spawn('yt-dlp', [
+            '-f', 'bestaudio',
+            '--extract-audio',
+            '--audio-format', 'mp3',
+            '--audio-quality', '0',
+            '-o', filePath,
+            url
+        ]);
+
+        ytDlp.stderr.on('data', (data) => {
+            console.log(`yt-dlp: ${data}`);
+        });
+
+        ytDlp.on('close', async (code) => {
+            if (code !== 0) {
+                return res.status(500).json({ error: 'İndirme başarısız' });
+            }
+
+            try {
+                // Dosya var mı kontrol et
+                if (!fs.existsSync(filePath)) {
+                    return res.status(500).json({ error: 'Dosya oluşturulamadı' });
+                }
+
+                // Telegram'a gönder
+                const form = new FormData();
+                form.append('chat_id', chat_id);
+                form.append('audio', fs.createReadStream(filePath));
+                form.append('title', title.substring(0, 100));
+                form.append('performer', 'YouTube MP3');
+
+                const telegramRes = await axios.post(
+                    `https://api.telegram.org/bot${BOT_TOKEN}/sendAudio`,
+                    form,
+                    { headers: form.getHeaders() }
+                );
+
+                // Dosyayı sil
+                fs.unlinkSync(filePath);
+
+                if (telegramRes.data.ok) {
+                    res.json({ success: true, message: 'MP3 gönderildi!' });
+                } else {
+                    res.status(500).json({ error: 'Telegram gönderilemedi' });
+                }
+
+            } catch (error) {
+                console.error('Telegram hatası:', error);
+                // Dosyayı sil
+                if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+                res.status(500).json({ error: 'Telegram hatası: ' + error.message });
+            }
+        });
+
     } catch (error) {
         console.error('İndirme hatası:', error);
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: 'İndirme hatası: ' + error.message });
     }
 });
 
-// 🔋 SAĞLIK KONTROLÜ
-app.get('/health', (req, res) => {
-    res.json({ 
-        status: 'active', 
-        service: 'Music Downloader API',
-        time: new Date().toISOString()
-    });
-});
-
-// ========== BOTU BAŞLAT ==========
-bot.launch()
-    .then(() => console.log('🤖 Telegram bot aktif!'))
-    .catch(err => console.error('Bot hatası:', err));
-
 // ========== SUNUCUYU BAŞLAT ==========
-const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-    console.log(`🚀 Server çalışıyor: http://localhost:${PORT}`);
+    console.log(`🚀 Site çalışıyor: http://localhost:${PORT}`);
+    console.log(`🔍 Arama: /search?q=müzik_adı`);
+    console.log(`📥 İndirme: /download`);
 });
-
-// Graceful shutdown
-process.once('SIGINT', () => bot.stop('SIGINT'));
-process.once('SIGTERM', () => bot.stop('SIGTERM'));
