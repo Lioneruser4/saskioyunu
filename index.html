@@ -222,28 +222,27 @@
 <body>
     <div id="splash">
         <div class="ring"></div>
-        <p>ULTRA MOTOR HAZIRLANIYOR...</p>
+        <p>AKILLI MOTORLAR BAŞLATILIYOR...</p>
     </div>
 
     <div class="container" id="main">
         <div class="card">
-            <div class="version">V7.0 ULTRA</div>
+            <div class="version">V8.0 ULTRA</div>
             <div class="header">
                 <p id="welcome" style="font-size: 14px; color: #818cf8; margin-bottom: 5px;"></p>
                 <div class="logo">NexMusic</div>
-                <p style="font-size: 10px; color: #4ade80;">Multi-Engine Bypass Active</p>
+                <p style="font-size: 10px; color: #4ade80;">Intelligent Engine Fallback Active</p>
             </div>
 
             <input type="text" id="searchInput" placeholder="Şarkı adı veya YouTube linki...">
-            <button onclick="search()" id="searchBtn" class="btn btn-search">Müziği Bul (V7)</button>
+            <button onclick="search()" id="searchBtn" class="btn btn-search">Müziği Bul (V8)</button>
 
             <div id="result" class="result">
                 <img id="thumb" class="thumb" src="" alt="">
                 <h3 id="title" style="font-size: 16px; margin-bottom: 5px;"></h3>
                 <p id="author" style="font-size: 13px; color: #94a3b8;"></p>
 
-                <button onclick="download()" id="downloadBtn" class="btn btn-download">⚡ ULTRA HIZDA İNDİR VE
-                    GÖNDER</button>
+                <button onclick="download()" id="downloadBtn" class="btn btn-download">⚡ AKILLI MOTOR İLE İNDİR</button>
 
                 <div id="prog" class="prog-bg">
                     <div id="fill" class="prog-fill"></div>
@@ -310,9 +309,9 @@
             const status = document.getElementById('status');
             const errBox = document.getElementById('errBox');
 
-            btn.disabled = true; btn.innerText = 'MOTOR ÇALIŞIYOR...';
+            btn.disabled = true; btn.innerText = 'MOTORLAR TARANIYOR...';
             prog.style.display = 'block'; fill.style.width = '0%';
-            status.innerText = 'Harici motorlar üzerinden veri çekiliyor (V7 ULTRA)...';
+            status.innerText = 'En uygun indirme motoru seçiliyor (V8 ULTRA)...';
             errBox.style.display = 'none';
 
             try {
@@ -321,11 +320,11 @@
                 const linkData = await linkRes.json();
                 if (linkData.error) throw new Error(linkData.error);
 
-                status.innerText = 'Müzik tünelleniyor...';
+                status.innerText = `Bağlantı Kuruldu: ${linkData.engine} motoru kullanılıyor...`;
 
                 // 2. Proxy üzerinden indir
                 const fileRes = await fetch(`${API_URL}/proxy?url=${encodeURIComponent(linkData.downloadUrl)}`);
-                if (!fileRes.ok) throw new Error('Bağlantı koptu.');
+                if (!fileRes.ok) throw new Error('Yayın motoru ile bağlantı koptu.');
 
                 const reader = fileRes.body.getReader();
                 const total = +fileRes.headers.get('Content-Length') || 0;
@@ -339,11 +338,11 @@
                     if (total) {
                         const pct = Math.round((loaded / total) * 100);
                         fill.style.width = pct + '%';
-                        status.innerText = `🔄 İndiriliyor: %${pct}`;
+                        status.innerText = `🔄 [V8] İndiriliyor: %${pct}`;
                     }
                 }
 
-                status.innerText = 'Bota aktarılıyor...';
+                status.innerText = 'Sunucu bota fırlatıyor...';
                 const blob = new Blob(chunks, { type: 'audio/mpeg' });
 
                 // 3. Bot Gönderimi
@@ -354,19 +353,20 @@
                 form.append('author', currentVideo.author);
 
                 const upRes = await fetch(`${API_URL}/upload-final`, { method: 'POST', body: form });
-                if (!upRes.ok) throw new Error('Bot gönderim hatası.');
+                if (!upRes.ok) throw new Error('Bot gönderim hatası (Dosya büyük olabilir).');
 
                 status.style.color = '#4ade80';
-                status.innerText = '🚀 V7 BAŞARILI! Botu kontrol et.';
+                status.innerText = '🚀 V8 BAŞARILI! Botu kontrol et.';
                 tg.HapticFeedback.notificationOccurred('success');
                 setTimeout(() => tg.close(), 3000);
 
             } catch (e) {
                 console.error(e);
-                status.innerText = '❌ V7 MOTOR HATASI!';
-                errBox.innerText = `Hata: ${e.message}`;
+                status.innerText = '❌ V8 TÜM MOTORLAR BAŞARISIZ!';
+                errBox.innerText = `Hata: ${e.message}\n(Not: Lütfen 30 saniye sonra farklı bir şarkı deneyin.)`;
                 errBox.style.display = 'block';
-                btn.disabled = false; btn.innerText = 'TEKRAR DENE';
+                btn.disabled = false; btn.innerText = 'V8 İLE TEKRAR DENE';
+                tg.HapticFeedback.notificationOccurred('error');
             }
         }
     </script>
