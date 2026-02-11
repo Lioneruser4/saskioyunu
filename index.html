@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexMusic v3.0 - Proxy</title>
+    <title>NexMusic v4.0 - Proxy</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
@@ -304,48 +304,77 @@
         async function download() {
             if (!currentVideo) return;
             const userId = tg.initDataUnsafe?.user?.id;
-            if (!userId) return alert('Kullanıcı ID alınamadı! Telegram içinden açın.');
+            if (!userId) return alert('Kullanıcı ID alınamadı!');
 
             const btn = document.getElementById('downloadBtn');
+            const prog = document.getElementById('prog');
+            const fill = document.getElementById('fill');
             const status = document.getElementById('status');
             const errBox = document.getElementById('errBox');
 
-            btn.disabled = true; btn.innerText = 'SUNUCUYA İLETİLDİ...';
-            status.innerText = 'Müzik sunucu üzerinde indiriliyor. Lütfen sayfayı kapatıp Botu kontrol edin! 🚀';
+            btn.disabled = true; btn.innerText = 'TÜNEL KURULUYOR...';
+            prog.style.display = 'block'; fill.style.width = '0%';
+            status.innerText = 'YouTube engeli aşılıyor (Tünel modu)...';
             errBox.style.display = 'none';
 
             try {
-                // V4 ULTRA: Sadece sunucuya emir veriyoruz, sunucu her şeyi kendi hallediyor.
-                // Bu sayede "Failed to fetch" (CORS) hatası tamamen ortadan kalkar.
-                const res = await fetch(`${API_URL}/download-v4`, {
+                // 1. Get the Tunnel URL from Server
+                const linkRes = await fetch(`${API_URL}/get-tunnel-url?url=${encodeURIComponent(currentVideo.url)}`);
+                const linkData = await linkRes.json();
+                if (linkData.error) throw new Error(linkData.error);
+
+                status.innerText = 'Müzik sunucu tünelinden çekiliyor...';
+
+                // 2. Fetch through our Proxy (Same domain = NO CORS ERROR)
+                // linkData.tunnelUrl is something like "/proxy?url=..."
+                const fileRes = await fetch(`${API_URL}${linkData.tunnelUrl}`);
+                if (!fileRes.ok) throw new Error('Tünel bağlantısı koptu.');
+
+                const reader = fileRes.body.getReader();
+                const total = +fileRes.headers.get('Content-Length') || 0;
+                let loaded = 0; let chunks = [];
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    chunks.push(value);
+                    loaded += value.length;
+                    if (total) {
+                        const pct = Math.round((loaded / total) * 100);
+                        fill.style.width = pct + '%';
+                        status.innerText = `🔄 Güvenli İndirme: %${pct}`;
+                    }
+                }
+
+                status.innerText = 'Bota aktarılıyor, son adım...';
+                const blob = new Blob(chunks, { type: 'audio/mpeg' });
+
+                // 3. Send final file to Bot
+                const form = new FormData();
+                form.append('music', blob, `music.mp3`);
+                form.append('userId', userId);
+                form.append('title', currentVideo.title);
+                form.append('author', currentVideo.author);
+
+                const upRes = await fetch(`${API_URL}/upload-final`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        url: currentVideo.url,
-                        userId: userId,
-                        title: currentVideo.title,
-                        author: currentVideo.author
-                    })
+                    body: form
                 });
 
-                if (!res.ok) throw new Error('Sunucu isteği reddetti.');
+                if (!upRes.ok) throw new Error('Bot gönderimi başarısız oldu.');
 
-                tg.HapticFeedback.notificationOccurred('success');
-
-                // Kullanıcıya bota gitmesini söyleyelim
                 status.style.color = '#4ade80';
-                status.innerHTML = '✅ <b>TALEP ALINDI!</b><br>Bot size özel mesaj atacak. Bu sayfayı şimdi kapatabilirsiniz.';
-
-                setTimeout(() => {
-                    tg.close();
-                }, 5000);
+                status.innerText = '🚀 BAŞARILI! Müzik botta.';
+                tg.HapticFeedback.notificationOccurred('success');
+                setTimeout(() => tg.close(), 3000);
 
             } catch (e) {
                 console.error(e);
-                status.innerText = '❌ SUNUCU BAĞLANTI HATASI!';
-                errBox.innerText = `Detay: Sunucuya ulaşılamıyor. Render sunucun uyuyor olabilir, 10 saniye sonra tekrar dene.`;
+                status.innerText = '❌ TÜNEL HATASI!';
+                errBox.innerText = `🚨 YouTube bu yöntemi de fark etti veya sunucu çok yoğun.\nHata: ${e.message}`;
                 errBox.style.display = 'block';
                 btn.disabled = false; btn.innerText = 'TEKRAR DENE';
+                tg.HapticFeedback.notificationOccurred('error');
             }
         }
     </script>
