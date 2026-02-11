@@ -20,11 +20,11 @@ app.use(cors());
 const token = '5246489165:AAGhMleCadeh3bhtje1EBPY95yn2rDKH7KE';
 const bot = new TelegramBot(token);
 const YTDLP_PATH = path.join(__dirname, 'yt-dlp');
-const VERSION = "V5 ULTRA - TUNNEL MODE";
+const VERSION = "V6 ULTRA - HYBRID MODE";
 
-app.get('/', (req, res) => res.send(`NexMusic ${VERSION} is active! 🚀`));
+app.get('/', (req, res) => res.send(`NexMusic ${VERSION} is Active 🚀`));
 
-// 🔍 Search API
+// 🔍 Arama API
 app.get('/search', async (req, res) => {
     const query = req.query.q;
     if (!query) return res.status(400).json({ error: 'Sorgu yok' });
@@ -36,77 +36,75 @@ app.get('/search', async (req, res) => {
                 title: video.title,
                 thumbnail: video.thumbnail,
                 url: video.url,
-                author: video.author.name,
-                duration: video.timestamp
+                author: video.author.name
             });
         } else res.status(404).json({ error: 'Bulunamadı' });
     } catch (err) { res.status(500).json({ error: 'Arama hatası' }); }
 });
 
-// �️ V5 TUNNEL: Get a stable URL for the client to fetch through our server
+// 🛠️ V6 BYPASS: iOS/Android Client Emulation
 app.get('/get-tunnel-url', async (req, res) => {
     const { url } = req.query;
     try {
         const execPath = fs.existsSync(YTDLP_PATH) ? YTDLP_PATH : 'yt-dlp';
+
+        // V6 Spec: Mobil cihaz taklidi yaparak link çekiyoruz
         const output = await ytdlp(url, {
             getUrl: true,
             format: 'bestaudio',
             noCheckCertificates: true,
+            // Bu kısım YouTube'un mobil uygulamasını taklit eder (2026 Bypass)
+            addHeader: [
+                'user-agent:com.google.ios.youtube/19.01.1 (iPhone16,2; U; CPU iOS 17_2 like Mac OS X; en_US)',
+                'x-youtube-client-name:5',
+                'x-youtube-client-version:19.01.1'
+            ]
         }, { binaryPath: execPath });
 
         const directUrl = output.trim().split('\n')[0];
-        // We return an encrypted or direct link that the client will use with our /proxy endpoint
         res.json({ tunnelUrl: `/proxy?url=${encodeURIComponent(directUrl)}` });
     } catch (err) {
+        console.error('V6 Hatası:', err.message);
         res.status(500).json({ error: 'YouTube engeline takıldık.', details: err.message });
     }
 });
 
-// ⚡ PROXY TUNNEL: This solves CORS and IP blocks at the same time
+// ⚡ V6 PROXY: Dosyayı tarayıcıya güvenle aktarır
 app.get('/proxy', async (req, res) => {
     const targetUrl = req.query.url;
     if (!targetUrl) return res.status(400).send('No URL');
-
     try {
         const response = await axios({
             method: 'get',
             url: targetUrl,
             responseType: 'stream',
             headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+                'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
                 'Referer': 'https://www.youtube.com/'
             }
         });
-
-        // Copy headers to allow client to see progress
-        res.setHeader('Content-Type', response.headers['content-type']);
-        if (response.headers['content-length']) {
-            res.setHeader('Content-Length', response.headers['content-length']);
-        }
-
+        res.setHeader('Content-Type', 'audio/mpeg');
         response.data.pipe(res);
     } catch (err) {
-        console.error('Proxy Error:', err.message);
-        res.status(500).send('Proxy failure');
+        res.status(500).send('Proxy hatası');
     }
 });
 
-// 📤 FINAL UPLOAD TO TELEGRAM
+// 📤 Dosyayı Bota ve Kullanıcıya Gönder
 app.post('/upload-final', upload.single('music'), async (req, res) => {
     const { userId, title, author } = req.body;
     const file = req.file;
-
-    if (!file || !userId) return res.status(400).json({ error: 'Dosya kayboldu.' });
+    if (!file) return res.status(400).json({ error: 'Dosya yok' });
 
     try {
+        // Kullanıcıya bota aktarıldığı bildirimini ver
+        await bot.sendMessage(userId, `🎵 *${title}* sunucu tarafından bota aktarılıyor...`, { parse_mode: 'Markdown' });
+
         await bot.sendAudio(userId, fs.createReadStream(file.path), {
-            title: title || 'Music',
-            performer: author || 'Artist',
-            caption: `✅ *Müzik Hazır!* \n@NexMusicBot`,
+            title: title || 'Müzik',
+            performer: author || 'YouTube',
+            caption: `✅ *İşlem Tamam!* \n@NexMusicBot`,
             parse_mode: 'Markdown'
-        }, {
-            filename: `${title.substring(0, 30)}.mp3`,
-            contentType: 'audio/mpeg'
         });
 
         fs.unlinkSync(file.path);
@@ -118,4 +116,4 @@ app.post('/upload-final', upload.single('music'), async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`${VERSION} running on ${PORT}`));
+app.listen(PORT, () => console.log(`${VERSION} Aktif!`));
