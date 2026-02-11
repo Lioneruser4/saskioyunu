@@ -363,7 +363,7 @@
             } catch (e) {
                 alert('V10 Çekirdeği meşgul veya Render sunucu uyuyor. Lütfen 5 sn sonra tekrar deneyin.');
             } finally {
-                btn.disabled = false; btn.innerText = 'Hızlı Bul (V10)';
+                btn.disabled = false; btn.innerText = 'Hızlı Bul (V12)';
             }
         }
 
@@ -377,14 +377,14 @@
             const errBox = document.getElementById('errBox');
             const prog = document.getElementById('prog');
 
-            btn.disabled = true; btn.innerText = 'TALEBİNİZ ALINDI...';
-            status.innerText = 'Müzik sunucuda gerçek MP3 formatına çevriliyor. Lütfen bota dönün! 🚀';
+            btn.disabled = true; btn.innerText = 'V12 MOTORU DEVREDE...';
+            status.innerText = 'V12 Ultra motoru çalışıyor. Motorlar arası geçiş yapılıyor, bota bakın! 🚀';
             errBox.style.display = 'none';
             prog.style.display = 'none';
 
             try {
-                // V11: Sunucuya emir ver, sunucu MP3 yapıp bota atsın
-                const res = await fetch(`${API_URL}/download-v11`, {
+                // V12: Dual-Engine Çekirdek (Local + Cloud Fallback)
+                const res = await fetch(`${API_URL}/download-v12`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -395,20 +395,20 @@
                     })
                 });
 
-                if (!res.ok) throw new Error('Sunucu şu an meşgul.');
+                if (!res.ok) throw new Error('Sunucu hattı meşgul.');
 
                 status.style.color = '#10b981';
-                status.innerHTML = '✅ <b>İŞLEM BAŞLATILDI!</b><br>Bot size özel MP3 gönderecek. Bu sayfayı şimdi kapatabilirsiniz.';
+                status.innerHTML = '✅ <b>V12 BAŞLATILDI!</b><br>Bot motorları şu an çalışıyor. Sayfayı kapatabilirsiniz.';
 
                 tg.HapticFeedback.notificationOccurred('success');
                 setTimeout(() => tg.close(), 4000);
 
             } catch (e) {
                 console.error(e);
-                status.innerText = '❌ V11 BAĞLANTI HATASI!';
-                errBox.innerText = `Hata: ${e.message}\n(Not: Sunucu şu an yoğun olabilir, birkaç saniye bekleyip tekrar deneyin.)`;
+                status.innerText = '❌ V12 MOTOR HATASI!';
+                errBox.innerText = `Hata: ${e.message}\n(Not: YouTube engelleri aşılıyor, lütfen birkaç saniye sonra tekrar deneyin.)`;
                 errBox.style.display = 'block';
-                btn.disabled = false; btn.innerText = 'V11 İLE TEKRAR DENE';
+                btn.disabled = false; btn.innerText = 'V12 İLE TEKRAR DENE';
                 tg.HapticFeedback.notificationOccurred('error');
             }
         }
