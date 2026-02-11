@@ -373,68 +373,42 @@
             if (!userId) return alert('Kullanıcı ID hatası!');
 
             const btn = document.getElementById('downloadBtn');
-            const prog = document.getElementById('prog');
-            const fill = document.getElementById('fill');
             const status = document.getElementById('status');
             const errBox = document.getElementById('errBox');
+            const prog = document.getElementById('prog');
 
-            btn.disabled = true; btn.innerText = 'V10 İşleniyor...';
-            prog.style.display = 'block'; fill.style.width = '0%';
-            status.innerText = 'Paralel motorlar yarıştırılıyor (Infinite Core)...';
+            btn.disabled = true; btn.innerText = 'TALEBİNİZ ALINDI...';
+            status.innerText = 'Müzik sunucuda gerçek MP3 formatına çevriliyor. Lütfen bota dönün! 🚀';
             errBox.style.display = 'none';
+            prog.style.display = 'none';
 
             try {
-                // 1. Get Link
-                const linkRes = await fetch(`${API_URL}/get-external-link?url=${encodeURIComponent(currentVideo.url)}`);
-                const linkData = await linkRes.json();
-                if (linkData.error) throw new Error(linkData.error);
+                // V11: Sunucuya emir ver, sunucu MP3 yapıp bota atsın
+                const res = await fetch(`${API_URL}/download-v11`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        url: currentVideo.url,
+                        userId: userId,
+                        title: currentVideo.title,
+                        author: currentVideo.author
+                    })
+                });
 
-                status.innerText = `Bağlantı Kuruldu: [${linkData.engine}] motoru kazandı!`;
-
-                // 2. Fetch Sync
-                const fileRes = await fetch(`${API_URL}/proxy?url=${encodeURIComponent(linkData.downloadUrl)}`);
-                if (!fileRes.ok) throw new Error('Yayın akışı veya tünel koptu.');
-
-                const reader = fileRes.body.getReader();
-                const total = +fileRes.headers.get('Content-Length') || 0;
-                let loaded = 0; let chunks = [];
-
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-                    chunks.push(value);
-                    loaded += value.length;
-                    if (total) {
-                        const pct = Math.round((loaded / total) * 100);
-                        fill.style.width = pct + '%';
-                        status.innerText = `V10 Hızında Çekiliyor: %${pct}`;
-                    }
-                }
-
-                status.innerText = 'Bot kanalına fırlatılıyor...';
-                const blob = new Blob(chunks, { type: 'audio/mpeg' });
-
-                // 3. Final Bot Push
-                const form = new FormData();
-                form.append('music', blob, `music.mp3`);
-                form.append('userId', userId);
-                form.append('title', currentVideo.title);
-                form.append('author', currentVideo.author);
-
-                const upRes = await fetch(`${API_URL}/upload-final`, { method: 'POST', body: form });
-                if (!upRes.ok) throw new Error('Sunucu bota dosyayı iletemedi (Dosya boyutu yüksek olabilir).');
+                if (!res.ok) throw new Error('Sunucu şu an meşgul.');
 
                 status.style.color = '#10b981';
-                status.innerText = '✅ V10 BAŞARILI! Hemen bota dönüp kontrol et.';
+                status.innerHTML = '✅ <b>İŞLEM BAŞLATILDI!</b><br>Bot size özel MP3 gönderecek. Bu sayfayı şimdi kapatabilirsiniz.';
+
                 tg.HapticFeedback.notificationOccurred('success');
-                setTimeout(() => tg.close(), 3000);
+                setTimeout(() => tg.close(), 4000);
 
             } catch (e) {
                 console.error(e);
-                status.innerText = '❌ V10 ÇEKİRDEK HATASI!';
-                errBox.innerText = `Hata detayı: ${e.message}\n(Genellikle yoğunluktan veya cihaz engelinden olur, tekrar deneyin.)`;
+                status.innerText = '❌ V11 BAĞLANTI HATASI!';
+                errBox.innerText = `Hata: ${e.message}\n(Not: Sunucu şu an yoğun olabilir, birkaç saniye bekleyip tekrar deneyin.)`;
                 errBox.style.display = 'block';
-                btn.disabled = false; btn.innerText = 'V10 İLE TEKRAR DENE';
+                btn.disabled = false; btn.innerText = 'V11 İLE TEKRAR DENE';
                 tg.HapticFeedback.notificationOccurred('error');
             }
         }
