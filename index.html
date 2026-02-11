@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>🎵 Müzik İndirici</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * {
             margin: 0;
@@ -31,6 +32,39 @@
             padding: 30px 24px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.4);
             border: 1px solid rgba(255,255,255,0.08);
+        }
+        
+        .welcome-card {
+            background: linear-gradient(145deg, #2b86ff, #1a5fc9);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+            box-shadow: 0 10px 20px rgba(43,134,255,0.2);
+        }
+        
+        .welcome-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .welcome-subtitle {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        
+        .user-avatar {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            border: 3px solid white;
         }
         
         h1 {
@@ -203,10 +237,28 @@
             padding-top: 24px;
             border-top: 1px solid #2f353c;
         }
+        
+        .user-id-badge {
+            background: rgba(0,0,0,0.3);
+            padding: 6px 12px;
+            border-radius: 30px;
+            font-size: 12px;
+            display: inline-block;
+            margin-top: 10px;
+            color: #b0b8c5;
+        }
     </style>
 </head>
 <body>
     <div class="container">
+        <!-- HOŞ GELDİN KARTI - TELEGRAM VERİLERİYLE DOLACAK -->
+        <div id="welcomeCard" class="welcome-card">
+            <div id="userAvatar" class="user-avatar">👤</div>
+            <div id="welcomeTitle" class="welcome-title">Xoş gəldin! 👋</div>
+            <div id="welcomeSubtitle" class="welcome-subtitle">Yükleniyor...</div>
+            <div id="userIdBadge" class="user-id-badge">🔵 Telegram</div>
+        </div>
+        
         <h1>🎵 Müzik İndirici</h1>
         <div class="subtitle">YouTube'dan MP3 indir, bot sana göndersin</div>
         
@@ -253,24 +305,91 @@
     </div>
 
     <script>
-        // ========== KULLANICI BİLGİLERİ (Telegram WebView'den otomatik alır) ==========
+        // ========== TELEGRAM WEBVIEW'DEN KULLANICI BİLGİLERİNİ AL ==========
+        let telegramUser = null;
         let telegramId = null;
-        let videoUrl = null;
-        let videoBaslik = null;
+        let telegramFirstName = null;
+        let telegramLastName = null;
+        let telegramUsername = null;
+        let telegramPhoto = null;
         
-        // Telegram WebView'den kullanıcı ID'sini al
+        // Telegram WebApp API'sini başlat
         try {
             if (window.Telegram && Telegram.WebApp) {
+                // WebApp'i hazırla
                 Telegram.WebApp.ready();
-                Telegram.WebApp.expand();
-                telegramId = Telegram.WebApp.initDataUnsafe?.user?.id;
-                console.log("Telegram ID:", telegramId);
+                Telegram.WebApp.expand(); // Tam ekran yap
+                
+                // Kullanıcı bilgilerini al
+                const initData = Telegram.WebApp.initDataUnsafe;
+                telegramUser = initData?.user;
+                
+                if (telegramUser) {
+                    telegramId = telegramUser.id;
+                    telegramFirstName = telegramUser.first_name || '';
+                    telegramLastName = telegramUser.last_name || '';
+                    telegramUsername = telegramUser.username || '';
+                    telegramPhoto = telegramUser.photo_url || '';
+                    
+                    console.log("Telegram Kullanıcısı:", telegramUser);
+                } else {
+                    console.log("Kullanıcı bilgisi alınamadı, test modu");
+                }
+            } else {
+                console.log("Telegram WebApp bulunamadı, test modu");
             }
         } catch(e) {
-            console.log("WebView değil, test modu");
-            telegramId = 123456789; // Test için
+            console.error("Telegram WebApp hatası:", e);
         }
         
+        // Sayfa yüklendiğinde hoş geldin mesajını göster
+        window.addEventListener('load', function() {
+            hosgeldinMesajiGoster();
+        });
+        
+        function hosgeldinMesajiGoster() {
+            const welcomeTitle = document.getElementById('welcomeTitle');
+            const welcomeSubtitle = document.getElementById('welcomeSubtitle');
+            const userAvatar = document.getElementById('userAvatar');
+            const userIdBadge = document.getElementById('userIdBadge');
+            
+            // Eğer Telegram kullanıcısı varsa
+            if (telegramUser) {
+                // İsmi hazırla
+                let fullName = telegramFirstName;
+                if (telegramLastName) {
+                    fullName += ' ' + telegramLastName;
+                }
+                
+                // Hoş geldin mesajı
+                welcomeTitle.innerHTML = `Xoş gəldin, ${telegramFirstName}! 👋`;
+                welcomeSubtitle.innerHTML = fullName;
+                
+                // Kullanıcı adı varsa göster
+                if (telegramUsername) {
+                    userIdBadge.innerHTML = `@${telegramUsername} • ID: ${telegramId}`;
+                } else {
+                    userIdBadge.innerHTML = `ID: ${telegramId}`;
+                }
+                
+                // Avatar varsa göster
+                if (telegramPhoto) {
+                    userAvatar.innerHTML = `<img src="${telegramPhoto}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+                } else {
+                    // Avatar yoksa ismin baş harfini göster
+                    const firstChar = telegramFirstName.charAt(0).toUpperCase();
+                    userAvatar.innerHTML = firstChar;
+                    userAvatar.style.background = 'linear-gradient(145deg, #2b86ff, #1a5fc9)';
+                }
+            } else {
+                // Test modu - örnek kullanıcı
+                welcomeTitle.innerHTML = 'Xoş gəldin! 👋';
+                welcomeSubtitle.innerHTML = 'Test Kullanıcısı';
+                userIdBadge.innerHTML = '🔵 Telegram WebView';
+            }
+        }
+        
+        // Müzik ara fonksiyonu
         async function muzikAra() {
             const query = document.getElementById('searchInput').value.trim();
             if (!query) {
@@ -283,25 +402,21 @@
             document.getElementById('sonuc').classList.remove('active');
             document.getElementById('tamam').classList.remove('active');
             
-            // YouTube arama ve video bilgisi alma (yt-dlp API kullan)
+            // YouTube arama simülasyonu
             try {
                 document.getElementById('loadingText').innerText = 'YouTube taranıyor...';
                 document.getElementById('loadingDetail').innerText = `"${query}" aranıyor`;
                 
-                // FREE YT-DLP API (Render'da çalışacak)
-                const apiUrl = `https://youtube-mp3-downloader-v2.p.rapidapi.com/yt_search?q=${encodeURIComponent(query)}`;
+                // GERÇEK YT-DLP API ENTEGRASYONU İÇİN BURAYI KULLAN
+                // Şimdilik örnek veri gösteriyoruz
                 
-                // RapidAPI üzerinden dene (ücretsiz)
-                // Alternatif: Kendi yt-dlp endpoint'in varsa onu kullan
-                
-                // Bu kısım Render'da yt-dlp ile çalışacak - ŞİMDİLİK ÖRNEK VERİ
                 setTimeout(() => {
                     // ÖRNEK VERİ - Gerçekte API'den gelecek
                     document.getElementById('videoTitle').innerText = query.length > 50 ? query.substring(0,50)+'...' : query;
                     document.getElementById('videoChannel').innerText = 'YouTube • Kaliteli MP3';
                     document.getElementById('thumbnail').src = 'https://i.ytimg.com/vi/example/hqdefault.jpg';
-                    videoUrl = 'https://youtube.com/watch?v=example';
-                    videoBaslik = query;
+                    window.videoUrl = 'https://youtube.com/watch?v=example';
+                    window.videoBaslik = query;
                     
                     document.getElementById('loading').classList.remove('active');
                     document.getElementById('sonuc').classList.add('active');
@@ -314,6 +429,7 @@
             }
         }
         
+        // İndir ve Telegram'a bildir
         async function indirVeBildir() {
             if (!telegramId) {
                 alert('Telegram ID alınamadı! Lütfen bot üzerinden aç.');
@@ -323,20 +439,25 @@
             document.getElementById('sonuc').classList.remove('active');
             document.getElementById('loading').classList.add('active');
             document.getElementById('loadingText').innerText = 'MP3 indiriliyor...';
-            document.getElementById('loadingDetail').innerText = videoBaslik || 'Müzik hazırlanıyor';
+            document.getElementById('loadingDetail').innerText = window.videoBaslik || 'Müzik hazırlanıyor';
             
             try {
-                // ⚡ BOTU TETİKLE - Bot zaten aktif, sadece haber ver
-                // Botun Webhook'una istek at veya direkt mesaj gönder
-                
+                // BOTU TETİKLE - Kullanıcıya mesaj gönder
                 const botApi = `https://api.telegram.org/bot5246489165:AAGhMleCadeh3bhtje1EBPY95yn2rDKH7KE/sendMessage`;
+                
+                // Kullanıcının adını mesaja ekle
+                const kullaniciAdi = telegramFirstName || 'Kullanıcı';
                 
                 await fetch(botApi, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         chat_id: telegramId,
-                        text: `🎵 *Müzik indirme isteği alındı!*\n\n🔍 *Aranan:* ${document.getElementById('searchInput').value}\n📌 *Bulunan:* ${videoBaslik}\n\n⏳ MP3 hazırlanıyor, birazdan göndereceğim...`,
+                        text: `🎵 *Merhaba ${kullaniciAdi}!*\n\n` +
+                              `✅ *Müzik isteğin alındı!*\n\n` +
+                              `🔍 *Aranan:* ${document.getElementById('searchInput').value}\n` +
+                              `📌 *Bulunan:* ${window.videoBaslik || 'Müzik'}\n\n` +
+                              `⏳ MP3 hazırlanıyor, birazdan göndereceğim...`,
                         parse_mode: 'Markdown'
                     })
                 });
@@ -344,7 +465,7 @@
                 // 2 saniye bekle
                 setTimeout(() => {
                     document.getElementById('loading').classList.remove('active');
-                    document.getElementById('tamamMesaj').innerHTML = `"${videoBaslik}"<br>Bot sana MP3 gönderiyor 📲`;
+                    document.getElementById('tamamMesaj').innerHTML = `"${window.videoBaslik || 'Müzik'}"<br>Bot sana MP3 gönderiyor 📲`;
                     document.getElementById('tamam').classList.add('active');
                     
                     // Input temizle
