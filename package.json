@@ -4,8 +4,7 @@
     "description": "YouTube to Telegram MP3 Downloader",
     "main": "server.js",
     "scripts": {
-        "start": "node server.js",
-        "install-deps": "apt-get update && apt-get install -y python3 ffmpeg && pip3 install yt-dlp"
+        "start": "node server.js"
     },
     "dependencies": {
         "express": "^4.18.2",
@@ -13,6 +12,7 @@
         "yt-dlp-exec": "^1.0.2",
         "yt-search": "^2.10.4",
         "cors": "^2.8.5",
-        "dotenv": "^16.3.1"
+        "axios": "^1.6.0",
+        "multer": "^1.4.5-lts.1"
     }
 }
