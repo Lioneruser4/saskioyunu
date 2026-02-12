@@ -24,16 +24,17 @@ app.use(cors());
 const token = '5246489165:AAGhMleCadeh3bhtje1EBPY95yn2rDKH7KE';
 const bot = new TelegramBot(token);
 const YTDLP_PATH = path.join(__dirname, 'yt-dlp');
-const VERSION = "V15 - REBORN PLAYER";
-const SELF_URL = `https://saskioyunu-1.onrender.com`;
+const VERSION = "V16 - HYPER STABLE";
+let SELF_URL = `https://saskioyunu-1.onrender.com`;
 
-// 🛡️ RENDER ANTI-SLEEP ENGINE (Ultra-Persistent)
+// 🛡️ RENDER ANTI-SLEEP ENGINE (V16)
+app.get('/ping', (req, res) => res.send('ok'));
 setInterval(async () => {
     try {
-        await axios.get(SELF_URL, { timeout: 10000 });
-        console.log(`[${VERSION}] Ping: Active`);
+        await axios.get(`${SELF_URL}/ping`, { timeout: 10000 });
+        console.log(`[${VERSION}] Heartbeat pulse: System kept awake.`);
     } catch (e) {
-        console.log(`[${VERSION}] Ping: Rebooting...`);
+        console.log(`[${VERSION}] Heartbeat fail - Server might be restarting.`);
     }
 }, 30000);
 
@@ -172,69 +173,67 @@ app.get('/proxy', async (req, res) => {
     }
 });
 
-// 🚀 V15 REBORN ENGINE: Guaranteed Music Mode
+// 🚀 V16 HYPER-STABLE ENGINE: Native M4A Player Mode
 app.get('/download-direct', async (req, res) => {
     const { url, userId, title, author, duration } = req.query;
     if (!url || !userId) return res.status(400).json({ error: 'Missing parameters' });
 
     const videoId = url.split('v=')[1]?.split('&')[0] || url.split('/').pop().split('?')[0];
-    const tempFile = path.join(UPLOADS_DIR, `${videoId}_${Date.now()}.mp3`);
+    const tempFile = path.join(UPLOADS_DIR, `${videoId}_${Date.now()}.m4a`);
 
-    console.log(`[${VERSION}] Processing: ${title} (${duration}s)`);
+    console.log(`[${VERSION}] Hyper-Stable Process: ${title}`);
 
     try {
         const execPath = fs.existsSync(YTDLP_PATH) ? YTDLP_PATH : 'yt-dlp';
 
-        // Step 1: Download directly to file with YT-DLP (Forces clean container)
-        await ytdlp(url, {
-            output: tempFile,
-            format: 'bestaudio/best',
-            noCheckCertificates: true,
-            addHeader: [`user-agent:${getRandomUA()}`, 'referer:https://www.youtube.com/'],
-            extractAudio: true,
-            audioFormat: 'mp3',
-            audioQuality: '0' // Best quality
-        }, { binaryPath: execPath });
+        // Step 1: Get the direct M4A link (itag 140 is native high quality AAC)
+        let directLink;
+        try {
+            const output = await ytdlp(url, {
+                getUrl: true,
+                format: '140/bestaudio[ext=m4a]/bestaudio',
+                noCheckCertificates: true,
+                addHeader: [`user-agent:${getRandomUA()}`, 'referer:https://www.youtube.com/']
+            }, { binaryPath: execPath });
+            directLink = output.toString().trim().split('\n')[0];
+        } catch (e) {
+            console.log("yt-dlp link failed, trying engine race...");
+            const raceEngine = async (engine) => {
+                if (engine.type === 'ytdlp') {
+                    const out = await ytdlp(url, { getUrl: true, format: '140/bestaudio', noCheckCertificates: true, addHeader: [`user-agent:${getRandomUA()}`, 'referer:https://www.youtube.com/'] }, { binaryPath: execPath });
+                    return out.toString().trim().split('\n')[0];
+                }
+                return `${engine.instance}/latest_version?id=${videoId}&itag=140`;
+            };
+            directLink = await Promise.any(ENGINES.map(raceEngine));
+        }
 
-        if (!fs.existsSync(tempFile)) throw new Error('Download failed - File not found');
+        // Step 2: Download to local file (REQUIRED for Telegram Player mode)
+        const response = await axios({ method: 'get', url: directLink, responseType: 'stream', timeout: 60000, headers: { 'User-Agent': getRandomUA() } });
+        const writer = fs.createWriteStream(tempFile);
+        response.data.pipe(writer);
 
-        // Step 2: Send to Telegram with EXPLICIT Audio Parameters
-        const fileStream = fs.createReadStream(tempFile);
-
-        await bot.sendAudio(userId, fileStream, {
-            title: title || 'Müzik',
-            performer: author || 'Nexus Player',
-            duration: parseInt(duration) || 0,
-            caption: title // As requested: Only music name
-        }, {
-            filename: `${title.replace(/[^a-z0-9]/gi, '_')}.mp3`,
-            contentType: 'audio/mpeg'
+        await new Promise((resolve, reject) => {
+            writer.on('finish', resolve);
+            writer.on('error', reject);
         });
 
-        res.json({ success: true, message: 'Sent as Music player item' });
+        // Step 3: Send as PURE AUDIO
+        await bot.sendAudio(userId, tempFile, {
+            title: title || 'Müzik',
+            performer: author || 'Global Player',
+            duration: parseInt(duration) || 0,
+            caption: title // ONLY MUSIC NAME IN CAPTION
+        });
+
+        res.json({ success: true, message: 'Sent as Music' });
 
         // Cleanup
-        setTimeout(() => fs.unlink(tempFile, () => { }), 10000);
+        setTimeout(() => { if (fs.existsSync(tempFile)) fs.unlink(tempFile, () => { }); }, 15000);
 
     } catch (err) {
-        console.error('V15 Error:', err.message);
-        // Fallback to Invidious if yt-dlp fails
-        try {
-            const fallbackUrl = `https://invidious.projectsegfau.lt/latest_version?id=${videoId}&itag=140`;
-            const response = await axios({ url: fallbackUrl, responseType: 'stream' });
-            await bot.sendAudio(userId, response.data, {
-                title: title,
-                performer: author,
-                duration: parseInt(duration) || 0,
-                caption: title
-            }, {
-                filename: `${title.replace(/[^a-z0-9]/gi, '_')}.mp3`,
-                contentType: 'audio/mpeg'
-            });
-            res.json({ success: true, fallback: true });
-        } catch (f) {
-            res.status(500).json({ error: 'Tüm sistemler meşgul.' });
-        }
+        console.error('V16 Error:', err.message);
+        res.status(500).json({ error: 'İndirme hatası.' });
         if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile);
     }
 });
