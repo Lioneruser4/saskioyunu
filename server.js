@@ -2,186 +2,286 @@ const express = require('express');
 const TelegramBot = require('node-telegram-bot-api');
 const yts = require('yt-search');
 const cors = require('cors');
-const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
-const ytdlp = require('yt-dlp-exec');
 const { exec } = require('child_process');
-const { PassThrough } = require('stream');
+const { promisify } = require('util');
 
+const execAsync = promisify(exec);
 const app = express();
+
+// Klasör ayarları
 const UPLOADS_DIR = path.join(__dirname, 'uploads');
 if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR);
-
-const upload = multer({
-    dest: 'uploads/',
-    limits: { fileSize: 50 * 1024 * 1024 } // 50MB limit
-});
 
 app.use(express.json());
 app.use(cors());
 
+// Bot yapılandırması
 const token = '5246489165:AAGhMleCadeh3bhtje1EBPY95yn2rDKH7KE';
-const bot = new TelegramBot(token);
-const YTDLP_PATH = path.join(__dirname, 'yt-dlp');
-const FFMPEG_PATH = fs.existsSync(path.join(__dirname, 'ffmpeg')) ? path.join(__dirname, 'ffmpeg') : 'ffmpeg';
-const VERSION = "V26 - TITAN X";
-let SELF_URL = `https://saskioyunu-1.onrender.com`;
+const bot = new TelegramBot(token, { polling: false });
 
-// 🛡️ RENDER ANTI-SLEEP ENGINE
-app.get('/ping', (req, res) => res.send('ok'));
+const VERSION = "V25 - NEXUS PRO";
+const SELF_URL = process.env.RENDER_EXTERNAL_URL || 'https://saskioyunu-1.onrender.com';
+
+// Anti-sleep sistemi
+app.get('/ping', (req, res) => res.send('alive'));
 setInterval(async () => {
     try {
-        await axios.get(`${SELF_URL}/ping`, { timeout: 10000 });
-        console.log(`[${VERSION}] Heartbeat pulse: System kept awake.`);
+        await axios.get(`${SELF_URL}/ping`, { timeout: 8000 });
+        console.log(`[${VERSION}] Heartbeat OK`);
     } catch (e) {
-        console.log(`[${VERSION}] Heartbeat fail - Server might be restarting.`);
+        console.log(`[${VERSION}] Heartbeat skip`);
     }
-}, 30000);
+}, 25000);
 
+// User agents
 const USER_AGENTS = [
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (iPhone; CPU iPhone OS 17_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Mobile/15E148 Safari/604.1',
-    'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.6167.101 Mobile Safari/537.36'
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.3 Mobile/15E148 Safari/604.1'
 ];
 
 function getRandomUA() {
     return USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
 }
 
-app.get('/', (req, res) => res.send(`NexMusic ${VERSION} is active! Titan X-Engine Online. ⚡`));
+// Ana sayfa
+app.get('/', (req, res) => {
+    res.send(`🎵 NexMusic ${VERSION} - Sistem Aktif!`);
+});
 
-// 🔍 SEARCH: Discovery
+// 🔍 ARAMA
 app.get('/search', async (req, res) => {
     const query = req.query.q;
-    if (!query) return res.status(400).json({ error: 'Sorgu yok' });
+    if (!query) return res.status(400).json({ error: 'Sorgu eksik' });
+    
     try {
-        const r = await yts(query);
-        const v = r.videos[0];
-        if (v) {
-            res.json({ title: v.title, thumbnail: v.thumbnail, url: v.url, author: v.author.name, seconds: v.seconds, duration: v.timestamp });
-        } else res.status(404).json({ error: 'Bulunamadı' });
-    } catch (err) { res.status(500).json({ error: 'Arama hatası' }); }
+        console.log(`[SEARCH] Aranan: ${query}`);
+        const result = await yts(query);
+        const video = result.videos[0];
+        
+        if (video) {
+            res.json({
+                title: video.title,
+                thumbnail: video.thumbnail,
+                url: video.url,
+                author: video.author.name,
+                seconds: video.seconds,
+                duration: video.timestamp
+            });
+        } else {
+            res.status(404).json({ error: 'Sonuç bulunamadı' });
+        }
+    } catch (err) {
+        console.error('[SEARCH ERROR]', err.message);
+        res.status(500).json({ error: 'Arama hatası' });
+    }
 });
 
-// 🚀 V26 TITAN X: Extreme Multi-Node Race (Added VidsSave Logic)
+// 🎵 MÜZİK İNDİRME VE GÖNDERME - YENİ SİSTEM
 app.get('/download-direct', async (req, res) => {
     const { url, userId, title, author, duration } = req.query;
-    if (!url || !userId) return res.status(400).json({ error: 'Missing parameters' });
+    
+    if (!url || !userId) {
+        return res.status(400).json({ error: 'Eksik parametreler' });
+    }
 
-    const videoId = url.split('v=')[1]?.split('&')[0] || url.split('/').pop().split('?')[0];
-    const rawFile = path.join(UPLOADS_DIR, `raw_${Date.now()}`);
-    const finalFile = path.join(UPLOADS_DIR, `titan_${Date.now()}.mp3`);
+    const timestamp = Date.now();
+    const tempFile = path.join(UPLOADS_DIR, `temp_${timestamp}.mp4`);
+    const finalFile = path.join(UPLOADS_DIR, `music_${timestamp}.mp3`);
 
-    console.log(`[${VERSION}] Titan X Request: ${title}`);
-
-    // High-Tier Node Pool (Invidious + Global Scrapers)
-    const nodes = [
-        `https://invidious.projectsegfau.lt/latest_version?id=${videoId}&itag=140`,
-        `https://invidious.flokinet.is/latest_version?id=${videoId}&itag=140`,
-        `https://inv.vern.cc/latest_version?id=${videoId}&itag=140`,
-        `https://invidious.liteserver.nl/latest_version?id=${videoId}&itag=140`,
-        `https://inv.tux.mu/latest_version?id=${videoId}&itag=140`,
-        `https://invidious.perennialte.ch/latest_version?id=${videoId}&itag=140`,
-        `https://invidious.dr.theholyone.xyz/latest_version?id=${videoId}&itag=140`
-    ];
+    console.log(`[DOWNLOAD] İstek: ${title} - User: ${userId}`);
 
     try {
-        const secureNode = async () => {
-            const probe = async (u) => {
-                const resp = await axios.head(u, { timeout: 6000, headers: { 'User-Agent': getRandomUA() } });
-                if (resp.status === 200) return u;
-                throw new Error('Busy');
-            };
+        // Video ID çıkar
+        const videoId = extractVideoId(url);
+        if (!videoId) {
+            throw new Error('Geçersiz YouTube URL');
+        }
 
-            const cobaltScraper = async () => {
-                const c = await axios.post('https://api.cobalt.tools/api/json', { url, format: 'mp3', isAudioOnly: true }, { timeout: 8000 });
-                if (c.data.url) return c.data.url;
-                throw new Error('Cobalt Skip');
-            };
+        let downloadSuccess = false;
+        let streamUrl = null;
 
-            const najemiScraper = async () => {
-                const n = await axios.get(`https://najemi.cz/ytdl/handler.php?url=${url}`, { timeout: 8000 });
-                const m = n.data.match(/href="([^"]+)"/);
-                if (m && m[1] && m[1].includes('http')) return m[1];
-                throw new Error('Najemi Skip');
-            };
+        // METOD 1: yt-dlp ile direkt indirme (en güvenilir)
+        try {
+            console.log('[DOWNLOAD] yt-dlp deneniyor...');
+            const ytdlpCmd = `yt-dlp -f "bestaudio[ext=m4a]/bestaudio" --no-playlist --extract-audio --audio-format mp3 --audio-quality 0 -o "${finalFile.replace('.mp3', '.%(ext)s')}" "${url}"`;
+            
+            await execAsync(ytdlpCmd, { timeout: 120000 });
+            
+            // Dosya kontrolü (yt-dlp bazen farklı uzantı verir)
+            const possibleFiles = [
+                finalFile,
+                finalFile.replace('.mp3', '.m4a'),
+                finalFile.replace('.mp3', '.webm')
+            ];
+            
+            for (const file of possibleFiles) {
+                if (fs.existsSync(file)) {
+                    if (file !== finalFile) {
+                        // FFmpeg ile mp3'e çevir
+                        await convertToMp3(file, finalFile);
+                        fs.unlinkSync(file);
+                    }
+                    downloadSuccess = true;
+                    console.log('[DOWNLOAD] yt-dlp başarılı!');
+                    break;
+                }
+            }
+        } catch (e) {
+            console.log('[DOWNLOAD] yt-dlp başarısız:', e.message);
+        }
 
-            // VidsSave / Hybrid Scraper Logic
-            const hybridScraper = async () => {
-                // Try to simulate a quick direct extraction or find another fallback
-                const h = await axios.get(`https://vidssave.com/youtube-to-mp3`, { timeout: 5000 });
-                // Note: Actual scraping of VidsSave might require dynamic tokens, 
-                // but we add it to the race to maintain robustness if their public API appears.
-                throw new Error('Hybrid Skip');
-            };
+        // METOD 2: Cobalt API
+        if (!downloadSuccess) {
+            try {
+                console.log('[DOWNLOAD] Cobalt API deneniyor...');
+                const cobaltResp = await axios.post('https://api.cobalt.tools/api/json', {
+                    url: url,
+                    isAudioOnly: true,
+                    audioFormat: 'mp3'
+                }, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    timeout: 30000
+                });
 
-            return await Promise.any([...nodes.map(probe), cobaltScraper(), najemiScraper(), hybridScraper()]);
-        };
+                if (cobaltResp.data && cobaltResp.data.url) {
+                    streamUrl = cobaltResp.data.url;
+                    await downloadFromStream(streamUrl, tempFile);
+                    await convertToMp3(tempFile, finalFile);
+                    downloadSuccess = true;
+                    console.log('[DOWNLOAD] Cobalt başarılı!');
+                }
+            } catch (e) {
+                console.log('[DOWNLOAD] Cobalt başarısız:', e.message);
+            }
+        }
 
-        const streamUrl = await secureNode();
-        console.log(`[${VERSION}] Stream Secured: ${streamUrl.substring(0, 40)}...`);
+        // METOD 3: Invidious Fallback
+        if (!downloadSuccess) {
+            try {
+                console.log('[DOWNLOAD] Invidious deneniyor...');
+                streamUrl = `https://invidious.projectsegfau.lt/latest_version?id=${videoId}&itag=140`;
+                await downloadFromStream(streamUrl, tempFile);
+                await convertToMp3(tempFile, finalFile);
+                downloadSuccess = true;
+                console.log('[DOWNLOAD] Invidious başarılı!');
+            } catch (e) {
+                console.log('[DOWNLOAD] Invidious başarısız:', e.message);
+            }
+        }
 
-        const response = await axios({
-            method: 'get', url: streamUrl, responseType: 'stream',
-            timeout: 90000, headers: { 'User-Agent': getRandomUA() }
-        });
+        if (!downloadSuccess || !fs.existsSync(finalFile)) {
+            throw new Error('Müzik indirilemedi. Tüm yöntemler başarısız oldu.');
+        }
 
-        const writer = fs.createWriteStream(rawFile);
-        response.data.pipe(writer);
-        await new Promise((resolve, reject) => {
-            writer.on('finish', resolve);
-            writer.on('error', reject);
-        });
+        // Dosya boyutu kontrolü
+        const stats = fs.statSync(finalFile);
+        if (stats.size < 10000) { // 10KB'den küçükse hatalı
+            throw new Error('İndirilen dosya çok küçük veya bozuk');
+        }
 
-        if (!fs.existsSync(rawFile) || fs.statSync(rawFile).size < 1000) throw new Error('Data Throttled');
+        console.log(`[DOWNLOAD] Dosya hazır: ${stats.size} bytes`);
 
-        const ffmpegCmd = `"${FFMPEG_PATH}" -y -i "${rawFile}" -vn -ar 44100 -ac 2 -b:a 192k "${finalFile}"`;
-        await new Promise((resolve, reject) => {
-            exec(ffmpegCmd, (error) => {
-                if (error) reject(new Error('FFmpeg error.'));
-                else resolve();
-            });
-        });
-
+        // Telegram'a gönder
+        console.log('[TELEGRAM] Gönderiliyor...');
         await bot.sendAudio(userId, finalFile, {
             title: title || 'Müzik',
-            performer: author || 'TITAN X',
+            performer: author || 'NexMusic',
             duration: parseInt(duration) || 0,
-            caption: title
-        }, { filename: `${title.replace(/[^a-z0-9]/gi, '_')}.mp3`, contentType: 'audio/mpeg' });
+            caption: `🎵 ${title}\n🎤 ${author}\n\n✅ ${VERSION} ile indirildi`
+        }, {
+            filename: sanitizeFilename(title) + '.mp3',
+            contentType: 'audio/mpeg'
+        });
 
-        res.json({ success: true });
-        setTimeout(() => { [rawFile, finalFile].forEach(f => { if (fs.existsSync(f)) fs.unlink(f, () => { }); }); }, 15000);
+        console.log('[TELEGRAM] Gönderim başarılı!');
+        res.json({ success: true, message: 'Müzik başarıyla gönderildi' });
+
+        // Temizlik
+        setTimeout(() => {
+            [tempFile, finalFile].forEach(file => {
+                if (fs.existsSync(file)) {
+                    fs.unlink(file, () => {});
+                }
+            });
+        }, 10000);
 
     } catch (err) {
-        console.error(`[${VERSION}] Fatal:`, err.message);
-        res.status(500).json({ error: 'Global ağ yoğun. Lütfen 10sn bekleyip tekrar deneyin.' });
-        if (fs.existsSync(rawFile)) fs.unlinkSync(rawFile);
-        if (fs.existsSync(finalFile)) fs.unlinkSync(finalFile);
+        console.error('[DOWNLOAD ERROR]', err.message);
+        res.status(500).json({ 
+            error: err.message || 'İndirme hatası. Lütfen tekrar deneyin.' 
+        });
+
+        // Hata durumunda temizlik
+        [tempFile, finalFile].forEach(file => {
+            if (fs.existsSync(file)) {
+                fs.unlinkSync(file);
+            }
+        });
     }
 });
 
-// 📤 HIGH-VOLUME SENDER
-app.post('/upload-final', upload.single('music'), async (req, res) => {
-    const { userId, title, author } = req.body;
-    const file = req.file;
-    if (!file || !userId) return res.status(400).json({ error: 'Missing parameters' });
+// Yardımcı fonksiyonlar
+function extractVideoId(url) {
+    const patterns = [
+        /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
+        /^([a-zA-Z0-9_-]{11})$/
+    ];
+    
+    for (const pattern of patterns) {
+        const match = url.match(pattern);
+        if (match) return match[1];
+    }
+    return null;
+}
+
+async function downloadFromStream(url, outputPath) {
+    const response = await axios({
+        method: 'get',
+        url: url,
+        responseType: 'stream',
+        timeout: 60000,
+        headers: { 'User-Agent': getRandomUA() }
+    });
+
+    const writer = fs.createWriteStream(outputPath);
+    response.data.pipe(writer);
+
+    return new Promise((resolve, reject) => {
+        writer.on('finish', resolve);
+        writer.on('error', reject);
+        setTimeout(() => reject(new Error('Stream timeout')), 60000);
+    });
+}
+
+async function convertToMp3(inputPath, outputPath) {
+    const ffmpegCmd = `ffmpeg -y -i "${inputPath}" -vn -ar 44100 -ac 2 -b:a 192k "${outputPath}"`;
     try {
-        const stream = fs.createReadStream(file.path);
-        await bot.sendAudio(userId, stream, {
-            title: title || 'Müzik', performer: author || 'Global Ağ',
-            caption: `✅ *İşlem Başarılı!* \n📦 TITAN X ile iletildi.`,
-            parse_mode: 'Markdown'
-        }, { filename: `${(title || 'muzik').substring(0, 20)}.mp3`, contentType: 'audio/mpeg' });
-        res.json({ success: true });
-        fs.unlink(file.path, () => { });
+        await execAsync(ffmpegCmd, { timeout: 60000 });
     } catch (err) {
-        if (file) fs.unlinkSync(file.path);
-        res.status(500).json({ error: 'Bot error' });
+        throw new Error('Audio dönüştürme hatası');
     }
-});
+}
 
+function sanitizeFilename(name) {
+    return (name || 'music')
+        .replace(/[^a-z0-9\s]/gi, '_')
+        .replace(/\s+/g, '_')
+        .substring(0, 50);
+}
+
+// Sunucu başlat
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`${VERSION} System Online 🚀`));
+app.listen(PORT, () => {
+    console.log(`\n${'='.repeat(50)}`);
+    console.log(`🎵 ${VERSION} - ONLINE`);
+    console.log(`🌐 Port: ${PORT}`);
+    console.log(`🤖 Bot: Active`);
+    console.log(`${'='.repeat(50)}\n`);
+});
