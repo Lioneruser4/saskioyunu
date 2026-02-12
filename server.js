@@ -7,6 +7,7 @@ const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
 const ytdlp = require('yt-dlp-exec');
+const { exec } = require('child_process');
 const { PassThrough } = require('stream');
 
 const app = express();
@@ -24,7 +25,8 @@ app.use(cors());
 const token = '5246489165:AAGhMleCadeh3bhtje1EBPY95yn2rDKH7KE';
 const bot = new TelegramBot(token);
 const YTDLP_PATH = path.join(__dirname, 'yt-dlp');
-const VERSION = "V16 - HYPER STABLE";
+const FFMPEG_PATH = fs.existsSync(path.join(__dirname, 'ffmpeg')) ? path.join(__dirname, 'ffmpeg') : 'ffmpeg';
+const VERSION = "V17 - FFmpeg POWER";
 let SELF_URL = `https://saskioyunu-1.onrender.com`;
 
 // 🛡️ RENDER ANTI-SLEEP ENGINE (V16)
@@ -173,44 +175,32 @@ app.get('/proxy', async (req, res) => {
     }
 });
 
-// 🚀 V16 HYPER-STABLE ENGINE: Native M4A Player Mode
+// 🚀 V17 FFmpeg POWER: The ultimate fix for Music Player mode
 app.get('/download-direct', async (req, res) => {
     const { url, userId, title, author, duration } = req.query;
     if (!url || !userId) return res.status(400).json({ error: 'Missing parameters' });
 
     const videoId = url.split('v=')[1]?.split('&')[0] || url.split('/').pop().split('?')[0];
-    const tempFile = path.join(UPLOADS_DIR, `${videoId}_${Date.now()}.m4a`);
+    const rawFile = path.join(UPLOADS_DIR, `raw_${Date.now()}.m4a`);
+    const finalFile = path.join(UPLOADS_DIR, `${Date.now()}.mp3`);
 
-    console.log(`[${VERSION}] Hyper-Stable Process: ${title}`);
+    console.log(`[${VERSION}] FFmpeg Conversion Start: ${title}`);
 
     try {
         const execPath = fs.existsSync(YTDLP_PATH) ? YTDLP_PATH : 'yt-dlp';
 
-        // Step 1: Get the direct M4A link (itag 140 is native high quality AAC)
-        let directLink;
-        try {
-            const output = await ytdlp(url, {
-                getUrl: true,
-                format: '140/bestaudio[ext=m4a]/bestaudio',
-                noCheckCertificates: true,
-                addHeader: [`user-agent:${getRandomUA()}`, 'referer:https://www.youtube.com/']
-            }, { binaryPath: execPath });
-            directLink = output.toString().trim().split('\n')[0];
-        } catch (e) {
-            console.log("yt-dlp link failed, trying engine race...");
-            const raceEngine = async (engine) => {
-                if (engine.type === 'ytdlp') {
-                    const out = await ytdlp(url, { getUrl: true, format: '140/bestaudio', noCheckCertificates: true, addHeader: [`user-agent:${getRandomUA()}`, 'referer:https://www.youtube.com/'] }, { binaryPath: execPath });
-                    return out.toString().trim().split('\n')[0];
-                }
-                return `${engine.instance}/latest_version?id=${videoId}&itag=140`;
-            };
-            directLink = await Promise.any(ENGINES.map(raceEngine));
-        }
+        // Step 1: Get the direct link
+        const output = await ytdlp(url, {
+            getUrl: true,
+            format: '140/bestaudio[ext=m4a]/bestaudio',
+            noCheckCertificates: true,
+            addHeader: [`user-agent:${getRandomUA()}`, 'referer:https://www.youtube.com/']
+        }, { binaryPath: execPath });
+        const directLink = output.toString().trim().split('\n')[0];
 
-        // Step 2: Download to local file (REQUIRED for Telegram Player mode)
-        const response = await axios({ method: 'get', url: directLink, responseType: 'stream', timeout: 60000, headers: { 'User-Agent': getRandomUA() } });
-        const writer = fs.createWriteStream(tempFile);
+        // Step 2: Download raw audio
+        const response = await axios({ method: 'get', url: directLink, responseType: 'stream', timeout: 60000 });
+        const writer = fs.createWriteStream(rawFile);
         response.data.pipe(writer);
 
         await new Promise((resolve, reject) => {
@@ -218,23 +208,39 @@ app.get('/download-direct', async (req, res) => {
             writer.on('error', reject);
         });
 
-        // Step 3: Send as PURE AUDIO
-        await bot.sendAudio(userId, tempFile, {
-            title: title || 'Müzik',
-            performer: author || 'Global Player',
-            duration: parseInt(duration) || 0,
-            caption: title // ONLY MUSIC NAME IN CAPTION
+        // Step 3: FFmpeg MAGIC - Convert to standardized MP3 for Telegram Player
+        const ffmpegCmd = `${FFMPEG_PATH} -i "${rawFile}" -vn -ar 44100 -ac 2 -b:a 192k "${finalFile}"`;
+
+        await new Promise((resolve, reject) => {
+            exec(ffmpegCmd, (error) => {
+                if (error) {
+                    console.error("FFmpeg Error:", error);
+                    reject(error);
+                } else resolve();
+            });
         });
 
-        res.json({ success: true, message: 'Sent as Music' });
+        // Step 4: Send to Telegram (Now it's a perfect MP3)
+        await bot.sendAudio(userId, finalFile, {
+            title: title || 'Müzik',
+            performer: author || 'Nexus Player',
+            duration: parseInt(duration) || 0,
+            caption: title // ONLY MUSIC NAME
+        });
 
-        // Cleanup
-        setTimeout(() => { if (fs.existsSync(tempFile)) fs.unlink(tempFile, () => { }); }, 15000);
+        res.json({ success: true, message: 'Sent as Music player item' });
+
+        // Cleanup files
+        setTimeout(() => {
+            if (fs.existsSync(rawFile)) fs.unlink(rawFile, () => { });
+            if (fs.existsSync(finalFile)) fs.unlink(finalFile, () => { });
+        }, 20000);
 
     } catch (err) {
-        console.error('V16 Error:', err.message);
-        res.status(500).json({ error: 'İndirme hatası.' });
-        if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile);
+        console.error('V17 Error:', err.message);
+        res.status(500).json({ error: 'FFmpeg veya İndirme hatası.' });
+        if (fs.existsSync(rawFile)) fs.unlinkSync(rawFile);
+        if (fs.existsSync(finalFile)) fs.unlinkSync(finalFile);
     }
 });
 
