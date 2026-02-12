@@ -24,7 +24,18 @@ app.use(cors());
 const token = '5246489165:AAGhMleCadeh3bhtje1EBPY95yn2rDKH7KE';
 const bot = new TelegramBot(token);
 const YTDLP_PATH = path.join(__dirname, 'yt-dlp');
-const VERSION = "V13 ULTRA - PLAYER MAX";
+const VERSION = "V14 ULTRA - PURE MUSIC";
+const SELF_URL = `https://saskioyunu-1.onrender.com`;
+
+// 🛡️ RENDER ANTI-SLEEP ENGINE (30 Seconds Interval)
+setInterval(async () => {
+    try {
+        await axios.get(SELF_URL);
+        console.log(`[${VERSION}] Heartbeat pulse: System kept awake.`);
+    } catch (e) {
+        console.log(`[${VERSION}] Heartbeat fail - Server might be restarting.`);
+    }
+}, 30000);
 
 // --- GLOBAL ENGINE REPOSITORY (API-FREE) ---
 const ENGINES = [
@@ -161,27 +172,24 @@ app.get('/proxy', async (req, res) => {
     }
 });
 
-// � HYPER-SPEED DIRECT DOWNLOAD (V11): YT -> Server -> Telegram (No client data usage)
+// 🚀 HYPER-SPEED DIRECT DOWNLOAD (V14): Pure Music Mode
 app.get('/download-direct', async (req, res) => {
-    const { url, userId, title, author } = req.query;
+    const { url, userId, title, author, duration } = req.query;
     if (!url || !userId) return res.status(400).json({ error: 'Missing parameters' });
 
     console.log(`[${VERSION}] Direct Download Start: ${title}`);
 
     try {
-        // Step 1: Get the best link using the race engine logic
         const raceEngine = async (engine) => {
             if (engine.type === 'ytdlp') {
                 const execPath = fs.existsSync(YTDLP_PATH) ? YTDLP_PATH : 'yt-dlp';
-                const ua = engine.client === 'ios' ? 'com.google.ios.youtube/19.01.1 (iPhone16,2; U; CPU iOS 17_2 like Mac OS X; en_US)' : getRandomUA();
                 const args = {
                     getUrl: true,
                     format: 'bestaudio/best',
                     noCheckCertificates: true,
                     noWarnings: true,
-                    geoBypass: true,
-                    addHeader: [`user-agent:${ua}`, 'referer:https://www.youtube.com/'],
-                    extractorArgs: `youtube:player_client=${engine.client || 'ios'},web_creator;player_skip=web,android`
+                    addHeader: [`user-agent:${getRandomUA()}`, 'referer:https://www.youtube.com/'],
+                    extractorArgs: `youtube:player_client=ios,web_creator`
                 };
                 const output = await ytdlp(url, args, { binaryPath: execPath });
                 const link = output.toString().trim().split('\n')[0];
@@ -194,9 +202,6 @@ app.get('/download-direct', async (req, res) => {
         };
 
         const directLink = await Promise.any(ENGINES.map(raceEngine));
-        console.log(`[${VERSION}] Link acquired, streaming to Telegram...`);
-
-        // Step 2: Stream directly to Telegram
         const audioResponse = await axios({
             method: 'get',
             url: directLink,
@@ -205,34 +210,26 @@ app.get('/download-direct', async (req, res) => {
             headers: { 'User-Agent': getRandomUA(), 'Referer': 'https://www.youtube.com/' }
         });
 
-        const safeTitle = (title || 'muzik').replace(/[^a-z0-9]/gi, '_').substring(0, 30);
-        const tempPath = path.join(UPLOADS_DIR, `temp_${Date.now()}_${userId}.m4a`);
-
-        // Write to temp file for guaranteed metadata detection by Telegram
+        const tempPath = path.join(UPLOADS_DIR, `temp_${Date.now()}_${userId}.mp3`);
         const writer = fs.createWriteStream(tempPath);
         audioResponse.data.pipe(writer);
 
-        await new Promise((resolve, reject) => {
-            writer.on('finish', resolve);
-            writer.on('error', reject);
-        });
+        await new Promise((resolve) => writer.on('finish', resolve));
 
-        // Send from local path (Most reliable for "Music Player" mode)
+        // PURE MUSIC SENDER (Clean caption, Audio mode)
         await bot.sendAudio(userId, tempPath, {
             title: title || 'Müzik',
-            performer: author || 'Hyper Speed Engine',
-            caption: `🚀 *V13 Hyper Speed*\n✅ Müzik player uyumlu format fırlatıldı.\n💎 Sıfır veri kaybı.`,
-            parse_mode: 'Markdown'
+            performer: author || 'Nexus Engine',
+            caption: title, // ONLY music title
+            duration: parseInt(duration) || 0
         });
 
-        res.json({ success: true, message: 'Sent as Music' });
-
-        // Clean up
-        fs.unlink(tempPath, (err) => { if (err) console.error("Temp delete error:", err); });
+        res.json({ success: true, message: 'Sent as Pure Music' });
+        fs.unlink(tempPath, () => { });
 
     } catch (err) {
         console.error('Direct Download Error:', err.message);
-        res.status(500).json({ error: 'İndirme motoru hatası. Lütfen tekrar deneyin.' });
+        res.status(500).json({ error: 'İndirme motoru hatası.' });
     }
 });
 
