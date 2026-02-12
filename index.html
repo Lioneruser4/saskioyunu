@@ -1,568 +1,99 @@
 <!DOCTYPE html>
 <html lang="tr">
-
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NexMusic V26 - MULTI-SOURCE PRO</title>
-    <script src="https://telegram.org/js/telegram-web-app.js?v=22"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexMusic V26 - API Active</title>
     <style>
-        :root {
-            --primary: #6366f1;
-            --bg: #020617;
-            --card: rgba(15, 23, 42, 0.95);
-            --text: #f1f5f9;
-            --accent: #38bdf8;
-            --success: #10b981;
-            --error: #ef4444;
-            --nebula: linear-gradient(135deg, #6366f1, #38bdf8);
-        }
-
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Outfit', sans-serif;
-            -webkit-tap-highlight-color: transparent;
         }
-
         body {
-            background: var(--bg);
-            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             display: flex;
             justify-content: center;
-            align-items: flex-start;
-            padding: 20px;
-            overflow-y: auto;
-            overflow-x: hidden;
-        }
-
-        body::before {
-            content: '';
-            position: fixed;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%);
-            animation: nebulaPulse 15s ease-in-out infinite;
-            z-index: -1;
-        }
-
-        @keyframes nebulaPulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-        }
-
-        #splash {
-            position: fixed;
-            inset: 0;
-            background: var(--bg);
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
             align-items: center;
-            transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            color: white;
+            padding: 20px;
         }
-
-        .ring {
-            width: 80px;
-            height: 80px;
-            border: 4px solid rgba(99, 102, 241, 0.1);
-            border-top-color: var(--accent);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .splash-text {
-            margin-top: 30px;
-            font-weight: 800;
-            color: var(--accent);
-            letter-spacing: 3px;
-            font-size: 13px;
-            animation: pulse 2s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
         .container {
-            width: 100%;
-            max-width: 440px;
-            transform: scale(0.9) translateY(20px);
-            opacity: 0;
-            transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-
-        .container.active {
-            transform: scale(1) translateY(0);
-            opacity: 1;
-        }
-
-        .card {
-            background: var(--card);
-            backdrop-filter: blur(40px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 32px;
-            padding: 35px;
-            box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.9);
-            position: relative;
-        }
-
-        .version-tag {
-            position: absolute;
-            top: 20px;
-            right: 24px;
-            font-size: 10px;
-            color: var(--accent);
-            font-weight: 800;
-            letter-spacing: 1.5px;
-            background: rgba(56, 189, 248, 0.15);
-            padding: 6px 14px;
-            border-radius: 50px;
-            border: 1px solid rgba(56, 189, 248, 0.3);
-        }
-
-        .header {
             text-align: center;
-            margin-bottom: 35px;
+            max-width: 600px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         }
-
-        .welcome {
-            font-size: 13px;
-            color: var(--accent);
-            margin-bottom: 12px;
-            font-weight: 600;
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        .status {
+            display: inline-block;
+            background: #10b981;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        .info {
+            margin: 20px 0;
             opacity: 0.9;
         }
-
-        .logo {
-            font-size: 48px;
-            font-weight: 800;
-            background: var(--nebula);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            letter-spacing: -2px;
-            margin-bottom: 8px;
-        }
-
-        .tagline {
-            font-size: 11px;
-            opacity: 0.5;
-            font-weight: 500;
-        }
-
-        .search-box {
-            position: relative;
-            margin-bottom: 20px;
-        }
-
-        input {
-            width: 100%;
-            padding: 20px 24px;
-            background: rgba(0, 0, 0, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 20px;
-            color: white;
-            font-size: 15px;
-            outline: none;
-            transition: all 0.3s;
-        }
-
-        input::placeholder {
-            color: rgba(255, 255, 255, 0.4);
-        }
-
-        input:focus {
-            border-color: var(--accent);
-            box-shadow: 0 0 30px rgba(56, 189, 248, 0.2);
-            background: rgba(0, 0, 0, 0.8);
-        }
-
-        .btn {
-            width: 100%;
-            padding: 18px;
-            border: none;
-            border-radius: 18px;
-            color: white;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-            font-size: 15px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .btn::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: rgba(255, 255, 255, 0.1);
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        .btn:hover::before {
-            opacity: 1;
-        }
-
-        .btn:active {
-            transform: scale(0.97);
-        }
-
-        .btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        .btn-search {
-            background: var(--nebula);
-            box-shadow: 0 10px 40px rgba(99, 102, 241, 0.4);
-        }
-
-        .btn-download {
-            background: var(--success);
-            margin-top: 25px;
-            box-shadow: 0 10px 40px rgba(16, 185, 129, 0.4);
-        }
-
-        .result {
-            margin-top: 35px;
-            display: none;
-            animation: slideUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-
-        .result.show {
-            display: block;
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .thumb-container {
-            border-radius: 24px;
-            overflow: hidden;
-            margin-bottom: 20px;
-            aspect-ratio: 16/9;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
-            position: relative;
-        }
-
-        .thumb {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .music-info {
-            margin-bottom: 20px;
-        }
-
-        .music-title {
-            font-size: 19px;
-            font-weight: 800;
-            margin-bottom: 6px;
-            line-height: 1.3;
-        }
-
-        .music-author {
-            font-size: 14px;
-            color: #64748b;
-            font-weight: 600;
-        }
-
-        .prog-bar {
-            width: 100%;
-            height: 8px;
-            background: rgba(255, 255, 255, 0.08);
-            border-radius: 100px;
-            margin-top: 25px;
-            display: none;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .prog-bar.show {
-            display: block;
-        }
-
-        .prog-fill {
-            width: 0%;
-            height: 100%;
-            background: var(--nebula);
-            transition: width 0.5s ease-out;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .prog-fill::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-            animation: shimmer 1.5s infinite;
-        }
-
-        @keyframes shimmer {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
-        }
-
-        .status {
-            text-align: center;
-            font-size: 13px;
-            margin-top: 15px;
-            color: #94a3b8;
-            font-weight: 500;
-        }
-
-        .alert {
-            display: none;
-            padding: 16px 20px;
-            border-radius: 16px;
-            font-size: 13px;
-            text-align: center;
+        .endpoints {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            border-radius: 10px;
             margin-top: 20px;
-            font-weight: 600;
-            animation: slideUp 0.3s ease;
+            text-align: left;
         }
-
-        .alert.show {
-            display: block;
+        .endpoint {
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
         }
-
-        .alert-error {
-            background: rgba(239, 68, 68, 0.15);
-            color: var(--error);
-            border: 1px solid rgba(239, 68, 68, 0.3);
-        }
-
-        .alert-success {
-            background: rgba(16, 185, 129, 0.15);
-            color: var(--success);
-            border: 1px solid rgba(16, 185, 129, 0.3);
-        }
-
-        .loader {
+        .telegram-btn {
             display: inline-block;
-            width: 12px;
-            height: 12px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-top-color: white;
-            border-radius: 50%;
-            animation: spin 0.6s linear infinite;
+            background: #0088cc;
+            color: white;
+            padding: 12px 30px;
+            border-radius: 25px;
+            text-decoration: none;
+            margin-top: 20px;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+        .telegram-btn:hover {
+            background: #006699;
         }
     </style>
 </head>
-
 <body>
-    <div id="splash">
-        <div class="ring"></div>
-        <p class="splash-text">NEXUS PRO CORE...</p>
-    </div>
-
-    <div class="container" id="main">
-        <div class="card">
-            <div class="version-tag">V26 MULTI-SOURCE</div>
-            
-            <div class="header">
-                <p class="welcome" id="welcome"></p>
-                <div class="logo">NexMusic</div>
-                <p class="tagline">Global Music Cloud Engine | Pro Edition</p>
-            </div>
-
-            <div class="search-box">
-                <input type="text" id="searchInput" placeholder="🔍 Sanatçı veya Şarkı ara..." autocomplete="off">
-            </div>
-            
-            <button onclick="search()" id="searchBtn" class="btn btn-search">
-                <span>🎵 Hızlı Bul</span>
-            </button>
-
-            <div id="result" class="result">
-                <div class="thumb-container">
-                    <img id="thumb" class="thumb" src="" alt="Kapak">
-                </div>
-                
-                <div class="music-info">
-                    <h3 id="title" class="music-title"></h3>
-                    <p id="author" class="music-author"></p>
-                </div>
-
-                <button onclick="download()" id="downloadBtn" class="btn btn-download">
-                    <span>⚡ İNDİR VE BOTA GÖNDER</span>
-                </button>
-
-                <div id="prog" class="prog-bar">
-                    <div id="fill" class="prog-fill"></div>
-                </div>
-                
-                <p id="status" class="status"></p>
-                <div id="alert" class="alert"></div>
-            </div>
+    <div class="container">
+        <h1>🎵 NexMusic V26</h1>
+        <div class="status">✅ SYSTEM ACTIVE</div>
+        <p class="info">Multi-Source Music Download API</p>
+        
+        <div class="endpoints">
+            <div class="endpoint">📍 GET /search?q=song_name</div>
+            <div class="endpoint">📍 GET /download-direct</div>
+            <div class="endpoint">📍 GET /ping</div>
         </div>
+        
+        <p style="margin-top: 30px; opacity: 0.8;">
+            7 farklı kaynaktan müzik indirme<br>
+            Telegram Bot entegrasyonu<br>
+            Otomatik MP3 dönüştürme
+        </p>
+        
+        <a href="https://t.me/YOUR_BOT_USERNAME" class="telegram-btn">
+            📱 Telegram Bot'u Aç
+        </a>
     </div>
-
-    <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand();
-        tg.ready();
-        tg.enableClosingConfirmation();
-
-        const API_URL = 'https://saskioyunu-1.onrender.com';
-        let currentTrack = null;
-
-        window.onload = () => {
-            const userName = tg.initDataUnsafe?.user?.first_name || 'Müziksever';
-            document.getElementById('welcome').innerText = `Hoş geldin, ${userName} 👋`;
-            
-            setTimeout(() => {
-                document.getElementById('splash').style.opacity = '0';
-                setTimeout(() => {
-                    document.getElementById('splash').style.display = 'none';
-                    document.getElementById('main').classList.add('active');
-                }, 800);
-            }, 2000);
-
-            // Enter tuşu ile arama
-            document.getElementById('searchInput').addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') search();
-            });
-        };
-
-        async function search() {
-            const query = document.getElementById('searchInput').value.trim();
-            if (!query) {
-                showAlert('Lütfen bir şarkı veya sanatçı adı girin', 'error');
-                return;
-            }
-
-            const btn = document.getElementById('searchBtn');
-            const result = document.getElementById('result');
-            
-            btn.disabled = true;
-            btn.innerHTML = '<span class="loader"></span><span>Aranıyor...</span>';
-            result.classList.remove('show');
-            hideAlert();
-
-            try {
-                const response = await fetch(`${API_URL}/search?q=${encodeURIComponent(query)}`);
-                const data = await response.json();
-
-                if (data.url) {
-                    currentTrack = data;
-                    document.getElementById('thumb').src = data.thumbnail;
-                    document.getElementById('title').innerText = data.title;
-                    document.getElementById('author').innerText = data.author;
-                    result.classList.add('show');
-                    tg.HapticFeedback.impactOccurred('medium');
-                } else {
-                    showAlert('Şarkı bulunamadı. Başka bir arama deneyin.', 'error');
-                }
-            } catch (error) {
-                console.error('Arama hatası:', error);
-                showAlert('Bağlantı hatası. Lütfen tekrar deneyin.', 'error');
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<span>🎵 Hızlı Bul</span>';
-            }
-        }
-
-        async function download() {
-            if (!currentTrack) return;
-
-            const userId = tg.initDataUnsafe?.user?.id;
-            if (!userId) {
-                showAlert('Telegram kullanıcı bilgisi alınamadı', 'error');
-                return;
-            }
-
-            const btn = document.getElementById('downloadBtn');
-            const prog = document.getElementById('prog');
-            const fill = document.getElementById('fill');
-            const status = document.getElementById('status');
-
-            btn.disabled = true;
-            btn.innerHTML = '<span class="loader"></span><span>Hazırlanıyor...</span>';
-            prog.classList.add('show');
-            fill.style.width = '0%';
-            status.innerText = 'Müzik bulunuyor...';
-            hideAlert();
-
-            try {
-                // İlerleme simülasyonu
-                setTimeout(() => {
-                    fill.style.width = '30%';
-                    status.innerText = 'İndiriliyor...';
-                }, 500);
-
-                setTimeout(() => {
-                    fill.style.width = '60%';
-                    status.innerText = 'İşleniyor...';
-                }, 1500);
-
-                const url = `${API_URL}/download-direct?url=${encodeURIComponent(currentTrack.url)}&userId=${userId}&title=${encodeURIComponent(currentTrack.title)}&author=${encodeURIComponent(currentTrack.author)}&duration=${currentTrack.seconds}`;
-                
-                const response = await fetch(url);
-                const data = await response.json();
-
-                if (data.error) {
-                    throw new Error(data.error);
-                }
-
-                fill.style.width = '100%';
-                status.innerText = '✅ BAŞARILI! Botunuza gönderildi.';
-                showAlert('🎉 Müzik başarıyla botunuza iletildi!', 'success');
-                tg.HapticFeedback.notificationOccurred('success');
-
-                setTimeout(() => {
-                    tg.close();
-                }, 3000);
-
-            } catch (error) {
-                console.error('İndirme hatası:', error);
-                fill.style.width = '0%';
-                status.innerText = '❌ Hata oluştu';
-                showAlert(error.message || 'İndirme başarısız. Lütfen tekrar deneyin.', 'error');
-                btn.disabled = false;
-                btn.innerHTML = '<span>🔄 TEKRAR DENE</span>';
-                tg.HapticFeedback.notificationOccurred('error');
-            }
-        }
-
-        function showAlert(message, type) {
-            const alert = document.getElementById('alert');
-            alert.className = `alert alert-${type} show`;
-            alert.innerText = message;
-        }
-
-        function hideAlert() {
-            const alert = document.getElementById('alert');
-            alert.classList.remove('show');
-        }
-    </script>
 </body>
-
 </html>
