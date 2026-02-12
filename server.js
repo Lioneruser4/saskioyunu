@@ -26,10 +26,10 @@ const token = '5246489165:AAGhMleCadeh3bhtje1EBPY95yn2rDKH7KE';
 const bot = new TelegramBot(token);
 const YTDLP_PATH = path.join(__dirname, 'yt-dlp');
 const FFMPEG_PATH = fs.existsSync(path.join(__dirname, 'ffmpeg')) ? path.join(__dirname, 'ffmpeg') : 'ffmpeg';
-const VERSION = "V22 - NEBULA GLOBAL";
+const VERSION = "V24 - TITAN MULTI-LINK";
 let SELF_URL = `https://saskioyunu-1.onrender.com`;
 
-// 🛡️ RENDER ANTI-SLEEP ENGINE (V16)
+// 🛡️ RENDER ANTI-SLEEP ENGINE
 app.get('/ping', (req, res) => res.send('ok'));
 setInterval(async () => {
     try {
@@ -42,96 +42,86 @@ setInterval(async () => {
 
 const USER_AGENTS = [
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (iPhone; CPU iPhone OS 17_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Mobile/15E148 Safari/604.1',
-    'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.6167.101 Mobile Safari/537.36',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
+    'Mozilla/5.0 (iPhone; CPU iPhone OS 17_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Mobile/15E148 Safari/604.1'
 ];
 
 function getRandomUA() {
     return USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
 }
 
-app.get('/', (req, res) => res.send(`NexMusic ${VERSION} is active! Global Cloud Engine Active. ⚡`));
+app.get('/', (req, res) => res.send(`NexMusic ${VERSION} is active! Multi-Link Bypass Active. ⚡`));
 
-// 🔍 SEARCH: Global SoundCloud Search (Fast & Unblocked)
+// 🔍 SEARCH: Global Discovery
 app.get('/search', async (req, res) => {
     const query = req.query.q;
     if (!query) return res.status(400).json({ error: 'Sorgu yok' });
-
     try {
-        console.log(`[${VERSION}] Searching Global Cloud: ${query}`);
-        const execPath = fs.existsSync(YTDLP_PATH) ? YTDLP_PATH : 'yt-dlp';
-
-        const output = await ytdlp(`scsearch1:${query}`, {
-            dumpSingleJson: true,
-            noCheckCertificates: true,
-            noWarnings: true,
-            extractorArgs: 'soundcloud:api_key=default'
-        }, { binaryPath: execPath });
-
-        const info = JSON.parse(output);
-        if (info.entries && info.entries.length > 0) {
-            const entry = info.entries[0];
+        const r = await yts(query);
+        const v = r.videos[0];
+        if (v) {
             res.json({
-                title: entry.title,
-                thumbnail: entry.thumbnail || 'https://i1.sndcdn.com/avatars-000437232516-9rv6nd-t500x500.jpg',
-                url: entry.url || entry.webpage_url,
-                author: entry.uploader || entry.user?.username || 'Global Artist',
-                seconds: entry.duration || 0,
-                duration: entry.duration_string || '0:00'
+                title: v.title, thumbnail: v.thumbnail, url: v.url,
+                author: v.author.name, seconds: v.seconds, duration: v.timestamp
             });
-        } else {
-            // Fallback to YouTube Search
-            const r = await yts(query);
-            const v = r.videos[0];
-            if (v) res.json({ title: v.title, thumbnail: v.thumbnail, url: v.url, author: v.author.name, seconds: v.seconds, duration: v.timestamp });
-            else res.status(404).json({ error: 'Bulunamadı' });
-        }
-    } catch (err) {
-        res.status(500).json({ error: 'Arama hatası' });
-    }
+        } else res.status(404).json({ error: 'Bulunamadı' });
+    } catch (err) { res.status(500).json({ error: 'Arama hatası' }); }
 });
 
-// 🚀 V22 NEBULA DOWNLOAD: Bypassing YouTube via Global Stream
+// 🚀 V24 TITAN DOWNLOAD: Multi-Stage Global Scraper
 app.get('/download-direct', async (req, res) => {
     const { url, userId, title, author, duration } = req.query;
     if (!url || !userId) return res.status(400).json({ error: 'Missing parameters' });
 
     const rawFile = path.join(UPLOADS_DIR, `raw_${Date.now()}`);
-    const finalFile = path.join(UPLOADS_DIR, `nebula_${Date.now()}.mp3`);
+    const finalFile = path.join(UPLOADS_DIR, `titan_${Date.now()}.mp3`);
 
-    console.log(`[${VERSION}] Global Request: ${title}`);
+    console.log(`[${VERSION}] Multi-Link Request: ${title}`);
 
     try {
-        const execPath = fs.existsSync(YTDLP_PATH) ? YTDLP_PATH : 'yt-dlp';
+        let streamUrl = null;
 
-        // Step 1: Extract direct stream URL
-        let directUrl = null;
+        // --- STAGE 1: NAJEMI GLOBAL SCRAPER (NEW) ---
         try {
-            // If it's a youtube link, try to bypass. If it's a sc link, use it directly.
-            const out = await ytdlp(url, {
-                getUrl: true,
-                format: 'bestaudio/best',
-                noCheckCertificates: true,
-                addHeader: [`User-Agent:${getRandomUA()}`]
-            }, { binaryPath: execPath });
-            directUrl = out.toString().trim().split('\n')[0];
+            console.log(`[${VERSION}] Trying Najemi Scraper...`);
+            const najemiPage = await axios.get(`https://najemi.cz/ytdl/handler.php?url=${url}`, {
+                headers: { 'User-Agent': getRandomUA() }
+            });
+            // Extract href link using regex
+            const match = najemiPage.data.match(/href="([^"]+)"/);
+            if (match && match[1] && match[1].includes('http')) {
+                streamUrl = match[1];
+                console.log(`[${VERSION}] Najemi Success.`);
+            }
         } catch (e) {
-            console.warn(`[${VERSION}] Extraction failed. Trying alternative cloud...`);
-            // Try scsearch as fallback even if url was provided
-            const altOut = await ytdlp(`scsearch1:${title} ${author}`, { getUrl: true, format: 'bestaudio/best' }, { binaryPath: execPath });
-            directUrl = altOut.toString().trim().split('\n')[0];
+            console.warn(`[${VERSION}] Najemi failed.`);
         }
 
-        if (!directUrl || !directUrl.startsWith('http')) throw new Error('Stream Link Not Found');
+        // --- STAGE 2: COBALT SHADOW TUNNEL ---
+        if (!streamUrl) {
+            try {
+                console.log(`[${VERSION}] Trying Cobalt Tunnel...`);
+                const cobaltResp = await axios.post('https://api.cobalt.tools/api/json', {
+                    url: url, format: 'mp3', isAudioOnly: true
+                }, { headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' } });
+                if (cobaltResp.data && cobaltResp.data.url) {
+                    streamUrl = cobaltResp.data.url;
+                    console.log(`[${VERSION}] Cobalt Success.`);
+                }
+            } catch (e) { }
+        }
 
-        // Step 2: High-Speed Direct Stream (requested logic)
-        console.log(`[${VERSION}] Streaming to Server...`);
+        // --- STAGE 3: ONLYMP3 / INVIDIOUS RELAY Fallback ---
+        if (!streamUrl) {
+            console.log(`[${VERSION}] Trying Invidious Relay...`);
+            const videoId = url.split('v=')[1]?.split('&')[0] || url.split('/').pop().split('?')[0];
+            streamUrl = `https://invidious.projectsegfau.lt/latest_version?id=${videoId}&itag=140`;
+        }
+
+        // --- STAGE 4: DIRECT STREAM ---
+        console.log(`[${VERSION}] Syncing stream from global node...`);
         const response = await axios({
-            method: 'get', url: directUrl,
-            responseType: 'stream',
-            timeout: 60000,
-            headers: { "User-Agent": getRandomUA(), "Accept": "audio/*" }
+            method: 'get', url: streamUrl, responseType: 'stream',
+            timeout: 60000, headers: { 'User-Agent': getRandomUA() }
         });
 
         const writer = fs.createWriteStream(rawFile);
@@ -141,32 +131,29 @@ app.get('/download-direct', async (req, res) => {
             writer.on('error', reject);
         });
 
-        if (!fs.existsSync(rawFile) || fs.statSync(rawFile).size < 1000) throw new Error('Source Corrupt');
-
-        // Step 3: FFmpeg MAGIC
-        console.log(`[${VERSION}] Stabilizing for Music Player...`);
+        // --- STAGE 5: FFmpeg STABILIZER ---
         const ffmpegCmd = `"${FFMPEG_PATH}" -y -i "${rawFile}" -vn -ar 44100 -ac 2 -b:a 192k "${finalFile}"`;
         await new Promise((resolve, reject) => {
             exec(ffmpegCmd, (error) => {
-                if (error) reject(new Error('Audio encoding failed.'));
+                if (error) reject(new Error('İşlem başarısız.'));
                 else resolve();
             });
         });
 
-        // Step 4: Secure Delivery
+        // --- STAGE 6: BOT DELIVERY ---
         await bot.sendAudio(userId, finalFile, {
             title: title || 'Müzik',
-            performer: author || 'Global Artist',
+            performer: author || 'TITAN Multi',
             duration: parseInt(duration) || 0,
             caption: title
         }, { filename: `${title.replace(/[^a-z0-9]/gi, '_')}.mp3`, contentType: 'audio/mpeg' });
 
-        res.json({ success: true, message: 'Global Cloud: Delivered' });
-        setTimeout(() => { [rawFile, finalFile].forEach(f => { if (fs.existsSync(f)) fs.unlink(f, () => { }); }); }, 15000);
+        res.json({ success: true, message: 'Delivered' });
+        setTimeout(() => { if (fs.existsSync(rawFile)) fs.unlink(rawFile, () => { }); if (fs.existsSync(finalFile)) fs.unlink(finalFile, () => { }); }, 15000);
 
     } catch (err) {
-        console.error(`[${VERSION}] Fatal Error:`, err.message);
-        res.status(500).json({ error: 'Global hat meşgul. Lütfen tekrar deneyin.' });
+        console.error(`[${VERSION}] Error:`, err.message);
+        res.status(500).json({ error: 'Şu an tüm hatlar dolu, lütfen tekrar deneyin.' });
         if (fs.existsSync(rawFile)) fs.unlinkSync(rawFile);
         if (fs.existsSync(finalFile)) fs.unlinkSync(finalFile);
     }
@@ -180,9 +167,8 @@ app.post('/upload-final', upload.single('music'), async (req, res) => {
     try {
         const stream = fs.createReadStream(file.path);
         await bot.sendAudio(userId, stream, {
-            title: title || 'Müzik',
-            performer: author || 'Global Ağ',
-            caption: `✅ *İşlem Başarılı!* \n📦 Global Bulut üzerinden iletildi.`,
+            title: title || 'Müzik', performer: author || 'Global Ağ',
+            caption: `✅ *İşlem Başarılı!* \n📦 ${VERSION} ile iletildi.`,
             parse_mode: 'Markdown'
         }, { filename: `${(title || 'muzik').substring(0, 20)}.mp3`, contentType: 'audio/mpeg' });
         res.json({ success: true });
