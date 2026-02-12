@@ -26,7 +26,7 @@ const token = '5246489165:AAGhMleCadeh3bhtje1EBPY95yn2rDKH7KE';
 const bot = new TelegramBot(token);
 const YTDLP_PATH = path.join(__dirname, 'yt-dlp');
 const FFMPEG_PATH = fs.existsSync(path.join(__dirname, 'ffmpeg')) ? path.join(__dirname, 'ffmpeg') : 'ffmpeg';
-const VERSION = "V17.1 - FFmpeg FIX";
+const VERSION = "V18 - GHOST ENGINE";
 let SELF_URL = `https://saskioyunu-1.onrender.com`;
 
 // 🛡️ RENDER ANTI-SLEEP ENGINE (V16)
@@ -175,7 +175,7 @@ app.get('/proxy', async (req, res) => {
     }
 });
 
-// 🚀 V17 FFmpeg POWER: The ultimate fix for Music Player mode
+// 🚀 V18 GHOST ENGINE: Anti-Bot & Fallback system
 app.get('/download-direct', async (req, res) => {
     const { url, userId, title, author, duration } = req.query;
     if (!url || !userId) return res.status(400).json({ error: 'Missing parameters' });
@@ -184,22 +184,55 @@ app.get('/download-direct', async (req, res) => {
     const rawFile = path.join(UPLOADS_DIR, `raw_${Date.now()}.m4a`);
     const finalFile = path.join(UPLOADS_DIR, `${Date.now()}.mp3`);
 
-    console.log(`[${VERSION}] FFmpeg Conversion Start: ${title}`);
+    console.log(`[${VERSION}] Starting Ghost Process: ${title}`);
 
     try {
         const execPath = fs.existsSync(YTDLP_PATH) ? YTDLP_PATH : 'yt-dlp';
+        let directLink = null;
 
-        // Step 1: Get the direct link
-        const output = await ytdlp(url, {
-            getUrl: true,
-            format: '140/bestaudio[ext=m4a]/bestaudio',
-            noCheckCertificates: true,
-            addHeader: [`user-agent:${getRandomUA()}`, 'referer:https://www.youtube.com/']
-        }, { binaryPath: execPath });
-        const directLink = output.toString().trim().split('\n')[0];
+        // Step 1: Attempt High-Quality Extraction with Anti-Bot Args
+        try {
+            console.log(`[${VERSION}] Attempting YouTube Direct...`);
+            const output = await ytdlp(url, {
+                getUrl: true,
+                format: '140/bestaudio[ext=m4a]/bestaudio',
+                noCheckCertificates: true,
+                noWarnings: true,
+                addHeader: [`user-agent:${getRandomUA()}`, 'referer:https://www.youtube.com/'],
+                // iOS client is harder for YouTube to block
+                extractorArgs: 'youtube:player_client=ios,web_creator'
+            }, { binaryPath: execPath });
+            directLink = output.toString().trim().split('\n')[0];
+        } catch (botErr) {
+            console.warn(`[${VERSION}] YouTube Blocked us. Swerving to Fallback Engine...`);
+            // Step 1.5: Fallback to Invidious instances
+            const raceFallback = async (engine) => {
+                if (engine.type === 'invidious') {
+                    const testUrl = `${engine.instance}/latest_version?id=${videoId}&itag=140`;
+                    return testUrl;
+                }
+                throw new Error('Not an invidious engine');
+            };
+
+            try {
+                directLink = await Promise.any(ENGINES.filter(e => e.type === 'invidious').map(raceFallback));
+                console.log(`[${VERSION}] Ghost Link found via Invidious.`);
+            } catch (failAll) {
+                throw new Error('All download sources are currently blocked by YouTube.');
+            }
+        }
+
+        if (!directLink) throw new Error('Could not resolve download link.');
 
         // Step 2: Download raw audio
-        const response = await axios({ method: 'get', url: directLink, responseType: 'stream', timeout: 60000 });
+        const response = await axios({
+            method: 'get',
+            url: directLink,
+            responseType: 'stream',
+            timeout: 60000,
+            headers: { 'User-Agent': getRandomUA() }
+        });
+
         const writer = fs.createWriteStream(rawFile);
         response.data.pipe(writer);
 
@@ -208,7 +241,8 @@ app.get('/download-direct', async (req, res) => {
             writer.on('error', reject);
         });
 
-        // Step 3: FFmpeg MAGIC - Convert to standardized MP3 for Telegram Player
+        // Step 3: FFmpeg Conversion (Guarantees Music Player recognition)
+        console.log(`[${VERSION}] Encoding MP3 for Telegram compatibility...`);
         const ffmpegCmd = `${FFMPEG_PATH} -i "${rawFile}" -vn -ar 44100 -ac 2 -b:a 192k "${finalFile}"`;
 
         await new Promise((resolve, reject) => {
@@ -220,28 +254,28 @@ app.get('/download-direct', async (req, res) => {
             });
         });
 
-        // Step 4: Send to Telegram (Now it's a perfect MP3)
+        // Step 4: Send to Telegram
         await bot.sendAudio(userId, finalFile, {
             title: title || 'Müzik',
-            performer: author || 'Nexus Player',
+            performer: author || 'Nexus Engine',
             duration: parseInt(duration) || 0,
-            caption: title // ONLY MUSIC NAME
+            caption: title
         }, {
             filename: `${title.replace(/[^a-z0-9]/gi, '_')}.mp3`,
             contentType: 'audio/mpeg'
         });
 
-        res.json({ success: true, message: 'Sent as Music player item' });
+        res.json({ success: true, message: 'Sent via Ghost Engine' });
 
-        // Cleanup files
+        // Cleanup
         setTimeout(() => {
             if (fs.existsSync(rawFile)) fs.unlink(rawFile, () => { });
             if (fs.existsSync(finalFile)) fs.unlink(finalFile, () => { });
         }, 20000);
 
     } catch (err) {
-        console.error('V17 Error:', err.message);
-        res.status(500).json({ error: 'FFmpeg veya İndirme hatası.' });
+        console.error(`[${VERSION}] Critical Error:`, err.message);
+        res.status(500).json({ error: err.message || 'Sistem meşgul, lütfen tekrar deneyin.' });
         if (fs.existsSync(rawFile)) fs.unlinkSync(rawFile);
         if (fs.existsSync(finalFile)) fs.unlinkSync(finalFile);
     }
