@@ -26,7 +26,7 @@ const token = '5246489165:AAGhMleCadeh3bhtje1EBPY95yn2rDKH7KE';
 const bot = new TelegramBot(token);
 const YTDLP_PATH = path.join(__dirname, 'yt-dlp');
 const FFMPEG_PATH = fs.existsSync(path.join(__dirname, 'ffmpeg')) ? path.join(__dirname, 'ffmpeg') : 'ffmpeg';
-const VERSION = "V17 - FFmpeg POWER";
+const VERSION = "V17.1 - FFmpeg FIX";
 let SELF_URL = `https://saskioyunu-1.onrender.com`;
 
 // 🛡️ RENDER ANTI-SLEEP ENGINE (V16)
@@ -226,6 +226,9 @@ app.get('/download-direct', async (req, res) => {
             performer: author || 'Nexus Player',
             duration: parseInt(duration) || 0,
             caption: title // ONLY MUSIC NAME
+        }, {
+            filename: `${title.replace(/[^a-z0-9]/gi, '_')}.mp3`,
+            contentType: 'audio/mpeg'
         });
 
         res.json({ success: true, message: 'Sent as Music player item' });
