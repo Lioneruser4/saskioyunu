@@ -24,16 +24,16 @@ app.use(cors());
 const token = '5246489165:AAGhMleCadeh3bhtje1EBPY95yn2rDKH7KE';
 const bot = new TelegramBot(token);
 const YTDLP_PATH = path.join(__dirname, 'yt-dlp');
-const VERSION = "V14 ULTRA - PURE MUSIC";
+const VERSION = "V15 - REBORN PLAYER";
 const SELF_URL = `https://saskioyunu-1.onrender.com`;
 
-// 🛡️ RENDER ANTI-SLEEP ENGINE (30 Seconds Interval)
+// 🛡️ RENDER ANTI-SLEEP ENGINE (Ultra-Persistent)
 setInterval(async () => {
     try {
-        await axios.get(SELF_URL);
-        console.log(`[${VERSION}] Heartbeat pulse: System kept awake.`);
+        await axios.get(SELF_URL, { timeout: 10000 });
+        console.log(`[${VERSION}] Ping: Active`);
     } catch (e) {
-        console.log(`[${VERSION}] Heartbeat fail - Server might be restarting.`);
+        console.log(`[${VERSION}] Ping: Rebooting...`);
     }
 }, 30000);
 
@@ -172,64 +172,70 @@ app.get('/proxy', async (req, res) => {
     }
 });
 
-// 🚀 HYPER-SPEED DIRECT DOWNLOAD (V14): Pure Music Mode
+// 🚀 V15 REBORN ENGINE: Guaranteed Music Mode
 app.get('/download-direct', async (req, res) => {
     const { url, userId, title, author, duration } = req.query;
     if (!url || !userId) return res.status(400).json({ error: 'Missing parameters' });
 
-    console.log(`[${VERSION}] Direct Download Start: ${title}`);
+    const videoId = url.split('v=')[1]?.split('&')[0] || url.split('/').pop().split('?')[0];
+    const tempFile = path.join(UPLOADS_DIR, `${videoId}_${Date.now()}.mp3`);
+
+    console.log(`[${VERSION}] Processing: ${title} (${duration}s)`);
 
     try {
-        const raceEngine = async (engine) => {
-            if (engine.type === 'ytdlp') {
-                const execPath = fs.existsSync(YTDLP_PATH) ? YTDLP_PATH : 'yt-dlp';
-                const args = {
-                    getUrl: true,
-                    format: 'bestaudio/best',
-                    noCheckCertificates: true,
-                    noWarnings: true,
-                    addHeader: [`user-agent:${getRandomUA()}`, 'referer:https://www.youtube.com/'],
-                    extractorArgs: `youtube:player_client=ios,web_creator`
-                };
-                const output = await ytdlp(url, args, { binaryPath: execPath });
-                const link = output.toString().trim().split('\n')[0];
-                if (link && link.startsWith('http')) return link;
-                throw new Error('Link not found');
-            } else {
-                const videoId = url.split('v=')[1]?.split('&')[0] || url.split('/').pop().split('?')[0];
-                return `${engine.instance}/latest_version?id=${videoId}&itag=140`;
-            }
-        };
+        const execPath = fs.existsSync(YTDLP_PATH) ? YTDLP_PATH : 'yt-dlp';
 
-        const directLink = await Promise.any(ENGINES.map(raceEngine));
-        const audioResponse = await axios({
-            method: 'get',
-            url: directLink,
-            responseType: 'stream',
-            timeout: 60000,
-            headers: { 'User-Agent': getRandomUA(), 'Referer': 'https://www.youtube.com/' }
-        });
+        // Step 1: Download directly to file with YT-DLP (Forces clean container)
+        await ytdlp(url, {
+            output: tempFile,
+            format: 'bestaudio/best',
+            noCheckCertificates: true,
+            addHeader: [`user-agent:${getRandomUA()}`, 'referer:https://www.youtube.com/'],
+            extractAudio: true,
+            audioFormat: 'mp3',
+            audioQuality: '0' // Best quality
+        }, { binaryPath: execPath });
 
-        const tempPath = path.join(UPLOADS_DIR, `temp_${Date.now()}_${userId}.mp3`);
-        const writer = fs.createWriteStream(tempPath);
-        audioResponse.data.pipe(writer);
+        if (!fs.existsSync(tempFile)) throw new Error('Download failed - File not found');
 
-        await new Promise((resolve) => writer.on('finish', resolve));
+        // Step 2: Send to Telegram with EXPLICIT Audio Parameters
+        const fileStream = fs.createReadStream(tempFile);
 
-        // PURE MUSIC SENDER (Clean caption, Audio mode)
-        await bot.sendAudio(userId, tempPath, {
+        await bot.sendAudio(userId, fileStream, {
             title: title || 'Müzik',
-            performer: author || 'Nexus Engine',
-            caption: title, // ONLY music title
-            duration: parseInt(duration) || 0
+            performer: author || 'Nexus Player',
+            duration: parseInt(duration) || 0,
+            caption: title // As requested: Only music name
+        }, {
+            filename: `${title.replace(/[^a-z0-9]/gi, '_')}.mp3`,
+            contentType: 'audio/mpeg'
         });
 
-        res.json({ success: true, message: 'Sent as Pure Music' });
-        fs.unlink(tempPath, () => { });
+        res.json({ success: true, message: 'Sent as Music player item' });
+
+        // Cleanup
+        setTimeout(() => fs.unlink(tempFile, () => { }), 10000);
 
     } catch (err) {
-        console.error('Direct Download Error:', err.message);
-        res.status(500).json({ error: 'İndirme motoru hatası.' });
+        console.error('V15 Error:', err.message);
+        // Fallback to Invidious if yt-dlp fails
+        try {
+            const fallbackUrl = `https://invidious.projectsegfau.lt/latest_version?id=${videoId}&itag=140`;
+            const response = await axios({ url: fallbackUrl, responseType: 'stream' });
+            await bot.sendAudio(userId, response.data, {
+                title: title,
+                performer: author,
+                duration: parseInt(duration) || 0,
+                caption: title
+            }, {
+                filename: `${title.replace(/[^a-z0-9]/gi, '_')}.mp3`,
+                contentType: 'audio/mpeg'
+            });
+            res.json({ success: true, fallback: true });
+        } catch (f) {
+            res.status(500).json({ error: 'Tüm sistemler meşgul.' });
+        }
+        if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile);
     }
 });
 
