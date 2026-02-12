@@ -4,284 +4,517 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NexMusic V27 - TITAN X-TREME</title>
-    <script src="https://telegram.org/js/telegram-web-app.js?v=27"></script>
+    <title>Titan Football 3D - Multiplay</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <link
-        href="https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=Inter:wght@300;400;600;800&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Syncopate:wght@700&family=Orbitron:wght@400;700;900&display=swap"
         rel="stylesheet">
     <style>
         :root {
-            --bg: #000000;
-            --primary: #ffffff;
-            --accent: #ff0055;
-            --glass: rgba(255, 255, 255, 0.03);
-            --border: rgba(255, 255, 255, 0.1);
+            --primary: #ff0055;
+            --secondary: #0088ff;
+            --bg: #050505;
         }
 
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Inter', sans-serif;
-            -webkit-tap-highlight-color: transparent;
+            font-family: 'Orbitron', sans-serif;
+            user-select: none;
         }
 
         body {
             background: var(--bg);
-            color: var(--primary);
-            min-height: 100vh;
+            color: #fff;
+            overflow: hidden;
+            touch-action: none;
+            position: fixed;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #ui-layer {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 30px 20px;
-            overflow-x: hidden;
-            overflow-y: auto;
+            justify-content: center;
+            background: radial-gradient(circle at center, #111 0%, #000 100%);
+            transition: 0.5s;
         }
 
-        .background-glow {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 100vw;
-            height: 100vh;
-            background: radial-gradient(circle at center, rgba(255, 0, 85, 0.1) 0%, transparent 60%);
-            z-index: -1;
-            pointer-events: none;
+        .hidden {
+            display: none !important;
         }
 
-        .container {
-            width: 100%;
-            max-width: 400px;
+        .profile-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 20px;
             text-align: center;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .profile-pic {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 3px solid var(--primary);
+            margin-bottom: 10px;
         }
 
         .logo {
-            font-family: 'Syncopate', sans-serif;
-            font-weight: 700;
-            font-size: 28px;
+            font-family: 'Syncopate';
+            font-size: 24px;
             letter-spacing: 5px;
+            color: var(--primary);
             margin-bottom: 40px;
             text-transform: uppercase;
-            background: linear-gradient(to right, #fff, #666);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-        }
-
-        .search-container {
-            position: relative;
-            width: 100%;
-            margin-bottom: 25px;
-        }
-
-        input {
-            width: 100%;
-            background: var(--glass);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 22px;
-            color: #fff;
-            font-size: 16px;
-            outline: none;
-            transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        input:focus {
-            border-color: var(--accent);
-            background: rgba(255, 255, 255, 0.05);
-            box-shadow: 0 0 30px rgba(255, 0, 85, 0.2);
         }
 
         .btn {
-            width: 100%;
-            padding: 20px;
+            padding: 15px 40px;
             border: none;
             border-radius: 12px;
-            font-weight: 800;
-            font-size: 15px;
-            letter-spacing: 2px;
+            font-weight: 900;
             cursor: pointer;
             text-transform: uppercase;
+            letter-spacing: 2px;
             transition: 0.3s;
+            margin: 5px;
+            width: 250px;
         }
 
-        .btn-main {
-            background: var(--primary);
-            color: var(--bg);
+        .btn-play {
+            background: #fff;
+            color: #000;
         }
 
-        .btn-main:active {
-            transform: scale(0.96);
+        .btn-team {
+            width: 140px;
+            font-size: 11px;
+            margin-top: 10px;
         }
 
-        .result-card {
-            margin-top: 40px;
+        #room-lobby {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 900;
             display: none;
-            background: var(--glass);
-            border: 1px solid var(--border);
-            border-radius: 24px;
-            padding: 24px;
-            animation: slideUp 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
         }
 
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .thumb {
+        .team-split {
+            display: flex;
             width: 100%;
-            aspect-ratio: 1;
-            border-radius: 16px;
-            object-fit: cover;
-            margin-bottom: 20px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            max-width: 800px;
+            justify-content: space-around;
+            margin-top: 20px;
+            gap: 10px;
         }
 
-        .title {
-            font-size: 18px;
-            font-weight: 800;
-            margin-bottom: 8px;
-            line-height: 1.4;
+        .team-box {
+            width: 48%;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 15px;
+            border-radius: 15px;
+            min-height: 250px;
+            border-top: 4px solid #fff;
+            overflow-y: auto;
         }
 
-        .author {
-            font-size: 14px;
-            opacity: 0.5;
-            font-weight: 600;
-            margin-bottom: 25px;
+        #game-controls {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 500;
+            display: none;
         }
 
-        .btn-download {
-            background: var(--accent);
-            color: #fff;
-            box-shadow: 0 10px 25px rgba(255, 0, 85, 0.3);
-        }
-
-        .loader {
-            width: 40px;
-            height: 40px;
-            border: 3px solid rgba(255, 255, 255, 0.1);
-            border-top-color: var(--accent);
+        .joystick-zone {
+            position: absolute;
+            bottom: 40px;
+            left: 40px;
+            width: 150px;
+            height: 150px;
             border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            display: none;
-            margin: 20px auto;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            pointer-events: auto;
         }
 
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
+        .joystick-stick {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 60px;
+            height: 60px;
+            background: #fff;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
         }
 
-        #statusText {
-            font-size: 13px;
-            color: var(--accent);
-            font-weight: 600;
-            margin-top: 15px;
+        .action-btns {
+            position: absolute;
+            bottom: 40px;
+            right: 40px;
+            display: flex;
+            gap: 20px;
+            pointer-events: auto;
+        }
+
+        .action-btn {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            border: 3px solid #fff;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 14px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        #scoreboard {
+            position: fixed;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 12px 35px;
+            border-radius: 50px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            font-size: 24px;
+            font-weight: 900;
+            z-index: 600;
             display: none;
+            backdrop-filter: blur(5px);
+        }
+
+        .score-red {
+            color: var(--primary);
+        }
+
+        .score-blue {
+            color: var(--secondary);
         }
     </style>
 </head>
 
 <body>
-    <div class="background-glow"></div>
 
-    <div class="container">
-        <div class="logo">NexMusic</div>
-
-        <div class="search-container">
-            <input type="text" id="searchInput" placeholder="Şarkı adı veya YouTube linki...">
+    <div id="ui-layer">
+        <div class="logo">TITAN FOOTBALL 3D</div>
+        <div class="profile-card">
+            <img src="https://via.placeholder.com/80" class="profile-pic" id="uPic">
+            <div id="uName" style="font-weight: 900;">Yükleniyor...</div>
         </div>
+        <button class="btn btn-play" onclick="createMyRoom()">ODA KUR</button>
+    </div>
 
-        <button onclick="handleSearch()" id="searchBtn" class="btn btn-main">Müziği Bul</button>
+    <div id="room-lobby">
+        <h2 id="lobbyTitle" style="letter-spacing: 3px; color: var(--primary);">LOBİ: Bekleniyor...</h2>
+        <div class="team-split">
+            <div class="team-box" id="redTeamList" style="border-color: var(--primary);">
+                <h3>RED TEAM</h3>
+                <hr style="opacity:0.2;margin:10px 0;">
+            </div>
+            <div class="team-box" id="blueTeamList" style="border-color: var(--secondary);">
+                <h3>BLUE TEAM</h3>
+                <hr style="opacity:0.2;margin:10px 0;">
+            </div>
+        </div>
+        <div style="margin-top: 30px; display: flex; flex-direction: column; align-items: center;">
+            <button class="btn btn-team" style="background: var(--primary); color: #fff;" onclick="switchTeam()">TAKIM
+                DEĞİŞTİR</button>
+            <button class="btn btn-play" onclick="startGame()">MAÇI BAŞLAT</button>
+        </div>
+    </div>
 
-        <div class="loader" id="loader"></div>
-        <p id="statusText"></p>
+    <div id="scoreboard">
+        <span class="score-red" id="scoreR">0</span>
+        <span style="opacity: 0.3;">-</span>
+        <span class="score-blue" id="scoreB">0</span>
+        <span id="gameTimer" style="margin-left: 20px; font-size: 16px; color: #aaa;">05:00</span>
+    </div>
 
-        <div id="resultCard" class="result-card">
-            <img id="thumb" class="thumb" src="" alt="">
-            <div id="title" class="title"></div>
-            <div id="author" class="author"></div>
-            <button onclick="handleDownload()" id="downloadBtn" class="btn btn-download">Bota Gönder</button>
+    <div id="game-controls">
+        <div class="joystick-zone" id="joyZone">
+            <div class="joystick-stick" id="joyStick"></div>
+        </div>
+        <div class="action-btns">
+            <div class="action-btn" id="shootBtn" style="background: var(--primary);">ŞUT</div>
+            <div class="action-btn" id="passBtn" style="background: var(--secondary);">PAS</div>
         </div>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
-        tg.ready();
 
-        const API_URL = 'https://saskioyunu-1.onrender.com';
-        let currentVideo = null;
+        const socket = io();
+        let user = { name: 'Oyuncu', pic: 'https://via.placeholder.com/80' };
+        let myId, currentRoomId, myTeam = 'red';
+        let isKicking = false, isPassing = false;
 
-        async function handleSearch() {
-            const query = document.getElementById('searchInput').value.trim();
-            if (!query) return;
+        if (tg.initDataUnsafe?.user) {
+            user.name = tg.initDataUnsafe.user.first_name;
+            user.pic = tg.initDataUnsafe.user.photo_url || user.pic;
+            document.getElementById('uPic').src = user.pic;
+            document.getElementById('uName').innerText = user.name;
+        }
 
-            const btn = document.getElementById('searchBtn');
-            const loader = document.getElementById('loader');
-            const card = document.getElementById('resultCard');
+        // --- 3D ENGINE ---
+        let scene, camera, renderer, ball, players = {};
+        let ballVel = { x: 0, z: 0 };
+        let moveDir = { x: 0, z: 0 };
+        let clock = new THREE.Clock();
 
-            btn.style.display = 'none';
-            loader.style.display = 'block';
-            card.style.display = 'none';
+        function init3D() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0a0a0a);
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 
-            try {
-                const res = await fetch(`${API_URL}/search?q=${encodeURIComponent(query)}`);
-                const data = await res.json();
-                if (data.url) {
-                    currentVideo = data;
-                    document.getElementById('thumb').src = data.thumbnail;
-                    document.getElementById('title').innerText = data.title;
-                    document.getElementById('author').innerText = data.author;
-                    card.style.display = 'block';
-                    tg.HapticFeedback.impactOccurred('medium');
-                } else alert('Müzik bulunamadı.');
-            } catch (e) {
-                alert('Sistem meşgul, lütfen tekrar deneyin.');
-            } finally {
-                btn.style.display = 'block';
-                loader.style.display = 'none';
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            document.body.appendChild(renderer.domElement);
+
+            scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+            const sun = new THREE.DirectionalLight(0xffffff, 1);
+            sun.position.set(20, 50, 20);
+            sun.castShadow = true;
+            scene.add(sun);
+
+            // Field
+            const field = new THREE.Mesh(
+                new THREE.PlaneGeometry(100, 60),
+                new THREE.MeshPhongMaterial({ color: 0x1a3a1a })
+            );
+            field.rotation.x = -Math.PI / 2;
+            field.receiveShadow = true;
+            scene.add(field);
+
+            // Lines
+            const centerCircle = new THREE.Mesh(new THREE.RingGeometry(8, 8.2, 32), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+            centerCircle.rotation.x = -Math.PI / 2;
+            centerCircle.position.y = 0.01;
+            scene.add(centerCircle);
+
+            // Ball
+            ball = new THREE.Mesh(new THREE.SphereGeometry(0.5, 16, 16), new THREE.MeshPhongMaterial({ color: 0xffffff }));
+            ball.position.set(0, 0.5, 0);
+            ball.castShadow = true;
+            scene.add(ball);
+
+            animate();
+        }
+
+        function createPlayerModel(team) {
+            const group = new THREE.Group();
+            const color = team === 'red' ? 0xff0055 : 0x0088ff;
+            const torso = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.2, 0.4), new THREE.MeshPhongMaterial({ color }));
+            torso.position.y = 1.6;
+            group.add(torso);
+            const head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshPhongMaterial({ color: 0xffccaa }));
+            head.position.y = 2.5;
+            group.add(head);
+            const legGeo = new THREE.BoxGeometry(0.25, 1, 0.25);
+            const lLeg = new THREE.Mesh(legGeo, new THREE.MeshPhongMaterial({ color }));
+            lLeg.position.set(-0.25, 0.5, 0);
+            group.add(lLeg);
+            const rLeg = new THREE.Mesh(legGeo, new THREE.MeshPhongMaterial({ color }));
+            rLeg.position.set(0.25, 0.5, 0);
+            group.add(rLeg);
+            scene.add(group);
+            return { mesh: group, lLeg, rLeg };
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            if (!myId || !players[myId]) return;
+
+            const me = players[myId];
+            const speed = 0.3;
+            me.mesh.position.x += moveDir.x * speed;
+            me.mesh.position.z += moveDir.z * speed;
+
+            // Boundaries
+            me.mesh.position.x = Math.max(-49, Math.min(49, me.mesh.position.x));
+            me.mesh.position.z = Math.max(-29, Math.min(29, me.mesh.position.z));
+
+            if (moveDir.x !== 0 || moveDir.z !== 0) {
+                me.mesh.rotation.y = Math.atan2(moveDir.x, moveDir.z);
+                const t = Date.now() * 0.01;
+                me.lLeg.rotation.x = Math.sin(t) * 0.8;
+                me.rLeg.rotation.x = -Math.sin(t) * 0.8;
+            } else {
+                me.lLeg.rotation.x = 0;
+                me.rLeg.rotation.x = 0;
+            }
+
+            // Ball Interaction
+            const dist = me.mesh.position.distanceTo(ball.position);
+            if (dist < 1.4) {
+                const dir = new THREE.Vector3().subVectors(ball.position, me.mesh.position).normalize();
+                let force = isKicking ? 0.7 : (isPassing ? 0.4 : 0.15);
+                ballVel.x = dir.x * force;
+                ballVel.z = dir.z * force;
+                socket.emit('ballSync', { roomId: currentRoomId, ball: { x: ball.position.x, y: 0.5, z: ball.position.z, vx: ballVel.x, vz: ballVel.z } });
+                if (isKicking || isPassing) tg.HapticFeedback.impactOccurred('medium');
+            }
+
+            // Ball Physics
+            ball.position.x += ballVel.x;
+            ball.position.z += ballVel.z;
+            ballVel.x *= 0.985;
+            ballVel.z *= 0.985;
+
+            // Simple Goal detection
+            if (Math.abs(ball.position.z) < 6) {
+                if (ball.position.x > 49.5) goal('red');
+                if (ball.position.x < -49.5) goal('blue');
+            }
+
+            // Ball boundaries
+            if (Math.abs(ball.position.x) > 50) ballVel.x *= -0.5;
+            if (Math.abs(ball.position.z) > 30) ballVel.z *= -0.5;
+
+            socket.emit('move', { roomId: currentRoomId, x: me.mesh.position.x, y: me.mesh.position.y, z: me.mesh.position.z, ry: me.mesh.rotation.y });
+
+            camera.position.lerp(new THREE.Vector3(me.mesh.position.x, 20, me.mesh.position.z + 25), 0.1);
+            camera.lookAt(me.mesh.position);
+            renderer.render(scene, camera);
+        }
+
+        function goal(team) {
+            ball.position.set(0, 0.5, 0);
+            ballVel = { x: 0, z: 0 };
+            tg.HapticFeedback.notificationOccurred('success');
+            // Server will sync score
+        }
+
+        // --- NETWORK ---
+        function createMyRoom() {
+            socket.emit('createRoom', { duration: 10, user });
+        }
+
+        socket.on('roomCreated', id => {
+            currentRoomId = id;
+            socket.emit('joinRoom', { roomId: id, user });
+        });
+
+        socket.on('joined', data => {
+            myId = data.playerId;
+            document.getElementById('ui-layer').classList.add('hidden');
+            document.getElementById('room-lobby').style.display = 'flex';
+            document.getElementById('lobbyTitle').innerText = `ODA: ${data.roomId}`;
+            init3D();
+        });
+
+        socket.on('updatePlayers', serverPlayers => {
+            for (let id in serverPlayers) {
+                if (!players[id]) players[id] = createPlayerModel(serverPlayers[id].team);
+                if (id !== myId) {
+                    players[id].mesh.position.set(serverPlayers[id].x, serverPlayers[id].y, serverPlayers[id].z);
+                    players[id].mesh.rotation.y = serverPlayers[id].ry;
+                }
+            }
+            updateLobbyUI(serverPlayers);
+        });
+
+        function updateLobbyUI(pl) {
+            const rList = document.getElementById('redTeamList');
+            const bList = document.getElementById('blueTeamList');
+            rList.innerHTML = '<h3>RED TEAM</h3><hr style="opacity:0.2;margin:10px 0;">';
+            bList.innerHTML = '<h3>BLUE TEAM</h3><hr style="opacity:0.2;margin:10px 0;">';
+            for (let id in pl) {
+                const item = document.createElement('div');
+                item.style.padding = '5px';
+                item.style.fontSize = '12px';
+                item.innerText = (id === myId ? '★ ' : '') + pl[id].name;
+                if (pl[id].team === 'red') rList.appendChild(item);
+                else bList.appendChild(item);
             }
         }
 
-        async function handleDownload() {
-            if (!currentVideo) return;
-            const userId = tg.initDataUnsafe?.user?.id;
-            const btn = document.getElementById('downloadBtn');
-            const status = document.getElementById('statusText');
-
-            btn.disabled = true;
-            btn.innerText = 'Tünel Açılıyor...';
-            status.style.display = 'block';
-            status.innerText = 'Titan X-Treme veri çekiyor...';
-
-            try {
-                const res = await fetch(`${API_URL}/download-direct?url=${encodeURIComponent(currentVideo.url)}&userId=${userId}&title=${encodeURIComponent(currentVideo.title)}&author=${encodeURIComponent(currentVideo.author)}&duration=${currentVideo.seconds}`);
-                const data = await res.json();
-
-                if (data.error) throw new Error(data.error);
-
-                status.innerText = '✅ BAŞARILI! Bota gönderildi.';
-                tg.HapticFeedback.notificationOccurred('success');
-                setTimeout(() => tg.close(), 2500);
-            } catch (e) {
-                status.innerText = `❌ HATA: ${e.message}`;
-                btn.disabled = false;
-                btn.innerText = 'Tekrar Dene';
-                tg.HapticFeedback.notificationOccurred('error');
-            }
+        function switchTeam() { socket.emit('switchTeam', currentRoomId); }
+        function startGame() {
+            document.getElementById('room-lobby').style.display = 'none';
+            document.getElementById('game-controls').style.display = 'block';
+            document.getElementById('scoreboard').style.display = 'flex';
         }
+
+        // --- CONTROLS ---
+        const joyStick = document.getElementById('joyStick');
+        const joyZone = document.getElementById('joyZone');
+        let joyActive = false;
+
+        joyZone.addEventListener('touchstart', e => { joyActive = true; e.preventDefault(); }, { passive: false });
+        window.addEventListener('touchmove', e => {
+            if (!joyActive) return;
+            const touch = e.touches[0];
+            const rect = joyZone.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            let dx = touch.clientX - centerX;
+            let dy = touch.clientY - centerY;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            const max = rect.width / 2;
+            if (dist > max) { dx *= max / dist; dy *= max / dist; }
+            joyStick.style.transform = `translate(-50%, -50%) translate(${dx}px, ${dy}px)`;
+            moveDir = { x: dx / max, z: dy / max };
+        }, { passive: false });
+        window.addEventListener('touchend', () => {
+            joyActive = false;
+            joyStick.style.transform = `translate(-50%, -50%)`;
+            moveDir = { x: 0, z: 0 };
+        });
+
+        const sBtn = document.getElementById('shootBtn');
+        const pBtn = document.getElementById('passBtn');
+        sBtn.addEventListener('touchstart', () => isKicking = true);
+        sBtn.addEventListener('touchend', () => isKicking = false);
+        pBtn.addEventListener('touchstart', () => isPassing = true);
+        pBtn.addEventListener('touchend', () => isPassing = false);
+
+        window.addEventListener('keydown', e => {
+            if (e.code === 'KeyW') moveDir.z = -1;
+            if (e.code === 'KeyS') moveDir.z = 1;
+            if (e.code === 'KeyA') moveDir.x = -1;
+            if (e.code === 'KeyD') moveDir.x = 1;
+            if (e.code === 'Space') isKicking = true;
+        });
+        window.addEventListener('keyup', e => {
+            if (['KeyW', 'KeyS'].includes(e.code)) moveDir.z = 0;
+            if (['KeyA', 'KeyD'].includes(e.code)) moveDir.x = 0;
+            if (e.code === 'Space') isKicking = false;
+        });
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
     </script>
 </body>
 
