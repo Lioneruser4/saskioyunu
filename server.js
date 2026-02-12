@@ -24,7 +24,7 @@ app.use(cors());
 const token = '5246489165:AAGhMleCadeh3bhtje1EBPY95yn2rDKH7KE';
 const bot = new TelegramBot(token);
 const YTDLP_PATH = path.join(__dirname, 'yt-dlp');
-const VERSION = "V12 ULTRA - AUDIO FIX";
+const VERSION = "V13 ULTRA - PLAYER MAX";
 
 // --- GLOBAL ENGINE REPOSITORY (API-FREE) ---
 const ENGINES = [
@@ -206,19 +206,29 @@ app.get('/download-direct', async (req, res) => {
         });
 
         const safeTitle = (title || 'muzik').replace(/[^a-z0-9]/gi, '_').substring(0, 30);
+        const tempPath = path.join(UPLOADS_DIR, `temp_${Date.now()}_${userId}.m4a`);
 
-        // Critical: Send as Audio and ensure filename ends with .mp3 or .m4a
-        await bot.sendAudio(userId, audioResponse.data, {
-            title: title || 'Müzik',
-            performer: author || 'Hyper Speed Engine',
-            caption: `🚀 *Hyper Speed Download*\n✅ ${VERSION} ile müzik olarak gönderildi.\n💎 Veri tasarrufu sağlandı.`,
-            parse_mode: 'Markdown'
-        }, {
-            filename: `${safeTitle}.mp3`,
-            contentType: 'audio/mpeg'
+        // Write to temp file for guaranteed metadata detection by Telegram
+        const writer = fs.createWriteStream(tempPath);
+        audioResponse.data.pipe(writer);
+
+        await new Promise((resolve, reject) => {
+            writer.on('finish', resolve);
+            writer.on('error', reject);
         });
 
-        res.json({ success: true, message: 'Sent to Telegram' });
+        // Send from local path (Most reliable for "Music Player" mode)
+        await bot.sendAudio(userId, tempPath, {
+            title: title || 'Müzik',
+            performer: author || 'Hyper Speed Engine',
+            caption: `🚀 *V13 Hyper Speed*\n✅ Müzik player uyumlu format fırlatıldı.\n💎 Sıfır veri kaybı.`,
+            parse_mode: 'Markdown'
+        });
+
+        res.json({ success: true, message: 'Sent as Music' });
+
+        // Clean up
+        fs.unlink(tempPath, (err) => { if (err) console.error("Temp delete error:", err); });
 
     } catch (err) {
         console.error('Direct Download Error:', err.message);
