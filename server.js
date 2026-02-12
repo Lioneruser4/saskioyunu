@@ -24,16 +24,30 @@ app.use(cors());
 const token = '5246489165:AAGhMleCadeh3bhtje1EBPY95yn2rDKH7KE';
 const bot = new TelegramBot(token);
 const YTDLP_PATH = path.join(__dirname, 'yt-dlp');
-const VERSION = "V10 ULTRA - INFINITE CORE";
+const VERSION = "V11 ULTRA - HYPER SPEED";
 
 // --- GLOBAL ENGINE REPOSITORY (API-FREE) ---
 const ENGINES = [
-    { name: 'Primary Invidious', type: 'invidious', instance: 'https://invidious.flokinet.is' },
-    { name: 'Secondary Invidious', type: 'invidious', instance: 'https://inv.vern.cc' },
-    { name: 'Core Alpha (iOS)', type: 'ytdlp', client: 'ios' },
-    { name: 'Core Beta (Android)', type: 'ytdlp', client: 'android' },
-    { name: 'Core Gamma (Web)', type: 'ytdlp', client: 'web' }
+    { name: 'Alpha Core (iOS)', type: 'ytdlp', client: 'ios' },
+    { name: 'Beta Core (Android)', type: 'ytdlp', client: 'android' },
+    { name: 'Gamma Core (Web)', type: 'ytdlp', client: 'web' },
+    { name: 'Invidious Segfault', type: 'invidious', instance: 'https://invidious.projectsegfau.lt' },
+    { name: 'Invidious Flokinet', type: 'invidious', instance: 'https://invidious.flokinet.is' },
+    { name: 'Invidious Vern', type: 'invidious', instance: 'https://inv.vern.cc' },
+    { name: 'Invidious Liteserver', type: 'invidious', instance: 'https://invidious.liteserver.nl' }
 ];
+
+const USER_AGENTS = [
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (iPhone; CPU iPhone OS 17_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Mobile/15E148 Safari/604.1',
+    'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.6167.101 Mobile Safari/537.36',
+    'com.google.ios.youtube/19.01.1 (iPhone16,2; U; CPU iOS 17_2 like Mac OS X; en_US)',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+];
+
+function getRandomUA() {
+    return USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
+}
 
 app.get('/', (req, res) => res.send(`NexMusic ${VERSION} is active! Running on High-Performance mode. ⚡`));
 
@@ -67,38 +81,40 @@ app.get('/get-external-link', async (req, res) => {
         try {
             if (engine.type === 'ytdlp') {
                 const execPath = fs.existsSync(YTDLP_PATH) ? YTDLP_PATH : 'yt-dlp';
+                const ua = engine.client === 'ios' ? 'com.google.ios.youtube/19.01.1 (iPhone16,2; U; CPU iOS 17_2 like Mac OS X; en_US)' : getRandomUA();
+
                 const args = {
                     getUrl: true,
                     format: 'bestaudio/best',
                     noCheckCertificates: true,
+                    noWarnings: true,
+                    geoBypass: true,
                     addHeader: [
-                        `user-agent:${engine.client === 'ios' ? 'com.google.ios.youtube/19.01.1 (iPhone16,2; U; CPU iOS 17_2 like Mac OS X; en_US)' : 'Mozilla/5.0'}`,
-                        'referer:https://www.youtube.com/'
-                    ]
+                        `user-agent:${ua}`,
+                        'referer:https://www.youtube.com/',
+                        'accept:text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+                        'accept-language:en-US,en;q=0.5'
+                    ],
+                    extractorArgs: `youtube:player_client=${engine.client || 'ios'},web_creator;player_skip=web,android`
                 };
-                let output;
-                try {
-                    output = await ytdlp(url, args, { binaryPath: execPath });
-                } catch (execError) {
-                    console.error(`[Engine ${engine.name}] Exec Error:`, execError.message);
-                    throw execError;
-                }
 
+                let output = await ytdlp(url, args, { binaryPath: execPath });
                 const link = output.toString().trim().split('\n')[0];
+
                 if (link && link.startsWith('http')) {
                     return { downloadUrl: link, engine: engine.name };
-                } else {
-                    console.error(`[Engine ${engine.name}] Invalid Output:`, output.substring(0, 100));
-                    throw new Error('Invalid output format');
                 }
+                throw new Error('No link found');
+
             } else if (engine.type === 'invidious') {
                 const videoId = url.split('v=')[1]?.split('&')[0] || url.split('/').pop().split('?')[0];
-                const instance = engine.instance || 'https://invidious.projectsegfau.lt';
+                const instance = engine.instance;
+                // Try to get direct stream link from Invidious
                 const testUrl = `${instance}/latest_version?id=${videoId}&itag=140`;
                 return { downloadUrl: testUrl, engine: engine.name };
             }
         } catch (e) {
-            console.error(`[Engine ${engine.name}] Error:`, e.message);
+            console.error(`[Engine ${engine.name}] Failed:`, e.message);
             throw e;
         }
     };
@@ -126,12 +142,15 @@ app.get('/proxy', async (req, res) => {
             timeout: 120000,
             maxRedirects: 10,
             headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'Referer': 'https://www.youtube.com/'
+                'User-Agent': getRandomUA(),
+                'Referer': 'https://www.youtube.com/',
+                'Range': 'bytes=0-'
             }
         });
 
         res.setHeader('Content-Type', 'audio/mpeg');
+        res.setHeader('Accept-Ranges', 'bytes');
+        res.setHeader('Access-Control-Allow-Origin', '*');
         if (response.headers['content-length']) {
             res.setHeader('Content-Length', response.headers['content-length']);
         }
@@ -142,42 +161,94 @@ app.get('/proxy', async (req, res) => {
     }
 });
 
-// 📤 HIGH-VOLUME SENDER: Handles multiple uploads with low memory footprint
-app.post('/upload-final', upload.single('music'), async (req, res) => {
-    const { userId, title, author } = req.body;
-    const file = req.file;
+// � HYPER-SPEED DIRECT DOWNLOAD (V11): YT -> Server -> Telegram (No client data usage)
+app.get('/download-direct', async (req, res) => {
+    const { url, userId, title, author } = req.query;
+    if (!url || !userId) return res.status(400).json({ error: 'Missing parameters' });
 
-    if (!file || !userId) {
-        console.log("Upload failed: Missing file or userId");
-        return res.status(400).json({ error: 'Dosya bota ulaştırılamadı.' });
-    }
+    console.log(`[${VERSION}] Direct Download Start: ${title}`);
 
     try {
-        console.log(`[${VERSION}] Sending ${title} to ${userId}`);
+        // Step 1: Get the best link using the race engine logic
+        const raceEngine = async (engine) => {
+            if (engine.type === 'ytdlp') {
+                const execPath = fs.existsSync(YTDLP_PATH) ? YTDLP_PATH : 'yt-dlp';
+                const ua = engine.client === 'ios' ? 'com.google.ios.youtube/19.01.1 (iPhone16,2; U; CPU iOS 17_2 like Mac OS X; en_US)' : getRandomUA();
+                const args = {
+                    getUrl: true,
+                    format: 'bestaudio/best',
+                    noCheckCertificates: true,
+                    noWarnings: true,
+                    geoBypass: true,
+                    addHeader: [`user-agent:${ua}`, 'referer:https://www.youtube.com/'],
+                    extractorArgs: `youtube:player_client=${engine.client || 'ios'},web_creator;player_skip=web,android`
+                };
+                const output = await ytdlp(url, args, { binaryPath: execPath });
+                const link = output.toString().trim().split('\n')[0];
+                if (link && link.startsWith('http')) return link;
+                throw new Error('Link not found');
+            } else {
+                const videoId = url.split('v=')[1]?.split('&')[0] || url.split('/').pop().split('?')[0];
+                return `${engine.instance}/latest_version?id=${videoId}&itag=140`;
+            }
+        };
 
-        // Use stream for memory efficiency
-        const stream = fs.createReadStream(file.path);
+        const directLink = await Promise.any(ENGINES.map(raceEngine));
+        console.log(`[${VERSION}] Link acquired, streaming to Telegram...`);
+
+        // Step 2: Stream directly to Telegram
+        const audioResponse = await axios({
+            method: 'get',
+            url: directLink,
+            responseType: 'stream',
+            timeout: 60000,
+            headers: { 'User-Agent': getRandomUA(), 'Referer': 'https://www.youtube.com/' }
+        });
 
         const safeTitle = (title || 'muzik').replace(/[^a-z0-9]/gi, '_').substring(0, 30);
-        await bot.sendAudio(userId, stream, {
+
+        await bot.sendAudio(userId, audioResponse.data, {
             title: title || 'Müzik',
-            performer: author || 'Global Ağ',
-            caption: `✅ *İşlem Başarılı!* \n📦 ${VERSION} altyapısı ile saniyeler içinde indirildi.`,
+            performer: author || 'Hyper Speed Engine',
+            caption: `🚀 *Hyper Speed Download*\n✅ ${VERSION} ile anında gönderildi.\n💎 Veri tasarrufu sağlandı.`,
             parse_mode: 'Markdown'
         }, {
             filename: `${safeTitle}.mp3`,
             contentType: 'audio/mpeg'
         });
 
-        res.json({ success: true });
-
-        // Clean up after response
-        fs.unlink(file.path, (err) => { if (err) console.error("File delete error:", err); });
+        res.json({ success: true, message: 'Sent to Telegram' });
 
     } catch (err) {
-        console.error('Bot Send Error:', err.message);
+        console.error('Direct Download Error:', err.message);
+        res.status(500).json({ error: 'İndirme motoru hatası. Lütfen tekrar deneyin.' });
+    }
+});
+
+// 📤 HIGH-VOLUME SENDER: Handles multiple uploads with low memory footprint
+app.post('/upload-final', upload.single('music'), async (req, res) => {
+    const { userId, title, author } = req.body;
+    const file = req.file;
+
+    if (!file || !userId) return res.status(400).json({ error: 'Missing file or userId' });
+
+    try {
+        const stream = fs.createReadStream(file.path);
+        const safeTitle = (title || 'muzik').replace(/[^a-z0-9]/gi, '_').substring(0, 30);
+        await bot.sendAudio(userId, stream, {
+            title: title || 'Müzik',
+            performer: author || 'Global Ağ',
+            caption: `✅ *İşlem Başarılı!* \n📦 ${VERSION} altyapısı ile indirildi.`,
+            parse_mode: 'Markdown'
+        }, {
+            filename: `${safeTitle}.mp3`,
+            contentType: 'audio/mpeg'
+        });
+        res.json({ success: true });
+        fs.unlink(file.path, () => { });
+    } catch (err) {
         if (file) fs.unlinkSync(file.path);
-        res.status(500).json({ error: 'Bot katmanında bir sorun oluştu.' });
+        res.status(500).json({ error: 'Bot error' });
     }
 });
 
