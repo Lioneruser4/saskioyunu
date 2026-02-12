@@ -24,7 +24,7 @@ app.use(cors());
 const token = '5246489165:AAGhMleCadeh3bhtje1EBPY95yn2rDKH7KE';
 const bot = new TelegramBot(token);
 const YTDLP_PATH = path.join(__dirname, 'yt-dlp');
-const VERSION = "V11 ULTRA - HYPER SPEED";
+const VERSION = "V12 ULTRA - AUDIO FIX";
 
 // --- GLOBAL ENGINE REPOSITORY (API-FREE) ---
 const ENGINES = [
@@ -207,10 +207,11 @@ app.get('/download-direct', async (req, res) => {
 
         const safeTitle = (title || 'muzik').replace(/[^a-z0-9]/gi, '_').substring(0, 30);
 
+        // Critical: Send as Audio and ensure filename ends with .mp3 or .m4a
         await bot.sendAudio(userId, audioResponse.data, {
             title: title || 'Müzik',
             performer: author || 'Hyper Speed Engine',
-            caption: `🚀 *Hyper Speed Download*\n✅ ${VERSION} ile anında gönderildi.\n💎 Veri tasarrufu sağlandı.`,
+            caption: `🚀 *Hyper Speed Download*\n✅ ${VERSION} ile müzik olarak gönderildi.\n💎 Veri tasarrufu sağlandı.`,
             parse_mode: 'Markdown'
         }, {
             filename: `${safeTitle}.mp3`,
@@ -238,7 +239,7 @@ app.post('/upload-final', upload.single('music'), async (req, res) => {
         await bot.sendAudio(userId, stream, {
             title: title || 'Müzik',
             performer: author || 'Global Ağ',
-            caption: `✅ *İşlem Başarılı!* \n📦 ${VERSION} altyapısı ile indirildi.`,
+            caption: `✅ *İşlem Başarılı!* \n📦 ${VERSION} ile müzik olarak iletildi.`,
             parse_mode: 'Markdown'
         }, {
             filename: `${safeTitle}.mp3`,
