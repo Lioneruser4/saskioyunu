@@ -4,17 +4,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NexMusic V9 ULTRA - Global Search</title>
-    <!-- Cache busting by adding version to URL in your mind, but here we just update content -->
-    <script src="https://telegram.org/js/telegram-web-app.js?v=9"></script>
+    <title>NexMusic V22 - NEBULA GLOBAL</title>
+    <script src="https://telegram.org/js/telegram-web-app.js?v=22"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #8b5cf6;
-            --bg: #030712;
-            --card: rgba(17, 24, 39, 0.8);
-            --text: #f9fafb;
-            --accent: #10b981;
+            --primary: #6366f1;
+            --bg: #020617;
+            --card: rgba(15, 23, 42, 0.9);
+            --text: #f1f5f9;
+            --accent: #38bdf8;
+            --nebula: linear-gradient(135deg, #6366f1, #38bdf8);
         }
 
         * {
@@ -36,7 +36,6 @@
             overflow: hidden;
         }
 
-        /* Background Glow */
         body::before {
             content: '';
             position: fixed;
@@ -44,7 +43,7 @@
             left: -50%;
             width: 200%;
             height: 200%;
-            background: radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, transparent 70%);
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
             z-index: -1;
         }
 
@@ -57,16 +56,16 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            transition: 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: 0.8s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .ring {
-            width: 60px;
-            height: 60px;
-            border: 4px solid rgba(139, 92, 246, 0.1);
-            border-top-color: var(--primary);
+            width: 70px;
+            height: 70px;
+            border: 4px solid rgba(99, 102, 241, 0.1);
+            border-top-color: var(--accent);
             border-radius: 50%;
-            animation: spin 0.8s cubic-bezier(0.5, 0.1, 0.5, 0.9) infinite;
+            animation: spin 0.8s linear infinite;
         }
 
         @keyframes spin {
@@ -78,142 +77,133 @@
         .container {
             width: 100%;
             max-width: 420px;
-            transform: scale(0.95);
+            transform: scale(0.9) translateY(20px);
             opacity: 0;
             transition: 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
         .container.active {
-            transform: scale(1);
+            transform: scale(1) translateY(0);
             opacity: 1;
         }
 
         .card {
             background: var(--card);
-            backdrop-filter: blur(25px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 32px;
             padding: 32px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+            box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.8);
             position: relative;
-            overflow: hidden;
         }
 
         .version-tag {
             position: absolute;
-            top: 18px;
-            right: 22px;
-            font-size: 10px;
-            color: var(--primary);
+            top: 20px;
+            right: 24px;
+            font-size: 11px;
+            color: var(--accent);
             font-weight: 800;
             letter-spacing: 1px;
-            background: rgba(139, 92, 246, 0.1);
-            padding: 4px 10px;
-            border-radius: 100px;
-            border: 1px solid rgba(139, 92, 246, 0.2);
+            background: rgba(56, 189, 248, 0.1);
+            padding: 5px 12px;
+            border-radius: 50px;
+            border: 1px solid rgba(56, 189, 248, 0.2);
         }
 
         .header {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 35px;
         }
 
         .logo {
-            font-size: 36px;
+            font-size: 42px;
             font-weight: 800;
-            background: linear-gradient(135deg, #a78bfa, #f472b6);
+            background: var(--nebula);
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
-            letter-spacing: -1px;
+            letter-spacing: -2px;
         }
 
         .search-box {
             position: relative;
-            margin-bottom: 20px;
+            margin-bottom: 24px;
         }
 
         input {
             width: 100%;
-            padding: 20px 24px;
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 22px 26px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.05);
             border-radius: 20px;
             color: white;
             font-size: 16px;
             outline: none;
-            transition: 0.3s;
+            transition: 0.4s;
         }
 
         input:focus {
-            border-color: var(--primary);
-            background: rgba(0, 0, 0, 0.6);
-            box-shadow: 0 0 20px rgba(139, 92, 246, 0.2);
+            border-color: var(--accent);
+            box-shadow: 0 0 30px rgba(56, 189, 248, 0.15);
+            background: rgba(0, 0, 0, 0.7);
         }
 
         .btn {
             width: 100%;
-            padding: 18px;
+            padding: 20px;
             border: none;
             border-radius: 20px;
             color: white;
             font-weight: 700;
             cursor: pointer;
-            transition: 0.4s;
+            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             display: flex;
             justify-content: center;
             align-items: center;
             gap: 12px;
-            font-size: 16px;
+            font-size: 17px;
         }
 
         .btn-search {
-            background: var(--primary);
-            box-shadow: 0 10px 20px -5px rgba(139, 92, 246, 0.4);
+            background: var(--nebula);
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3);
         }
 
-        .btn-search:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 15px 30px -5px rgba(139, 92, 246, 0.5);
+        .btn-search:active {
+            transform: scale(0.96);
         }
 
         .btn-download {
-            background: var(--accent);
-            margin-top: 24px;
-            box-shadow: 0 10px 20px -5px rgba(16, 185, 129, 0.3);
-        }
-
-        .btn:disabled {
-            opacity: 0.6;
-            cursor: wait;
-            transform: none !important;
+            background: #10b981;
+            margin-top: 25px;
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
         }
 
         .result {
-            margin-top: 32px;
+            margin-top: 35px;
             display: none;
-            animation: reveal 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            animation: nebulaPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
-        @keyframes reveal {
+        @keyframes nebulaPop {
             from {
                 opacity: 0;
-                transform: translateY(20px);
+                transform: scale(0.9);
             }
 
             to {
                 opacity: 1;
-                transform: translateY(0);
+                transform: scale(1);
             }
         }
 
         .thumb-container {
-            position: relative;
             border-radius: 24px;
             overflow: hidden;
-            margin-bottom: 18px;
-            aspect-ratio: 16/9;
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
+            margin-bottom: 20px;
+            aspect-ratio: 1/1;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
         }
 
         .thumb {
@@ -224,10 +214,10 @@
 
         .prog-bar {
             width: 100%;
-            height: 8px;
+            height: 6px;
             background: rgba(255, 255, 255, 0.05);
             border-radius: 100px;
-            margin-top: 20px;
+            margin-top: 25px;
             display: none;
             overflow: hidden;
         }
@@ -235,38 +225,26 @@
         .prog-fill {
             width: 0%;
             height: 100%;
-            background: linear-gradient(90deg, var(--accent), #34d399);
-            border-radius: 100px;
-            transition: 0.4s cubic-bezier(0.1, 0.7, 0.1, 1);
+            background: var(--nebula);
+            transition: 0.5s ease-out;
         }
 
         .status {
             text-align: center;
-            font-size: 13px;
-            margin-top: 12px;
-            color: #9ca3af;
-            font-weight: 500;
+            font-size: 14px;
+            margin-top: 15px;
+            color: #94a3b8;
         }
 
         #errBox {
             display: none;
-            background: rgba(239, 68, 68, 0.08);
-            border: 1px solid rgba(239, 68, 68, 0.2);
-            border-radius: 16px;
-            padding: 14px;
-            margin-top: 20px;
-            font-size: 12px;
-            color: #f87171;
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            padding: 15px;
+            border-radius: 15px;
+            font-size: 13px;
             text-align: center;
-        }
-
-        .refresh-hint {
-            text-align: center;
-            font-size: 11px;
-            color: rgba(255, 255, 255, 0.2);
-            margin-top: 24px;
-            cursor: pointer;
-            text-decoration: underline;
+            margin-top: 15px;
         }
     </style>
 </head>
@@ -274,33 +252,32 @@
 <body>
     <div id="splash">
         <div class="ring"></div>
-        <p style="margin-top:20px; font-weight:600; font-size:14px; letter-spacing:1px; color:var(--primary);">V19
-            TITAN ENGINE ACTIVE...</p>
+        <p style="margin-top:25px; font-weight:800; color:var(--accent); letter-spacing:2px;">NEBULA GLOBAL CORE...</p>
     </div>
 
     <div class="container" id="main">
         <div class="card">
-            <div class="version-tag">V19.0 TITAN</div>
+            <div class="version-tag">V22.0 GLOBAL</div>
             <div class="header">
-                <p id="welcome" style="font-size: 14px; color: #a78bfa; margin-bottom: 8px; font-weight: 600;"></p>
-                <div class="logo">NexMusiccc</div>
-                <p style="font-size: 11px; color: var(--accent); font-weight: 600; opacity: 0.8; margin-top: 4px;">
-                    Titan Bypass Engine | Shadow Mode</p>
+                <p id="welcome" style="font-size: 14px; color: var(--accent); margin-bottom: 10px; font-weight: 600;">
+                </p>
+                <div class="logo">NexMusic</div>
+                <p style="font-size: 12px; opacity: 0.6; margin-top: 5px;">Global Music Cloud Engine | Bypass Mode</p>
             </div>
 
             <div class="search-box">
-                <input type="text" id="searchInput" placeholder="Herhangi bir müzik ismi yazın...">
+                <input type="text" id="searchInput" placeholder="Sanatçı veya Şarkı adı...">
             </div>
-            <button onclick="search()" id="searchBtn" class="btn btn-search">Hızlı Bul (V19)</button>
+            <button onclick="search()" id="searchBtn" class="btn btn-search">Hızlı Bul (SoundCloud)</button>
 
             <div id="result" class="result">
                 <div class="thumb-container">
                     <img id="thumb" class="thumb" src="" alt="">
                 </div>
-                <h3 id="title" style="font-size: 18px; font-weight: 700; margin-bottom: 4px; line-height: 1.3;"></h3>
-                <p id="author" style="font-size: 14px; color: #9ca3af; font-weight: 500;"></p>
+                <h3 id="title" style="font-size: 20px; font-weight: 800; margin-bottom: 5px;"></h3>
+                <p id="author" style="font-size: 15px; color: #64748b; font-weight: 600;"></p>
 
-                <button onclick="download()" id="downloadBtn" class="btn btn-download">⚡ HYPER-SPEED İNDİR VE BOTA
+                <button onclick="download()" id="downloadBtn" class="btn btn-download">⚡ BULUTTAN İNDİR VE BOTA
                     AT</button>
 
                 <div id="prog" class="prog-bar">
@@ -309,8 +286,6 @@
                 <p id="status" class="status"></p>
                 <div id="errBox"></div>
             </div>
-
-            <p class="refresh-hint" onclick="location.reload(true)">Sitede eski sürüm mü var? Buraya tıkla yenile.</p>
         </div>
     </div>
 
@@ -318,24 +293,19 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
         tg.ready();
-        tg.enableClosingConfirmation();
 
-        // API URL (Automatic Detection)
         const API_URL = 'https://saskioyunu-1.onrender.com';
-        let currentVideo = null;
+        let currentTrack = null;
 
         window.onload = () => {
-            const name = tg.initDataUnsafe?.user?.first_name || 'Müziksever';
-            document.getElementById('welcome').innerText = `Hoş geldin, ${name}`;
-
-            // Splash handling
+            document.getElementById('welcome').innerText = `Hoş geldin, ${tg.initDataUnsafe?.user?.first_name || 'Müziksever'}`;
             setTimeout(() => {
                 document.getElementById('splash').style.opacity = '0';
                 setTimeout(() => {
                     document.getElementById('splash').style.display = 'none';
                     document.getElementById('main').classList.add('active');
-                }, 600);
-            }, 1500);
+                }, 800);
+            }, 1800);
         };
 
         async function search() {
@@ -343,66 +313,53 @@
             if (!q) return;
 
             const btn = document.getElementById('searchBtn');
-            btn.disabled = true; btn.innerText = 'V19 Ağ Taranıyor...';
+            btn.disabled = true; btn.innerText = 'Nebula Bulut Taranıyor...';
             document.getElementById('result').style.display = 'none';
-            document.getElementById('errBox').style.display = 'none';
 
             try {
                 const res = await fetch(`${API_URL}/search?q=${encodeURIComponent(q)}`);
                 const data = await res.json();
                 if (data.url) {
-                    currentVideo = data;
+                    currentTrack = data;
                     document.getElementById('thumb').src = data.thumbnail;
                     document.getElementById('title').innerText = data.title;
                     document.getElementById('author').innerText = data.author;
                     document.getElementById('result').style.display = 'block';
                     tg.HapticFeedback.impactOccurred('medium');
-                } else {
-                    alert('Hata: Müzik bulunamadı.');
-                }
+                } else alert('Bulunamadı.');
             } catch (e) {
-                alert('V10 Çekirdeği meşgul veya Render sunucu uyuyor. Lütfen 5 sn sonra tekrar deneyin.');
+                alert('Ağ meşgul. Lütfen tekrar deneyin.');
             } finally {
-                btn.disabled = false; btn.innerText = 'Hızlı Bul (V19)';
+                btn.disabled = false; btn.innerText = 'Hızlı Bul (SoundCloud)';
             }
         }
 
         async function download() {
-            if (!currentVideo) return;
+            if (!currentTrack) return;
             const userId = tg.initDataUnsafe?.user?.id;
-            if (!userId) return alert('Kullanıcı ID hatası!');
-
             const btn = document.getElementById('downloadBtn');
             const prog = document.getElementById('prog');
             const fill = document.getElementById('fill');
             const status = document.getElementById('status');
-            const errBox = document.getElementById('errBox');
 
-            btn.disabled = true; btn.innerText = 'V19 İşleniyor...';
-            prog.style.display = 'block'; fill.style.width = '0%';
-            status.innerText = 'TITAN motorları ateşleniyor...';
-            errBox.style.display = 'none';
+            btn.disabled = true; btn.innerText = 'İşleniyor...';
+            prog.style.display = 'block'; fill.style.width = '20%';
+            status.innerText = 'Nebula Cloud verisi çekiliyor...';
 
             try {
-                // V19 TITAN: Anti-Bot & Shadow Bypass
-                const res = await fetch(`${API_URL}/download-direct?url=${encodeURIComponent(currentVideo.url)}&userId=${userId}&title=${encodeURIComponent(currentVideo.title)}&author=${encodeURIComponent(currentVideo.author)}&duration=${currentVideo.seconds}`);
+                const res = await fetch(`${API_URL}/download-direct?url=${encodeURIComponent(currentTrack.url)}&userId=${userId}&title=${encodeURIComponent(currentTrack.title)}&author=${encodeURIComponent(currentTrack.author)}&duration=${currentTrack.seconds}`);
                 const data = await res.json();
-
                 if (data.error) throw new Error(data.error);
 
                 fill.style.width = '100%';
-                status.style.color = '#10b981';
-                status.innerText = '✅ V19 BAŞARILI! Titan ile teslim edildi.';
+                status.innerText = '✅ BAŞARILI! Botuna teslim edildi.';
                 tg.HapticFeedback.notificationOccurred('success');
                 setTimeout(() => tg.close(), 3000);
-
             } catch (e) {
-                console.error(e);
-                status.innerText = '❌ V19 SİSTEM HATASI!';
-                errBox.innerText = `Hata detayı: ${e.message}\n(Genellikle yoğunluktan olur, tekrar deneyin.)`;
-                errBox.style.display = 'block';
-                btn.disabled = false; btn.innerText = 'V19 İLE TEKRAR DENE';
-                tg.HapticFeedback.notificationOccurred('error');
+                status.innerText = '❌ HATA OLUŞTU!';
+                document.getElementById('errBox').innerText = e.message;
+                document.getElementById('errBox').style.display = 'block';
+                btn.disabled = false; btn.innerText = 'TEKRAR DENE';
             }
         }
     </script>
