@@ -1,99 +1,288 @@
 <!DOCTYPE html>
 <html lang="tr">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexMusic V26 - API Active</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NexMusic V27 - TITAN X-TREME</title>
+    <script src="https://telegram.org/js/telegram-web-app.js?v=27"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=Inter:wght@300;400;600;800&display=swap"
+        rel="stylesheet">
     <style>
+        :root {
+            --bg: #000000;
+            --primary: #ffffff;
+            --accent: #ff0055;
+            --glass: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
         }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--bg);
+            color: var(--primary);
             min-height: 100vh;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
-            color: white;
-            padding: 20px;
+            padding: 30px 20px;
+            overflow-x: hidden;
+            overflow-y: auto;
         }
+
+        .background-glow {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100vw;
+            height: 100vh;
+            background: radial-gradient(circle at center, rgba(255, 0, 85, 0.1) 0%, transparent 60%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
         .container {
+            width: 100%;
+            max-width: 400px;
             text-align: center;
-            max-width: 600px;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         }
-        h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
+
+        .logo {
+            font-family: 'Syncopate', sans-serif;
+            font-weight: 700;
+            font-size: 28px;
+            letter-spacing: 5px;
+            margin-bottom: 40px;
+            text-transform: uppercase;
+            background: linear-gradient(to right, #fff, #666);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
         }
-        .status {
-            display: inline-block;
-            background: #10b981;
-            padding: 8px 20px;
-            border-radius: 20px;
-            font-weight: bold;
-            margin: 20px 0;
+
+        .search-container {
+            position: relative;
+            width: 100%;
+            margin-bottom: 25px;
         }
-        .info {
-            margin: 20px 0;
-            opacity: 0.9;
+
+        input {
+            width: 100%;
+            background: var(--glass);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 22px;
+            color: #fff;
+            font-size: 16px;
+            outline: none;
+            transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .endpoints {
-            background: rgba(0, 0, 0, 0.2);
+
+        input:focus {
+            border-color: var(--accent);
+            background: rgba(255, 255, 255, 0.05);
+            box-shadow: 0 0 30px rgba(255, 0, 85, 0.2);
+        }
+
+        .btn {
+            width: 100%;
             padding: 20px;
-            border-radius: 10px;
-            margin-top: 20px;
-            text-align: left;
+            border: none;
+            border-radius: 12px;
+            font-weight: 800;
+            font-size: 15px;
+            letter-spacing: 2px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: 0.3s;
         }
-        .endpoint {
-            margin: 10px 0;
-            font-family: 'Courier New', monospace;
-            font-size: 0.9em;
+
+        .btn-main {
+            background: var(--primary);
+            color: var(--bg);
         }
-        .telegram-btn {
-            display: inline-block;
-            background: #0088cc;
-            color: white;
-            padding: 12px 30px;
-            border-radius: 25px;
-            text-decoration: none;
-            margin-top: 20px;
-            font-weight: bold;
-            transition: background 0.3s;
+
+        .btn-main:active {
+            transform: scale(0.96);
         }
-        .telegram-btn:hover {
-            background: #006699;
+
+        .result-card {
+            margin-top: 40px;
+            display: none;
+            background: var(--glass);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 24px;
+            animation: slideUp 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .thumb {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 16px;
+            object-fit: cover;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .title {
+            font-size: 18px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+
+        .author {
+            font-size: 14px;
+            opacity: 0.5;
+            font-weight: 600;
+            margin-bottom: 25px;
+        }
+
+        .btn-download {
+            background: var(--accent);
+            color: #fff;
+            box-shadow: 0 10px 25px rgba(255, 0, 85, 0.3);
+        }
+
+        .loader {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            display: none;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        #statusText {
+            font-size: 13px;
+            color: var(--accent);
+            font-weight: 600;
+            margin-top: 15px;
+            display: none;
         }
     </style>
 </head>
+
 <body>
+    <div class="background-glow"></div>
+
     <div class="container">
-        <h1>🎵 NexMusic V26</h1>
-        <div class="status">✅ SYSTEM ACTIVE</div>
-        <p class="info">Multi-Source Music Download API</p>
-        
-        <div class="endpoints">
-            <div class="endpoint">📍 GET /search?q=song_name</div>
-            <div class="endpoint">📍 GET /download-direct</div>
-            <div class="endpoint">📍 GET /ping</div>
+        <div class="logo">NexMusic</div>
+
+        <div class="search-container">
+            <input type="text" id="searchInput" placeholder="Şarkı adı veya YouTube linki...">
         </div>
-        
-        <p style="margin-top: 30px; opacity: 0.8;">
-            7 farklı kaynaktan müzik indirme<br>
-            Telegram Bot entegrasyonu<br>
-            Otomatik MP3 dönüştürme
-        </p>
-        
-        <a href="https://t.me/YOUR_BOT_USERNAME" class="telegram-btn">
-            📱 Telegram Bot'u Aç
-        </a>
+
+        <button onclick="handleSearch()" id="searchBtn" class="btn btn-main">Müziği Bul</button>
+
+        <div class="loader" id="loader"></div>
+        <p id="statusText"></p>
+
+        <div id="resultCard" class="result-card">
+            <img id="thumb" class="thumb" src="" alt="">
+            <div id="title" class="title"></div>
+            <div id="author" class="author"></div>
+            <button onclick="handleDownload()" id="downloadBtn" class="btn btn-download">Bota Gönder</button>
+        </div>
     </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.ready();
+
+        const API_URL = 'https://saskioyunu-1.onrender.com';
+        let currentVideo = null;
+
+        async function handleSearch() {
+            const query = document.getElementById('searchInput').value.trim();
+            if (!query) return;
+
+            const btn = document.getElementById('searchBtn');
+            const loader = document.getElementById('loader');
+            const card = document.getElementById('resultCard');
+
+            btn.style.display = 'none';
+            loader.style.display = 'block';
+            card.style.display = 'none';
+
+            try {
+                const res = await fetch(`${API_URL}/search?q=${encodeURIComponent(query)}`);
+                const data = await res.json();
+                if (data.url) {
+                    currentVideo = data;
+                    document.getElementById('thumb').src = data.thumbnail;
+                    document.getElementById('title').innerText = data.title;
+                    document.getElementById('author').innerText = data.author;
+                    card.style.display = 'block';
+                    tg.HapticFeedback.impactOccurred('medium');
+                } else alert('Müzik bulunamadı.');
+            } catch (e) {
+                alert('Sistem meşgul, lütfen tekrar deneyin.');
+            } finally {
+                btn.style.display = 'block';
+                loader.style.display = 'none';
+            }
+        }
+
+        async function handleDownload() {
+            if (!currentVideo) return;
+            const userId = tg.initDataUnsafe?.user?.id;
+            const btn = document.getElementById('downloadBtn');
+            const status = document.getElementById('statusText');
+
+            btn.disabled = true;
+            btn.innerText = 'Tünel Açılıyor...';
+            status.style.display = 'block';
+            status.innerText = 'Titan X-Treme veri çekiyor...';
+
+            try {
+                const res = await fetch(`${API_URL}/download-direct?url=${encodeURIComponent(currentVideo.url)}&userId=${userId}&title=${encodeURIComponent(currentVideo.title)}&author=${encodeURIComponent(currentVideo.author)}&duration=${currentVideo.seconds}`);
+                const data = await res.json();
+
+                if (data.error) throw new Error(data.error);
+
+                status.innerText = '✅ BAŞARILI! Bota gönderildi.';
+                tg.HapticFeedback.notificationOccurred('success');
+                setTimeout(() => tg.close(), 2500);
+            } catch (e) {
+                status.innerText = `❌ HATA: ${e.message}`;
+                btn.disabled = false;
+                btn.innerText = 'Tekrar Dene';
+                tg.HapticFeedback.notificationOccurred('error');
+            }
+        }
+    </script>
 </body>
+
 </html>
