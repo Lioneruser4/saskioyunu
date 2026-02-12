@@ -26,7 +26,7 @@ const token = '5246489165:AAGhMleCadeh3bhtje1EBPY95yn2rDKH7KE';
 const bot = new TelegramBot(token);
 const YTDLP_PATH = path.join(__dirname, 'yt-dlp');
 const FFMPEG_PATH = fs.existsSync(path.join(__dirname, 'ffmpeg')) ? path.join(__dirname, 'ffmpeg') : 'ffmpeg';
-const VERSION = "V20 - TITAN ULTRA";
+const VERSION = "V21 - QUANTUM BYPASS";
 let SELF_URL = `https://saskioyunu-1.onrender.com`;
 
 // 🛡️ RENDER ANTI-SLEEP ENGINE (V16)
@@ -42,13 +42,16 @@ setInterval(async () => {
 
 // --- GLOBAL ENGINE REPOSITORY (API-FREE) ---
 const ENGINES = [
-    { name: 'Alpha Core (iOS)', type: 'ytdlp', client: 'ios' },
-    { name: 'Beta Core (Android)', type: 'ytdlp', client: 'android' },
-    { name: 'Gamma Core (Web)', type: 'ytdlp', client: 'web' },
+    { name: 'Alpha Core', type: 'ytdlp', client: 'ios' },
+    { name: 'Beta Core', type: 'ytdlp', client: 'android' },
+    { name: 'Gamma Core', type: 'ytdlp', client: 'web' },
     { name: 'Invidious Segfault', type: 'invidious', instance: 'https://invidious.projectsegfau.lt' },
     { name: 'Invidious Flokinet', type: 'invidious', instance: 'https://invidious.flokinet.is' },
     { name: 'Invidious Vern', type: 'invidious', instance: 'https://inv.vern.cc' },
-    { name: 'Invidious Liteserver', type: 'invidious', instance: 'https://invidious.liteserver.nl' }
+    { name: 'Invidious Liteserver', type: 'invidious', instance: 'https://invidious.liteserver.nl' },
+    { name: 'Invidious Esma', type: 'invidious', instance: 'https://inv.tux.mu' },
+    { name: 'Invidious Perennial', type: 'invidious', instance: 'https://invidious.perennialte.ch' },
+    { name: 'Invidious Nerd', type: 'invidious', instance: 'https://invidious.nerdvpn.de' }
 ];
 
 const USER_AGENTS = [
@@ -177,100 +180,90 @@ app.get('/proxy', async (req, res) => {
     }
 });
 
-// 🚀 V20 TITAN ULTRA: File Verification & Shadow Bypass
+// 🚀 V21 QUANTUM BYPASS: Self-Healing Download Pipeline
 app.get('/download-direct', async (req, res) => {
     const { url, userId, title, author, duration } = req.query;
     if (!url || !userId) return res.status(400).json({ error: 'Missing parameters' });
 
     const videoId = url.split('v=')[1]?.split('&')[0] || url.split('/').pop().split('?')[0];
     const rawFile = path.join(UPLOADS_DIR, `raw_${Date.now()}.m4a`);
-    const finalFile = path.join(UPLOADS_DIR, `titan_${Date.now()}.mp3`);
+    const finalFile = path.join(UPLOADS_DIR, `quantum_${Date.now()}.mp3`);
 
-    console.log(`[${VERSION}] TITAN ULTRA Process: ${title}`);
+    console.log(`[${VERSION}] Quantum Request: ${title}`);
 
-    try {
-        const execPath = fs.existsSync(YTDLP_PATH) ? YTDLP_PATH : 'yt-dlp';
-        let directLink = null;
-
-        // Step 1: Titan Bypass (Android/iOS Client Mix)
-        try {
-            const output = await ytdlp(url, {
-                getUrl: true,
-                format: '140/bestaudio[ext=m4a]/bestaudio',
-                noCheckCertificates: true,
-                noWarnings: true,
-                addHeader: [`user-agent:${getRandomUA()}`, 'referer:https://www.youtube.com/'],
-                extractorArgs: 'youtube:player_client=android,ios,web_creator;player_skip=web'
-            }, { binaryPath: execPath });
-            directLink = output.toString().trim().split('\n')[0];
-        } catch (botErr) {
-            console.warn(`[${VERSION}] YT Blocked. Racing Shadow Engines...`);
-            const raceShadow = async (engine) => {
-                const testUrl = `${engine.instance}/latest_version?id=${videoId}&itag=140`;
-                return testUrl;
-            };
-            try {
-                directLink = await Promise.any(ENGINES.filter(e => e.type === 'invidious').map(raceShadow));
-            } catch (failAll) {
-                throw new Error('All sources blocked. Please try again later.');
-            }
-        }
-
-        // Step 2: Download with Verification
+    const attemptDownload = async (directUrl) => {
         const response = await axios({
-            method: 'get',
-            url: directLink,
-            responseType: 'stream',
-            timeout: 90000,
+            method: 'get', url: directUrl,
+            responseType: 'stream', timeout: 35000,
             headers: { 'User-Agent': getRandomUA(), 'Referer': 'https://www.youtube.com/' }
         });
-
         const writer = fs.createWriteStream(rawFile);
         response.data.pipe(writer);
-
         await new Promise((resolve, reject) => {
             writer.on('finish', resolve);
             writer.on('error', reject);
         });
+        if (!fs.existsSync(rawFile) || fs.statSync(rawFile).size < 1000) throw new Error('File Corrupt');
+    };
 
-        // 🛡️ VERIFY FILE INTEGRITY
-        if (!fs.existsSync(rawFile) || fs.statSync(rawFile).size < 1000) {
-            throw new Error('Download failed: Source file is empty or corrupt. Try another song.');
+    try {
+        const execPath = fs.existsSync(YTDLP_PATH) ? YTDLP_PATH : 'yt-dlp';
+        let sources = [];
+
+        // Step 1: Accumulate Sources (Direct + Shadow)
+        try {
+            const out = await ytdlp(url, { getUrl: true, format: '140/bestaudio', noCheckCertificates: true, extractorArgs: 'youtube:player_client=android,ios' }, { binaryPath: execPath });
+            sources.push(out.toString().trim().split('\n')[0]);
+        } catch (e) {
+            console.log(`[${VERSION}] YT Direct Blocked. Switching to Shadow Race.`);
         }
 
-        // Step 3: TITAN ULTRA ENCODER
+        const shadowSources = ENGINES.filter(e => e.type === 'invidious').map(e => `${e.instance}/latest_version?id=${videoId}&itag=140`);
+        sources = [...sources, ...shadowSources];
+
+        // Step 2: Adaptive Fallback Loop
+        let success = false;
+        for (const source of sources) {
+            try {
+                console.log(`[${VERSION}] Testing source: ${source.substring(0, 40)}...`);
+                await attemptDownload(source);
+                success = true;
+                break;
+            } catch (err) {
+                console.warn(`[${VERSION}] Source failed, trying next...`);
+                if (fs.existsSync(rawFile)) fs.unlinkSync(rawFile);
+            }
+        }
+
+        if (!success) throw new Error('All quantum tunnels are blocked. Try again in 60s.');
+
+        // Step 3: Global MP3 Encoder
         console.log(`[${VERSION}] Stabilizing Audio (${(fs.statSync(rawFile).size / 1024 / 1024).toFixed(2)}MB)...`);
         const ffmpegCmd = `"${FFMPEG_PATH}" -y -i "${rawFile}" -vn -ar 44100 -ac 2 -b:a 128k "${finalFile}"`;
-
         await new Promise((resolve, reject) => {
-            exec(ffmpegCmd, (error, stdout, stderr) => {
-                if (error) {
-                    console.error("FFmpeg Error Out:", stderr);
-                    reject(new Error('Audio encoding failed. YouTube stream was incomplete.'));
-                } else resolve();
+            exec(ffmpegCmd, (error) => {
+                if (error) reject(new Error('Audio processing failed.'));
+                else resolve();
             });
         });
 
-        // Step 4: Final Deployment
+        // Step 4: Secure Delivery
         await bot.sendAudio(userId, finalFile, {
             title: title || 'Müzik',
-            performer: author || 'TITAN Ultra',
+            performer: author || 'Quantum Player',
             duration: parseInt(duration) || 0,
             caption: title
-        }, {
-            filename: `${title.replace(/[^a-z0-9]/gi, '_')}.mp3`,
-            contentType: 'audio/mpeg'
-        });
+        }, { filename: `${title.replace(/[^a-z0-9]/gi, '_')}.mp3`, contentType: 'audio/mpeg' });
 
-        res.json({ success: true, message: 'Titan Ultra: Delivered' });
+        res.json({ success: true, message: 'Delivered via Quantum Tunnel' });
 
-        // Cleanup
         setTimeout(() => {
-            [rawFile, finalFile].forEach(f => { if (fs.existsSync(f)) fs.unlink(f, () => { }); });
+            if (fs.existsSync(rawFile)) fs.unlink(rawFile, () => { });
+            if (fs.existsSync(finalFile)) fs.unlink(finalFile, () => { });
         }, 15000);
 
     } catch (err) {
-        console.error(`[${VERSION}] Failure:`, err.message);
+        console.error(`[${VERSION}] Fatal Error:`, err.message);
         res.status(500).json({ error: err.message });
         if (fs.existsSync(rawFile)) fs.unlinkSync(rawFile);
         if (fs.existsSync(finalFile)) fs.unlinkSync(finalFile);
