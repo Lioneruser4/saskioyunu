@@ -1,521 +1,690 @@
 <!DOCTYPE html>
 <html lang="tr">
-
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Titan Football 3D - Multiplay</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Syncopate:wght@700&family=Orbitron:wght@400;700;900&display=swap"
-        rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sanal Dünya</title>
     <style>
-        :root {
-            --primary: #ff0055;
-            --secondary: #0088ff;
-            --bg: #050505;
-        }
-
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Orbitron', sans-serif;
-            user-select: none;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-
+        
         body {
-            background: var(--bg);
-            color: #fff;
-            overflow: hidden;
-            touch-action: none;
-            position: fixed;
-            width: 100vw;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             height: 100vh;
-        }
-
-        #ui-layer {
-            position: fixed;
-            inset: 0;
-            z-index: 1000;
             display: flex;
-            flex-direction: column;
-            align-items: center;
             justify-content: center;
-            background: radial-gradient(circle at center, #111 0%, #000 100%);
-            transition: 0.5s;
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
-        .profile-card {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 20px;
-            border-radius: 20px;
-            text-align: center;
-            margin-bottom: 30px;
-            backdrop-filter: blur(10px);
-        }
-
-        .profile-pic {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            border: 3px solid var(--primary);
-            margin-bottom: 10px;
-        }
-
-        .logo {
-            font-family: 'Syncopate';
-            font-size: 24px;
-            letter-spacing: 5px;
-            color: var(--primary);
-            margin-bottom: 40px;
-            text-transform: uppercase;
-        }
-
-        .btn {
-            padding: 15px 40px;
-            border: none;
-            border-radius: 12px;
-            font-weight: 900;
-            cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            transition: 0.3s;
-            margin: 5px;
-            width: 250px;
-        }
-
-        .btn-play {
-            background: #fff;
-            color: #000;
-        }
-
-        .btn-team {
-            width: 140px;
-            font-size: 11px;
-            margin-top: 10px;
-        }
-
-        #room-lobby {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.95);
-            z-index: 900;
-            display: none;
-            flex-direction: column;
             align-items: center;
-            justify-content: center;
-            padding: 20px;
         }
-
-        .team-split {
-            display: flex;
+        
+        #game-container {
             width: 100%;
-            max-width: 800px;
-            justify-content: space-around;
-            margin-top: 20px;
-            gap: 10px;
+            max-width: 1200px;
+            height: 90vh;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            position: relative;
         }
-
-        .team-box {
-            width: 48%;
-            background: rgba(255, 255, 255, 0.03);
-            padding: 15px;
-            border-radius: 15px;
-            min-height: 250px;
-            border-top: 4px solid #fff;
+        
+        /* Loading Screen */
+        #loading-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 0.5s;
+        }
+        
+        .loading-content {
+            text-align: center;
+            color: white;
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Lobby Screen */
+        #lobby-screen {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .lobby-header {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: rgba(255,255,255,0.2);
+            padding: 10px 20px;
+            border-radius: 50px;
+            color: white;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid white;
+        }
+        
+        .balance {
+            background: gold;
+            color: #333;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .balance:hover {
+            transform: scale(1.05);
+        }
+        
+        .bonus-timer {
+            font-size: 12px;
+            color: #ffd700;
+        }
+        
+        .lobby-buttons {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .lobby-btn {
+            width: 200px;
+            height: 200px;
+            border-radius: 20px;
+            border: none;
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+        
+        .lobby-btn:hover {
+            transform: translateY(-10px);
+            background: rgba(255,255,255,0.3);
+            border-color: white;
+        }
+        
+        .lobby-btn span {
+            font-size: 48px;
+        }
+        
+        /* Room List */
+        #room-list-screen {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            display: none;
+        }
+        
+        .room-list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+            margin-bottom: 20px;
+        }
+        
+        .back-btn {
+            background: rgba(255,255,255,0.2);
+            border: 2px solid white;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .back-btn:hover {
+            background: white;
+            color: #667eea;
+        }
+        
+        .rooms-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            height: calc(100% - 80px);
             overflow-y: auto;
         }
-
-        #game-controls {
-            position: fixed;
-            inset: 0;
-            pointer-events: none;
-            z-index: 500;
+        
+        .room-card {
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+        
+        .room-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255,255,255,0.3);
+            border-color: white;
+        }
+        
+        .room-name {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .room-info {
+            display: flex;
+            justify-content: space-between;
+            opacity: 0.8;
+        }
+        
+        /* Create Room */
+        #create-room-screen {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
             display: none;
         }
-
-        .joystick-zone {
-            position: absolute;
-            bottom: 40px;
-            left: 40px;
-            width: 150px;
-            height: 150px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.05);
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            pointer-events: auto;
+        
+        .create-room-form {
+            max-width: 400px;
+            margin: 50px auto;
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 20px;
+            color: white;
         }
-
-        .joystick-stick {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 60px;
-            height: 60px;
-            background: #fff;
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        
+        .create-room-form h2 {
+            margin-bottom: 20px;
+            text-align: center;
         }
-
-        .action-btns {
-            position: absolute;
-            bottom: 40px;
-            right: 40px;
+        
+        .create-room-form input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.9);
+        }
+        
+        .create-room-form button {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 10px;
+            background: white;
+            color: #667eea;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .create-room-form button:hover {
+            transform: scale(1.02);
+            background: #f0f0f0;
+        }
+        
+        /* Room Screen */
+        #room-screen {
+            height: 100%;
+            background: #1a1a2e;
+            display: none;
+            flex-direction: column;
+        }
+        
+        .room-header {
+            background: #16213e;
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #0f3460;
+        }
+        
+        .room-info {
             display: flex;
             gap: 20px;
-            pointer-events: auto;
-        }
-
-        .action-btn {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.1);
-            border: 3px solid #fff;
-            color: #fff;
-            display: flex;
             align-items: center;
-            justify-content: center;
-            font-weight: 900;
-            font-size: 14px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
         }
-
-        #scoreboard {
+        
+        .exit-btn {
+            background: #e94560;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .exit-btn:hover {
+            background: #ff6b8b;
+        }
+        
+        .room-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .chat-area {
+            width: 300px;
+            background: #16213e;
+            display: flex;
+            flex-direction: column;
+            border-right: 2px solid #0f3460;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            color: white;
+        }
+        
+        .message {
+            margin-bottom: 10px;
+            padding: 8px;
+            background: #0f3460;
+            border-radius: 8px;
+        }
+        
+        .message .username {
+            color: #e94560;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+        
+        .message .time {
+            font-size: 10px;
+            color: #888;
+            float: right;
+        }
+        
+        .chat-input-area {
+            padding: 15px;
+            background: #0f3460;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .chat-input-area input {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 5px;
+            background: #16213e;
+            color: white;
+        }
+        
+        .chat-input-area input::placeholder {
+            color: #888;
+        }
+        
+        .chat-input-area button {
+            padding: 8px 15px;
+            background: #e94560;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .game-area {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        #game-canvas {
+            width: 100%;
+            height: 100%;
+            background: #16213e;
+        }
+        
+        .character-info {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: #16213e;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #0f3460;
+            min-width: 200px;
+        }
+        
+        .character-info h3 {
+            margin-bottom: 10px;
+            color: #e94560;
+        }
+        
+        .info-item {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        
+        /* Market */
+        .market-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        }
+        
+        .market-modal {
             position: fixed;
-            top: 30px;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+        
+        .market-content {
+            background: white;
+            width: 90%;
+            max-width: 800px;
+            height: 80vh;
+            border-radius: 20px;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .market-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .close-btn {
+            background: #e94560;
+            color: white;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+        }
+        
+        .market-categories {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .category-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 20px;
+            background: #f0f0f0;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .category-btn.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        .items-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+        }
+        
+        .item-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .item-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        
+        .item-color {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            margin: 5px auto;
+            border: 2px solid #ddd;
+        }
+        
+        .item-price {
+            color: #4CAF50;
+            font-weight: bold;
+            margin: 5px 0;
+        }
+        
+        .buy-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+        }
+        
+        .inventory-section {
+            margin-top: 30px;
+            border-top: 2px solid #eee;
+            padding-top: 20px;
+        }
+        
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 30px;
             left: 50%;
             transform: translateX(-50%);
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 12px 35px;
+            background: #333;
+            color: white;
+            padding: 12px 24px;
             border-radius: 50px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            font-size: 24px;
-            font-weight: 900;
-            z-index: 600;
-            display: none;
-            backdrop-filter: blur(5px);
+            z-index: 3000;
+            animation: slideUp 0.3s;
         }
-
-        .score-red {
-            color: var(--primary);
-        }
-
-        .score-blue {
-            color: var(--secondary);
+        
+        @keyframes slideUp {
+            from {
+                bottom: 0;
+                opacity: 0;
+            }
+            to {
+                bottom: 30px;
+                opacity: 1;
+            }
         }
     </style>
 </head>
-
 <body>
-
-    <div id="ui-layer">
-        <div class="logo">TITAN FOOTBALL 3D</div>
-        <div class="profile-card">
-            <img src="https://via.placeholder.com/80" class="profile-pic" id="uPic">
-            <div id="uName" style="font-weight: 900;">Yükleniyor...</div>
-        </div>
-        <button class="btn btn-play" onclick="createMyRoom()">ODA KUR</button>
-    </div>
-
-    <div id="room-lobby">
-        <h2 id="lobbyTitle" style="letter-spacing: 3px; color: var(--primary);">LOBİ: Bekleniyor...</h2>
-        <div class="team-split">
-            <div class="team-box" id="redTeamList" style="border-color: var(--primary);">
-                <h3>RED TEAM</h3>
-                <hr style="opacity:0.2;margin:10px 0;">
-            </div>
-            <div class="team-box" id="blueTeamList" style="border-color: var(--secondary);">
-                <h3>BLUE TEAM</h3>
-                <hr style="opacity:0.2;margin:10px 0;">
+    <div id="game-container">
+        <!-- Loading Screen -->
+        <div id="loading-screen">
+            <div class="loading-content">
+                <h1>Sanal Dünya</h1>
+                <div class="loading-spinner"></div>
+                <p>Yükleniyor...</p>
             </div>
         </div>
-        <div style="margin-top: 30px; display: flex; flex-direction: column; align-items: center;">
-            <button class="btn btn-team" style="background: var(--primary); color: #fff;" onclick="switchTeam()">TAKIM
-                DEĞİŞTİR</button>
-            <button class="btn btn-play" onclick="startGame()">MAÇI BAŞLAT</button>
+        
+        <!-- Lobby Screen -->
+        <div id="lobby-screen">
+            <div class="lobby-header">
+                <img id="user-avatar" class="user-avatar" src="" alt="avatar">
+                <span id="user-name"></span>
+                <div>
+                    <div class="balance" onclick="claimBonus()">
+                        💰 <span id="user-balance">0</span>$
+                    </div>
+                    <div id="bonus-timer" class="bonus-timer"></div>
+                </div>
+            </div>
+            
+            <div class="lobby-buttons">
+                <button class="lobby-btn" onclick="joinRandomRoom()">
+                    <span>🎲</span>
+                    Rastgele Oda
+                </button>
+                <button class="lobby-btn" onclick="showCreateRoom()">
+                    <span>🏠</span>
+                    Oda Kur
+                </button>
+                <button class="lobby-btn" onclick="showRoomList()">
+                    <span>📋</span>
+                    Odalar
+                </button>
+            </div>
+        </div>
+        
+        <!-- Room List Screen -->
+        <div id="room-list-screen">
+            <div class="room-list-header">
+                <h2>Aktif Odalar</h2>
+                <button class="back-btn" onclick="showLobby()">← Geri</button>
+            </div>
+            <div id="rooms-container" class="rooms-grid">
+                <!-- Odalar buraya gelecek -->
+            </div>
+        </div>
+        
+        <!-- Create Room Screen -->
+        <div id="create-room-screen">
+            <div class="room-list-header">
+                <h2>Oda Kur</h2>
+                <button class="back-btn" onclick="showLobby()">← Geri</button>
+            </div>
+            <div class="create-room-form">
+                <h2>Yeni Oda</h2>
+                <input type="text" id="room-name" placeholder="Oda adı" maxlength="30">
+                <input type="text" id="room-password" placeholder="Şifre (boş bırakılırsa herkese açık)">
+                <button onclick="createRoom()">Odayı Oluştur</button>
+            </div>
+        </div>
+        
+        <!-- Room Screen -->
+        <div id="room-screen">
+            <div class="room-header">
+                <div class="room-info">
+                    <h2 id="current-room-name"></h2>
+                    <span id="room-user-count">👥 0</span>
+                </div>
+                <button class="exit-btn" onclick="leaveRoom()">Odadan Çık</button>
+            </div>
+            
+            <div class="room-content">
+                <div class="chat-area">
+                    <div id="chat-messages" class="chat-messages"></div>
+                    <div class="chat-input-area">
+                        <input type="text" id="chat-input" placeholder="Mesaj yaz..." onkeypress="handleChatKeyPress(event)">
+                        <button onclick="sendMessage()">Gönder</button>
+                    </div>
+                </div>
+                
+                <div class="game-area">
+                    <canvas id="game-canvas"></canvas>
+                    
+                    <div class="character-info">
+                        <h3>Karakterin</h3>
+                        <div id="equipped-info"></div>
+                        <button class="market-btn" onclick="openMarket()">🛒 Market</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Market Modal -->
+        <div id="market-modal" class="market-modal">
+            <div class="market-content">
+                <div class="market-header">
+                    <h2>🛒 Market</h2>
+                    <button class="close-btn" onclick="closeMarket()">×</button>
+                </div>
+                
+                <div class="market-categories">
+                    <button class="category-btn active" onclick="filterMarket('all')">Hepsi</button>
+                    <button class="category-btn" onclick="filterMarket('hat')">Şapkalar</button>
+                    <button class="category-btn" onclick="filterMarket('shirt')">Gömlekler</button>
+                    <button class="category-btn" onclick="filterMarket('pants')">Pantolonlar</button>
+                    <button class="category-btn" onclick="filterMarket('shoes')">Ayakkabılar</button>
+                    <button class="category-btn" onclick="filterMarket('accessory')">Aksesuarlar</button>
+                </div>
+                
+                <div id="market-items" class="items-grid"></div>
+                
+                <div class="inventory-section">
+                    <h3>Envanterin</h3>
+                    <div id="user-inventory" class="items-grid"></div>
+                </div>
+            </div>
         </div>
     </div>
-
-    <div id="scoreboard">
-        <span class="score-red" id="scoreR">0</span>
-        <span style="opacity: 0.3;">-</span>
-        <span class="score-blue" id="scoreB">0</span>
-        <span id="gameTimer" style="margin-left: 20px; font-size: 16px; color: #aaa;">05:00</span>
-    </div>
-
-    <div id="game-controls">
-        <div class="joystick-zone" id="joyZone">
-            <div class="joystick-stick" id="joyStick"></div>
-        </div>
-        <div class="action-btns">
-            <div class="action-btn" id="shootBtn" style="background: var(--primary);">ŞUT</div>
-            <div class="action-btn" id="passBtn" style="background: var(--secondary);">PAS</div>
-        </div>
-    </div>
-
-    <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand();
-
-        const socket = io();
-        let user = { name: 'Oyuncu', pic: 'https://via.placeholder.com/80' };
-        let myId, currentRoomId, myTeam = 'red';
-        let isKicking = false, isPassing = false;
-
-        if (tg.initDataUnsafe?.user) {
-            user.name = tg.initDataUnsafe.user.first_name;
-            user.pic = tg.initDataUnsafe.user.photo_url || user.pic;
-            document.getElementById('uPic').src = user.pic;
-            document.getElementById('uName').innerText = user.name;
-        }
-
-        // --- 3D ENGINE ---
-        let scene, camera, renderer, ball, players = {};
-        let ballVel = { x: 0, z: 0 };
-        let moveDir = { x: 0, z: 0 };
-        let clock = new THREE.Clock();
-
-        function init3D() {
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x0a0a0a);
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-
-            renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.shadowMap.enabled = true;
-            document.body.appendChild(renderer.domElement);
-
-            scene.add(new THREE.AmbientLight(0xffffff, 0.6));
-            const sun = new THREE.DirectionalLight(0xffffff, 1);
-            sun.position.set(20, 50, 20);
-            sun.castShadow = true;
-            scene.add(sun);
-
-            // Field
-            const field = new THREE.Mesh(
-                new THREE.PlaneGeometry(100, 60),
-                new THREE.MeshPhongMaterial({ color: 0x1a3a1a })
-            );
-            field.rotation.x = -Math.PI / 2;
-            field.receiveShadow = true;
-            scene.add(field);
-
-            // Lines
-            const centerCircle = new THREE.Mesh(new THREE.RingGeometry(8, 8.2, 32), new THREE.MeshBasicMaterial({ color: 0xffffff }));
-            centerCircle.rotation.x = -Math.PI / 2;
-            centerCircle.position.y = 0.01;
-            scene.add(centerCircle);
-
-            // Ball
-            ball = new THREE.Mesh(new THREE.SphereGeometry(0.5, 16, 16), new THREE.MeshPhongMaterial({ color: 0xffffff }));
-            ball.position.set(0, 0.5, 0);
-            ball.castShadow = true;
-            scene.add(ball);
-
-            animate();
-        }
-
-        function createPlayerModel(team) {
-            const group = new THREE.Group();
-            const color = team === 'red' ? 0xff0055 : 0x0088ff;
-            const torso = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.2, 0.4), new THREE.MeshPhongMaterial({ color }));
-            torso.position.y = 1.6;
-            group.add(torso);
-            const head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshPhongMaterial({ color: 0xffccaa }));
-            head.position.y = 2.5;
-            group.add(head);
-            const legGeo = new THREE.BoxGeometry(0.25, 1, 0.25);
-            const lLeg = new THREE.Mesh(legGeo, new THREE.MeshPhongMaterial({ color }));
-            lLeg.position.set(-0.25, 0.5, 0);
-            group.add(lLeg);
-            const rLeg = new THREE.Mesh(legGeo, new THREE.MeshPhongMaterial({ color }));
-            rLeg.position.set(0.25, 0.5, 0);
-            group.add(rLeg);
-            scene.add(group);
-            return { mesh: group, lLeg, rLeg };
-        }
-
-        function animate() {
-            requestAnimationFrame(animate);
-            if (!myId || !players[myId]) return;
-
-            const me = players[myId];
-            const speed = 0.3;
-            me.mesh.position.x += moveDir.x * speed;
-            me.mesh.position.z += moveDir.z * speed;
-
-            // Boundaries
-            me.mesh.position.x = Math.max(-49, Math.min(49, me.mesh.position.x));
-            me.mesh.position.z = Math.max(-29, Math.min(29, me.mesh.position.z));
-
-            if (moveDir.x !== 0 || moveDir.z !== 0) {
-                me.mesh.rotation.y = Math.atan2(moveDir.x, moveDir.z);
-                const t = Date.now() * 0.01;
-                me.lLeg.rotation.x = Math.sin(t) * 0.8;
-                me.rLeg.rotation.x = -Math.sin(t) * 0.8;
-            } else {
-                me.lLeg.rotation.x = 0;
-                me.rLeg.rotation.x = 0;
-            }
-
-            // Ball Interaction
-            const dist = me.mesh.position.distanceTo(ball.position);
-            if (dist < 1.4) {
-                const dir = new THREE.Vector3().subVectors(ball.position, me.mesh.position).normalize();
-                let force = isKicking ? 0.7 : (isPassing ? 0.4 : 0.15);
-                ballVel.x = dir.x * force;
-                ballVel.z = dir.z * force;
-                socket.emit('ballSync', { roomId: currentRoomId, ball: { x: ball.position.x, y: 0.5, z: ball.position.z, vx: ballVel.x, vz: ballVel.z } });
-                if (isKicking || isPassing) tg.HapticFeedback.impactOccurred('medium');
-            }
-
-            // Ball Physics
-            ball.position.x += ballVel.x;
-            ball.position.z += ballVel.z;
-            ballVel.x *= 0.985;
-            ballVel.z *= 0.985;
-
-            // Simple Goal detection
-            if (Math.abs(ball.position.z) < 6) {
-                if (ball.position.x > 49.5) goal('red');
-                if (ball.position.x < -49.5) goal('blue');
-            }
-
-            // Ball boundaries
-            if (Math.abs(ball.position.x) > 50) ballVel.x *= -0.5;
-            if (Math.abs(ball.position.z) > 30) ballVel.z *= -0.5;
-
-            socket.emit('move', { roomId: currentRoomId, x: me.mesh.position.x, y: me.mesh.position.y, z: me.mesh.position.z, ry: me.mesh.rotation.y });
-
-            camera.position.lerp(new THREE.Vector3(me.mesh.position.x, 20, me.mesh.position.z + 25), 0.1);
-            camera.lookAt(me.mesh.position);
-            renderer.render(scene, camera);
-        }
-
-        function goal(team) {
-            ball.position.set(0, 0.5, 0);
-            ballVel = { x: 0, z: 0 };
-            tg.HapticFeedback.notificationOccurred('success');
-            // Server will sync score
-        }
-
-        // --- NETWORK ---
-        function createMyRoom() {
-            socket.emit('createRoom', { duration: 10, user });
-        }
-
-        socket.on('roomCreated', id => {
-            currentRoomId = id;
-            socket.emit('joinRoom', { roomId: id, user });
-        });
-
-        socket.on('joined', data => {
-            myId = data.playerId;
-            document.getElementById('ui-layer').classList.add('hidden');
-            document.getElementById('room-lobby').style.display = 'flex';
-            document.getElementById('lobbyTitle').innerText = `ODA: ${data.roomId}`;
-            init3D();
-        });
-
-        socket.on('updatePlayers', serverPlayers => {
-            for (let id in serverPlayers) {
-                if (!players[id]) players[id] = createPlayerModel(serverPlayers[id].team);
-                if (id !== myId) {
-                    players[id].mesh.position.set(serverPlayers[id].x, serverPlayers[id].y, serverPlayers[id].z);
-                    players[id].mesh.rotation.y = serverPlayers[id].ry;
-                }
-            }
-            updateLobbyUI(serverPlayers);
-        });
-
-        function updateLobbyUI(pl) {
-            const rList = document.getElementById('redTeamList');
-            const bList = document.getElementById('blueTeamList');
-            rList.innerHTML = '<h3>RED TEAM</h3><hr style="opacity:0.2;margin:10px 0;">';
-            bList.innerHTML = '<h3>BLUE TEAM</h3><hr style="opacity:0.2;margin:10px 0;">';
-            for (let id in pl) {
-                const item = document.createElement('div');
-                item.style.padding = '5px';
-                item.style.fontSize = '12px';
-                item.innerText = (id === myId ? '★ ' : '') + pl[id].name;
-                if (pl[id].team === 'red') rList.appendChild(item);
-                else bList.appendChild(item);
-            }
-        }
-
-        function switchTeam() { socket.emit('switchTeam', currentRoomId); }
-        function startGame() {
-            document.getElementById('room-lobby').style.display = 'none';
-            document.getElementById('game-controls').style.display = 'block';
-            document.getElementById('scoreboard').style.display = 'flex';
-        }
-
-        // --- CONTROLS ---
-        const joyStick = document.getElementById('joyStick');
-        const joyZone = document.getElementById('joyZone');
-        let joyActive = false;
-
-        joyZone.addEventListener('touchstart', e => { joyActive = true; e.preventDefault(); }, { passive: false });
-        window.addEventListener('touchmove', e => {
-            if (!joyActive) return;
-            const touch = e.touches[0];
-            const rect = joyZone.getBoundingClientRect();
-            const centerX = rect.left + rect.width / 2;
-            const centerY = rect.top + rect.height / 2;
-            let dx = touch.clientX - centerX;
-            let dy = touch.clientY - centerY;
-            const dist = Math.sqrt(dx * dx + dy * dy);
-            const max = rect.width / 2;
-            if (dist > max) { dx *= max / dist; dy *= max / dist; }
-            joyStick.style.transform = `translate(-50%, -50%) translate(${dx}px, ${dy}px)`;
-            moveDir = { x: dx / max, z: dy / max };
-        }, { passive: false });
-        window.addEventListener('touchend', () => {
-            joyActive = false;
-            joyStick.style.transform = `translate(-50%, -50%)`;
-            moveDir = { x: 0, z: 0 };
-        });
-
-        const sBtn = document.getElementById('shootBtn');
-        const pBtn = document.getElementById('passBtn');
-        sBtn.addEventListener('touchstart', () => isKicking = true);
-        sBtn.addEventListener('touchend', () => isKicking = false);
-        pBtn.addEventListener('touchstart', () => isPassing = true);
-        pBtn.addEventListener('touchend', () => isPassing = false);
-
-        window.addEventListener('keydown', e => {
-            if (e.code === 'KeyW') moveDir.z = -1;
-            if (e.code === 'KeyS') moveDir.z = 1;
-            if (e.code === 'KeyA') moveDir.x = -1;
-            if (e.code === 'KeyD') moveDir.x = 1;
-            if (e.code === 'Space') isKicking = true;
-        });
-        window.addEventListener('keyup', e => {
-            if (['KeyW', 'KeyS'].includes(e.code)) moveDir.z = 0;
-            if (['KeyA', 'KeyD'].includes(e.code)) moveDir.x = 0;
-            if (e.code === 'Space') isKicking = false;
-        });
-
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
-
-    </script>
+    
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="game.js"></script>
 </body>
-
 </html>
