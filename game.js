@@ -1,779 +1,676 @@
-// Telegram WebApp başlatma
-window.Telegram.WebApp.ready();
-
-// Oyun değişkenleri
-let scene, camera, renderer, controls;
-let players = {};
-let currentPlayer = null;
-let ball = null;
-let field = null;
-let goals = [];
-let socket = null;
+// ==================== GAME.JS ====================
+let socket;
+let currentUser = null;
 let currentRoom = null;
-let isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+let gameCanvas;
+let ctx;
+let gameLoop;
+let characters = [];
+let items = [];
+let animationFrame;
 
-// Animasyon değişkenleri
-let mixer;
-let clock = new THREE.Clock();
-let moveDirection = new THREE.Vector3();
-let currentVelocity = new THREE.Vector3();
+// Telegram WebApp
+const tg = window.Telegram?.WebApp;
+if (tg) {
+    tg.expand();
+    tg.ready();
+}
 
-// Oyun durumu
-let gameState = {
-    isPlaying: false,
-    scores: { blue: 0, red: 0 },
-    timeLeft: 600,
-    ballPosition: { x: 0, y: 1, z: 0 }
-};
-
-// Üç.js başlatma
-function init() {
-    // Telegram kullanıcı bilgilerini al
-    const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
+// Sayfa yüklendiğinde
+document.addEventListener('DOMContentLoaded', async () => {
+    gameCanvas = document.getElementById('game-canvas');
+    ctx = gameCanvas.getContext('2d');
     
-    // Kullanıcı arayüzünü güncelle
-    if (tgUser) {
-        document.getElementById('username').textContent = tgUser.first_name || 'Oyuncu';
-        if (tgUser.photo_url) {
-            document.getElementById('profilePic').src = tgUser.photo_url;
+    // Telegram'dan giriş yap
+    await loginWithTelegram();
+    
+    // Canvas boyutunu ayarla
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+    
+    // Loading ekranını kapat
+    setTimeout(() => {
+        document.getElementById('loading-screen').style.opacity = '0';
+        setTimeout(() => {
+            document.getElementById('loading-screen').style.display = 'none';
+        }, 500);
+    }, 1000);
+});
+
+// Telegram ile giriş
+async function loginWithTelegram() {
+    try {
+        let telegramId, username, avatar;
+        
+        if (tg && tg.initDataUnsafe?.user) {
+            const user = tg.initDataUnsafe.user;
+            telegramId = user.id.toString();
+            username = user.first_name + (user.last_name ? ' ' + user.last_name : '');
+            avatar = `https://t.me/i/userpic/320/${user.username}.jpg` || '';
+        } else {
+            // Test için
+            telegramId = 'test' + Math.floor(Math.random() * 1000);
+            username = 'Test Kullanıcı';
+            avatar = '';
         }
+        
+        const response = await fetch('/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ telegramId, username, avatar })
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            currentUser = data.user;
+            updateUserInfo();
+            startBonusTimer();
+        }
+    } catch (error) {
+        console.error('Giriş hatası:', error);
+    }
+}
+
+// Kullanıcı bilgilerini güncelle
+function updateUserInfo() {
+    if (currentUser) {
+        document.getElementById('user-name').textContent = currentUser.username;
+        document.getElementById('user-balance').textContent = currentUser.balance;
+        document.getElementById('user-avatar').src = currentUser.avatar || 'https://via.placeholder.com/40';
+    }
+}
+
+// Bonus zamanlayıcı
+function startBonusTimer() {
+    updateBonusTimer();
+    setInterval(updateBonusTimer, 60000); // Her dakika güncelle
+}
+
+async function updateBonusTimer() {
+    if (!currentUser) return;
+    
+    const response = await fetch('/api/claim-bonus', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telegramId: currentUser.telegramId })
+    });
+    
+    const data = await response.json();
+    
+    if (!data.success && data.remainingMinutes) {
+        document.getElementById('bonus-timer').textContent = `⏰ ${data.remainingMinutes} dk`;
     } else {
-        // Telegram dışında test için
-        document.getElementById('username').textContent = 'Test Oyuncu';
-        document.getElementById('profilePic').src = 'https://ui-avatars.com/api/?name=Oyuncu&background=random';
+        document.getElementById('bonus-timer').textContent = '✅ Bonus hazır';
+    }
+}
+
+// Bonus al
+async function claimBonus() {
+    if (!currentUser) return;
+    
+    const response = await fetch('/api/claim-bonus', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telegramId: currentUser.telegramId })
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+        currentUser.balance = data.newBalance;
+        updateUserInfo();
+        showToast('10$ kazandın! 🎉');
+    } else if (data.remainingMinutes) {
+        showToast(`${data.remainingMinutes} dakika sonra tekrar dene`);
+    }
+}
+
+// Toast mesajı
+function showToast(message) {
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.remove();
+    }, 3000);
+}
+
+// Rastgele odaya katıl
+function joinRandomRoom() {
+    // Test için örnek oda
+    joinRoom('room1', 'Genel Sohbet');
+}
+
+// Oda kur
+function showCreateRoom() {
+    document.getElementById('lobby-screen').style.display = 'none';
+    document.getElementById('create-room-screen').style.display = 'block';
+}
+
+async function createRoom() {
+    const name = document.getElementById('room-name').value;
+    const password = document.getElementById('room-password').value;
+    
+    if (!name) {
+        showToast('Oda adı gerekli');
+        return;
     }
     
-    // Sahne oluştur
-    scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x87CEEB); // Gökyüzü mavisi
+    const roomId = 'room' + Date.now();
+    joinRoom(roomId, name, true);
+}
+
+// Oda listesini göster
+async function showRoomList() {
+    document.getElementById('lobby-screen').style.display = 'none';
+    document.getElementById('room-list-screen').style.display = 'block';
     
-    // Kamera oluştur
-    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 30, 50);
+    // Test için örnek odalar
+    const rooms = [
+        { id: 'room1', name: 'Genel Sohbet', users: 5 },
+        { id: 'room2', name: 'Oyun Odası', users: 3 },
+        { id: 'room3', name: 'Sohbet', users: 2 }
+    ];
     
-    // Renderer
-    renderer = new THREE.WebGLRenderer({ 
-        canvas: document.getElementById('gameCanvas'),
-        antialias: true 
+    const container = document.getElementById('rooms-container');
+    container.innerHTML = '';
+    
+    rooms.forEach(room => {
+        const card = document.createElement('div');
+        card.className = 'room-card';
+        card.onclick = () => joinRoom(room.id, room.name);
+        card.innerHTML = `
+            <div class="room-name">${room.name}</div>
+            <div class="room-info">
+                <span>👥 ${room.users} kişi</span>
+                <span>🔓 Herkese açık</span>
+            </div>
+        `;
+        container.appendChild(card);
     });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+}
+
+// Odaya katıl
+function joinRoom(roomId, roomName, isOwner = false) {
+    currentRoom = { id: roomId, name: roomName, isOwner };
     
-    // Işıklar
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-    scene.add(ambientLight);
+    document.getElementById('lobby-screen').style.display = 'none';
+    document.getElementById('room-list-screen').style.display = 'none';
+    document.getElementById('create-room-screen').style.display = 'none';
+    document.getElementById('room-screen').style.display = 'flex';
     
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-    directionalLight.position.set(50, 100, 50);
-    directionalLight.castShadow = true;
-    directionalLight.shadow.mapSize.width = 2048;
-    directionalLight.shadow.mapSize.height = 2048;
-    scene.add(directionalLight);
+    document.getElementById('current-room-name').textContent = roomName;
     
-    // Saha oluştur
-    createField();
+    // Socket bağlantısı
+    connectSocket();
     
-    // Top oluştur
-    createBall();
-    
-    // Kontroller
-    setupControls();
-    
-    // Socket.io bağlantısı
+    // Oyun döngüsünü başlat
+    startGameLoop();
+}
+
+// Socket bağlantısı
+function connectSocket() {
     socket = io();
     
-    // Event listeners
-    setupEventListeners();
-    
-    // Animasyon döngüsü
-    animate();
-}
-
-// Futbol sahası oluştur
-function createField() {
-    // Zemin
-    const groundGeometry = new THREE.PlaneGeometry(80, 50);
-    const groundMaterial = new THREE.MeshLambertMaterial({ 
-        color: 0x3CB371, // Çim yeşili
-        side: THREE.DoubleSide
-    });
-    const ground = new THREE.Mesh(groundGeometry, groundMaterial);
-    ground.rotation.x = -Math.PI / 2;
-    ground.receiveShadow = true;
-    scene.add(ground);
-    
-    // Çizgiler
-    const lineMaterial = new THREE.LineBasicMaterial({ color: 0xffffff });
-    
-    // Orta çizgi
-    const middleLinePoints = [
-        new THREE.Vector3(0, 0.1, -25),
-        new THREE.Vector3(0, 0.1, 25)
-    ];
-    const middleLineGeometry = new THREE.BufferGeometry().setFromPoints(middleLinePoints);
-    const middleLine = new THREE.Line(middleLineGeometry, lineMaterial);
-    scene.add(middleLine);
-    
-    // Orta daire
-    const circleGeometry = new THREE.CircleGeometry(9.15, 32);
-    const circleEdges = new THREE.EdgesGeometry(circleGeometry);
-    const circle = new THREE.LineSegments(circleEdges, lineMaterial);
-    circle.rotation.x = -Math.PI / 2;
-    circle.position.y = 0.1;
-    scene.add(circle);
-    
-    // Kale alanları
-    createGoalArea(-35, 0, 0x4361ee); // Mavi takım
-    createGoalArea(35, 0, 0xf72585); // Kırmızı takım
-}
-
-// Kale alanı oluştur
-function createGoalArea(x, z, color) {
-    const goalGeometry = new THREE.BoxGeometry(5, 2.5, 1);
-    const goalMaterial = new THREE.MeshLambertMaterial({ 
-        color: color,
-        transparent: true,
-        opacity: 0.7
-    });
-    const goal = new THREE.Mesh(goalGeometry, goalMaterial);
-    goal.position.set(x, 1.25, z);
-    goal.castShadow = true;
-    scene.add(goal);
-    goals.push(goal);
-    
-    // Kale ağları
-    const netGeometry = new THREE.BoxGeometry(4.8, 2.4, 0.1);
-    const netMaterial = new THREE.MeshBasicMaterial({ 
-        color: 0xffffff,
-        wireframe: true,
-        transparent: true,
-        opacity: 0.5
-    });
-    const net = new THREE.Mesh(netGeometry, netMaterial);
-    net.position.set(x, 1.2, z + (x > 0 ? -0.5 : 0.5));
-    scene.add(net);
-}
-
-// Top oluştur
-function createBall() {
-    const ballGeometry = new THREE.SphereGeometry(0.5, 32, 32);
-    const ballMaterial = new THREE.MeshPhongMaterial({ 
-        color: 0xffffff,
-        shininess: 100
-    });
-    ball = new THREE.Mesh(ballGeometry, ballMaterial);
-    ball.castShadow = true;
-    ball.position.set(0, 1, 0);
-    scene.add(ball);
-}
-
-// Oyuncu oluştur
-function createPlayer(id, username, team, position) {
-    const playerColor = team === 'blue' ? 0x4361ee : 0xf72585;
-    
-    // Oyuncu gövdesi
-    const bodyGeometry = new THREE.CapsuleGeometry(0.3, 1, 4, 8);
-    const bodyMaterial = new THREE.MeshLambertMaterial({ color: playerColor });
-    const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
-    body.castShadow = true;
-    
-    // Oyuncu başı
-    const headGeometry = new THREE.SphereGeometry(0.25, 16, 16);
-    const headMaterial = new THREE.MeshLambertMaterial({ color: 0xFFCC99 });
-    const head = new THREE.Mesh(headGeometry, headMaterial);
-    head.position.y = 0.9;
-    head.castShadow = true;
-    
-    // Oyuncu grup
-    const playerGroup = new THREE.Group();
-    playerGroup.add(body);
-    playerGroup.add(head);
-    playerGroup.position.set(position.x, position.y, position.z);
-    
-    scene.add(playerGroup);
-    
-    // Oyuncu bilgisi
-    players[id] = {
-        id: id,
-        mesh: playerGroup,
-        team: team,
-        username: username,
-        velocity: new THREE.Vector3(),
-        isJumping: false
-    };
-    
-    return playerGroup;
-}
-
-// Kontrolleri ayarla
-function setupControls() {
-    if (isMobile) {
-        setupMobileControls();
-    } else {
-        setupDesktopControls();
-    }
-}
-
-// Mobil kontroller
-function setupMobileControls() {
-    document.getElementById('mobileControls').style.display = 'flex';
-    
-    const joystickThumb = document.getElementById('joystickThumb');
-    const joystickBase = joystickThumb.parentElement;
-    const baseRect = joystickBase.getBoundingClientRect();
-    const baseRadius = baseRect.width / 2;
-    
-    let isJoystickActive = false;
-    
-    // Joystick dokunma event'leri
-    joystickThumb.addEventListener('touchstart', (e) => {
-        isJoystickActive = true;
-        e.preventDefault();
-    });
-    
-    document.addEventListener('touchmove', (e) => {
-        if (!isJoystickActive) return;
+    socket.on('connect', () => {
+        console.log('Socket bağlandı');
         
-        const touch = e.touches[0];
-        const x = touch.clientX - baseRect.left - baseRadius;
-        const y = touch.clientY - baseRect.top - baseRadius;
-        
-        // Joystick sınırları
-        const distance = Math.min(Math.sqrt(x*x + y*y), baseRadius * 0.7);
-        const angle = Math.atan2(y, x);
-        
-        const thumbX = Math.cos(angle) * distance;
-        const thumbY = Math.sin(angle) * distance;
-        
-        joystickThumb.style.transform = `translate(${thumbX}px, ${thumbY}px)`;
-        
-        // Hareket yönü
-        moveDirection.set(-thumbY / (baseRadius * 0.7), 0, -thumbX / (baseRadius * 0.7));
-        
-        e.preventDefault();
-    });
-    
-    document.addEventListener('touchend', () => {
-        isJoystickActive = false;
-        joystickThumb.style.transform = 'translate(40px, 40px)';
-        moveDirection.set(0, 0, 0);
-    });
-    
-    // Buton event'leri
-    document.getElementById('jumpBtn').addEventListener('touchstart', () => {
-        if (currentPlayer && !players[currentPlayer.id].isJumping) {
-            players[currentPlayer.id].velocity.y = 0.1;
-            players[currentPlayer.id].isJumping = true;
-            socket.emit('playerAction', {
-                roomId: currentRoom?.id,
-                action: 'jump'
-            });
-        }
-    });
-    
-    document.getElementById('passBtn').addEventListener('touchstart', () => {
-        kickBall(5, 'pass');
-    });
-    
-    document.getElementById('shootBtn').addEventListener('touchstart', () => {
-        kickBall(15, 'shoot');
-    });
-}
-
-// Masaüstü kontrolleri
-function setupDesktopControls() {
-    const keys = {};
-    
-    window.addEventListener('keydown', (e) => {
-        keys[e.key.toLowerCase()] = true;
-        
-        if (e.key === ' ' && currentPlayer && !players[currentPlayer.id].isJumping) {
-            players[currentPlayer.id].velocity.y = 0.1;
-            players[currentPlayer.id].isJumping = true;
-            socket.emit('playerAction', {
-                roomId: currentRoom?.id,
-                action: 'jump'
-            });
-        }
-        
-        // Fare ile şut (test için)
-        if (e.key === 'f') {
-            kickBall(15, 'shoot');
-        }
-        if (e.key === 'p') {
-            kickBall(5, 'pass');
-        }
-    });
-    
-    window.addEventListener('keyup', (e) => {
-        keys[e.key.toLowerCase()] = false;
-    });
-    
-    // Hareket güncelleme
-    function updateDesktopMovement() {
-        if (!currentPlayer) return;
-        
-        moveDirection.set(0, 0, 0);
-        
-        if (keys['w'] || keys['arrowup']) moveDirection.z = -1;
-        if (keys['s'] || keys['arrowdown']) moveDirection.z = 1;
-        if (keys['a'] || keys['arrowleft']) moveDirection.x = -1;
-        if (keys['d'] || keys['arrowright']) moveDirection.x = 1;
-        
-        // Normalize
-        if (moveDirection.length() > 0) {
-            moveDirection.normalize();
-        }
-    }
-    
-    // Fare kontrolleri
-    let isMouseDown = false;
-    
-    window.addEventListener('mousedown', () => {
-        isMouseDown = true;
-    });
-    
-    window.addEventListener('mouseup', () => {
-        isMouseDown = false;
-    });
-    
-    window.addEventListener('mousemove', (e) => {
-        if (isMouseDown && currentPlayer) {
-            // Oyuncu rotasyonu
-            const player = players[currentPlayer.id];
-            if (player) {
-                player.mesh.rotation.y += e.movementX * 0.01;
+        socket.emit('join-room', {
+            roomId: currentRoom.id,
+            user: {
+                userId: currentUser.telegramId,
+                username: currentUser.username,
+                avatar: currentUser.avatar
             }
-        }
-    });
-    
-    // Oyun döngüsüne hareket güncellemesini ekle
-    const originalAnimate = animate;
-    animate = function() {
-        updateDesktopMovement();
-        originalAnimate();
-    };
-}
-
-// Topa vur
-function kickBall(force, type) {
-    if (!currentPlayer || !ball) return;
-    
-    const player = players[currentPlayer.id];
-    const direction = new THREE.Vector3();
-    
-    // Top yönünü hesapla
-    direction.subVectors(ball.position, player.mesh.position).normalize();
-    
-    // Topa vur
-    ball.position.y += 0.2; // Biraz yukarı kaldır
-    ball.userData.velocity = direction.multiplyScalar(force / 10);
-    
-    // Sunucuya gönder
-    socket.emit('ballKick', {
-        roomId: currentRoom?.id,
-        force: force,
-        direction: { x: direction.x, y: direction.y, z: direction.z },
-        type: type
-    });
-    
-    // Ses efekti (basit)
-    playSound(type === 'shoot' ? 'shoot' : 'pass');
-}
-
-// Ses efekti
-function playSound(type) {
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-    
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-    
-    if (type === 'shoot') {
-        oscillator.frequency.setValueAtTime(300, audioContext.currentTime);
-        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-        oscillator.start();
-        oscillator.stop(audioContext.currentTime + 0.5);
-    } else {
-        oscillator.frequency.setValueAtTime(200, audioContext.currentTime);
-        gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-        oscillator.start();
-        oscillator.stop(audioContext.currentTime + 0.3);
-    }
-}
-
-// Event listeners
-function setupEventListeners() {
-    // Oda kur butonu
-    document.getElementById('createRoomBtn').addEventListener('click', () => {
-        document.getElementById('timeSelection').style.display = 'flex';
-    });
-    
-    // Süre seçimi
-    document.querySelectorAll('.time-option').forEach(option => {
-        option.addEventListener('click', () => {
-            document.querySelectorAll('.time-option').forEach(o => o.classList.remove('selected'));
-            option.classList.add('selected');
-            
-            const duration = parseInt(option.dataset.time);
-            
-            // Telegram kullanıcı bilgilerini al
-            const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
-            
-            // Sunucuya bağlan
-            socket.emit('join', {
-                userId: tgUser?.id || Date.now().toString(),
-                username: tgUser?.first_name || 'Oyuncu',
-                photoUrl: tgUser?.photo_url || '',
-                roomId: null // Yeni oda
-            });
-            
-            // Oda ekranını göster
-            document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('roomScreen').style.display = 'flex';
         });
     });
     
-    // Hemen oyna
-    document.getElementById('quickPlayBtn').addEventListener('click', () => {
-        const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
-        
-        socket.emit('join', {
-            userId: tgUser?.id || Date.now().toString(),
-            username: tgUser?.first_name || 'Oyuncu',
-            photoUrl: tgUser?.photo_url || '',
-            roomId: 'quickplay'
+    socket.on('room-users', (users) => {
+        characters = users;
+        updateUserCount();
+    });
+    
+    socket.on('user-joined', (user) => {
+        characters.push(user);
+        updateUserCount();
+    });
+    
+    socket.on('user-left', (userId) => {
+        characters = characters.filter(c => c.userId !== userId);
+        updateUserCount();
+    });
+    
+    socket.on('character-moved', (data) => {
+        const char = characters.find(c => c.userId === data.userId);
+        if (char) {
+            char.x = data.x;
+            char.y = data.y;
+        }
+    });
+    
+    socket.on('character-pushed', (data) => {
+        const char = characters.find(c => c.userId === data.targetId);
+        if (char) {
+            char.x = data.newX;
+            char.y = data.newY;
+        }
+    });
+    
+    socket.on('new-message', (msg) => {
+        addMessage(msg);
+    });
+    
+    socket.on('private-message', (data) => {
+        showToast(`📩 ${data.from}: ${data.message}`);
+    });
+    
+    socket.on('banned', () => {
+        showToast('🚫 Banlandınız!');
+        leaveRoom();
+    });
+}
+
+// Oda sayısını güncelle
+function updateUserCount() {
+    document.getElementById('room-user-count').textContent = `👥 ${characters.length}`;
+}
+
+// Mesaj ekle
+function addMessage(msg) {
+    const chat = document.getElementById('chat-messages');
+    const div = document.createElement('div');
+    div.className = 'message';
+    div.innerHTML = `
+        <span class="username">${msg.username}:</span>
+        <span class="text">${msg.message}</span>
+        <span class="time">${new Date(msg.timestamp).toLocaleTimeString()}</span>
+    `;
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+}
+
+// Mesaj gönder
+function sendMessage() {
+    const input = document.getElementById('chat-input');
+    const message = input.value.trim();
+    
+    if (message && socket) {
+        socket.emit('send-message', {
+            roomId: currentRoom.id,
+            message
         });
-    });
-    
-    // Takım değiştir
-    document.getElementById('blueTeam').addEventListener('click', (e) => {
-        if (e.target.classList.contains('player-slot')) return;
-        switchTeam('blue');
-    });
-    
-    document.getElementById('redTeam').addEventListener('click', (e) => {
-        if (e.target.classList.contains('player-slot')) return;
-        switchTeam('red');
-    });
-    
-    // Oyuna başla
-    document.getElementById('startGameBtn').addEventListener('click', () => {
-        if (currentRoom) {
-            socket.emit('startGame', {
-                roomId: currentRoom.id
-            });
-        }
-    });
-    
-    // Menüye dön
-    document.getElementById('backToMenuBtn').addEventListener('click', () => {
-        document.getElementById('roomScreen').style.display = 'none';
-        document.getElementById('loginScreen').style.display = 'flex';
-        document.getElementById('timeSelection').style.display = 'none';
-    });
+        input.value = '';
+    }
 }
 
-// Takım değiştir
-function switchTeam(team) {
-    if (!currentPlayer || !currentRoom) return;
-    
-    socket.emit('switchTeam', {
-        userId: currentPlayer.id,
-        roomId: currentRoom.id,
-        team: team
-    });
+function handleChatKeyPress(e) {
+    if (e.key === 'Enter') {
+        sendMessage();
+    }
 }
 
-// Socket event listeners
-socket.on('joined', (data) => {
-    currentRoom = data.room;
-    currentPlayer = data.player;
+// Odadan çık
+function leaveRoom() {
+    if (socket) {
+        socket.emit('leave-room', currentRoom.id);
+        socket.disconnect();
+    }
     
-    // Oyuncuları listele
-    updatePlayerList(data.room);
-});
+    document.getElementById('room-screen').style.display = 'none';
+    document.getElementById('lobby-screen').style.display = 'flex';
+    
+    if (animationFrame) {
+        cancelAnimationFrame(animationFrame);
+    }
+}
 
-socket.on('playerJoined', (data) => {
-    updatePlayerList(data.room);
-});
+// Lobiye dön
+function showLobby() {
+    document.getElementById('room-list-screen').style.display = 'none';
+    document.getElementById('create-room-screen').style.display = 'none';
+    document.getElementById('lobby-screen').style.display = 'flex';
+}
 
-socket.on('teamUpdated', (data) => {
-    updateTeamDisplay(data.blueTeam, data.redTeam);
-});
+// Canvas boyutlandır
+function resizeCanvas() {
+    if (gameCanvas) {
+        const container = document.querySelector('.game-area');
+        gameCanvas.width = container.clientWidth;
+        gameCanvas.height = container.clientHeight;
+    }
+}
 
-socket.on('gameStarted', (data) => {
-    // Oyun ekranını göster
-    document.getElementById('roomScreen').style.display = 'none';
-    document.getElementById('scoreboard').style.display = 'flex';
+// Oyun döngüsü
+function startGameLoop() {
+    let isDragging = false;
+    let selectedChar = null;
+    let dragOffset = { x: 0, y: 0 };
     
-    // Oyun durumunu güncelle
-    gameState.isPlaying = true;
-    gameState.scores = { blue: 0, red: 0 };
-    
-    // Oyuncuları oluştur
-    data.players.forEach(player => {
-        if (player.id !== currentPlayer.id) {
-            createPlayer(player.id, player.username, player.team, player.position || { x: 0, y: 1, z: 0 });
-        }
-    });
-    
-    // Kendi oyuncumuzu oluştur
-    if (currentPlayer) {
-        createPlayer(currentPlayer.id, currentPlayer.username, currentPlayer.team, 
-                    currentPlayer.position || { x: 0, y: 1, z: 0 });
+    gameCanvas.addEventListener('mousedown', (e) => {
+        const rect = gameCanvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
         
-        // Kamera kontrolü
-        setupCamera();
-    }
-    
-    // Geri sayım
-    startCountdown(3);
-});
-
-socket.on('playerMoved', (data) => {
-    const player = players[data.userId];
-    if (player) {
-        player.mesh.position.set(data.position.x, data.position.y, data.position.z);
-        player.mesh.rotation.set(data.rotation.x, data.rotation.y, data.rotation.z);
-    }
-});
-
-socket.on('ballMoved', (data) => {
-    if (ball) {
-        ball.position.set(data.position.x, data.position.y, data.position.z);
-        ball.userData.velocity = new THREE.Vector3(data.velocity.x, data.velocity.y, data.velocity.z);
-    }
-});
-
-socket.on('goalScored', (data) => {
-    // Skoru güncelle
-    document.getElementById('blueScore').textContent = data.scores.blue;
-    document.getElementById('redScore').textContent = data.scores.red;
-    
-    // Topu sıfırla
-    if (ball) {
-        ball.position.set(0, 1, 0);
-        ball.userData.velocity = new THREE.Vector3(0, 0, 0);
-    }
-    
-    // Gol animasyonu
-    showGoalAnimation(data.team);
-});
-
-socket.on('gameUpdate', (data) => {
-    gameState = data;
-    
-    // Topu güncelle
-    if (ball && data.ball) {
-        ball.position.set(data.ball.x, data.ball.y, data.ball.z);
-    }
-});
-
-socket.on('gameEnded', (data) => {
-    gameState.isPlaying = false;
-    
-    // Oyun sonu ekranı
-    setTimeout(() => {
-        alert(`Oyun bitti!\nMavi: ${data.scores.blue} - Kırmızı: ${data.scores.red}`);
-        location.reload();
-    }, 1000);
-});
-
-// Oyun listesini güncelle
-function updatePlayerList(room) {
-    const blueList = document.getElementById('bluePlayers');
-    const redList = document.getElementById('redPlayers');
-    
-    blueList.innerHTML = '';
-    redList.innerHTML = '';
-    
-    room.blueTeam.forEach(player => {
-        const div = document.createElement('div');
-        div.className = 'player-slot';
-        div.textContent = player.username;
-        blueList.appendChild(div);
-    });
-    
-    room.redTeam.forEach(player => {
-        const div = document.createElement('div');
-        div.className = 'player-slot';
-        div.textContent = player.username;
-        redList.appendChild(div);
-    });
-}
-
-// Takım görüntüsünü güncelle
-function updateTeamDisplay(blueTeam, redTeam) {
-    updatePlayerList({ blueTeam, redTeam, players: [...blueTeam, ...redTeam] });
-}
-
-// Kamera ayarı
-function setupCamera() {
-    if (!currentPlayer) return;
-    
-    const player = players[currentPlayer.id];
-    if (!player) return;
-    
-    // Üçüncü şahıs kamerası
-    camera.position.set(0, 10, -15);
-    camera.lookAt(player.mesh.position);
-    
-    // Kamera takibi
-    const cameraOffset = new THREE.Vector3(0, 10, -15);
-    
-    // Oyun döngüsüne kamera takibini ekle
-    const originalAnimate = animate;
-    animate = function() {
-        if (player) {
-            const playerPosition = player.mesh.position.clone();
-            const cameraPosition = playerPosition.clone().add(cameraOffset);
-            camera.position.lerp(cameraPosition, 0.1);
-            camera.lookAt(playerPosition);
-        }
-        originalAnimate();
-    };
-}
-
-// Geri sayım
-function startCountdown(seconds) {
-    const countdownElement = document.getElementById('countdown');
-    countdownElement.style.display = 'block';
-    
-    let count = seconds;
-    
-    const interval = setInterval(() => {
-        countdownElement.textContent = count > 0 ? count : 'BAŞLA!';
-        
-        if (count === 0) {
-            clearInterval(interval);
-            setTimeout(() => {
-                countdownElement.style.display = 'none';
-            }, 1000);
-        }
-        
-        count--;
-    }, 1000);
-}
-
-// Gol animasyonu
-function showGoalAnimation(team) {
-    const color = team === 'blue' ? '#4361ee' : '#f72585';
-    const message = team === 'blue' ? 'MAVİ TAKIM GOL!' : 'KIRMIZI TAKIM GOL!';
-    
-    const goalDiv = document.createElement('div');
-    goalDiv.style.position = 'fixed';
-    goalDiv.style.top = '50%';
-    goalDiv.style.left = '50%';
-    goalDiv.style.transform = 'translate(-50%, -50%)';
-    goalDiv.style.fontSize = '48px';
-    goalDiv.style.color = color;
-    goalDiv.style.fontWeight = 'bold';
-    goalDiv.style.textShadow = '0 0 20px white';
-    goalDiv.style.zIndex = '100';
-    goalDiv.textContent = message;
-    
-    document.body.appendChild(goalDiv);
-    
-    setTimeout(() => {
-        document.body.removeChild(goalDiv);
-    }, 2000);
-}
-
-// Animasyon döngüsü
-function animate() {
-    requestAnimationFrame(animate);
-    
-    const delta = clock.getDelta();
-    
-    // Oyuncu hareketi
-    if (currentPlayer && gameState.isPlaying) {
-        const player = players[currentPlayer.id];
-        if (player) {
-            // Hareket
-            if (moveDirection.length() > 0) {
-                const speed = 0.1;
-                player.velocity.x = moveDirection.x * speed;
-                player.velocity.z = moveDirection.z * speed;
+        // Karakter seç
+        for (let char of characters) {
+            const dx = x - char.x;
+            const dy = y - char.y;
+            if (Math.sqrt(dx*dx + dy*dy) < 25) {
+                isDragging = true;
+                selectedChar = char;
+                dragOffset.x = char.x - x;
+                dragOffset.y = char.y - y;
                 
-                // Rotasyon
-                if (moveDirection.z !== 0 || moveDirection.x !== 0) {
-                    player.mesh.rotation.y = Math.atan2(moveDirection.x, moveDirection.z);
+                // Özel mesaj menüsü
+                if (char.userId !== currentUser.telegramId) {
+                    showUserMenu(char);
                 }
-                
-                // Sunucuya gönder
-                socket.emit('playerMove', {
-                    roomId: currentRoom?.id,
-                    userId: currentPlayer.id,
-                    position: player.mesh.position,
-                    rotation: player.mesh.rotation
-                });
-            } else {
-                player.velocity.x *= 0.9;
-                player.velocity.z *= 0.9;
+                break;
             }
-            
-            // Yerçekimi
-            player.velocity.y -= 0.01;
-            
-            // Zıplama kontrolü
-            if (player.mesh.position.y <= 1) {
-                player.mesh.position.y = 1;
-                player.velocity.y = 0;
-                player.isJumping = false;
-            }
-            
-            // Pozisyon güncelle
-            player.mesh.position.x += player.velocity.x;
-            player.mesh.position.y += player.velocity.y;
-            player.mesh.position.z += player.velocity.z;
         }
-    }
+    });
     
-    // Top hareketi
-    if (ball && ball.userData.velocity) {
-        ball.position.x += ball.userData.velocity.x;
-        ball.position.y += ball.userData.velocity.y;
-        ball.position.z += ball.userData.velocity.z;
-        
-        // Yerçekimi
-        ball.userData.velocity.y -= 0.01;
-        
-        // Zemin çarpışması
-        if (ball.position.y < 0.5) {
-            ball.position.y = 0.5;
-            ball.userData.velocity.y *= -0.8;
-            ball.userData.velocity.x *= 0.9;
-            ball.userData.velocity.z *= 0.9;
-        }
-        
-        // Kale çarpışması
-        goals.forEach(goal => {
-            const distance = ball.position.distanceTo(goal.position);
-            if (distance < 3) {
-                // Gol kontrolü
-                const team = goal.position.x > 0 ? 'blue' : 'red';
-                socket.emit('goal', {
-                    roomId: currentRoom?.id,
-                    team: team
+    gameCanvas.addEventListener('mousemove', (e) => {
+        if (isDragging && selectedChar) {
+            const rect = gameCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            selectedChar.x = x + dragOffset.x;
+            selectedChar.y = y + dragOffset.y;
+            
+            // Hareketi yayınla
+            if (socket) {
+                socket.emit('character-move', {
+                    roomId: currentRoom.id,
+                    x: selectedChar.x,
+                    y: selectedChar.y
                 });
             }
+        }
+    });
+    
+    gameCanvas.addEventListener('mouseup', () => {
+        if (isDragging && selectedChar) {
+            // İtme kontrolü
+            for (let char of characters) {
+                if (char !== selectedChar) {
+                    const dx = char.x - selectedChar.x;
+                    const dy = char.y - selectedChar.y;
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+                    
+                    if (dist < 50) {
+                        // İtme
+                        const angle = Math.atan2(dy, dx);
+                        char.x += Math.cos(angle) * 10;
+                        char.y += Math.sin(angle) * 10;
+                        
+                        if (socket) {
+                            socket.emit('character-push', {
+                                roomId: currentRoom.id,
+                                targetId: char.userId,
+                                newX: char.x,
+                                newY: char.y
+                            });
+                        }
+                    }
+                }
+            }
+        }
+        
+        isDragging = false;
+        selectedChar = null;
+    });
+    
+    function draw() {
+        if (!ctx || !gameCanvas) return;
+        
+        ctx.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
+        
+        // Grid çiz
+        ctx.strokeStyle = '#0f3460';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < gameCanvas.width; i += 50) {
+            ctx.beginPath();
+            ctx.strokeStyle = '#0f3460';
+            ctx.lineWidth = 0.5;
+            ctx.moveTo(i, 0);
+            ctx.lineTo(i, gameCanvas.height);
+            ctx.stroke();
+        }
+        for (let i = 0; i < gameCanvas.height; i += 50) {
+            ctx.beginPath();
+            ctx.moveTo(0, i);
+            ctx.lineTo(gameCanvas.width, i);
+            ctx.stroke();
+        }
+        
+        // Karakterleri çiz
+        characters.forEach(char => {
+            drawCharacter(char);
         });
+        
+        animationFrame = requestAnimationFrame(draw);
     }
     
-    renderer.render(scene, camera);
+    draw();
 }
 
-// Pencere boyutu değiştiğinde
-window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-});
+// Karakter çiz
+function drawCharacter(char) {
+    const size = 50;
+    const x = char.x || 100;
+    const y = char.y || 100;
+    
+    // Ayakkabılar
+    if (char.equipped?.shoes) {
+        ctx.fillStyle = char.equipped.shoes.color;
+        ctx.fillRect(x + 10, y + 40, 10, 10);
+        ctx.fillRect(x + 30, y + 40, 10, 10);
+    } else {
+        ctx.fillStyle = '#8B4513';
+        ctx.fillRect(x + 10, y + 40, 10, 10);
+        ctx.fillRect(x + 30, y + 40, 10, 10);
+    }
+    
+    // Pantolon
+    if (char.equipped?.pants) {
+        ctx.fillStyle = char.equipped.pants.color;
+    } else {
+        ctx.fillStyle = '#0000FF';
+    }
+    ctx.fillRect(x + 10, y + 25, 30, 20);
+    
+    // Gövde
+    if (char.equipped?.shirt) {
+        ctx.fillStyle = char.equipped.shirt.color;
+    } else {
+        ctx.fillStyle = '#FF0000';
+    }
+    ctx.fillRect(x + 10, y + 10, 30, 20);
+    
+    // Kollar
+    ctx.fillStyle = '#FFDBAD';
+    ctx.fillRect(x, y + 15, 10, 15);
+    ctx.fillRect(x + 40, y + 15, 10, 15);
+    
+    // Kafa
+    if (char.avatar) {
+        let img = new Image();
+        img.src = char.avatar;
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(x + 25, y + 5, 12, 0, Math.PI * 2);
+        ctx.clip();
+        ctx.drawImage(img, x + 13, y - 7, 24, 24);
+        ctx.restore();
+    } else {
+        ctx.fillStyle = '#FFDBAD';
+        ctx.beginPath();
+        ctx.arc(x + 25, y + 5, 12, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    
+    // Şapka
+    if (char.equipped?.hat) {
+        ctx.fillStyle = char.equipped.hat.color;
+        ctx.fillRect(x + 15, y - 5, 20, 8);
+    }
+    
+    // Aksesuar
+    if (char.equipped?.accessory) {
+        ctx.fillStyle = char.equipped.accessory.color;
+        ctx.fillRect(x + 20, y + 15, 10, 5);
+    }
+    
+    // Admin ışığı
+    if (char.userId === currentRoom?.ownerId) {
+        ctx.shadowColor = 'gold';
+        ctx.shadowBlur = 20;
+        ctx.beginPath();
+        ctx.arc(x + 25, y + 25, 35, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 215, 0, 0.3)';
+        ctx.fill();
+        ctx.shadowBlur = 0;
+    }
+    
+    // İsim
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '12px Arial';
+    ctx.fillText(char.username, x, y - 10);
+    
+    // Ben ise işaret
+    if (char.userId === currentUser?.telegramId) {
+        ctx.fillStyle = '#4CAF50';
+        ctx.beginPath();
+        ctx.arc(x + 40, y - 5, 5, 0, Math.PI * 2);
+        ctx.fill();
+    }
+}
 
-// Uygulamayı başlat
-window.onload = init;
+// Kullanıcı menüsü
+function showUserMenu(char) {
+    const menu = document.createElement('div');
+    menu.style.position = 'fixed';
+    menu.style.top = '50%';
+    menu.style.left = '50%';
+    menu.style.transform = 'translate(-50%, -50%)';
+    menu.style.background = 'white';
+    menu.style.padding = '20px';
+    menu.style.borderRadius = '10px';
+    menu.style.boxShadow = '0 10px 40px rgba(0,0,0,0.2)';
+    menu.style.zIndex = '1000';
+    
+    menu.innerHTML = `
+        <h3>${char.username}</h3>
+        <button onclick="sendPrivateMessage('${char.userId}')">💬 Sohbet Et</button>
+        <button onclick="this.parentElement.remove()">Kapat</button>
+    `;
+    
+    document.body.appendChild(menu);
+}
+
+// Özel mesaj gönder
+function sendPrivateMessage(targetId) {
+    const message = prompt('Mesajınız:');
+    if (message && socket) {
+        socket.emit('send-private-message', {
+            targetId,
+            message
+        });
+        showToast('Mesaj gönderildi');
+    }
+}
+
+// Market
+async function openMarket() {
+    document.getElementById('market-modal').style.display = 'flex';
+    await loadMarketItems();
+    loadInventory();
+}
+
+function closeMarket() {
+    document.getElementById('market-modal').style.display = 'none';
+}
+
+async function loadMarketItems() {
+    const response = await fetch('/api/market/items');
+    const data = await response.json();
+    
+    if (data.success) {
+        items = data.items;
+        filterMarket('all');
+    }
+}
+
+function filterMarket(category) {
+    // Kategori butonlarını güncelle
+    document.querySelectorAll('.category-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
+    
+    const filtered = category === 'all' 
+        ? items 
+        : items.filter(item => item.category === category);
+    
+    displayItems(filtered);
+}
+
+function displayItems(itemsToShow) {
+    const container = document.getElementById('market-items');
+    container.innerHTML = '';
+    
+    itemsToShow.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'item-card';
+        
+        let colorsHtml = '';
+        item.colors.forEach(color => {
+            colorsHtml += `<div class="item-color" style="background-color: ${color}" onclick="buyItem('${item.itemId}', '${color}')"></div>`;
+        });
+        
+        card.innerHTML = `
+            <h4>${item.name}</h4>
+            ${colorsHtml}
+            <div class="item-price">💰 ${item.price}$</div>
+        `;
+        
+        container.appendChild(card);
+    });
+}
+
+async function buyItem(itemId, color) {
+    if (!currentUser) return;
+    
+    const response = await fetch('/api/market/buy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            telegramId: currentUser.telegramId,
+            itemId,
+            color
+        })
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+        currentUser.balance = data.newBalance;
+        updateUserInfo();
+        showToast('Satın alındı!');
+        loadInventory();
+    } else {
+        showToast(data.error);
+    }
+}
+
+async function loadInventory() {
+    // Inventory API'si lazım
+}
+
+function equipItem(itemId, color, category) {
+    // Equip API'si lazım
+}
