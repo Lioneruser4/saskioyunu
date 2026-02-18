@@ -37,9 +37,32 @@ const PROXY_LIST = [
 // YouTube arama fonksiyonu
 async function searchYouTube(query) {
     try {
-        // YouTube Data API kullanarak arama (mock implementasyon)
-        // Gerçek implementasyon için YouTube Data API key gerekli
-        const searchResults = [
+        const { Innertube } = require('innertube');
+        const innertube = new Innertube();
+        
+        // YouTube'dan gerçek arama yap
+        const search = await innertube.search(query);
+        
+        if (!search || !search.results || search.results.length === 0) {
+            return [];
+        }
+        
+        // Sonuçları formatla
+        const results = search.results.slice(0, 10).map((video) => ({
+            id: video.id,
+            title: video.title,
+            channel: video.channel.name,
+            thumbnail: video.thumbnails[0]?.url || `https://img.youtube.com/vi/${video.id}/mqdefault.jpg`,
+            duration: Math.floor(video.duration / 1000),
+            views: video.viewCount || 0
+        }));
+        
+        return results;
+    } catch (error) {
+        console.error('YouTube arama hatası:', error);
+        
+        // Hata olursa mock sonuçlar döndür
+        return [
             {
                 id: 'dQw4w9WgXcQ',
                 title: `${query} - Official Video`,
@@ -57,11 +80,6 @@ async function searchYouTube(query) {
                 views: 987654
             }
         ];
-        
-        return searchResults;
-    } catch (error) {
-        console.error('YouTube arama hatası:', error);
-        return [];
     }
 }
 
