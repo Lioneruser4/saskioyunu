@@ -37,24 +37,24 @@ const PROXY_LIST = [
 // YouTube arama fonksiyonu
 async function searchYouTube(query) {
     try {
-        const { Innertube } = require('innertube');
-        const innertube = new Innertube();
+        // YouTube arama için alternatif yöntem
+        const { ytsr } = require('ytsr');
         
-        // YouTube'dan gerçek arama yap
-        const search = await innertube.search(query);
+        // YouTube'dan arama yap
+        const searchResults = await ytsr(query);
         
-        if (!search || !search.results || search.results.length === 0) {
+        if (!searchResults || searchResults.videos.length === 0) {
             return [];
         }
         
         // Sonuçları formatla
-        const results = search.results.slice(0, 10).map((video) => ({
-            id: video.id,
+        const results = searchResults.videos.slice(0, 10).map((video) => ({
+            id: video.videoId,
             title: video.title,
-            channel: video.channel.name,
-            thumbnail: video.thumbnails[0]?.url || `https://img.youtube.com/vi/${video.id}/mqdefault.jpg`,
+            channel: video.author.name,
+            thumbnail: video.thumbnail,
             duration: Math.floor(video.duration / 1000),
-            views: video.viewCount || 0
+            views: video.views || 0
         }));
         
         return results;
