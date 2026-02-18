@@ -63,6 +63,10 @@
             margin: 0 auto 30px;
         }
 
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
         .splash-title {
             font-size: 32px;
             font-weight: 700;
@@ -171,131 +175,52 @@
             color: #1a202c;
         }
 
-        .retry-btn {
-            margin-left: auto;
-            padding: 5px 15px;
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 20px;
-            font-size: 12px;
-            cursor: pointer;
-            display: none;
-        }
-
-        .retry-btn:hover {
-            background: #5a67d8;
-        }
-
-        /* TELEGRAM GİRİŞ */
-        .telegram-login {
-            background: linear-gradient(135deg, #0088cc, #00a2f0);
+        /* WEBVIEW ID GÖSTERİCİ */
+        .webview-info {
+            background: linear-gradient(135deg, #f6e05e, #fbbf24);
             border-radius: 16px;
-            padding: 25px;
+            padding: 20px;
             margin-bottom: 25px;
-            color: white;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .telegram-login:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(0, 136, 204, 0.4);
-        }
-
-        .telegram-icon {
-            font-size: 48px;
-            margin-bottom: 10px;
-        }
-
-        .telegram-title {
-            font-size: 20px;
-            font-weight: 700;
-            margin-bottom: 5px;
-        }
-
-        .telegram-subtitle {
-            font-size: 14px;
-            opacity: 0.9;
-        }
-
-        .telegram-user {
-            background: #f0f9ff;
-            border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 25px;
-            display: none;
+            color: #1a202c;
+            display: flex;
             align-items: center;
             gap: 15px;
-            border: 2px solid #0088cc;
+            border: 2px solid #ecc94b;
         }
 
-        .telegram-avatar {
+        .webview-icon {
             width: 50px;
             height: 50px;
+            background: white;
             border-radius: 50%;
-            background: #0088cc;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
             font-size: 24px;
             font-weight: bold;
+            color: #fbbf24;
         }
 
-        .telegram-info {
+        .webview-details {
             flex: 1;
         }
 
-        .telegram-name {
-            font-weight: 700;
-            color: #1a202c;
+        .webview-label {
+            font-size: 12px;
+            opacity: 0.8;
             margin-bottom: 3px;
         }
 
-        .telegram-id {
-            color: #718096;
+        .webview-id {
+            font-size: 18px;
+            font-weight: 700;
+            font-family: monospace;
+            margin-bottom: 2px;
+        }
+
+        .webview-name {
             font-size: 14px;
-        }
-
-        .logout-btn {
-            padding: 8px 15px;
-            background: #f56565;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 13px;
-            cursor: pointer;
-        }
-
-        .input-group {
-            margin-bottom: 20px;
-        }
-
-        .input-label {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 8px;
-            color: #4a5568;
-            font-weight: 600;
-            font-size: 14px;
-        }
-
-        .input-field {
-            width: 100%;
-            padding: 16px;
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            font-size: 16px;
-            transition: all 0.3s;
-            outline: none;
-        }
-
-        .input-field:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            opacity: 0.9;
         }
 
         .search-box {
@@ -311,6 +236,12 @@
             border-radius: 12px;
             font-size: 16px;
             outline: none;
+            transition: all 0.3s;
+        }
+
+        .search-box input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
         .search-box button {
@@ -323,6 +254,7 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
+            min-width: 120px;
         }
 
         .search-box button:hover:not(:disabled) {
@@ -342,6 +274,12 @@
             margin-top: 20px;
             display: none;
             border: 2px solid #e2e8f0;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .video-info {
@@ -351,10 +289,11 @@
         }
 
         .video-info img {
-            width: 120px;
-            height: 90px;
+            width: 100px;
+            height: 75px;
             object-fit: cover;
             border-radius: 10px;
+            background: #cbd5e0;
         }
 
         .video-details {
@@ -366,6 +305,7 @@
             font-weight: 600;
             color: #1a202c;
             margin-bottom: 5px;
+            line-height: 1.4;
         }
 
         .download-btn {
@@ -378,6 +318,17 @@
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .download-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(72, 187, 120, 0.4);
+        }
+
+        .download-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
 
         .toast {
@@ -389,12 +340,55 @@
             color: white;
             font-weight: 500;
             display: none;
+            animation: slideInRight 0.3s ease;
             z-index: 1001;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
         }
 
         .toast.success { background: #48bb78; }
         .toast.error { background: #f56565; }
         .toast.warning { background: #fbbf24; color: #1a202c; }
+
+        .info-text {
+            font-size: 13px;
+            color: #a0aec0;
+            margin-top: 5px;
+            text-align: center;
+        }
+
+        .quick-links {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .quick-link {
+            padding: 8px 15px;
+            background: #f7fafc;
+            border-radius: 20px;
+            font-size: 13px;
+            color: #667eea;
+            cursor: pointer;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s;
+        }
+
+        .quick-link:hover {
+            background: #667eea;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -414,36 +408,36 @@
     <!-- ANA KUTU -->
     <div class="container" id="mainContainer">
         <h1>🎵 Müzik İndirici</h1>
-        <div class="subtitle">YouTube → MP3 → Telegram</div>
+        <div class="subtitle">YouTube → MP3 → Telegram • WebView ile otomatik giriş</div>
 
         <!-- Sunucu Durumu -->
         <div class="server-status" id="serverStatus">
             <span class="status-dot" id="statusDot"></span>
             <span class="status-text" id="statusText">Sunucu kontrol ediliyor...</span>
-            <button class="retry-btn" id="retryBtn" onclick="checkServer()">🔄 Yeniden Dene</button>
         </div>
 
-        <!-- Telegram Giriş -->
-        <div class="telegram-login" id="telegramLogin" onclick="loginWithTelegram()">
-            <div class="telegram-icon">📱</div>
-            <div class="telegram-title">Telegram ile Giriş Yap</div>
-            <div class="telegram-subtitle">Hesabınızla otomatik bağlanın</div>
-        </div>
-
-        <!-- Telegram Kullanıcı Bilgisi -->
-        <div class="telegram-user" id="telegramUser">
-            <div class="telegram-avatar" id="userAvatar">👤</div>
-            <div class="telegram-info">
-                <div class="telegram-name" id="userName">Yükleniyor...</div>
-                <div class="telegram-id" id="userId"></div>
+        <!-- WebView Bilgisi (Otomatik) -->
+        <div class="webview-info" id="webviewInfo" style="display: none;">
+            <div class="webview-icon" id="webviewIcon">👤</div>
+            <div class="webview-details">
+                <div class="webview-label">WebView Kullanıcısı</div>
+                <div class="webview-id" id="webviewId">123456789</div>
+                <div class="webview-name" id="webviewName">Telegram Kullanıcı</div>
             </div>
-            <button class="logout-btn" onclick="logout()">Çıkış</button>
         </div>
 
         <!-- Arama -->
         <div class="search-box">
             <input type="text" id="query" placeholder="Müzik adı veya YouTube linki...">
             <button onclick="search()" id="searchBtn" disabled>ARA</button>
+        </div>
+
+        <!-- Hızlı Aramalar -->
+        <div class="quick-links">
+            <span class="quick-link" onclick="setQuery('Shape of You')">Shape of You</span>
+            <span class="quick-link" onclick="setQuery('Blinding Lights')">Blinding Lights</span>
+            <span class="quick-link" onclick="setQuery('Believer')">Believer</span>
+            <span class="quick-link" onclick="setQuery('Seni Dert Etmeler')">Seni Dert Etmeler</span>
         </div>
 
         <!-- Sonuç -->
@@ -454,8 +448,10 @@
                     <h3 id="videoTitle"></h3>
                 </div>
             </div>
-            <button class="download-btn" onclick="download()" id="downloadBtn" disabled>📥 İNDİR VE GÖNDER</button>
+            <button class="download-btn" onclick="download()" id="downloadBtn" disabled>📥 İNDİR VE TELEGRAM'A GÖNDER</button>
         </div>
+
+        <div class="info-text" id="infoText">WebView otomatik algılanıyor...</div>
     </div>
 
     <!-- Toast -->
@@ -464,7 +460,7 @@
     <script>
         const API = 'https://saskioyunu-1-2d6i.onrender.com';
         let currentVideo = null;
-        let telegramUser = null;
+        let webviewData = null;
 
         // BEKLEME EKRANI - Sunucu bağlantısını kontrol et
         async function waitForServer() {
@@ -473,7 +469,7 @@
             const splashStatus = document.getElementById('splashStatus');
             
             let attempts = 0;
-            const maxAttempts = 30; // 30 saniye max
+            const maxAttempts = 30;
 
             while (attempts < maxAttempts) {
                 attempts++;
@@ -490,7 +486,10 @@
                     if (response.ok) {
                         splashText.innerHTML = '✅ Sunucuya bağlandı!';
                         splashProgress.style.width = '100%';
-                        splashStatus.innerHTML = 'Bağlantı başarılı! Yönlendiriliyor...';
+                        splashStatus.innerHTML = 'WebView bilgileri alınıyor...';
+                        
+                        // WebView bilgilerini al
+                        await getWebViewInfo();
                         
                         setTimeout(() => {
                             document.getElementById('splashScreen').style.opacity = '0';
@@ -506,14 +505,68 @@
                     console.log('Bağlantı hatası:', e);
                 }
 
-                // 1 saniye bekle
                 await new Promise(resolve => setTimeout(resolve, 1000));
             }
 
-            // Bağlantı kurulamadı
             splashText.innerHTML = '❌ Sunucuya bağlanılamadı';
             splashStatus.innerHTML = 'Lütfen sayfayı yenileyin';
-            document.getElementById('retryBtn').style.display = 'block';
+        }
+
+        // WebView bilgilerini al (Telegram WebView'den otomatik)
+        async function getWebViewInfo() {
+            try {
+                // Telegram WebView'den initData al
+                if (window.Telegram && window.Telegram.WebApp) {
+                    const tg = window.Telegram.WebApp;
+                    tg.ready();
+                    
+                    const user = tg.initDataUnsafe?.user;
+                    
+                    if (user) {
+                        webviewData = {
+                            id: user.id,
+                            firstName: user.first_name,
+                            lastName: user.last_name || '',
+                            username: user.username || ''
+                        };
+                        
+                        // WebView bilgilerini göster
+                        document.getElementById('webviewInfo').style.display = 'flex';
+                        document.getElementById('webviewId').innerHTML = user.id;
+                        document.getElementById('webviewName').innerHTML = 
+                            user.first_name + (user.last_name ? ' ' + user.last_name : '');
+                        document.getElementById('webviewIcon').innerHTML = 
+                            user.first_name.charAt(0).toUpperCase();
+                        
+                        document.getElementById('infoText').innerHTML = 
+                            `✅ WebView: ${user.first_name} olarak giriş yapıldı`;
+                        
+                        return true;
+                    }
+                }
+                
+                // Test için (WebView yoksa)
+                const testUser = {
+                    id: Math.floor(Math.random() * 1000000000),
+                    firstName: 'Test',
+                    lastName: 'User',
+                    username: 'testuser'
+                };
+                
+                webviewData = testUser;
+                document.getElementById('webviewInfo').style.display = 'flex';
+                document.getElementById('webviewId').innerHTML = testUser.id;
+                document.getElementById('webviewName').innerHTML = 'Test User (WebView)';
+                document.getElementById('webviewIcon').innerHTML = 'T';
+                document.getElementById('infoText').innerHTML = 
+                    '⚠️ Test modu: WebView simüle ediliyor';
+                
+                return true;
+                
+            } catch (e) {
+                console.log('WebView hatası:', e);
+                return false;
+            }
         }
 
         // Sayfa yüklenince bekleme ekranını başlat
@@ -523,7 +576,6 @@
         async function checkServer() {
             const dot = document.getElementById('statusDot');
             const text = document.getElementById('statusText');
-            const retryBtn = document.getElementById('retryBtn');
             const searchBtn = document.getElementById('searchBtn');
             
             try {
@@ -535,86 +587,26 @@
                 if (response.ok) {
                     dot.className = 'status-dot connected';
                     text.innerHTML = '✅ Sunucu aktif';
-                    retryBtn.style.display = 'none';
                     
-                    // Telegram girişi varsa arama butonunu aktif et
-                    if (telegramUser) {
+                    // WebView varsa arama butonunu aktif et
+                    if (webviewData) {
                         searchBtn.disabled = false;
                     }
                 } else {
                     dot.className = 'status-dot disconnected';
                     text.innerHTML = '❌ Sunucu hatası';
-                    retryBtn.style.display = 'block';
                     searchBtn.disabled = true;
                 }
             } catch (e) {
                 dot.className = 'status-dot disconnected';
                 text.innerHTML = '❌ Bağlantı yok';
-                retryBtn.style.display = 'block';
                 searchBtn.disabled = true;
             }
         }
 
-        // Telegram ile giriş
-        function loginWithTelegram() {
-            showToast('Telegram girişi başlatılıyor...', 'warning');
-            
-            // Telegram Login Widget
-            window.TelegramLoginWidget = {
-                dataOnauth: (user) => {
-                    handleTelegramUser(user);
-                }
-            };
-
-            const script = document.createElement('script');
-            script.src = 'https://telegram.org/js/telegram-widget.js?22';
-            script.setAttribute('data-telegram-login', 'MusicDownloaderBot'); // Bot kullanıcı adı
-            script.setAttribute('data-size', 'large');
-            script.setAttribute('data-radius', '10');
-            script.setAttribute('data-request-access', 'write');
-            script.setAttribute('data-userpic', 'true');
-            script.setAttribute('data-lang', 'tr');
-            script.setAttribute('data-onauth', 'handleTelegramUser(user)');
-            
-            document.body.appendChild(script);
-        }
-
-        // Telegram kullanıcı bilgilerini işle
-        function handleTelegramUser(user) {
-            telegramUser = user;
-            
-            // Chat ID'yi kaydet
-            document.getElementById('userId').innerHTML = `ID: ${user.id}`;
-            document.getElementById('userName').innerHTML = user.first_name + (user.last_name ? ' ' + user.last_name : '');
-            document.getElementById('userAvatar').innerHTML = user.first_name.charAt(0).toUpperCase();
-            
-            // Telegram giriş butonunu gizle, kullanıcı bilgisini göster
-            document.getElementById('telegramLogin').style.display = 'none';
-            document.getElementById('telegramUser').style.display = 'flex';
-            
-            // Sunucu aktifse arama butonunu aktif et
-            if (document.getElementById('statusDot').classList.contains('connected')) {
-                document.getElementById('searchBtn').disabled = false;
-            }
-            
-            // Chat ID input'una otomatik doldur
-            const chatInput = document.querySelector('.input-field');
-            if (chatInput) {
-                chatInput.value = user.id;
-            }
-            
-            showToast(`Hoş geldin, ${user.first_name}!`, 'success');
-        }
-
-        // Çıkış yap
-        function logout() {
-            telegramUser = null;
-            document.getElementById('telegramLogin').style.display = 'block';
-            document.getElementById('telegramUser').style.display = 'none';
-            document.getElementById('searchBtn').disabled = true;
-            document.getElementById('downloadBtn').disabled = true;
-            document.querySelector('.input-field').value = '';
-            showToast('Çıkış yapıldı', 'warning');
+        // Hızlı sorgu
+        function setQuery(query) {
+            document.getElementById('query').value = query;
         }
 
         // Toast bildirim
@@ -638,13 +630,32 @@
                 return;
             }
 
-            if (!telegramUser) {
-                showToast('Önce Telegram ile giriş yapın', 'error');
+            if (!webviewData) {
+                showToast('WebView bilgisi alınamadı', 'error');
                 return;
             }
 
             showToast('🔍 Aranıyor...', 'warning');
             document.getElementById('searchBtn').disabled = true;
+
+            // YouTube linki mi?
+            if (query.includes('youtube.com') || query.includes('youtu.be')) {
+                const videoId = extractVideoId(query);
+                if (videoId) {
+                    currentVideo = {
+                        url: query,
+                        title: 'YouTube Linki',
+                        id: videoId
+                    };
+                    document.getElementById('thumbnail').src = `https://img.youtube.com/vi/${videoId}/default.jpg`;
+                    document.getElementById('videoTitle').innerHTML = 'YouTube Linki';
+                    document.getElementById('resultCard').style.display = 'block';
+                    document.getElementById('downloadBtn').disabled = false;
+                    showToast('Link algılandı', 'success');
+                }
+                document.getElementById('searchBtn').disabled = false;
+                return;
+            }
 
             try {
                 const response = await fetch(`${API}/api/search`, {
@@ -672,11 +683,21 @@
             }
         }
 
+        // YouTube ID çıkar
+        function extractVideoId(url) {
+            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+            const match = url.match(regExp);
+            return (match && match[2].length === 11) ? match[2] : null;
+        }
+
         // İndir
         async function download() {
-            if (!currentVideo || !telegramUser) return;
+            if (!currentVideo || !webviewData) {
+                showToast('Hata: Müzik veya WebView bilgisi yok', 'error');
+                return;
+            }
 
-            showToast('📥 İndiriliyor...', 'warning');
+            showToast('📥 İndiriliyor ve gönderiliyor...', 'warning');
             document.getElementById('downloadBtn').disabled = true;
 
             try {
@@ -684,27 +705,42 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        url: currentVideo.url,
-                        chatId: telegramUser.id
+                        url: currentVideo.url || `https://youtube.com/watch?v=${currentVideo.id}`,
+                        chatId: webviewData.id
                     })
                 });
 
                 const data = await response.json();
 
                 if (data.success) {
-                    showToast('✅ Müzik gönderildi!', 'success');
+                    showToast('✅ Müzik Telegram\'a gönderildi!', 'success');
                     document.getElementById('query').value = '';
                     document.getElementById('resultCard').style.display = 'none';
                     currentVideo = null;
                 } else {
-                    showToast('Hata: ' + (data.error || '?'), 'error');
+                    showToast('Hata: ' + (data.error || 'Bilinmiyor'), 'error');
                 }
             } catch (e) {
-                showToast('İndirme hatası', 'error');
+                showToast('İndirme hatası: ' + e.message, 'error');
             } finally {
                 document.getElementById('downloadBtn').disabled = false;
             }
         }
+
+        // Enter ile ara
+        document.getElementById('query').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') search();
+        });
+
+        // WebView scriptini yükle
+        (function() {
+            const script = document.createElement('script');
+            script.src = 'https://telegram.org/js/telegram-web-app.js';
+            script.onload = () => {
+                console.log('Telegram WebView yüklendi');
+            };
+            document.head.appendChild(script);
+        })();
     </script>
 </body>
 </html>
