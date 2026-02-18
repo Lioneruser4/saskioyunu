@@ -1,4 +1,3 @@
-// server.js
 const express = require('express');
 const cors = require('cors');
 const { exec } = require('child_process');
@@ -13,10 +12,11 @@ app.use(express.json());
 
 const BOT_TOKEN = "5246489165:AAGhMleCadeh3bhtje1EBPY95yn2rDKH7KE";
 
-// SADECE 2 PROXY - ÇALIŞANLAR
+// ÇALIŞAN PROXY'LER
 const PROXIES = [
     'http://20.111.54.16:8123',
-    'http://176.9.119.170:3128'
+    'http://176.9.119.170:3128',
+    'http://103.149.162.195:80'
 ];
 
 // Arama yap
@@ -26,7 +26,6 @@ app.post('/search', (req, res) => {
 
     const proxy = PROXIES[Math.floor(Math.random() * PROXIES.length)];
     
-    // Basit yt-dlp komutu
     const cmd = `yt-dlp --proxy "${proxy}" "ytsearch1:${query}" -j --no-warnings`;
     
     exec(cmd, (err, stdout) => {
@@ -58,7 +57,6 @@ app.post('/indir', async (req, res) => {
     const dosyaAdi = `muzik_${Date.now()}.mp3`;
     const dosyaYolu = path.join('/tmp', dosyaAdi);
 
-    // yt-dlp ile indir
     const cmd = `yt-dlp --proxy "${proxy}" -x --audio-format mp3 -o "${dosyaYolu}" "${url}"`;
     
     exec(cmd, async (err) => {
@@ -67,10 +65,8 @@ app.post('/indir', async (req, res) => {
             return res.json({ hata: 'İndirme başarısız' });
         }
 
-        // Dosya var mı?
         if (fs.existsSync(dosyaYolu)) {
             try {
-                // Telegram'a gönder
                 const form = new FormData();
                 form.append('chat_id', chat_id);
                 form.append('audio', fs.createReadStream(dosyaYolu));
@@ -79,7 +75,6 @@ app.post('/indir', async (req, res) => {
                     headers: form.getHeaders()
                 });
 
-                // Temizlik
                 fs.unlinkSync(dosyaYolu);
                 res.json({ basarili: true });
                 
@@ -97,4 +92,5 @@ app.get('/', (req, res) => {
     res.send('Müzik API çalışıyor 2026');
 });
 
-app.listen(5000, () => console.log('Server:5000'));
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server ${PORT} çalışıyor`));
