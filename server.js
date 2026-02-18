@@ -5,124 +5,96 @@ const { exec } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
-const { randomBytes } = require('crypto');
+const FormData = require('form-data');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
 const BOT_TOKEN = "5246489165:AAGhMleCadeh3bhtje1EBPY95yn2rDKH7KE";
-const TELEGRAM_API = `https://api.telegram.org/bot${BOT_TOKEN}`;
 
-// Proxy list
+// SADECE 2 PROXY - ÇALIŞANLAR
 const PROXIES = [
-    'socks5://45.136.228.83:1080',
-    'socks5://185.193.157.218:1080',
-    'socks5://51.91.210.166:1080',
-    'http://176.9.119.170:3128',
-    'http://157.230.105.94:3128',
-    'http://103.149.162.195:80',
-    'http://20.111.54.16:8123'
+    'http://20.111.54.16:8123',
+    'http://176.9.119.170:3128'
 ];
 
-function getRandomProxy() {
-    return PROXIES[Math.floor(Math.random() * PROXIES.length)];
-}
-
-// YouTube ara
-app.post('/api/search', async (req, res) => {
+// Arama yap
+app.post('/search', (req, res) => {
     const { query } = req.body;
+    console.log('Aranıyor:', query);
+
+    const proxy = PROXIES[Math.floor(Math.random() * PROXIES.length)];
     
-    if (!query) {
-        return res.status(400).json({ error: 'Query gerekli' });
-    }
-
-    try {
-        const proxy = getRandomProxy();
-        const command = `yt-dlp --proxy "${proxy}" "ytsearch1:${query}" --get-title --get-id --get-duration --get-thumbnail`;
-
-        exec(command, (error, stdout, stderr) => {
-            if (error) {
-                console.error('Arama hatası:', error);
-                return res.status(500).json({ error: 'Arama başarısız' });
-            }
-
-            const lines = stdout.trim().split('\n');
-            if (lines.length >= 4) {
-                const video = {
-                    title: lines[0],
-                    id: lines[1],
-                    url: `https://youtube.com/watch?v=${lines[1]}`,
-                    duration: lines[2],
-                    thumbnail: lines[3]
-                };
-                res.json({ success: true, video });
-            } else {
-                res.status(404).json({ error: 'Sonuç bulunamadı' });
-            }
-        });
-    } catch (error) {
-        res.status(500).json({ error: 'Sunucu hatası' });
-    }
+    // Basit yt-dlp komutu
+    const cmd = `yt-dlp --proxy "${proxy}" "ytsearch1:${query}" -j --no-warnings`;
+    
+    exec(cmd, (err, stdout) => {
+        if (err) {
+            console.log('Hata:', err.message);
+            return res.json({ error: 'Bulunamadı' });
+        }
+        
+        try {
+            const data = JSON.parse(stdout);
+            res.json({
+                baslik: data.title,
+                id: data.id,
+                url: `https://youtube.com/watch?v=${data.id}`,
+                sure: data.duration || 0
+            });
+        } catch (e) {
+            res.json({ error: 'Bulunamadı' });
+        }
+    });
 });
 
-// Müzik indir ve Telegram'a gönder
-app.post('/api/download', async (req, res) => {
-    const { url, chatId } = req.body;
+// İndir ve Telegram'a gönder
+app.post('/indir', async (req, res) => {
+    const { url, chat_id } = req.body;
+    console.log('İndiriliyor:', url, 'Chat:', chat_id);
+
+    const proxy = PROXIES[Math.floor(Math.random() * PROXIES.length)];
+    const dosyaAdi = `muzik_${Date.now()}.mp3`;
+    const dosyaYolu = path.join('/tmp', dosyaAdi);
+
+    // yt-dlp ile indir
+    const cmd = `yt-dlp --proxy "${proxy}" -x --audio-format mp3 -o "${dosyaYolu}" "${url}"`;
     
-    if (!url || !chatId) {
-        return res.status(400).json({ error: 'URL ve chatId gerekli' });
-    }
+    exec(cmd, async (err) => {
+        if (err) {
+            console.log('İndirme hatası:', err);
+            return res.json({ hata: 'İndirme başarısız' });
+        }
 
-    const fileName = `music_${randomBytes(8).toString('hex')}.mp3`;
-    const filePath = path.join('/tmp', fileName);
-
-    try {
-        const proxy = getRandomProxy();
-        
-        // yt-dlp ile indir
-        const command = `yt-dlp --proxy "${proxy}" -x --audio-format mp3 -o "${filePath}" "${url}"`;
-        
-        exec(command, async (error, stdout, stderr) => {
-            if (error) {
-                console.error('İndirme hatası:', error);
-                return res.status(500).json({ error: 'İndirme başarısız' });
-            }
-
-            // Dosya var mı kontrol et
-            if (fs.existsSync(filePath)) {
+        // Dosya var mı?
+        if (fs.existsSync(dosyaYolu)) {
+            try {
                 // Telegram'a gönder
-                const formData = new FormData();
-                formData.append('chat_id', chatId);
-                formData.append('audio', fs.createReadStream(filePath));
+                const form = new FormData();
+                form.append('chat_id', chat_id);
+                form.append('audio', fs.createReadStream(dosyaYolu));
 
-                try {
-                    await axios.post(`${TELEGRAM_API}/sendAudio`, formData, {
-                        headers: { 'Content-Type': 'multipart/form-data' }
-                    });
+                await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendAudio`, form, {
+                    headers: form.getHeaders()
+                });
 
-                    // Dosyayı sil
-                    fs.unlinkSync(filePath);
-                    
-                    res.json({ success: true, message: 'Müzik gönderildi' });
-                } catch (telegramError) {
-                    console.error('Telegram hatası:', telegramError);
-                    res.status(500).json({ error: 'Telegram gönderme hatası' });
-                }
-            } else {
-                res.status(500).json({ error: 'Dosya oluşturulamadı' });
+                // Temizlik
+                fs.unlinkSync(dosyaYolu);
+                res.json({ basarili: true });
+                
+            } catch (e) {
+                console.log('Telegram hatası:', e.message);
+                res.json({ hata: 'Telegram gönderilemedi' });
             }
-        });
-    } catch (error) {
-        res.status(500).json({ error: 'Sunucu hatası' });
-    }
+        } else {
+            res.json({ hata: 'Dosya oluşmadı' });
+        }
+    });
 });
 
-app.get('/health', (req, res) => {
-    res.json({ status: 'OK', time: Date.now() });
+app.get('/', (req, res) => {
+    res.send('Müzik API çalışıyor 2026');
 });
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-    console.log(`Server çalışıyor: ${PORT}`);
-});
+app.listen(5000, () => console.log('Server:5000'));
