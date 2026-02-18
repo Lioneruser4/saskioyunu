@@ -3,688 +3,375 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sanal Dünya</title>
+    <title>Müzik İndirici 2026</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         
         body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            height: 100vh;
+            min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
         }
         
-        #game-container {
-            width: 100%;
-            max-width: 1200px;
-            height: 90vh;
-            background: rgba(255, 255, 255, 0.95);
+        .container {
+            background: white;
             border-radius: 20px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            overflow: hidden;
-            position: relative;
-        }
-        
-        /* Loading Screen */
-        #loading-screen {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            transition: opacity 0.5s;
-        }
-        
-        .loading-content {
-            text-align: center;
-            color: white;
-        }
-        
-        .loading-spinner {
-            width: 50px;
-            height: 50px;
-            border: 5px solid rgba(255,255,255,0.3);
-            border-top-color: white;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
-        /* Lobby Screen */
-        #lobby-screen {
-            height: 100%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        
-        .lobby-header {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            background: rgba(255,255,255,0.2);
-            padding: 10px 20px;
-            border-radius: 50px;
-            color: white;
-        }
-        
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            border: 2px solid white;
-        }
-        
-        .balance {
-            background: gold;
-            color: #333;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-        
-        .balance:hover {
-            transform: scale(1.05);
-        }
-        
-        .bonus-timer {
-            font-size: 12px;
-            color: #ffd700;
-        }
-        
-        .lobby-buttons {
-            display: flex;
-            gap: 30px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-        
-        .lobby-btn {
-            width: 200px;
-            height: 200px;
-            border-radius: 20px;
-            border: none;
-            background: rgba(255,255,255,0.2);
-            backdrop-filter: blur(10px);
-            color: white;
-            font-size: 24px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            border: 2px solid rgba(255,255,255,0.3);
-        }
-        
-        .lobby-btn:hover {
-            transform: translateY(-10px);
-            background: rgba(255,255,255,0.3);
-            border-color: white;
-        }
-        
-        .lobby-btn span {
-            font-size: 48px;
-        }
-        
-        /* Room List */
-        #room-list-screen {
-            height: 100%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 20px;
-            display: none;
-        }
-        
-        .room-list-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            color: white;
-            margin-bottom: 20px;
-        }
-        
-        .back-btn {
-            background: rgba(255,255,255,0.2);
-            border: 2px solid white;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .back-btn:hover {
-            background: white;
-            color: #667eea;
-        }
-        
-        .rooms-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 20px;
-            height: calc(100% - 80px);
-            overflow-y: auto;
-        }
-        
-        .room-card {
-            background: rgba(255,255,255,0.2);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 20px;
-            color: white;
-            cursor: pointer;
-            transition: all 0.3s;
-            border: 2px solid rgba(255,255,255,0.3);
-        }
-        
-        .room-card:hover {
-            transform: translateY(-5px);
-            background: rgba(255,255,255,0.3);
-            border-color: white;
-        }
-        
-        .room-name {
-            font-size: 20px;
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-        
-        .room-info {
-            display: flex;
-            justify-content: space-between;
-            opacity: 0.8;
-        }
-        
-        /* Create Room */
-        #create-room-screen {
-            height: 100%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 20px;
-            display: none;
-        }
-        
-        .create-room-form {
-            max-width: 400px;
-            margin: 50px auto;
-            background: rgba(255,255,255,0.2);
-            backdrop-filter: blur(10px);
-            padding: 30px;
-            border-radius: 20px;
-            color: white;
-        }
-        
-        .create-room-form h2 {
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        
-        .create-room-form input {
-            width: 100%;
-            padding: 12px;
-            margin: 10px 0;
-            border: none;
-            border-radius: 10px;
-            background: rgba(255,255,255,0.9);
-        }
-        
-        .create-room-form button {
-            width: 100%;
-            padding: 12px;
-            margin: 10px 0;
-            border: none;
-            border-radius: 10px;
-            background: white;
-            color: #667eea;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .create-room-form button:hover {
-            transform: scale(1.02);
-            background: #f0f0f0;
-        }
-        
-        /* Room Screen */
-        #room-screen {
-            height: 100%;
-            background: #1a1a2e;
-            display: none;
-            flex-direction: column;
-        }
-        
-        .room-header {
-            background: #16213e;
-            color: white;
-            padding: 10px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid #0f3460;
-        }
-        
-        .room-info {
-            display: flex;
-            gap: 20px;
-            align-items: center;
-        }
-        
-        .exit-btn {
-            background: #e94560;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .exit-btn:hover {
-            background: #ff6b8b;
-        }
-        
-        .room-content {
-            display: flex;
-            flex: 1;
-            overflow: hidden;
-        }
-        
-        .chat-area {
-            width: 300px;
-            background: #16213e;
-            display: flex;
-            flex-direction: column;
-            border-right: 2px solid #0f3460;
-        }
-        
-        .chat-messages {
-            flex: 1;
-            padding: 15px;
-            overflow-y: auto;
-            color: white;
-        }
-        
-        .message {
-            margin-bottom: 10px;
-            padding: 8px;
-            background: #0f3460;
-            border-radius: 8px;
-        }
-        
-        .message .username {
-            color: #e94560;
-            font-weight: bold;
-            margin-right: 8px;
-        }
-        
-        .message .time {
-            font-size: 10px;
-            color: #888;
-            float: right;
-        }
-        
-        .chat-input-area {
-            padding: 15px;
-            background: #0f3460;
-            display: flex;
-            gap: 10px;
-        }
-        
-        .chat-input-area input {
-            flex: 1;
-            padding: 8px;
-            border: none;
-            border-radius: 5px;
-            background: #16213e;
-            color: white;
-        }
-        
-        .chat-input-area input::placeholder {
-            color: #888;
-        }
-        
-        .chat-input-area button {
-            padding: 8px 15px;
-            background: #e94560;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        
-        .game-area {
-            flex: 1;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        #game-canvas {
-            width: 100%;
-            height: 100%;
-            background: #16213e;
-        }
-        
-        .character-info {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            background: #16213e;
-            color: white;
-            padding: 15px;
-            border-radius: 10px;
-            border: 2px solid #0f3460;
-            min-width: 200px;
-        }
-        
-        .character-info h3 {
-            margin-bottom: 10px;
-            color: #e94560;
-        }
-        
-        .info-item {
-            margin: 5px 0;
-            font-size: 14px;
-        }
-        
-        /* Market */
-        .market-btn {
-            background: #4CAF50;
-            color: white;
-            border: none;
-            padding: 10px;
-            border-radius: 5px;
-            cursor: pointer;
-            width: 100%;
-            margin-top: 10px;
-        }
-        
-        .market-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.8);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 2000;
-        }
-        
-        .market-content {
-            background: white;
             width: 90%;
-            max-width: 800px;
-            height: 80vh;
-            border-radius: 20px;
-            padding: 20px;
-            overflow-y: auto;
+            max-width: 600px;
+            padding: 30px;
         }
         
-        .market-header {
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+        
+        .webview-info {
+            background: #f0f4f8;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 25px;
             display: flex;
-            justify-content: space-between;
+            gap: 10px;
             align-items: center;
+        }
+        
+        .webview-info input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        
+        .webview-info input:focus {
+            border-color: #667eea;
+        }
+        
+        .webview-info button {
+            padding: 12px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .webview-info button:hover {
+            background: #5a67d8;
+        }
+        
+        .search-section {
+            display: flex;
+            gap: 10px;
             margin-bottom: 20px;
         }
         
-        .close-btn {
-            background: #e94560;
+        .search-section input {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        
+        .search-section input:focus {
+            border-color: #667eea;
+        }
+        
+        .search-section button {
+            padding: 15px 30px;
+            background: #667eea;
             color: white;
             border: none;
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
             cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .search-section button:hover {
+            background: #5a67d8;
+        }
+        
+        .search-section button:disabled {
+            background: #a0aec0;
+            cursor: not-allowed;
+        }
+        
+        .result-card {
+            background: #f7fafc;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 2px solid #e0e0e0;
+        }
+        
+        .result-card.hidden {
+            display: none;
+        }
+        
+        .video-info {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .video-info img {
+            width: 120px;
+            height: 90px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+        
+        .video-details h3 {
+            color: #333;
+            margin-bottom: 8px;
             font-size: 18px;
         }
         
-        .market-categories {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
+        .video-details p {
+            color: #666;
+            font-size: 14px;
         }
         
-        .category-btn {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 20px;
-            background: #f0f0f0;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .category-btn.active {
-            background: #667eea;
-            color: white;
-        }
-        
-        .items-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 15px;
-        }
-        
-        .item-card {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 15px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .item-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-        }
-        
-        .item-color {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            margin: 5px auto;
-            border: 2px solid #ddd;
-        }
-        
-        .item-price {
-            color: #4CAF50;
-            font-weight: bold;
-            margin: 5px 0;
-        }
-        
-        .buy-btn {
-            background: #667eea;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 5px;
-            cursor: pointer;
+        .download-btn {
             width: 100%;
-        }
-        
-        .inventory-section {
-            margin-top: 30px;
-            border-top: 2px solid #eee;
-            padding-top: 20px;
-        }
-        
-        /* Toast */
-        .toast {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #333;
+            padding: 15px;
+            background: #48bb78;
             color: white;
-            padding: 12px 24px;
-            border-radius: 50px;
-            z-index: 3000;
-            animation: slideUp 0.3s;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
         }
         
-        @keyframes slideUp {
-            from {
-                bottom: 0;
-                opacity: 0;
-            }
-            to {
-                bottom: 30px;
-                opacity: 1;
-            }
+        .download-btn:hover {
+            background: #38a169;
+        }
+        
+        .download-btn:disabled {
+            background: #a0aec0;
+            cursor: not-allowed;
+        }
+        
+        .status {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 500;
+        }
+        
+        .status.success {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+        
+        .status.error {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+        
+        .status.info {
+            background: #bee3f8;
+            color: #2c5282;
+        }
+        
+        .status.hidden {
+            display: none;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
-    <div id="game-container">
-        <!-- Loading Screen -->
-        <div id="loading-screen">
-            <div class="loading-content">
-                <h1>Sanal Dünya</h1>
-                <div class="loading-spinner"></div>
-                <p>Yükleniyor...</p>
-            </div>
+    <div class="container">
+        <h1>🎵 Müzik İndirici 2026</h1>
+        
+        <div class="webview-info">
+            <input type="text" id="webviewId" placeholder="WebView ID giriniz" value="123456789">
+            <button onclick="setChatId()">Kaydet</button>
         </div>
         
-        <!-- Lobby Screen -->
-        <div id="lobby-screen">
-            <div class="lobby-header">
-                <img id="user-avatar" class="user-avatar" src="" alt="avatar">
-                <span id="user-name"></span>
-                <div>
-                    <div class="balance" onclick="claimBonus()">
-                        💰 <span id="user-balance">0</span>$
-                    </div>
-                    <div id="bonus-timer" class="bonus-timer"></div>
-                </div>
-            </div>
-            
-            <div class="lobby-buttons">
-                <button class="lobby-btn" onclick="joinRandomRoom()">
-                    <span>🎲</span>
-                    Rastgele Oda
-                </button>
-                <button class="lobby-btn" onclick="showCreateRoom()">
-                    <span>🏠</span>
-                    Oda Kur
-                </button>
-                <button class="lobby-btn" onclick="showRoomList()">
-                    <span>📋</span>
-                    Odalar
-                </button>
-            </div>
+        <div class="search-section">
+            <input type="text" id="searchInput" placeholder="Müzik adı veya YouTube linki...">
+            <button onclick="searchMusic()" id="searchBtn">Ara</button>
         </div>
         
-        <!-- Room List Screen -->
-        <div id="room-list-screen">
-            <div class="room-list-header">
-                <h2>Aktif Odalar</h2>
-                <button class="back-btn" onclick="showLobby()">← Geri</button>
+        <div id="resultCard" class="result-card hidden">
+            <div class="video-info">
+                <img id="videoThumbnail" src="" alt="Thumbnail">
+                <div class="video-details">
+                    <h3 id="videoTitle"></h3>
+                    <p id="videoDuration"></p>
+                </div>
             </div>
-            <div id="rooms-container" class="rooms-grid">
-                <!-- Odalar buraya gelecek -->
-            </div>
+            <button onclick="downloadMusic()" id="downloadBtn" class="download-btn">
+                İndir ve Telegram'a Gönder
+            </button>
         </div>
         
-        <!-- Create Room Screen -->
-        <div id="create-room-screen">
-            <div class="room-list-header">
-                <h2>Oda Kur</h2>
-                <button class="back-btn" onclick="showLobby()">← Geri</button>
-            </div>
-            <div class="create-room-form">
-                <h2>Yeni Oda</h2>
-                <input type="text" id="room-name" placeholder="Oda adı" maxlength="30">
-                <input type="text" id="room-password" placeholder="Şifre (boş bırakılırsa herkese açık)">
-                <button onclick="createRoom()">Odayı Oluştur</button>
-            </div>
-        </div>
-        
-        <!-- Room Screen -->
-        <div id="room-screen">
-            <div class="room-header">
-                <div class="room-info">
-                    <h2 id="current-room-name"></h2>
-                    <span id="room-user-count">👥 0</span>
-                </div>
-                <button class="exit-btn" onclick="leaveRoom()">Odadan Çık</button>
-            </div>
-            
-            <div class="room-content">
-                <div class="chat-area">
-                    <div id="chat-messages" class="chat-messages"></div>
-                    <div class="chat-input-area">
-                        <input type="text" id="chat-input" placeholder="Mesaj yaz..." onkeypress="handleChatKeyPress(event)">
-                        <button onclick="sendMessage()">Gönder</button>
-                    </div>
-                </div>
-                
-                <div class="game-area">
-                    <canvas id="game-canvas"></canvas>
-                    
-                    <div class="character-info">
-                        <h3>Karakterin</h3>
-                        <div id="equipped-info"></div>
-                        <button class="market-btn" onclick="openMarket()">🛒 Market</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Market Modal -->
-        <div id="market-modal" class="market-modal">
-            <div class="market-content">
-                <div class="market-header">
-                    <h2>🛒 Market</h2>
-                    <button class="close-btn" onclick="closeMarket()">×</button>
-                </div>
-                
-                <div class="market-categories">
-                    <button class="category-btn active" onclick="filterMarket('all')">Hepsi</button>
-                    <button class="category-btn" onclick="filterMarket('hat')">Şapkalar</button>
-                    <button class="category-btn" onclick="filterMarket('shirt')">Gömlekler</button>
-                    <button class="category-btn" onclick="filterMarket('pants')">Pantolonlar</button>
-                    <button class="category-btn" onclick="filterMarket('shoes')">Ayakkabılar</button>
-                    <button class="category-btn" onclick="filterMarket('accessory')">Aksesuarlar</button>
-                </div>
-                
-                <div id="market-items" class="items-grid"></div>
-                
-                <div class="inventory-section">
-                    <h3>Envanterin</h3>
-                    <div id="user-inventory" class="items-grid"></div>
-                </div>
-            </div>
-        </div>
+        <div id="status" class="status hidden"></div>
     </div>
-    
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="game.js"></script>
+
+    <script>
+        const API_URL = 'https://saskioyunu-o8s1.onrender.com'; // Render sunucun
+        let currentChatId = '123456789';
+        let currentVideo = null;
+
+        function setChatId() {
+            const input = document.getElementById('webviewId');
+            currentChatId = input.value.trim() || '123456789';
+            showStatus('WebView ID kaydedildi: ' + currentChatId, 'success');
+        }
+
+        async function searchMusic() {
+            const query = document.getElementById('searchInput').value.trim();
+            if (!query) {
+                showStatus('Lütfen müzik adı veya link girin', 'error');
+                return;
+            }
+
+            // YouTube linki mi kontrol et
+            if (query.includes('youtube.com') || query.includes('youtu.be')) {
+                // Direkt link ile indir
+                currentVideo = { url: query };
+                document.getElementById('resultCard').classList.add('hidden');
+                downloadMusic();
+                return;
+            }
+
+            const searchBtn = document.getElementById('searchBtn');
+            searchBtn.disabled = true;
+            searchBtn.innerHTML = '<span class="loading"></span>Aranıyor...';
+
+            try {
+                const response = await fetch(`${API_URL}/api/search`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query })
+                });
+
+                const data = await response.json();
+
+                if (data.success && data.video) {
+                    currentVideo = data.video;
+                    
+                    document.getElementById('videoTitle').textContent = data.video.title;
+                    document.getElementById('videoDuration').textContent = 
+                        `Süre: ${data.video.duration || '?'}`;
+                    document.getElementById('videoThumbnail').src = 
+                        data.video.thumbnail || 'https://via.placeholder.com/120x90';
+                    
+                    document.getElementById('resultCard').classList.remove('hidden');
+                    showStatus('Video bulundu!', 'success');
+                } else {
+                    showStatus('Sonuç bulunamadı', 'error');
+                }
+            } catch (error) {
+                showStatus('Arama hatası: ' + error.message, 'error');
+            } finally {
+                searchBtn.disabled = false;
+                searchBtn.innerHTML = 'Ara';
+            }
+        }
+
+        async function downloadMusic() {
+            if (!currentVideo) {
+                showStatus('Önce bir müzik seçin', 'error');
+                return;
+            }
+
+            if (!currentChatId) {
+                showStatus('Lütfen WebView ID girin', 'error');
+                return;
+            }
+
+            const downloadBtn = document.getElementById('downloadBtn');
+            downloadBtn.disabled = true;
+            downloadBtn.innerHTML = '<span class="loading"></span>İndiriliyor ve gönderiliyor...';
+
+            const videoUrl = currentVideo.url || `https://youtube.com/watch?v=${currentVideo.id}`;
+
+            try {
+                const response = await fetch(`${API_URL}/api/download`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        url: videoUrl,
+                        chatId: currentChatId
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showStatus('✅ Müzik indirildi ve Telegram\'a gönderildi!', 'success');
+                    document.getElementById('resultCard').classList.add('hidden');
+                    document.getElementById('searchInput').value = '';
+                    currentVideo = null;
+                } else {
+                    showStatus('Hata: ' + (data.error || 'Bilinmeyen hata'), 'error');
+                }
+            } catch (error) {
+                showStatus('İndirme hatası: ' + error.message, 'error');
+            } finally {
+                downloadBtn.disabled = false;
+                downloadBtn.innerHTML = 'İndir ve Telegram\'a Gönder';
+            }
+        }
+
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+            statusDiv.classList.remove('hidden');
+
+            setTimeout(() => {
+                statusDiv.classList.add('hidden');
+            }, 5000);
+        }
+
+        // Enter tuşu ile arama
+        document.getElementById('searchInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                searchMusic();
+            }
+        });
+    </script>
 </body>
 </html>
