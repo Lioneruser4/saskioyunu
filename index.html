@@ -1,221 +1,759 @@
 <!DOCTYPE html>
-<html>
+<html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>Müzik İndir</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Müzik İndirici 2026</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            font-family: Arial;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --success: #48bb78;
+            --error: #f56565;
+            --warning: #fbbf24;
+            --dark: #1a202c;
+            --light: #f7fafc;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
             padding: 20px;
         }
-        .kutu {
+
+        .container {
             background: white;
-            border-radius: 20px;
-            padding: 30px;
+            border-radius: 30px;
+            padding: 40px;
             width: 100%;
-            max-width: 500px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 600px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.3);
+            animation: slideUp 0.5s ease;
         }
-        h1 { text-align: center; color: #333; margin-bottom: 30px; }
-        input, button {
-            width: 100%;
-            padding: 15px;
-            margin: 10px 0;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #718096;
+            margin-bottom: 30px;
             font-size: 16px;
         }
-        input:focus { outline: none; border-color: #667eea; }
-        button {
-            background: #667eea;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-            border: none;
+
+        .server-status {
+            background: var(--light);
+            border-radius: 12px;
+            padding: 15px 20px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border: 1px solid #e2e8f0;
         }
-        button:hover { background: #5a67d8; }
-        button:disabled { background: #a0aec0; }
-        #sonuc {
-            background: #f7fafc;
-            border-radius: 10px;
-            padding: 20px;
-            margin-top: 20px;
-            display: none;
-        }
-        .loading {
-            display: none;
-            text-align: center;
-            padding: 20px;
-        }
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
+
+        .status-dot {
+            width: 14px;
+            height: 14px;
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 10px;
+            background: var(--warning);
+            transition: all 0.3s;
         }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .hata { background: #fed7d7; color: #742a2a; padding: 10px; border-radius: 5px; margin: 10px 0; }
-        .basarili { background: #c6f6d5; color: #22543d; padding: 10px; border-radius: 5px; margin: 10px 0; }
-        .durum {
+
+        .status-dot.online {
+            background: var(--success);
+            box-shadow: 0 0 15px var(--success);
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.offline {
+            background: var(--error);
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(72, 187, 120, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(72, 187, 120, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(72, 187, 120, 0); }
+        }
+
+        .status-text {
+            font-weight: 500;
+            color: var(--dark);
+        }
+
+        .status-time {
+            margin-left: auto;
+            font-size: 13px;
+            color: #a0aec0;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            color: #4a5568;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .input-label i {
+            font-size: 18px;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s;
+            outline: none;
+        }
+
+        .input-field:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .input-field::placeholder {
+            color: #cbd5e0;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 12px;
+            margin: 25px 0;
+        }
+
+        .search-box input {
+            flex: 1;
+            padding: 18px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .search-box input:focus {
+            border-color: var(--primary);
+        }
+
+        .search-box button {
+            padding: 18px 30px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            min-width: 120px;
+        }
+
+        .search-box button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .search-box button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .loading-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            animation: scaleIn 0.3s ease;
+        }
+
+        @keyframes scaleIn {
+            from {
+                transform: scale(0.9);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 5px solid #e2e8f0;
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 10px;
+        }
+
+        .loading-text {
+            color: #718096;
+            margin-bottom: 20px;
+        }
+
+        .progress-steps {
+            text-align: left;
+            margin: 20px 0;
+            padding: 15px;
+            background: var(--light);
+            border-radius: 12px;
+        }
+
+        .step {
             display: flex;
             align-items: center;
             gap: 10px;
             padding: 10px;
-            background: #f0f4f8;
-            border-radius: 8px;
+            color: #718096;
+        }
+
+        .step.active {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .step.completed {
+            color: var(--success);
+        }
+
+        .step-icon {
+            width: 24px;
+            text-align: center;
+        }
+
+        .result-card {
+            background: var(--light);
+            border-radius: 16px;
+            padding: 20px;
+            margin-top: 20px;
+            display: none;
+            border: 2px solid #e2e8f0;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .video-info {
+            display: flex;
+            gap: 15px;
             margin-bottom: 20px;
         }
-        .isik {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: #fbbf24;
+
+        .video-info img {
+            width: 120px;
+            height: 90px;
+            object-fit: cover;
+            border-radius: 10px;
+            background: #cbd5e0;
         }
-        .isik.aktif { background: #48bb78; box-shadow: 0 0 10px #48bb78; }
-        .isik.pasif { background: #f56565; }
+
+        .video-details {
+            flex: 1;
+        }
+
+        .video-details h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 5px;
+            line-height: 1.5;
+        }
+
+        .video-details p {
+            color: #718096;
+            font-size: 14px;
+            margin: 3px 0;
+        }
+
+        .video-meta {
+            display: flex;
+            gap: 15px;
+            margin-top: 8px;
+        }
+
+        .download-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--success), #38a169);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .download-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(72, 187, 120, 0.4);
+        }
+
+        .download-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            border-radius: 10px;
+            color: white;
+            font-weight: 500;
+            display: none;
+            animation: slideInRight 0.3s ease;
+            z-index: 1001;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .toast.success { background: var(--success); }
+        .toast.error { background: var(--error); }
+        .toast.warning { background: var(--warning); color: var(--dark); }
+
+        .info-text {
+            font-size: 13px;
+            color: #a0aec0;
+            margin-top: 5px;
+        }
+
+        .quick-links {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .quick-link {
+            padding: 8px 12px;
+            background: var(--light);
+            border-radius: 20px;
+            font-size: 13px;
+            color: var(--primary);
+            cursor: pointer;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s;
+        }
+
+        .quick-link:hover {
+            background: var(--primary);
+            color: white;
+        }
     </style>
 </head>
 <body>
-    <div class="kutu">
-        <h1>🎵 MÜZİK İNDİR</h1>
-        
-        <div class="durum">
-            <span class="isik" id="isik"></span>
-            <span id="durumText">Sunucu kontrol ediliyor...</span>
+    <div class="container">
+        <h1>🎵 Müzik İndirici</h1>
+        <div class="subtitle">YouTube → MP3 → Telegram • 2026</div>
+
+        <!-- Sunucu Durumu -->
+        <div class="server-status" id="serverStatus">
+            <span class="status-dot" id="statusDot"></span>
+            <span class="status-text" id="statusText">Sunucu kontrol ediliyor...</span>
+            <span class="status-time" id="statusTime"></span>
         </div>
 
-        <input type="text" id="chatId" placeholder="Telegram Chat ID" value="123456789">
-        <input type="text" id="sorgu" placeholder="Müzik adı veya YouTube linki">
-        
-        <button onclick="ara()" id="araBtn">🔍 ARA</button>
-        
-        <div class="loading" id="loading">
-            <div class="spinner"></div>
-            <p id="loadingText">İşlem yapılıyor...</p>
+        <!-- Chat ID -->
+        <div class="input-group">
+            <div class="input-label">
+                <i>📱</i>
+                <span>Telegram Chat ID</span>
+            </div>
+            <input type="text" class="input-field" id="chatId" 
+                   placeholder="Örnek: 123456789" value="123456789">
+            <div class="info-text">
+                Chat ID öğrenmek için Telegram'da @userinfobot yazın
+            </div>
         </div>
-        
-        <div id="sonuc"></div>
-        <div id="mesaj"></div>
+
+        <!-- Arama -->
+        <div class="search-box">
+            <input type="text" id="query" placeholder="Müzik adı veya YouTube linki...">
+            <button onclick="search()" id="searchBtn">ARA</button>
+        </div>
+
+        <!-- Hızlı Linkler -->
+        <div class="quick-links" id="quickLinks">
+            <span class="quick-link" onclick="setQuery('Shape of You')">Shape of You</span>
+            <span class="quick-link" onclick="setQuery('Blinding Lights')">Blinding Lights</span>
+            <span class="quick-link" onclick="setQuery('Believer')">Believer</span>
+            <span class="quick-link" onclick="setQuery('Seni Dert Etmeler')">Seni Dert Etmeler</span>
+        </div>
+
+        <!-- Sonuç Kartı -->
+        <div class="result-card" id="resultCard">
+            <div class="video-info">
+                <img id="thumbnail" src="" alt="Thumbnail">
+                <div class="video-details">
+                    <h3 id="videoTitle"></h3>
+                    <p id="videoChannel"></p>
+                    <div class="video-meta">
+                        <p id="videoDuration"></p>
+                        <p id="videoViews"></p>
+                    </div>
+                </div>
+            </div>
+            <button class="download-btn" onclick="download()" id="downloadBtn">
+                📥 İNDİR VE TELEGRAM'A GÖNDER
+            </button>
+        </div>
     </div>
 
-    <script>
-        const API = 'https://saskioyunu-1-4yn3.onrender.com';
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-card">
+            <div class="spinner"></div>
+            <div class="loading-title" id="loadingTitle">İşlem Devam Ediyor</div>
+            <div class="loading-text" id="loadingText">Lütfen bekleyin...</div>
+            
+            <div class="progress-steps" id="progressSteps">
+                <div class="step" id="step1">
+                    <span class="step-icon">⏳</span>
+                    <span>Sunucuya bağlanılıyor...</span>
+                </div>
+                <div class="step" id="step2">
+                    <span class="step-icon">⏳</span>
+                    <span>YouTube taranıyor...</span>
+                </div>
+                <div class="step" id="step3">
+                    <span class="step-icon">⏳</span>
+                    <span>Müzik indiriliyor...</span>
+                </div>
+                <div class="step" id="step4">
+                    <span class="step-icon">⏳</span>
+                    <span>Telegram'a gönderiliyor...</span>
+                </div>
+            </div>
 
-        // Sunucu kontrolü
-        async function kontrol() {
-            const isik = document.getElementById('isik');
-            const text = document.getElementById('durumText');
+            <button class="download-btn" onclick="cancelProcess()" style="background: var(--error);">
+                İptal Et
+            </button>
+        </div>
+    </div>
+
+    <!-- Toast Bildirim -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const API = 'https://saskioyunu-1-2d6i.onrender.com';
+        let currentVideo = null;
+        let processTimeout = null;
+        let abortController = null;
+
+        // Sunucu durumu kontrolü
+        async function checkServer() {
+            const dot = document.getElementById('statusDot');
+            const text = document.getElementById('statusText');
+            const time = document.getElementById('statusTime');
             
             try {
-                const res = await fetch(`${API}/health`);
-                if (res.ok) {
-                    isik.className = 'isik aktif';
+                const response = await fetch(`${API}/health`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    dot.className = 'status-dot online';
                     text.innerHTML = '✅ Sunucu aktif';
+                    time.innerHTML = new Date(data.time).toLocaleTimeString('tr-TR');
                 } else {
-                    isik.className = 'isik pasif';
+                    dot.className = 'status-dot offline';
                     text.innerHTML = '❌ Sunucu hatası';
                 }
-            } catch {
-                isik.className = 'isik pasif';
+            } catch (e) {
+                dot.className = 'status-dot offline';
                 text.innerHTML = '❌ Bağlantı yok';
             }
         }
 
-        kontrol();
-        setInterval(kontrol, 30000);
+        checkServer();
+        setInterval(checkServer, 30000);
 
-        function mesajGoster(text, tip) {
-            const div = document.getElementById('mesaj');
-            div.innerHTML = text;
-            div.className = tip;
-            setTimeout(() => div.innerHTML = '', 3000);
+        // Toast bildirim
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.innerHTML = message;
+            toast.className = `toast ${type}`;
+            toast.style.display = 'block';
+            
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3000);
         }
 
-        function loadingGoster(goster, text = 'İşlem yapılıyor...') {
-            document.getElementById('loading').style.display = goster ? 'block' : 'none';
+        // Loading göster
+        function showLoading(step = 1, title = 'İşlem Devam Ediyor', text = 'Lütfen bekleyin...') {
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            document.getElementById('loadingTitle').innerHTML = title;
             document.getElementById('loadingText').innerHTML = text;
-            document.getElementById('araBtn').disabled = goster;
+
+            // Adımları güncelle
+            const steps = ['step1', 'step2', 'step3', 'step4'];
+            steps.forEach((s, i) => {
+                const el = document.getElementById(s);
+                const stepNum = i + 1;
+                
+                if (stepNum < step) {
+                    el.innerHTML = '<span class="step-icon">✅</span><span>' + el.innerText.substring(2) + '</span>';
+                    el.className = 'step completed';
+                } else if (stepNum === step) {
+                    el.innerHTML = '<span class="step-icon">⏳</span><span>' + el.innerText.substring(2) + '</span>';
+                    el.className = 'step active';
+                } else {
+                    el.innerHTML = '<span class="step-icon">⏳</span><span>' + el.innerText.substring(2) + '</span>';
+                    el.className = 'step';
+                }
+            });
         }
 
-        async function ara() {
-            const sorgu = document.getElementById('sorgu').value.trim();
+        // Loading gizle
+        function hideLoading() {
+            document.getElementById('loadingOverlay').style.display = 'none';
+            if (processTimeout) {
+                clearTimeout(processTimeout);
+            }
+            if (abortController) {
+                abortController.abort();
+            }
+        }
+
+        // İptal et
+        function cancelProcess() {
+            hideLoading();
+            showToast('İşlem iptal edildi', 'warning');
+        }
+
+        // Hızlı sorgu
+        function setQuery(query) {
+            document.getElementById('query').value = query;
+        }
+
+        // YouTube ID çıkar
+        function extractVideoId(url) {
+            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+            const match = url.match(regExp);
+            return (match && match[2].length === 11) ? match[2] : null;
+        }
+
+        // Arama
+        async function search() {
+            const query = document.getElementById('query').value.trim();
             const chatId = document.getElementById('chatId').value.trim();
 
-            if (!sorgu) return mesajGoster('Müzik adı yaz', 'hata');
-            if (!chatId) return mesajGoster('Chat ID gerekli', 'hata');
-
-            // YouTube linki mi?
-            if (sorgu.includes('youtube.com') || sorgu.includes('youtu.be')) {
-                indir(sorgu, chatId);
+            if (!query) {
+                showToast('Lütfen müzik adı yazın', 'error');
                 return;
             }
 
-            loadingGoster(true, '🔍 YouTube aranıyor...');
+            if (!chatId) {
+                showToast('Telegram Chat ID gerekli', 'error');
+                return;
+            }
+
+            // YouTube linki mi kontrol et
+            if (query.includes('youtube.com') || query.includes('youtu.be')) {
+                const videoId = extractVideoId(query);
+                if (videoId) {
+                    currentVideo = {
+                        url: query,
+                        title: 'YouTube Linki',
+                        id: videoId,
+                        channel: 'YouTube'
+                    };
+                    document.getElementById('thumbnail').src = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+                    document.getElementById('videoTitle').innerHTML = 'YouTube Linki';
+                    document.getElementById('videoChannel').innerHTML = 'YouTube';
+                    document.getElementById('videoDuration').innerHTML = 'Direkt indirilecek';
+                    document.getElementById('videoViews').innerHTML = '';
+                    document.getElementById('resultCard').style.display = 'block';
+                    showToast('Link algılandı, indirebilirsiniz', 'success');
+                }
+                return;
+            }
+
+            // Arama başlat
+            showLoading(1, '🔍 Müzik Aranıyor', `"${query}" için YouTube taranıyor...`);
+            document.getElementById('searchBtn').disabled = true;
+
+            abortController = new AbortController();
 
             try {
-                const res = await fetch(`${API}/search`, {
+                const response = await fetch(`${API}/api/search`, {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({query: sorgu})
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query }),
+                    signal: abortController.signal
                 });
-                
-                const data = await res.json();
-                
-                if (data.error) {
-                    mesajGoster('Bulunamadı', 'hata');
+
+                const data = await response.json();
+
+                if (data.success) {
+                    currentVideo = data.video;
+                    
+                    document.getElementById('thumbnail').src = data.video.thumbnail;
+                    document.getElementById('videoTitle').innerHTML = data.video.title;
+                    document.getElementById('videoChannel').innerHTML = data.video.channel;
+                    document.getElementById('videoDuration').innerHTML = `Süre: ${Math.floor(data.video.duration / 60)}:${(data.video.duration % 60).toString().padStart(2, '0')}`;
+                    document.getElementById('videoViews').innerHTML = `👁️ ${data.video.views || '?'}`;
+                    
+                    document.getElementById('resultCard').style.display = 'block';
+                    showToast('Video bulundu!', 'success');
                 } else {
-                    document.getElementById('sonuc').innerHTML = `
-                        <h3>${data.baslik}</h3>
-                        <p>Süre: ${data.sure} saniye</p>
-                        <button onclick="indir('${data.url}', '${chatId}')">📥 İNDİR</button>
-                    `;
-                    document.getElementById('sonuc').style.display = 'block';
+                    showToast('Sonuç bulunamadı', 'error');
                 }
             } catch (e) {
-                mesajGoster('Sunucu hatası', 'hata');
+                if (e.name !== 'AbortError') {
+                    showToast('Sunucu hatası: ' + e.message, 'error');
+                }
             } finally {
-                loadingGoster(false);
+                hideLoading();
+                document.getElementById('searchBtn').disabled = false;
             }
         }
 
-        async function indir(url, chatId) {
-            loadingGoster(true, '📥 İndiriliyor...');
+        // İndir
+        async function download() {
+            if (!currentVideo) {
+                showToast('Önce bir müzik seçin', 'error');
+                return;
+            }
+
+            const chatId = document.getElementById('chatId').value.trim();
+            if (!chatId) {
+                showToast('Telegram Chat ID gerekli', 'error');
+                return;
+            }
+
+            showLoading(3, '📥 Müzik İndiriliyor', 'Bu işlem 30-60 saniye sürebilir...');
+            document.getElementById('downloadBtn').disabled = true;
+
+            abortController = new AbortController();
 
             try {
-                const res = await fetch(`${API}/indir`, {
+                const response = await fetch(`${API}/api/download`, {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({url, chat_id: chatId})
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        url: currentVideo.url || `https://youtube.com/watch?v=${currentVideo.id}`,
+                        chatId: chatId
+                    }),
+                    signal: abortController.signal
                 });
-                
-                const data = await res.json();
-                
-                if (data.basarili) {
-                    mesajGoster('✅ Telegram\'a gönderildi!', 'basarili');
-                    document.getElementById('sorgu').value = '';
-                    document.getElementById('sonuc').style.display = 'none';
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast('✅ Müzik Telegram\'a gönderildi!', 'success');
+                    
+                    // Temizlik
+                    document.getElementById('query').value = '';
+                    document.getElementById('resultCard').style.display = 'none';
+                    currentVideo = null;
                 } else {
-                    mesajGoster('Hata: ' + (data.hata || '?'), 'hata');
+                    showToast('Hata: ' + (data.error || 'Bilinmiyor'), 'error');
                 }
             } catch (e) {
-                mesajGoster('İndirme hatası', 'hata');
+                if (e.name !== 'AbortError') {
+                    showToast('İndirme hatası: ' + e.message, 'error');
+                }
             } finally {
-                loadingGoster(false);
+                hideLoading();
+                document.getElementById('downloadBtn').disabled = false;
             }
         }
 
-        document.getElementById('sorgu').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') ara();
+        // Enter ile ara
+        document.getElementById('query').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') search();
         });
+
+        // Chat ID'yi localStorage'a kaydet
+        document.getElementById('chatId').addEventListener('change', (e) => {
+            localStorage.setItem('chatId', e.target.value);
+        });
+
+        // Sayfa yüklenince kayıtlı Chat ID'yi yükle
+        const savedChatId = localStorage.getItem('chatId');
+        if (savedChatId) {
+            document.getElementById('chatId').value = savedChatId;
+        }
     </script>
 </body>
 </html>
