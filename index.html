@@ -1,25 +1,20 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Müzik İndirici 2026</title>
+    <title>Müzik İndir</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: Arial, sans-serif;
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: Arial;
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
             padding: 20px;
         }
-        .container {
+        .kutu {
             background: white;
             border-radius: 20px;
             padding: 30px;
@@ -27,76 +22,38 @@
             max-width: 500px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
         }
-        h1 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 10px;
-        }
-        .subtitle {
-            text-align: center;
-            color: #666;
-            margin-bottom: 30px;
-            font-size: 14px;
-        }
-        .input-group {
-            margin-bottom: 20px;
-        }
-        .input-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: #555;
-            font-weight: bold;
-            font-size: 14px;
-        }
-        .input-group input {
+        h1 { text-align: center; color: #333; margin-bottom: 30px; }
+        input, button {
             width: 100%;
             padding: 15px;
+            margin: 10px 0;
             border: 2px solid #e0e0e0;
             border-radius: 10px;
             font-size: 16px;
-            outline: none;
-            transition: border 0.3s;
         }
-        .input-group input:focus {
-            border-color: #667eea;
-        }
-        .search-box {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        .search-box input {
-            flex: 1;
-            padding: 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 16px;
-            outline: none;
-        }
-        .search-box button {
-            padding: 15px 30px;
+        input:focus { outline: none; border-color: #667eea; }
+        button {
             background: #667eea;
             color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
             font-weight: bold;
             cursor: pointer;
-            transition: background 0.3s;
+            border: none;
         }
-        .search-box button:hover {
-            background: #5a67d8;
-        }
-        .search-box button:disabled {
-            background: #a0aec0;
-            cursor: not-allowed;
-        }
-        .loading {
-            text-align: center;
+        button:hover { background: #5a67d8; }
+        button:disabled { background: #a0aec0; }
+        #sonuc {
+            background: #f7fafc;
+            border-radius: 10px;
             padding: 20px;
+            margin-top: 20px;
             display: none;
         }
-        .loading-spinner {
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        .spinner {
             border: 4px solid #f3f3f3;
             border-top: 4px solid #667eea;
             border-radius: 50%;
@@ -105,72 +62,10 @@
             animation: spin 1s linear infinite;
             margin: 0 auto 10px;
         }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .result-card {
-            background: #f7fafc;
-            border-radius: 10px;
-            padding: 20px;
-            margin-top: 20px;
-            display: none;
-            border: 2px solid #e0e0e0;
-        }
-        .video-info {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-        .video-info img {
-            width: 100px;
-            height: 75px;
-            object-fit: cover;
-            border-radius: 8px;
-        }
-        .video-details h3 {
-            font-size: 16px;
-            margin-bottom: 5px;
-            color: #333;
-        }
-        .video-details p {
-            color: #666;
-            font-size: 14px;
-        }
-        .download-btn {
-            width: 100%;
-            padding: 15px;
-            background: #48bb78;
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        .download-btn:hover {
-            background: #38a169;
-        }
-        .download-btn:disabled {
-            background: #a0aec0;
-            cursor: not-allowed;
-        }
-        .message {
-            padding: 15px;
-            border-radius: 10px;
-            margin-top: 15px;
-            text-align: center;
-            display: none;
-        }
-        .message.success {
-            background: #c6f6d5;
-            color: #22543d;
-        }
-        .message.error {
-            background: #fed7d7;
-            color: #742a2a;
-        }
-        .server-status {
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .hata { background: #fed7d7; color: #742a2a; padding: 10px; border-radius: 5px; margin: 10px 0; }
+        .basarili { background: #c6f6d5; color: #22543d; padding: 10px; border-radius: 5px; margin: 10px 0; }
+        .durum {
             display: flex;
             align-items: center;
             gap: 10px;
@@ -178,232 +73,148 @@
             background: #f0f4f8;
             border-radius: 8px;
             margin-bottom: 20px;
-            font-size: 14px;
         }
-        .status-dot {
+        .isik {
             width: 12px;
             height: 12px;
             border-radius: 50%;
             background: #fbbf24;
         }
-        .status-dot.online {
-            background: #48bb78;
-            box-shadow: 0 0 10px #48bb78;
-        }
-        .status-dot.offline {
-            background: #f56565;
-        }
+        .isik.aktif { background: #48bb78; box-shadow: 0 0 10px #48bb78; }
+        .isik.pasif { background: #f56565; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🎵 MÜZİK İNDİRİCİ</h1>
-        <div class="subtitle">YouTube → MP3 → Telegram</div>
-
-        <!-- Sunucu Durumu -->
-        <div class="server-status" id="serverStatus">
-            <span class="status-dot" id="statusDot"></span>
-            <span id="statusText">Sunucu kontrol ediliyor...</span>
+    <div class="kutu">
+        <h1>🎵 MÜZİK İNDİR</h1>
+        
+        <div class="durum">
+            <span class="isik" id="isik"></span>
+            <span id="durumText">Sunucu kontrol ediliyor...</span>
         </div>
 
-        <!-- Chat ID -->
-        <div class="input-group">
-            <label>📱 Telegram Chat ID</label>
-            <input type="text" id="chatId" placeholder="Örnek: 123456789" value="123456789">
-            <small style="color: #666; display: block; margin-top: 5px;">
-                @userinfobot yazıp alabilirsiniz
-            </small>
-        </div>
-
-        <!-- Arama -->
-        <div class="search-box">
-            <input type="text" id="query" placeholder="Müzik adı veya YouTube linki...">
-            <button onclick="search()" id="searchBtn">ARA</button>
-        </div>
-
-        <!-- Yükleniyor -->
+        <input type="text" id="chatId" placeholder="Telegram Chat ID" value="123456789">
+        <input type="text" id="sorgu" placeholder="Müzik adı veya YouTube linki">
+        
+        <button onclick="ara()" id="araBtn">🔍 ARA</button>
+        
         <div class="loading" id="loading">
-            <div class="loading-spinner"></div>
+            <div class="spinner"></div>
             <p id="loadingText">İşlem yapılıyor...</p>
         </div>
-
-        <!-- Sonuç -->
-        <div class="result-card" id="resultCard">
-            <div class="video-info">
-                <img id="thumbnail" src="" alt="Thumbnail">
-                <div class="video-details">
-                    <h3 id="title"></h3>
-                    <p id="duration"></p>
-                </div>
-            </div>
-            <button class="download-btn" onclick="download()" id="downloadBtn">📥 İNDİR VE GÖNDER</button>
-        </div>
-
-        <!-- Mesaj -->
-        <div class="message" id="message"></div>
+        
+        <div id="sonuc"></div>
+        <div id="mesaj"></div>
     </div>
 
     <script>
         const API = 'https://saskioyunu-1-4yn3.onrender.com';
-        let currentVideo = null;
 
         // Sunucu kontrolü
-        async function checkServer() {
-            const dot = document.getElementById('statusDot');
-            const text = document.getElementById('statusText');
+        async function kontrol() {
+            const isik = document.getElementById('isik');
+            const text = document.getElementById('durumText');
             
             try {
-                const response = await fetch(`${API}/health`);
-                if (response.ok) {
-                    dot.className = 'status-dot online';
+                const res = await fetch(`${API}/health`);
+                if (res.ok) {
+                    isik.className = 'isik aktif';
                     text.innerHTML = '✅ Sunucu aktif';
                 } else {
-                    dot.className = 'status-dot offline';
+                    isik.className = 'isik pasif';
                     text.innerHTML = '❌ Sunucu hatası';
                 }
-            } catch (e) {
-                dot.className = 'status-dot offline';
-                text.innerHTML = '❌ Sunucuya bağlanılamıyor';
+            } catch {
+                isik.className = 'isik pasif';
+                text.innerHTML = '❌ Bağlantı yok';
             }
         }
 
-        // Sayfa yüklenince kontrol et
-        checkServer();
-        // 30 saniyede bir kontrol et
-        setInterval(checkServer, 30000);
+        kontrol();
+        setInterval(kontrol, 30000);
 
-        // Mesaj göster
-        function showMessage(text, type) {
-            const msg = document.getElementById('message');
-            msg.innerHTML = text;
-            msg.className = `message ${type}`;
-            msg.style.display = 'block';
-            setTimeout(() => {
-                msg.style.display = 'none';
-            }, 3000);
+        function mesajGoster(text, tip) {
+            const div = document.getElementById('mesaj');
+            div.innerHTML = text;
+            div.className = tip;
+            setTimeout(() => div.innerHTML = '', 3000);
         }
 
-        // Yükleniyor göster
-        function showLoading(show, text = 'İşlem yapılıyor...') {
-            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        function loadingGoster(goster, text = 'İşlem yapılıyor...') {
+            document.getElementById('loading').style.display = goster ? 'block' : 'none';
             document.getElementById('loadingText').innerHTML = text;
+            document.getElementById('araBtn').disabled = goster;
         }
 
-        // Arama
-        async function search() {
-            const query = document.getElementById('query').value.trim();
+        async function ara() {
+            const sorgu = document.getElementById('sorgu').value.trim();
             const chatId = document.getElementById('chatId').value.trim();
 
-            if (!query) {
-                showMessage('Müzik adı yazın', 'error');
-                return;
-            }
-
-            if (!chatId) {
-                showMessage('Chat ID girin', 'error');
-                return;
-            }
+            if (!sorgu) return mesajGoster('Müzik adı yaz', 'hata');
+            if (!chatId) return mesajGoster('Chat ID gerekli', 'hata');
 
             // YouTube linki mi?
-            if (query.includes('youtube.com') || query.includes('youtu.be')) {
-                const videoId = extractVideoId(query);
-                currentVideo = {
-                    url: query,
-                    title: 'YouTube Linki',
-                    id: videoId
-                };
-                document.getElementById('thumbnail').src = `https://img.youtube.com/vi/${videoId}/default.jpg`;
-                document.getElementById('title').innerHTML = 'YouTube Linki';
-                document.getElementById('duration').innerHTML = 'Direkt indirilecek';
-                document.getElementById('resultCard').style.display = 'block';
+            if (sorgu.includes('youtube.com') || sorgu.includes('youtu.be')) {
+                indir(sorgu, chatId);
                 return;
             }
 
-            // Ara
-            showLoading(true, '🔍 YouTube taranıyor...');
-            document.getElementById('searchBtn').disabled = true;
-            document.getElementById('resultCard').style.display = 'none';
+            loadingGoster(true, '🔍 YouTube aranıyor...');
 
             try {
-                const response = await fetch(`${API}/api/search`, {
+                const res = await fetch(`${API}/search`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ query })
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({query: sorgu})
                 });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    currentVideo = data.video;
-                    document.getElementById('thumbnail').src = data.video.thumbnail;
-                    document.getElementById('title').innerHTML = data.video.title;
-                    document.getElementById('duration').innerHTML = `Süre: ${data.video.duration} saniye`;
-                    document.getElementById('resultCard').style.display = 'block';
+                
+                const data = await res.json();
+                
+                if (data.error) {
+                    mesajGoster('Bulunamadı', 'hata');
                 } else {
-                    showMessage('Sonuç bulunamadı', 'error');
+                    document.getElementById('sonuc').innerHTML = `
+                        <h3>${data.baslik}</h3>
+                        <p>Süre: ${data.sure} saniye</p>
+                        <button onclick="indir('${data.url}', '${chatId}')">📥 İNDİR</button>
+                    `;
+                    document.getElementById('sonuc').style.display = 'block';
                 }
             } catch (e) {
-                showMessage('Sunucu hatası: ' + e.message, 'error');
+                mesajGoster('Sunucu hatası', 'hata');
             } finally {
-                showLoading(false);
-                document.getElementById('searchBtn').disabled = false;
+                loadingGoster(false);
             }
         }
 
-        // İndir
-        async function download() {
-            if (!currentVideo) {
-                showMessage('Önce müzik seçin', 'error');
-                return;
-            }
-
-            const chatId = document.getElementById('chatId').value.trim();
-            if (!chatId) {
-                showMessage('Chat ID girin', 'error');
-                return;
-            }
-
-            showLoading(true, '📥 İndiriliyor ve gönderiliyor...');
-            document.getElementById('downloadBtn').disabled = true;
+        async function indir(url, chatId) {
+            loadingGoster(true, '📥 İndiriliyor...');
 
             try {
-                const response = await fetch(`${API}/api/download`, {
+                const res = await fetch(`${API}/indir`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        url: currentVideo.url,
-                        chatId: chatId
-                    })
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({url, chat_id: chatId})
                 });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    showMessage('✅ Müzik Telegram\'a gönderildi!', 'success');
-                    document.getElementById('query').value = '';
-                    document.getElementById('resultCard').style.display = 'none';
-                    currentVideo = null;
+                
+                const data = await res.json();
+                
+                if (data.basarili) {
+                    mesajGoster('✅ Telegram\'a gönderildi!', 'basarili');
+                    document.getElementById('sorgu').value = '';
+                    document.getElementById('sonuc').style.display = 'none';
                 } else {
-                    showMessage('Hata: ' + (data.error || 'Bilinmiyor'), 'error');
+                    mesajGoster('Hata: ' + (data.hata || '?'), 'hata');
                 }
             } catch (e) {
-                showMessage('İndirme hatası: ' + e.message, 'error');
+                mesajGoster('İndirme hatası', 'hata');
             } finally {
-                showLoading(false);
-                document.getElementById('downloadBtn').disabled = false;
+                loadingGoster(false);
             }
         }
 
-        // YouTube ID çıkar
-        function extractVideoId(url) {
-            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-            const match = url.match(regExp);
-            return (match && match[2].length === 11) ? match[2] : null;
-        }
-
-        // Enter ile ara
-        document.getElementById('query').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') search();
+        document.getElementById('sorgu').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') ara();
         });
     </script>
 </body>
