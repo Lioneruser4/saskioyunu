@@ -1,377 +1,214 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Müzik İndirici 2026</title>
+    <title>Müzik İndir</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        
-        .container {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            width: 90%;
-            max-width: 600px;
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #1a1a2e; font-family: Arial; padding: 20px; }
+        .kutu {
+            max-width: 500px;
+            margin: 50px auto;
+            background: #16213e;
             padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
         }
-        
         h1 {
-            color: #333;
+            color: #0f3460;
             text-align: center;
             margin-bottom: 30px;
-            font-size: 28px;
-        }
-        
-        .webview-info {
-            background: #f0f4f8;
-            border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 25px;
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-        
-        .webview-info input {
-            flex: 1;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 16px;
-            outline: none;
-            transition: border-color 0.3s;
-        }
-        
-        .webview-info input:focus {
-            border-color: #667eea;
-        }
-        
-        .webview-info button {
-            padding: 12px 20px;
-            background: #667eea;
             color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: background 0.3s;
         }
-        
-        .webview-info button:hover {
-            background: #5a67d8;
-        }
-        
-        .search-section {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        
-        .search-section input {
-            flex: 1;
-            padding: 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 16px;
-            outline: none;
-            transition: border-color 0.3s;
-        }
-        
-        .search-section input:focus {
-            border-color: #667eea;
-        }
-        
-        .search-section button {
-            padding: 15px 30px;
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-        
-        .search-section button:hover {
-            background: #5a67d8;
-        }
-        
-        .search-section button:disabled {
-            background: #a0aec0;
-            cursor: not-allowed;
-        }
-        
-        .result-card {
-            background: #f7fafc;
-            border-radius: 12px;
-            padding: 20px;
-            margin-top: 20px;
-            border: 2px solid #e0e0e0;
-        }
-        
-        .result-card.hidden {
-            display: none;
-        }
-        
-        .video-info {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .video-info img {
-            width: 120px;
-            height: 90px;
-            object-fit: cover;
-            border-radius: 8px;
-        }
-        
-        .video-details h3 {
-            color: #333;
-            margin-bottom: 8px;
-            font-size: 18px;
-        }
-        
-        .video-details p {
-            color: #666;
-            font-size: 14px;
-        }
-        
-        .download-btn {
+        input, button {
             width: 100%;
             padding: 15px;
-            background: #48bb78;
-            color: white;
+            margin: 10px 0;
             border: none;
-            border-radius: 10px;
+            border-radius: 5px;
             font-size: 16px;
-            font-weight: 600;
+        }
+        input {
+            background: #0f3460;
+            color: white;
+            border: 1px solid #533483;
+        }
+        input::placeholder { color: #aaa; }
+        button {
+            background: #e94560;
+            color: white;
+            font-weight: bold;
             cursor: pointer;
-            transition: background 0.3s;
         }
-        
-        .download-btn:hover {
-            background: #38a169;
-        }
-        
-        .download-btn:disabled {
-            background: #a0aec0;
-            cursor: not-allowed;
-        }
-        
-        .status {
-            margin-top: 15px;
-            padding: 12px;
-            border-radius: 8px;
-            text-align: center;
-            font-weight: 500;
-        }
-        
-        .status.success {
-            background: #c6f6d5;
-            color: #22543d;
-        }
-        
-        .status.error {
-            background: #fed7d7;
-            color: #742a2a;
-        }
-        
-        .status.info {
-            background: #bee3f8;
-            color: #2c5282;
-        }
-        
-        .status.hidden {
+        button:hover { background: #c73e56; }
+        button:disabled { background: #666; cursor: wait; }
+        #sonuc {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
             display: none;
         }
-        
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-right: 10px;
+        .bulundu {
+            background: #16213e;
+            border: 1px solid #533483;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
         }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .bulundu h3 { color: white; margin-bottom: 10px; }
+        .bulundu p { color: #aaa; margin-bottom: 15px; }
+        .loading {
+            text-align: center;
+            color: #e94560;
+            padding: 20px;
+            display: none;
+        }
+        .hata {
+            background: #ff4444;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .basarili {
+            background: #00C851;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .chat-input {
+            background: #0f3460;
+            color: white;
+            width: 100%;
+            padding: 15px;
+            border: 1px solid #533483;
+            border-radius: 5px;
+            margin-bottom: 20px;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🎵 Müzik İndirici 2026</h1>
+    <div class="kutu">
+        <h1>🎵 MÜZİK İNDİR 2026</h1>
         
-        <div class="webview-info">
-            <input type="text" id="webviewId" placeholder="WebView ID giriniz" value="123456789">
-            <button onclick="setChatId()">Kaydet</button>
-        </div>
+        <!-- CHAT ID -->
+        <input type="text" id="chatId" class="chat-input" placeholder="Telegram Chat ID (örn: 123456789)" value="123456789">
         
-        <div class="search-section">
-            <input type="text" id="searchInput" placeholder="Müzik adı veya YouTube linki...">
-            <button onclick="searchMusic()" id="searchBtn">Ara</button>
-        </div>
+        <!-- ARAMA -->
+        <input type="text" id="sorgu" placeholder="Müzik adı veya YouTube linki">
+        <button onclick="ara()" id="araBtn">🔍 ARA</button>
         
-        <div id="resultCard" class="result-card hidden">
-            <div class="video-info">
-                <img id="videoThumbnail" src="" alt="Thumbnail">
-                <div class="video-details">
-                    <h3 id="videoTitle"></h3>
-                    <p id="videoDuration"></p>
-                </div>
-            </div>
-            <button onclick="downloadMusic()" id="downloadBtn" class="download-btn">
-                İndir ve Telegram'a Gönder
-            </button>
-        </div>
+        <!-- YÜKLENİYOR -->
+        <div id="loading" class="loading">🔍 Aranıyor...</div>
         
-        <div id="status" class="status hidden"></div>
+        <!-- SONUÇ -->
+        <div id="sonuc"></div>
     </div>
 
     <script>
-        const API_URL = 'https://saskioyunu-o8s1.onrender.com'; // Render sunucun
-        let currentChatId = '123456789';
-        let currentVideo = null;
+    const API = 'https://saskioyunu-o8s1.onrender.com'; // SENİN SUNUCUN
 
-        function setChatId() {
-            const input = document.getElementById('webviewId');
-            currentChatId = input.value.trim() || '123456789';
-            showStatus('WebView ID kaydedildi: ' + currentChatId, 'success');
+    async function ara() {
+        const sorgu = document.getElementById('sorgu').value.trim();
+        const chatId = document.getElementById('chatId').value.trim();
+        
+        if (!sorgu) {
+            alert('Müzik adı yaz');
+            return;
+        }
+        
+        if (!chatId) {
+            alert('Chat ID gerekli');
+            return;
         }
 
-        async function searchMusic() {
-            const query = document.getElementById('searchInput').value.trim();
-            if (!query) {
-                showStatus('Lütfen müzik adı veya link girin', 'error');
-                return;
-            }
-
-            // YouTube linki mi kontrol et
-            if (query.includes('youtube.com') || query.includes('youtu.be')) {
-                // Direkt link ile indir
-                currentVideo = { url: query };
-                document.getElementById('resultCard').classList.add('hidden');
-                downloadMusic();
-                return;
-            }
-
-            const searchBtn = document.getElementById('searchBtn');
-            searchBtn.disabled = true;
-            searchBtn.innerHTML = '<span class="loading"></span>Aranıyor...';
-
-            try {
-                const response = await fetch(`${API_URL}/api/search`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ query })
-                });
-
-                const data = await response.json();
-
-                if (data.success && data.video) {
-                    currentVideo = data.video;
-                    
-                    document.getElementById('videoTitle').textContent = data.video.title;
-                    document.getElementById('videoDuration').textContent = 
-                        `Süre: ${data.video.duration || '?'}`;
-                    document.getElementById('videoThumbnail').src = 
-                        data.video.thumbnail || 'https://via.placeholder.com/120x90';
-                    
-                    document.getElementById('resultCard').classList.remove('hidden');
-                    showStatus('Video bulundu!', 'success');
-                } else {
-                    showStatus('Sonuç bulunamadı', 'error');
-                }
-            } catch (error) {
-                showStatus('Arama hatası: ' + error.message, 'error');
-            } finally {
-                searchBtn.disabled = false;
-                searchBtn.innerHTML = 'Ara';
-            }
+        // YouTube linki mi?
+        if (sorgu.includes('youtube.com') || sorgu.includes('youtu.be')) {
+            indir(sorgu, chatId);
+            return;
         }
 
-        async function downloadMusic() {
-            if (!currentVideo) {
-                showStatus('Önce bir müzik seçin', 'error');
-                return;
+        // Ara
+        document.getElementById('loading').style.display = 'block';
+        document.getElementById('araBtn').disabled = true;
+
+        try {
+            const cevap = await fetch(`${API}/search`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({query: sorgu})
+            });
+            
+            const data = await cevap.json();
+            
+            if (data.error) {
+                hataGoster('Bulunamadı: ' + data.error);
+            } else {
+                // Sonucu göster
+                document.getElementById('sonuc').innerHTML = `
+                    <div class="bulundu">
+                        <h3>${data.baslik}</h3>
+                        <p>Süre: ${data.sure} saniye</p>
+                        <button onclick="indir('${data.url}', '${chatId}')">📥 İNDİR VE GÖNDER</button>
+                    </div>
+                `;
+                document.getElementById('sonuc').style.display = 'block';
             }
-
-            if (!currentChatId) {
-                showStatus('Lütfen WebView ID girin', 'error');
-                return;
-            }
-
-            const downloadBtn = document.getElementById('downloadBtn');
-            downloadBtn.disabled = true;
-            downloadBtn.innerHTML = '<span class="loading"></span>İndiriliyor ve gönderiliyor...';
-
-            const videoUrl = currentVideo.url || `https://youtube.com/watch?v=${currentVideo.id}`;
-
-            try {
-                const response = await fetch(`${API_URL}/api/download`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        url: videoUrl,
-                        chatId: currentChatId
-                    })
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    showStatus('✅ Müzik indirildi ve Telegram\'a gönderildi!', 'success');
-                    document.getElementById('resultCard').classList.add('hidden');
-                    document.getElementById('searchInput').value = '';
-                    currentVideo = null;
-                } else {
-                    showStatus('Hata: ' + (data.error || 'Bilinmeyen hata'), 'error');
-                }
-            } catch (error) {
-                showStatus('İndirme hatası: ' + error.message, 'error');
-            } finally {
-                downloadBtn.disabled = false;
-                downloadBtn.innerHTML = 'İndir ve Telegram\'a Gönder';
-            }
+        } catch (e) {
+            hataGoster('Sunucu hatası: ' + e.message);
+        } finally {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('araBtn').disabled = false;
         }
+    }
 
-        function showStatus(message, type) {
-            const statusDiv = document.getElementById('status');
-            statusDiv.textContent = message;
-            statusDiv.className = `status ${type}`;
-            statusDiv.classList.remove('hidden');
-
-            setTimeout(() => {
-                statusDiv.classList.add('hidden');
-            }, 5000);
-        }
-
-        // Enter tuşu ile arama
-        document.getElementById('searchInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                searchMusic();
+    async function indir(url, chatId) {
+        document.getElementById('loading').style.display = 'block';
+        document.getElementById('loading').innerHTML = '📥 İndiriliyor ve gönderiliyor...';
+        
+        try {
+            const cevap = await fetch(`${API}/indir`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({url: url, chat_id: chatId})
+            });
+            
+            const data = await cevap.json();
+            
+            if (data.basarili) {
+                basariliGoster('✅ Müzik Telegram\'a gönderildi!');
+                document.getElementById('sorgu').value = '';
+                document.getElementById('sonuc').style.display = 'none';
+            } else {
+                hataGoster('Hata: ' + (data.hata || 'Bilinmiyor'));
             }
-        });
+        } catch (e) {
+            hataGoster('İndirme hatası: ' + e.message);
+        } finally {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('loading').innerHTML = '🔍 Aranıyor...';
+        }
+    }
+
+    function hataGoster(msg) {
+        document.getElementById('sonuc').innerHTML = `<div class="hata">${msg}</div>`;
+        document.getElementById('sonuc').style.display = 'block';
+    }
+
+    function basariliGoster(msg) {
+        document.getElementById('sonuc').innerHTML = `<div class="basarili">${msg}</div>`;
+        document.getElementById('sonuc').style.display = 'block';
+        setTimeout(() => {
+            document.getElementById('sonuc').style.display = 'none';
+        }, 3000);
+    }
+
+    // Enter ile ara
+    document.getElementById('sorgu').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') ara();
+    });
     </script>
 </body>
 </html>
