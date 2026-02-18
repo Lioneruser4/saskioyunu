@@ -12,106 +12,91 @@ app.use(express.json());
 
 const BOT_TOKEN = "5246489165:AAGhMleCadeh3bhtje1EBPY95yn2rDKH7KE";
 
-// ÇALIŞAN PROXY'LER (2026 güncel)
+// PROXY LIST
 const PROXIES = [
     'http://20.111.54.16:8123',
     'http://176.9.119.170:3128',
-    'http://103.149.162.195:80',
-    'http://45.87.61.5:3128',
-    'http://158.69.57.150:8888'
+    'http://103.149.162.195:80'
 ];
 
-// Arama endpoint'i
-app.post('/api/search', (req, res) => {
+// Arama
+app.post('/search', (req, res) => {
     const { query } = req.body;
-    console.log('🔍 Arama:', query);
+    console.log('Aranıyor:', query);
 
     const proxy = PROXIES[Math.floor(Math.random() * PROXIES.length)];
     
-    // yt-dlp ile ara
+    // yt-dlp komutu
     const cmd = `yt-dlp --proxy "${proxy}" "ytsearch1:${query}" -j --no-warnings 2>/dev/null`;
     
-    exec(cmd, (error, stdout) => {
-        if (error) {
-            console.log('Arama hatası:', error.message);
-            return res.json({ success: false, error: 'Bulunamadı' });
+    exec(cmd, (err, stdout) => {
+        if (err) {
+            return res.json({ error: 'Bulunamadı' });
         }
         
         try {
             const data = JSON.parse(stdout);
             res.json({
-                success: true,
-                video: {
-                    title: data.title,
-                    id: data.id,
-                    url: `https://youtube.com/watch?v=${data.id}`,
-                    duration: data.duration || 0,
-                    thumbnail: `https://img.youtube.com/vi/${data.id}/default.jpg`
-                }
+                baslik: data.title,
+                id: data.id,
+                url: `https://youtube.com/watch?v=${data.id}`,
+                sure: data.duration || 0
             });
         } catch (e) {
-            res.json({ success: false, error: 'İşlenemedi' });
+            res.json({ error: 'Hata' });
         }
     });
 });
 
-// İndir ve Telegram'a gönder
-app.post('/api/download', async (req, res) => {
-    const { url, chatId } = req.body;
-    console.log('📥 İndirme:', url, 'Chat:', chatId);
+// İndir
+app.post('/indir', async (req, res) => {
+    const { url, chat_id } = req.body;
+    console.log('İndiriliyor:', url);
 
     const proxy = PROXIES[Math.floor(Math.random() * PROXIES.length)];
-    const fileName = `music_${Date.now()}.mp3`;
+    const fileName = `muzik_${Date.now()}.mp3`;
     const filePath = path.join('/tmp', fileName);
 
-    // yt-dlp ile indir (ses olarak)
-    const cmd = `yt-dlp --proxy "${proxy}" -f bestaudio -x --audio-format mp3 -o "${filePath}" "${url}" 2>/dev/null`;
+    const cmd = `yt-dlp --proxy "${proxy}" -x --audio-format mp3 -o "${filePath}" "${url}" 2>/dev/null`;
     
-    exec(cmd, async (error) => {
-        if (error) {
-            console.log('İndirme hatası:', error);
-            return res.json({ success: false, error: 'İndirme başarısız' });
+    exec(cmd, async (err) => {
+        if (err) {
+            return res.json({ hata: 'İndirme başarısız' });
         }
 
-        // Dosya oluşmasını bekle
         setTimeout(async () => {
             if (fs.existsSync(filePath)) {
                 try {
-                    // Telegram'a gönder
                     const form = new FormData();
-                    form.append('chat_id', chatId);
+                    form.append('chat_id', chat_id);
                     form.append('audio', fs.createReadStream(filePath));
-                    form.append('caption', '🎵 Müziğiniz hazır!');
 
                     await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendAudio`, form, {
                         headers: form.getHeaders()
                     });
 
-                    // Temizlik
                     fs.unlinkSync(filePath);
-                    res.json({ success: true });
+                    res.json({ basarili: true });
                     
                 } catch (e) {
-                    console.log('Telegram hatası:', e.message);
-                    res.json({ success: false, error: 'Telegram gönderilemedi' });
+                    res.json({ hata: 'Telegram hatası' });
                 }
             } else {
-                res.json({ success: false, error: 'Dosya oluşmadı' });
+                res.json({ hata: 'Dosya yok' });
             }
         }, 3000);
     });
 });
 
-// Sağlık kontrolü
-app.get('/health', (req, res) => {
-    res.json({ status: 'online', time: Date.now() });
+app.get('/', (req, res) => {
+    res.send('API çalışıyor');
 });
 
-app.get('/', (req, res) => {
-    res.send('🎵 Music API 2026 çalışıyor');
+app.get('/health', (req, res) => {
+    res.json({ status: 'ok' });
 });
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-    console.log(`Server ${PORT} portunda çalışıyor`);
+    console.log(`Server ${PORT} çalışıyor`);
 });
