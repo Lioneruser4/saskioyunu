@@ -25,7 +25,7 @@
     "axios": "^1.6.2",
     "uuid": "^9.0.1",
     "form-data": "^4.0.0",
-    "innertube": "^6.0.0"
+    "ytsr": "^3.8.4"
   },
   "engines": {
     "node": ">=16.0.0"
