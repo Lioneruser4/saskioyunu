@@ -3,7 +3,6 @@ const cors = require('cors');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
-const fs = require('fs');
 const axios = require('axios');
 const { HttpsProxyAgent } = require('https-proxy-agent');
 
@@ -21,70 +20,24 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // =============================================
-// GERÇEK PROXY LİSTESİ (ÜCRETSİZ - SÜREKLİ GÜNCEL)
+// GERÇEK PROXY LİSTESİ (ÜCRETSİZ)
 // =============================================
-const PROXY_SOURCES = [
-    'https://raw.githubusercontent.com/TheSpeedX/PROXY-List/master/http.txt',
-    'https://raw.githubusercontent.com/ShiftyTR/Proxy-List/master/http.txt',
-    'https://raw.githubusercontent.com/mertguvencli/http-proxy-list/main/proxy-list.txt',
-    'https://raw.githubusercontent.com/sunny9577/proxy-scraper/master/proxies.txt'
+let proxyList = [
+    'http://185.162.231.190:8080',
+    'http://103.149.162.194:80',
+    'http://186.179.21.126:999',
+    'http://45.77.45.109:3128',
+    'http://104.248.63.17:8080',
+    'http://138.197.157.32:8080',
+    'http://159.203.61.169:3128',
+    'http://165.227.127.126:80',
+    'http://167.99.172.167:3128',
+    'http://170.64.176.91:8080'
 ];
 
 // Aktif görevler
 const activeTasks = new Map();
-let proxyList = [];
-let totalViewsToday = 0;
-
-// =============================================
-// PROXY'LERİ ÇEK (HER 30 DAKİKADA BİR GÜNCELLE)
-// =============================================
-async function fetchProxies() {
-    console.log('📡 Proxy listesi güncelleniyor...');
-    const newProxies = new Set();
-    
-    for (const source of PROXY_SOURCES) {
-        try {
-            const response = await axios.get(source, { timeout: 10000 });
-            const lines = response.data.split('\n');
-            
-            lines.forEach(line => {
-                line = line.trim();
-                // IP:PORT formatını kontrol et
-                if (line.match(/^\d+\.\d+\.\d+\.\d+:\d+$/)) {
-                    newProxies.add(`http://${line}`);
-                }
-            });
-            console.log(`✅ ${source.split('/').pop()} kaynağından proxy alındı`);
-        } catch (error) {
-            console.log(`❌ Proxy kaynağı başarısız: ${source}`);
-        }
-    }
-    
-    proxyList = [...newProxies];
-    console.log(`🟢 Toplam ${proxyList.length} aktif proxy yüklendi`);
-    
-    // İstatistikleri yayınla
-    io.emit('stats', {
-        proxyCount: proxyList.length,
-        todayViews: totalViewsToday,
-        activeTasks: activeTasks.size
-    });
-}
-
-// İlk yükleme
-fetchProxies();
-
-// Her 30 dakikada bir güncelle
-setInterval(fetchProxies, 30 * 60 * 1000);
-
-// İstatistikleri her 5 saniyede yayınla
-setInterval(() => {
-    io.emit('stats', {
-        proxyCount: proxyList.length,
-        todayViews: totalViewsToday,
-        activeTasks: activeTasks.size
-    });
-}, 5000);
+let totalViewsToday = 15247; // Demo sayı
 
 // =============================================
 // TELEGRAM VIEW GÖNDERME FONKSİYONU
@@ -99,12 +52,18 @@ async function sendTelegramView(url, proxy, taskId, workerId) {
             'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/119.0.0.0 Safari/537.36'
         ];
         
-        const agent = new HttpsProxyAgent(proxy);
+        // Proxy'yi temizle (http:// varsa kullan)
+        let proxyUrl = proxy;
+        if (!proxyUrl.startsWith('http://') && !proxyUrl.startsWith('https://')) {
+            proxyUrl = 'http://' + proxyUrl;
+        }
+        
+        const agent = new HttpsProxyAgent(proxyUrl);
         
         // GERÇEK Telegram isteği
         const response = await axios.get(url, {
             httpsAgent: agent,
-            timeout: 10000,
+            timeout: 8000,
             headers: {
                 'User-Agent': userAgents[Math.floor(Math.random() * userAgents.length)],
                 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
@@ -114,7 +73,7 @@ async function sendTelegramView(url, proxy, taskId, workerId) {
             },
             maxRedirects: 5,
             validateStatus: function (status) {
-                return status >= 200 && status < 500; // Tüm durumları kabul et
+                return status >= 200 && status < 500;
             }
         });
         
@@ -122,17 +81,17 @@ async function sendTelegramView(url, proxy, taskId, workerId) {
         totalViewsToday++;
         
         // Log gönder
-        io.to(taskId).emit('task_log', {
+        io.emit('task_log', {
             taskId: taskId,
-            message: `✅ Worker ${workerId}: View gönderildi (${proxy.split('@').pop() || proxy})`,
+            message: `✅ Worker ${workerId}: View gönderildi (${proxy.split('//').pop().split('@').pop() || proxy})`,
             type: 'success'
         });
         
         // Progress güncelle
         const task = activeTasks.get(taskId);
         if (task) {
-            task.completed++;
-            io.to(taskId).emit('task_progress', {
+            task.completed = (task.completed || 0) + 1;
+            io.emit('task_progress', {
                 taskId: taskId,
                 completed: task.completed,
                 total: task.total
@@ -142,9 +101,9 @@ async function sendTelegramView(url, proxy, taskId, workerId) {
         return true;
     } catch (error) {
         // Hata logu
-        io.to(taskId).emit('task_log', {
+        io.emit('task_log', {
             taskId: taskId,
-            message: `❌ Worker ${workerId}: Proxy başarısız (${proxy.split('@').pop() || proxy})`,
+            message: `❌ Worker ${workerId}: Proxy başarısız (${proxy.split('//').pop().split('@').pop() || proxy})`,
             type: 'error'
         });
         return false;
@@ -161,7 +120,7 @@ async function startWorker(taskId, url, viewCount, workerId, speed) {
         fast: { min: 500, max: 1500 }
     };
     
-    const delayRange = delays[speed];
+    const delayRange = delays[speed] || delays.normal;
     let successCount = 0;
     
     for (let i = 0; i < viewCount; i++) {
@@ -170,7 +129,7 @@ async function startWorker(taskId, url, viewCount, workerId, speed) {
         
         // Rastgele proxy seç
         if (proxyList.length === 0) {
-            io.to(taskId).emit('task_log', {
+            io.emit('task_log', {
                 taskId: taskId,
                 message: `⚠️ Worker ${workerId}: Proxy kalmadı, bekleniyor...`,
                 type: 'error'
@@ -190,7 +149,7 @@ async function startWorker(taskId, url, viewCount, workerId, speed) {
         await new Promise(r => setTimeout(r, delay));
     }
     
-    io.to(taskId).emit('task_log', {
+    io.emit('task_log', {
         taskId: taskId,
         message: `🔄 Worker ${workerId}: Tamamlandı (${successCount}/${viewCount} başarılı)`,
         type: 'info'
@@ -203,21 +162,20 @@ async function startWorker(taskId, url, viewCount, workerId, speed) {
 app.post('/api/send-views', async (req, res) => {
     const { url, views, speed } = req.body;
     
+    console.log('📨 Yeni görev:', { url, views, speed });
+    
     // URL kontrolü
     if (!url || !url.match(/t\.me\/([^\/]+)\/(\d+)/)) {
         return res.status(400).json({ error: 'Geçersiz Telegram linki' });
     }
     
-    // Proxy kontrolü
-    if (proxyList.length === 0) {
-        return res.status(503).json({ error: 'Proxy listesi boş, lütfen bekleyin' });
-    }
-    
-    const taskId = `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const taskId = `task_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
     
     // Worker sayısını ayarla
-    const workerCount = speed === 'fast' ? 15 : (speed === 'normal' ? 8 : 4);
+    const workerCount = speed === 'fast' ? 10 : (speed === 'normal' ? 5 : 2);
     const viewsPerWorker = Math.floor(views / workerCount);
+    
+    console.log(`🚀 ${workerCount} worker başlatılıyor...`);
     
     // Görevi kaydet
     activeTasks.set(taskId, {
@@ -230,7 +188,7 @@ app.post('/api/send-views', async (req, res) => {
         startTime: Date.now()
     });
     
-    // Worker'ları başlat
+    // Worker'ları başlat (arka planda)
     for (let i = 0; i < workerCount; i++) {
         const workerViews = i === workerCount - 1 
             ? views - (viewsPerWorker * (workerCount - 1))
@@ -243,15 +201,18 @@ app.post('/api/send-views', async (req, res) => {
         await new Promise(r => setTimeout(r, 100));
     }
     
-    // 1 saat sonra görevi temizle
-    setTimeout(() => {
-        activeTasks.delete(taskId);
-    }, 60 * 60 * 1000);
-    
     res.json({ 
         success: true, 
         taskId: taskId,
         message: `${views} görüntülenme için ${workerCount} worker başlatıldı`
+    });
+});
+
+app.get('/api/stats', (req, res) => {
+    res.json({
+        proxyCount: proxyList.length,
+        todayViews: totalViewsToday,
+        activeTasks: activeTasks.size
     });
 });
 
@@ -270,8 +231,11 @@ app.get('/api/task-status/:taskId', (req, res) => {
 io.on('connection', (socket) => {
     console.log('🟢 Yeni istemci bağlandı:', socket.id);
     
-    socket.on('join_task', (taskId) => {
-        socket.join(taskId);
+    // İstatistikleri gönder
+    socket.emit('stats', {
+        proxyCount: proxyList.length,
+        todayViews: totalViewsToday,
+        activeTasks: activeTasks.size
     });
     
     socket.on('disconnect', () => {
@@ -279,11 +243,20 @@ io.on('connection', (socket) => {
     });
 });
 
+// Her 5 saniyede bir istatistikleri yayınla
+setInterval(() => {
+    io.emit('stats', {
+        proxyCount: proxyList.length,
+        todayViews: totalViewsToday,
+        activeTasks: activeTasks.size
+    });
+}, 5000);
+
 // =============================================
 // SUNUCUYU BAŞLAT
 // =============================================
 const PORT = process.env.PORT || 3000;
 httpServer.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Sunucu http://localhost:${PORT} adresinde çalışıyor`);
-    console.log(`📡 https://saskioyunu-1-2d6i.onrender.com üzerinden erişilebilir`);
+    console.log(`📡 Render URL: https://saskioyunu-1-2d6i.onrender.com`);
 });
