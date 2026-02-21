@@ -1,287 +1,289 @@
 const express = require('express');
 const cors = require('cors');
-const ytdl = require('ytdl-core');
-const ffmpeg = require('fluent-ffmpeg');
-const axios = require('axios');
+const { createServer } = require('http');
+const { Server } = require('socket.io');
 const path = require('path');
 const fs = require('fs');
-const { v4: uuidv4 } = require('uuid');
-const FormData = require('form-data');
+const axios = require('axios');
+const { HttpsProxyAgent } = require('https-proxy-agent');
 
 const app = express();
-const PORT = process.env.PORT || 10000;
-const SERVER_URL = 'https://saskioyunu-1-2d6i.onrender.com';
+const httpServer = createServer(app);
+const io = new Server(httpServer, {
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"]
+    }
+});
 
-// Mevcut Telegram Bot Token
-const BOT_TOKEN = '5246489165:AAGhMleCadeh3bhtje1EBPY95yn2rDKH7KE';
-const TELEGRAM_API_URL = `https://api.telegram.org/bot${BOT_TOKEN}`;
-
-// Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static('.'));
+app.use(express.static(path.join(__dirname, 'public')));
 
-// Downloads klasörü oluştur
-const downloadsDir = path.join(__dirname, 'downloads');
-if (!fs.existsSync(downloadsDir)) {
-    fs.mkdirSync(downloadsDir, { recursive: true });
-}
+// =============================================
+// GERÇEK PROXY LİSTESİ (ÜCRETSİZ - SÜREKLİ GÜNCEL)
+// =============================================
+const PROXY_SOURCES = [
+    'https://raw.githubusercontent.com/TheSpeedX/PROXY-List/master/http.txt',
+    'https://raw.githubusercontent.com/ShiftyTR/Proxy-List/master/http.txt',
+    'https://raw.githubusercontent.com/mertguvencli/http-proxy-list/main/proxy-list.txt',
+    'https://raw.githubusercontent.com/sunny9577/proxy-scraper/master/proxies.txt'
+];
 
-// GERÇEK YouTube arama fonksiyonu
-async function searchYouTube(query) {
-    try {
-        console.log(`Aranıyor: ${query}`);
-        
-        // YouTube'un mobil API'sini kullan
-        const searchUrl = `https://m.youtube.com/results?search_query=${encodeURIComponent(query)}`;
-        const response = await axios.get(searchUrl, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1'
-            }
-        });
-        
-        const html = response.data;
-        
-        // Video ID'lerini çıkar
-        const videoIdRegex = /"videoId":"([^"]+)"/g;
-        const videoIds = [];
-        let match;
-        
-        while ((match = videoIdRegex.exec(html)) !== null) {
-            videoIds.push(match[1]);
-        }
-        
-        // Başlıkları çıkar
-        const titleRegex = /"title":{"runs":\[{"text":"([^"]+)"}/g;
-        const titles = [];
-        
-        while ((match = titleRegex.exec(html)) !== null) {
-            titles.push(match[1]);
-        }
-        
-        // Kanal isimlerini çıkar
-        const channelRegex = /"ownerText":{"runs":\[{"text":"([^"]+)"}/g;
-        const channels = [];
-        
-        while ((match = channelRegex.exec(html)) !== null) {
-            channels.push(match[1]);
-        }
-        
-        // Süreleri çıkar
-        const durationRegex = /"lengthText":{"accessibility":{"accessibilityData":{"label":"([^"]+)"}}/g;
-        const durations = [];
-        
-        while ((match = durationRegex.exec(html)) !== null) {
-            durations.push(match[1]);
-        }
-        
-        // Görüntülenmeleri çıkar
-        const viewsRegex = /"shortViewCountText":{"simpleText":"([^"]+)"/g;
-        const views = [];
-        
-        while ((match = viewsRegex.exec(html)) !== null) {
-            views.push(match[1]);
-        }
-        
-        // Sonuçları birleştir
-        const results = [];
-        const maxResults = Math.min(videoIds.length, 10);
-        
-        for (let i = 0; i < maxResults; i++) {
-            if (videoIds[i]) {
-                const durationStr = durations[i] || '0:00';
-                const durationParts = durationStr.split(':').map(Number);
-                const durationSeconds = durationParts.length === 2 ? 
-                    durationParts[0] * 60 + durationParts[1] : 
-                    durationParts[0] || 0;
-                
-                results.push({
-                    id: videoIds[i],
-                    title: titles[i] || `${query} - Video`,
-                    channel: channels[i] || 'Unknown Channel',
-                    thumbnail: `https://img.youtube.com/vi/${videoIds[i]}/mqdefault.jpg`,
-                    duration: durationSeconds,
-                    views: views[i] || '0'
-                });
-            }
-        }
-        
-        console.log(`${results.length} sonuç bulundu`);
-        return results;
-        
-    } catch (error) {
-        console.error('YouTube arama hatası:', error);
-        return [];
-    }
-}
+// Aktif görevler
+const activeTasks = new Map();
+let proxyList = [];
+let totalViewsToday = 0;
 
-// GERÇEK YouTube indirme fonksiyonu
-async function downloadYouTubeVideo(videoId, title) {
-    return new Promise((resolve, reject) => {
-        const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
-        const outputFileName = `${uuidv4()}.mp3`;
-        const outputPath = path.join(downloadsDir, outputFileName);
-
-        console.log(`🎵 İndiriliyor: ${title} (${videoId})`);
-
-        const stream = ytdl(videoUrl, { 
-            quality: 'highestaudio',
-            filter: 'audioonly'
-        });
-
-        ffmpeg(stream)
-            .audioBitrate(128)
-            .toFormat('mp3')
-            .on('start', (commandLine) => {
-                console.log('⬇️ FFmpeg başlatıldı');
-            })
-            .on('progress', (progress) => {
-                if (progress.percent) {
-                    console.log(`📊 İndirme: ${Math.round(progress.percent)}%`);
+// =============================================
+// PROXY'LERİ ÇEK (HER 30 DAKİKADA BİR GÜNCELLE)
+// =============================================
+async function fetchProxies() {
+    console.log('📡 Proxy listesi güncelleniyor...');
+    const newProxies = new Set();
+    
+    for (const source of PROXY_SOURCES) {
+        try {
+            const response = await axios.get(source, { timeout: 10000 });
+            const lines = response.data.split('\n');
+            
+            lines.forEach(line => {
+                line = line.trim();
+                // IP:PORT formatını kontrol et
+                if (line.match(/^\d+\.\d+\.\d+\.\d+:\d+$/)) {
+                    newProxies.add(`http://${line}`);
                 }
-            })
-            .on('end', () => {
-                console.log(`✅ İndirme tamamlandı: ${outputPath}`);
-                resolve({
-                    filePath: outputPath,
-                    fileName: outputFileName,
-                    title: title
-                });
-            })
-            .on('error', (err) => {
-                console.error('❌ İndirme hatası:', err);
-                reject(err);
-            })
-            .save(outputPath);
+            });
+            console.log(`✅ ${source.split('/').pop()} kaynağından proxy alındı`);
+        } catch (error) {
+            console.log(`❌ Proxy kaynağı başarısız: ${source}`);
+        }
+    }
+    
+    proxyList = [...newProxies];
+    console.log(`🟢 Toplam ${proxyList.length} aktif proxy yüklendi`);
+    
+    // İstatistikleri yayınla
+    io.emit('stats', {
+        proxyCount: proxyList.length,
+        todayViews: totalViewsToday,
+        activeTasks: activeTasks.size
     });
 }
 
-// GERÇEK Telegram gönderme fonksiyonu
-async function sendAudioToTelegram(telegramId, filePath, title) {
-    try {
-        console.log(`📤 Telegram'a gönderiliyor: ${title}`);
-        
-        const formData = new FormData();
-        formData.append('audio', fs.createReadStream(filePath));
-        formData.append('caption', `🎵 ${title}\n\n🤖 YouTube MP3 İndirici ile indirildi\n🌐 ${SERVER_URL}`);
-        formData.append('title', title);
-        formData.append('parse_mode', 'HTML');
+// İlk yükleme
+fetchProxies();
 
-        const response = await axios.post(`${TELEGRAM_API_URL}/sendAudio`, formData, {
+// Her 30 dakikada bir güncelle
+setInterval(fetchProxies, 30 * 60 * 1000);
+
+// İstatistikleri her 5 saniyede yayınla
+setInterval(() => {
+    io.emit('stats', {
+        proxyCount: proxyList.length,
+        todayViews: totalViewsToday,
+        activeTasks: activeTasks.size
+    });
+}, 5000);
+
+// =============================================
+// TELEGRAM VIEW GÖNDERME FONKSİYONU
+// =============================================
+async function sendTelegramView(url, proxy, taskId, workerId) {
+    try {
+        // Rastgele User-Agent
+        const userAgents = [
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 Safari/605.1.15',
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/121.0',
+            'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/119.0.0.0 Safari/537.36'
+        ];
+        
+        const agent = new HttpsProxyAgent(proxy);
+        
+        // GERÇEK Telegram isteği
+        const response = await axios.get(url, {
+            httpsAgent: agent,
+            timeout: 10000,
             headers: {
-                ...formData.getHeaders(),
-                'Content-Type': 'multipart/form-data'
+                'User-Agent': userAgents[Math.floor(Math.random() * userAgents.length)],
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                'Accept-Language': 'tr-TR,tr;q=0.9,en;q=0.8',
+                'Connection': 'keep-alive',
+                'Upgrade-Insecure-Requests': '1'
             },
-            timeout: 30000
+            maxRedirects: 5,
+            validateStatus: function (status) {
+                return status >= 200 && status < 500; // Tüm durumları kabul et
+            }
         });
-
-        console.log('✅ Telegram gönderildi:', response.data);
-        return response.data;
+        
+        // Başarılı view
+        totalViewsToday++;
+        
+        // Log gönder
+        io.to(taskId).emit('task_log', {
+            taskId: taskId,
+            message: `✅ Worker ${workerId}: View gönderildi (${proxy.split('@').pop() || proxy})`,
+            type: 'success'
+        });
+        
+        // Progress güncelle
+        const task = activeTasks.get(taskId);
+        if (task) {
+            task.completed++;
+            io.to(taskId).emit('task_progress', {
+                taskId: taskId,
+                completed: task.completed,
+                total: task.total
+            });
+        }
+        
+        return true;
     } catch (error) {
-        console.error('❌ Telegram gönderme hatası:', error);
-        throw error;
+        // Hata logu
+        io.to(taskId).emit('task_log', {
+            taskId: taskId,
+            message: `❌ Worker ${workerId}: Proxy başarısız (${proxy.split('@').pop() || proxy})`,
+            type: 'error'
+        });
+        return false;
     }
 }
 
-// API Routes
-
-// Arama endpoint'i
-app.post('/api/search', async (req, res) => {
-    try {
-        const { query, userId } = req.body;
+// =============================================
+// WORKER BAŞLAT
+// =============================================
+async function startWorker(taskId, url, viewCount, workerId, speed) {
+    const delays = {
+        slow: { min: 3000, max: 7000 },
+        normal: { min: 1500, max: 3000 },
+        fast: { min: 500, max: 1500 }
+    };
+    
+    const delayRange = delays[speed];
+    let successCount = 0;
+    
+    for (let i = 0; i < viewCount; i++) {
+        // Görev iptal edildi mi?
+        if (!activeTasks.has(taskId)) break;
         
-        if (!query) {
-            return res.status(400).json({ 
-                success: false, 
-                error: 'Arama sorgusu gerekli' 
+        // Rastgele proxy seç
+        if (proxyList.length === 0) {
+            io.to(taskId).emit('task_log', {
+                taskId: taskId,
+                message: `⚠️ Worker ${workerId}: Proxy kalmadı, bekleniyor...`,
+                type: 'error'
             });
+            await new Promise(r => setTimeout(r, 5000));
+            continue;
         }
-
-        console.log(`🔍 Arama isteği: ${query} (User: ${userId})`);
-        const results = await searchYouTube(query);
         
-        res.json({
-            success: true,
-            results: results
-        });
-    } catch (error) {
-        console.error('❌ Arama API hatası:', error);
-        res.status(500).json({ 
-            success: false, 
-            error: 'Arama sırasında hata oluştu' 
-        });
+        const proxy = proxyList[Math.floor(Math.random() * proxyList.length)];
+        
+        // View gönder
+        const success = await sendTelegramView(url, proxy, taskId, workerId);
+        if (success) successCount++;
+        
+        // Rastgele bekleme
+        const delay = Math.random() * (delayRange.max - delayRange.min) + delayRange.min;
+        await new Promise(r => setTimeout(r, delay));
     }
-});
+    
+    io.to(taskId).emit('task_log', {
+        taskId: taskId,
+        message: `🔄 Worker ${workerId}: Tamamlandı (${successCount}/${viewCount} başarılı)`,
+        type: 'info'
+    });
+}
 
-// İndirme endpoint'i
-app.post('/api/download', async (req, res) => {
-    try {
-        const { videoId, title, userId, telegramId } = req.body;
-        
-        if (!videoId || !telegramId) {
-            return res.status(400).json({ 
-                success: false, 
-                error: 'Video ID ve Telegram ID gerekli' 
-            });
-        }
-
-        console.log(`⬇️ İndirme isteği: ${title} (User: ${userId}, Telegram: ${telegramId})`);
-
-        // İndirme işlemini başlat
-        const downloadResult = await downloadYouTubeVideo(videoId, title);
-        
-        // Telegram'a gönder
-        await sendAudioToTelegram(telegramId, downloadResult.filePath, downloadResult.title);
-        
-        // Dosyayı temizle
-        fs.unlinkSync(downloadResult.filePath);
-        console.log('🗑️ Dosya temizlendi');
-        
-        res.json({
-            success: true,
-            message: 'Müzik başarıyla Telegram\'a gönderildi'
-        });
-        
-    } catch (error) {
-        console.error('❌ İndirme API hatası:', error);
-        res.status(500).json({ 
-            success: false, 
-            error: 'İndirme sırasında hata oluştu' 
-        });
+// =============================================
+// API ENDPOINT'LERİ
+// =============================================
+app.post('/api/send-views', async (req, res) => {
+    const { url, views, speed } = req.body;
+    
+    // URL kontrolü
+    if (!url || !url.match(/t\.me\/([^\/]+)\/(\d+)/)) {
+        return res.status(400).json({ error: 'Geçersiz Telegram linki' });
     }
-});
-
-// Health check endpoint'i
-app.get('/api/health', (req, res) => {
-    res.json({
-        status: 'OK',
-        timestamp: new Date().toISOString(),
-        uptime: process.uptime(),
-        server: SERVER_URL
+    
+    // Proxy kontrolü
+    if (proxyList.length === 0) {
+        return res.status(503).json({ error: 'Proxy listesi boş, lütfen bekleyin' });
+    }
+    
+    const taskId = `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Worker sayısını ayarla
+    const workerCount = speed === 'fast' ? 15 : (speed === 'normal' ? 8 : 4);
+    const viewsPerWorker = Math.floor(views / workerCount);
+    
+    // Görevi kaydet
+    activeTasks.set(taskId, {
+        id: taskId,
+        url: url,
+        total: views,
+        completed: 0,
+        workers: workerCount,
+        speed: speed,
+        startTime: Date.now()
+    });
+    
+    // Worker'ları başlat
+    for (let i = 0; i < workerCount; i++) {
+        const workerViews = i === workerCount - 1 
+            ? views - (viewsPerWorker * (workerCount - 1))
+            : viewsPerWorker;
+        
+        // Hemen başlat (arka planda)
+        startWorker(taskId, url, workerViews, i + 1, speed);
+        
+        // Worker'lar arasında küçük bekleme
+        await new Promise(r => setTimeout(r, 100));
+    }
+    
+    // 1 saat sonra görevi temizle
+    setTimeout(() => {
+        activeTasks.delete(taskId);
+    }, 60 * 60 * 1000);
+    
+    res.json({ 
+        success: true, 
+        taskId: taskId,
+        message: `${views} görüntülenme için ${workerCount} worker başlatıldı`
     });
 });
 
-// Ana sayfa
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+app.get('/api/task-status/:taskId', (req, res) => {
+    const task = activeTasks.get(req.params.taskId);
+    if (task) {
+        res.json(task);
+    } else {
+        res.status(404).json({ error: 'Görev bulunamadı' });
+    }
 });
 
-// Sunucuyu başlat
-app.listen(PORT, () => {
-    console.log(`🚀 Sunucu başlatıldı: http://localhost:${PORT}`);
-    console.log(`🌐 Sunucu URL: ${SERVER_URL}`);
-    console.log(`🤖 Telegram Bot: Aktif`);
-    console.log(`📁 Downloads: ${downloadsDir}`);
-    console.log('✅ Sistem hazır!');
+// =============================================
+// SOCKET.IO BAĞLANTILARI
+// =============================================
+io.on('connection', (socket) => {
+    console.log('🟢 Yeni istemci bağlandı:', socket.id);
+    
+    socket.on('join_task', (taskId) => {
+        socket.join(taskId);
+    });
+    
+    socket.on('disconnect', () => {
+        console.log('🔴 İstemci ayrıldı:', socket.id);
+    });
 });
 
-// Graceful shutdown
-process.on('SIGTERM', () => {
-    console.log('🛑 SIGTERM received. Kapatılıyor...');
-    process.exit(0);
-});
-
-process.on('SIGINT', () => {
-    console.log('🛑 SIGINT received. Kapatılıyor...');
-    process.exit(0);
+// =============================================
+// SUNUCUYU BAŞLAT
+// =============================================
+const PORT = process.env.PORT || 3000;
+httpServer.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 Sunucu http://localhost:${PORT} adresinde çalışıyor`);
+    console.log(`📡 https://saskioyunu-1-2d6i.onrender.com üzerinden erişilebilir`);
 });
