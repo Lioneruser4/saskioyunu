@@ -1,17 +1,20 @@
 {
-  "name": "saskioyunu-server",
+  "name": "baxis-artirma",
   "version": "1.0.0",
-  "description": "SAŞKİ OYUNU - FPS Savaş Arenası Sunucusu",
+  "description": "Realistik görüntülenme artırma sistemi",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
     "express": "^4.18.2",
-    "socket.io": "^4.7.2",
-    "cors": "^2.8.5"
-  },
-  "engines": {
-    "node": ">=16.0.0"
+    "puppeteer": "^21.0.0",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
+    "random-useragent": "^0.5.0",
+    "https-proxy-agent": "^7.0.0",
+    "socks-proxy-agent": "^8.0.0",
+    "moment": "^2.29.4",
+    "express-session": "^1.17.3"
   }
 }
