@@ -1,251 +1,290 @@
 const express = require('express');
-const http = require('http');
-const socketIO = require('socket.io');
-const cors = require('cors');
+const session = require('express-session');
+const path = require('path');
+const moment = require('moment');
+const fs = require('fs').promises;
+const { v4: uuidv4 } = require('uuid');
+
+// Puppeteer stealth mod ile
+const puppeteer = require('puppeteer-extra');
+const StealthPlugin = require('puppeteer-extra-plugin-stealth');
+puppeteer.use(StealthPlugin());
+
+const randomUseragent = require('random-useragent');
+const { HttpsProxyAgent } = require('https-proxy-agent');
+const { SocksProxyAgent } = require('socks-proxy-agent');
 
 const app = express();
-const server = http.createServer(app);
-const io = socketIO(server, {
-  cors: {
-    origin: "*",
-    methods: ["GET", "POST"]
-  }
-});
+const PORT = process.env.PORT || 3000;
 
-app.use(cors());
+// Middleware
 app.use(express.json());
+app.use(express.static('public'));
+app.use(session({
+    secret: 'baxis-artirma-secret-key',
+    resave: false,
+    saveUninitialized: true
+}));
 
-// ==================== VERİTABANI ====================
-const players = new Map();
-const rooms = new Map();
+// Proxy listesi
+let proxies = [];
+let currentProxyIndex = 0;
 
-// ==================== ODA YÖNETİMİ ====================
-class RoomManager {
-  constructor() {
-    this.rooms = rooms;
-    this.maxPlayers = 10; // 5v5
-  }
+// Kullanıcı ajanları listesi
+const userAgents = [
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36 Edg/119.0.0.0',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0',
+    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+];
 
-  createRoom(options = {}) {
-    const roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
-    const room = {
-      id: roomId,
-      name: options.name || `Oda ${roomId}`,
-      map: options.map || 'backrooms',
-      mode: options.mode || 'tdm',
-      state: 'waiting',
-      players: new Map(),
-      redTeam: [],
-      blueTeam: [],
-      redScore: 0,
-      blueScore: 0,
-      created: Date.now()
-    };
-    this.rooms.set(roomId, room);
-    return room;
-  }
+// Ekran çözünürlükleri
+const viewports = [
+    { width: 1920, height: 1080 },
+    { width: 1366, height: 768 },
+    { width: 1536, height: 864 },
+    { width: 1440, height: 900 },
+    { width: 1280, height: 720 }
+];
 
-  findRoom() {
-    for (const room of this.rooms.values()) {
-      if (room.players.size < this.maxPlayers && room.state === 'waiting') {
-        return room;
-      }
+// Proxy listesini yükle
+async function loadProxies() {
+    try {
+        const data = await fs.readFile('proxy-list.txt', 'utf8');
+        proxies = data.split('\n')
+            .map(line => line.trim())
+            .filter(line => line && !line.startsWith('#'));
+        console.log(`${proxies.length} proxy yüklendi`);
+    } catch (error) {
+        console.log('Proxy listesi bulunamadı, proxysiz çalışılacak');
+        proxies = [];
     }
-    return this.createRoom();
-  }
-
-  joinRoom(roomId, player) {
-    const room = this.rooms.get(roomId);
-    if (!room) return null;
-
-    // Takım seç (dengeleme)
-    const team = room.redTeam.length <= room.blueTeam.length ? 'red' : 'blue';
-    
-    const playerData = {
-      id: player.id,
-      username: player.username,
-      team: team,
-      health: 100,
-      kills: 0,
-      deaths: 0,
-      position: { x: Math.random() * 20 - 10, y: 1, z: Math.random() * 20 - 10 }
-    };
-
-    room.players.set(player.id, playerData);
-    if (team === 'red') {
-      room.redTeam.push(player.id);
-    } else {
-      room.blueTeam.push(player.id);
-    }
-
-    return { room, playerData, team };
-  }
-
-  leaveRoom(roomId, playerId) {
-    const room = this.rooms.get(roomId);
-    if (!room) return;
-
-    const player = room.players.get(playerId);
-    if (player) {
-      room.players.delete(playerId);
-      if (player.team === 'red') {
-        room.redTeam = room.redTeam.filter(id => id !== playerId);
-      } else {
-        room.blueTeam = room.blueTeam.filter(id => id !== playerId);
-      }
-    }
-
-    if (room.players.size === 0) {
-      this.rooms.delete(roomId);
-    }
-  }
 }
 
-const roomManager = new RoomManager();
+// Rastgele proxy seç
+function getRandomProxy() {
+    if (proxies.length === 0) return null;
+    return proxies[Math.floor(Math.random() * proxies.length)];
+}
 
-// ==================== API ROUTES ====================
+// Proxy ile browser oluştur
+async function createBrowserWithProxy(proxyString = null) {
+    const args = [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--disable-gpu',
+        '--window-size=1920,1080',
+        '--disable-blink-features=AutomationControlled',
+        '--disable-web-security',
+        '--disable-features=IsolateOrigins,site-per-process'
+    ];
+
+    if (proxyString) {
+        args.push(`--proxy-server=${proxyString}`);
+    }
+
+    const browser = await puppeteer.launch({
+        headless: 'new',
+        args: args,
+        ignoreHTTPSErrors: true
+    });
+
+    return browser;
+}
+
+// Gerçekçi görüntüleme simülasyonu
+async function simulateHumanView(page, url) {
+    // Rastgele scroll
+    await page.evaluate(() => {
+        const scrollHeight = document.body.scrollHeight;
+        const scrolls = Math.floor(Math.random() * 3) + 2;
+        for (let i = 0; i < scrolls; i++) {
+            setTimeout(() => {
+                window.scrollTo({
+                    top: Math.random() * scrollHeight,
+                    behavior: 'smooth'
+                });
+            }, i * 2000);
+        }
+    });
+
+    // Rastgele bekleme (insan gibi)
+    await page.waitForTimeout(Math.random() * 5000 + 3000);
+
+    // Mouse hareketleri simülasyonu
+    await page.mouse.move(
+        Math.random() * 500,
+        Math.random() * 500
+    );
+}
+
+// Ana görüntüleme fonksiyonu
+async function createView(url, count, useProxy = true, delayBetweenViews = 30) {
+    const results = [];
+    
+    for (let i = 0; i < count; i++) {
+        let browser = null;
+        let proxyUsed = null;
+        
+        try {
+            // Proxy seç
+            if (useProxy && proxies.length > 0) {
+                proxyUsed = getRandomProxy();
+                console.log(`Görüntüleme ${i+1}/${count} - Proxy: ${proxyUsed || 'yok'}`);
+            }
+
+            // Browser oluştur
+            browser = await createBrowserWithProxy(proxyUsed);
+            const page = await browser.newPage();
+
+            // Rastgele kullanıcı ajanı
+            const userAgent = userAgents[Math.floor(Math.random() * userAgents.length)];
+            await page.setUserAgent(userAgent);
+
+            // Rastgele viewport
+            const viewport = viewports[Math.floor(Math.random() * viewports.length)];
+            await page.setViewport(viewport);
+
+            // WebGL fingerprint gizleme
+            await page.evaluateOnNewDocument(() => {
+                // WebGL vendor renderer'ı gizle
+                const getParameter = WebGLRenderingContext.prototype.getParameter;
+                WebGLRenderingContext.prototype.getParameter = function(parameter) {
+                    if (parameter === 37445) {
+                        return 'Intel Inc.';
+                    }
+                    if (parameter === 37446) {
+                        return 'Intel Iris OpenGL Engine';
+                    }
+                    return getParameter(parameter);
+                };
+            });
+
+            // Sayfaya git
+            console.log(`Sayfa yükleniyor: ${url}`);
+            await page.goto(url, {
+                waitUntil: 'networkidle2',
+                timeout: 30000
+            });
+
+            // İnsan davranışı simülasyonu
+            await simulateHumanView(page, url);
+
+            // Sayfada kalma süresi
+            const stayTime = Math.floor(Math.random() * 20000) + 10000; // 10-30 saniye
+            console.log(`Sayfada kalınıyor: ${stayTime/1000} saniye`);
+            await page.waitForTimeout(stayTime);
+
+            // Başarılı görüntüleme
+            results.push({
+                success: true,
+                url: url,
+                proxy: proxyUsed,
+                userAgent: userAgent,
+                viewport: viewport,
+                timestamp: new Date().toISOString()
+            });
+
+            await browser.close();
+
+            // Görüntülemeler arası bekle
+            if (i < count - 1) {
+                const waitTime = delayBetweenViews * 1000;
+                console.log(`${delayBetweenViews} saniye bekleniyor...`);
+                await new Promise(resolve => setTimeout(resolve, waitTime));
+            }
+
+        } catch (error) {
+            console.error(`Görüntüleme hatası (${i+1}):`, error.message);
+            
+            if (browser) {
+                await browser.close();
+            }
+
+            results.push({
+                success: false,
+                url: url,
+                error: error.message,
+                timestamp: new Date().toISOString()
+            });
+
+            // Hata durumunda bekle
+            await new Promise(resolve => setTimeout(resolve, 5000));
+        }
+    }
+
+    return results;
+}
+
+// API Routes
 app.get('/', (req, res) => {
-  res.json({ 
-    status: 'online', 
-    players: io.engine.clientsCount,
-    rooms: rooms.size 
-  });
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-app.get('/api/rooms', (req, res) => {
-  const roomList = Array.from(rooms.values()).map(r => ({
-    id: r.id,
-    name: r.name,
-    map: r.map,
-    red: r.redTeam.length,
-    blue: r.blueTeam.length,
-    total: r.players.size,
-    max: 10
-  }));
-  res.json(roomList);
-});
+// Görüntüleme başlat
+app.post('/api/start', async (req, res) => {
+    const { url, count, useProxy, delayBetweenViews } = req.body;
 
-app.post('/api/rooms/create', (req, res) => {
-  const room = roomManager.createRoom(req.body);
-  res.json({ id: room.id });
-});
+    if (!url || !url.includes('turbo.az')) {
+        return res.status(400).json({ error: 'Geçerli bir turbo.az URL\'si girin' });
+    }
 
-// ==================== SOCKET.IO ====================
-io.on('connection', (socket) => {
-  console.log(`🔌 Bağlandı: ${socket.id}`);
+    if (count > 100) {
+        return res.status(400).json({ error: 'Maksimum 100 görüntüleme' });
+    }
 
-  let currentRoom = null;
-  let playerName = 'Oyuncu';
+    // Session'da işlem ID'si oluştur
+    const jobId = uuidv4();
+    req.session.jobId = jobId;
 
-  // Giriş
-  socket.on('auth', (data) => {
-    playerName = data.username || 'Oyuncu';
-    players.set(socket.id, { username: playerName });
-    socket.emit('auth:success', { 
-      id: socket.id,
-      username: playerName 
-    });
-  });
-
-  // Odaya katıl
-  socket.on('joinRoom', (data) => {
-    const room = roomManager.findRoom();
-    const result = roomManager.joinRoom(room.id, {
-      id: socket.id,
-      username: playerName
+    // İşlemi arka planda başlat
+    res.json({ 
+        message: 'Görüntüleme başlatıldı', 
+        jobId: jobId,
+        estimatedTime: count * (delayBetweenViews + 0.5) + ' saniye'
     });
 
-    if (result) {
-      socket.join(room.id);
-      currentRoom = room.id;
-
-      // Kendine bilgi gönder
-      socket.emit('roomJoined', {
-        roomId: room.id,
-        players: Array.from(room.players.values()),
-        yourTeam: result.team
-      });
-
-      // Diğerlerine yeni oyuncuyu bildir
-      socket.to(room.id).emit('playerJoined', {
-        id: socket.id,
-        username: playerName,
-        team: result.team
-      });
-
-      console.log(`${playerName} ${room.id} odasına katıldı`);
-    }
-  });
-
-  // Hareket
-  socket.on('playerMove', (position) => {
-    if (currentRoom) {
-      socket.to(currentRoom).emit('playerMoved', {
-        id: socket.id,
-        position: position
-      });
-    }
-  });
-
-  // Ateş et
-  socket.on('playerShoot', (data) => {
-    if (currentRoom) {
-      io.to(currentRoom).emit('playerShot', {
-        id: socket.id,
-        ...data
-      });
-
-      // Hasar hesapla
-      const damage = data.hitZone === 'head' ? 100 : 
-                     data.hitZone === 'body' ? 35 : 20;
-
-      io.to(currentRoom).emit('playerHit', {
-        shooter: socket.id,
-        target: data.targetId,
-        damage: damage,
-        hitZone: data.hitZone
-      });
-    }
-  });
-
-  // Yeniden doğ
-  socket.on('playerRespawn', () => {
-    if (currentRoom) {
-      io.to(currentRoom).emit('playerRespawned', {
-        id: socket.id,
-        position: { x: Math.random() * 20 - 10, y: 1, z: Math.random() * 20 - 10 }
-      });
-    }
-  });
-
-  // Sohbet
-  socket.on('chatMessage', (message) => {
-    if (currentRoom) {
-      io.to(currentRoom).emit('chatMessage', {
-        id: socket.id,
-        username: playerName,
-        message: message
-      });
-    }
-  });
-
-  // Ayrılma
-  socket.on('disconnect', () => {
-    if (currentRoom) {
-      roomManager.leaveRoom(currentRoom, socket.id);
-      io.to(currentRoom).emit('playerLeft', socket.id);
-    }
-    players.delete(socket.id);
-    console.log(`❌ Ayrıldı: ${socket.id}`);
-  });
+    // Görüntülemeleri başlat (arka planda)
+    createView(url, count, useProxy, delayBetweenViews)
+        .then(results => {
+            console.log('İşlem tamamlandı:', results);
+            // Sonuçları kaydet
+        })
+        .catch(error => {
+            console.error('Toplu hata:', error);
+        });
 });
 
-// 20 saniyede bir ping
-setInterval(() => {
-  io.emit('ping', Date.now());
-}, 20000);
-
-const PORT = process.env.PORT || 10000;
-server.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Sunucu ${PORT} portunda çalışıyor`);
+// İşlem durumu sorgula
+app.get('/api/status', (req, res) => {
+    // Basit durum kontrolü
+    res.json({ status: 'active', message: 'Sistem çalışıyor' });
 });
+
+// Proxy listesini güncelle
+app.post('/api/proxies', async (req, res) => {
+    const { proxies: newProxies } = req.body;
+    
+    try {
+        await fs.writeFile('proxy-list.txt', newProxies.join('\n'));
+        await loadProxies();
+        res.json({ message: 'Proxy listesi güncellendi', count: proxies.length });
+    } catch (error) {
+        res.status(500).json({ error: 'Proxy listesi güncellenemedi' });
+    }
+});
+
+// Başlangıç
+async function start() {
+    await loadProxies();
+    
+    app.listen(PORT, () => {
+        console.log(`Baxış Artırma sistemi çalışıyor: http://localhost:${PORT}`);
+        console.log(`Yüklü proxy sayısı: ${proxies.length}`);
+    });
+}
+
+start();
