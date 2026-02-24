@@ -1,499 +1,278 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Saski FPS">
-    <meta name="application-name" content="Saski FPS">
-    <meta name="theme-color" content="#667eea">
-    <meta name="msapplication-TileColor" content="#667eea">
-    <meta name="msapplication-config" content="browserconfig.xml">
-    <title>Saski FPS Oyunu</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>SaskiOyunu 🎮</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131f;
+    --surface2: #1c1c2e;
+    --border: #2a2a45;
+    --accent: #7c4dff;
+    --accent2: #00e5ff;
+    --green: #00e676;
+    --red: #ff1744;
+    --text: #e0e0ff;
+    --muted: #7070a0;
+  }
+  html,body { width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'Segoe UI',sans-serif; touch-action:manipulation; }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            overflow: hidden;
-            position: fixed;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            margin: 0;
-            padding: 0;
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
-            touch-action: none;
-        }
+  /* ===================== SCREENS ===================== */
+  .screen { position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .3s; }
+  .screen.hidden { opacity:0;pointer-events:none; }
 
-        #mainMenu {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(255, 255, 255, 0.95);
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            text-align: center;
-            z-index: 1000;
-            min-width: 350px;
-        }
+  /* ===================== LOADING ===================== */
+  #loadingScreen { background:var(--bg);z-index:100; }
+  .logo { font-size:2.5rem;font-weight:900;background:linear-gradient(135deg,#7c4dff,#00e5ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:1rem; }
+  .loader-bar { width:200px;height:4px;background:var(--border);border-radius:4px;overflow:hidden;margin-top:1.5rem; }
+  .loader-fill { height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0;animation:load 2s forwards; }
+  @keyframes load { to { width:100%; } }
 
-        #mainMenu h1 {
-            color: #333;
-            margin-bottom: 30px;
-            font-size: 2.5em;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
-        }
+  /* ===================== LOBBY ===================== */
+  #lobbyScreen { background:radial-gradient(ellipse at 50% 0%, #1a0a3a 0%, var(--bg) 70%);padding:1rem;overflow-y:auto;justify-content:flex-start;padding-top:2rem; }
+  .lobby-header { text-align:center;margin-bottom:1.5rem; }
+  .lobby-title { font-size:1.8rem;font-weight:900;background:linear-gradient(135deg,#7c4dff,#00e5ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent; }
+  .player-badge { display:inline-flex;align-items:center;gap:.5rem;background:var(--surface2);border:1px solid var(--border);border-radius:2rem;padding:.4rem 1rem;margin-top:.5rem;font-size:.85rem;color:var(--muted); }
+  .player-badge strong { color:var(--text); }
 
-        .menu-button {
-            display: block;
-            width: 100%;
-            padding: 15px 30px;
-            margin: 15px 0;
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            position: relative;
-            overflow: hidden;
-        }
+  .lobby-section { width:100%;max-width:480px;margin:0 auto .8rem; }
+  .section-label { font-size:.7rem;text-transform:uppercase;letter-spacing:2px;color:var(--muted);margin-bottom:.5rem; }
 
-        .menu-button:before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-            transition: left 0.5s;
-        }
+  /* Big Action Buttons */
+  .btn-row { display:grid;grid-template-columns:1fr 1fr;gap:.6rem;width:100%;max-width:480px;margin:0 auto .8rem; }
+  .btn { padding:.85rem 1rem;border:none;border-radius:.8rem;font-size:.95rem;font-weight:700;cursor:pointer;transition:all .15s;text-align:center;position:relative;overflow:hidden; }
+  .btn::after { content:'';position:absolute;inset:0;background:rgba(255,255,255,.08);opacity:0;transition:opacity .1s; }
+  .btn:active::after { opacity:1; }
+  .btn-primary { background:linear-gradient(135deg,#7c4dff,#4527a0);color:#fff;box-shadow:0 4px 20px rgba(124,77,255,.35); }
+  .btn-secondary { background:linear-gradient(135deg,#00b0ff,#0064b7);color:#fff; }
+  .btn-success { background:linear-gradient(135deg,#00e676,#00a040);color:#000;grid-column:1/-1; }
+  .btn-danger { background:linear-gradient(135deg,#ff1744,#b71c1c);color:#fff; }
+  .btn-full { grid-column:1/-1; }
+  .btn-outline { background:transparent;border:1px solid var(--border);color:var(--text); }
 
-        .menu-button:hover:before {
-            left: 100%;
-        }
+  /* Room List */
+  .room-list { display:flex;flex-direction:column;gap:.5rem;max-height:280px;overflow-y:auto; }
+  .room-item { display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border:1px solid var(--border);border-radius:.7rem;padding:.7rem 1rem;cursor:pointer;transition:border-color .15s; }
+  .room-item:active { border-color:var(--accent); }
+  .room-info { flex:1; }
+  .room-name { font-weight:700;font-size:.9rem; }
+  .room-meta { font-size:.75rem;color:var(--muted);margin-top:.1rem; }
+  .room-count { font-size:.8rem;color:var(--muted);white-space:nowrap;margin-left:.5rem; }
+  .badge-lock { font-size:.75rem;margin-left:.3rem; }
 
-        .menu-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
-        }
+  /* Create room modal */
+  .modal-overlay { position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:flex;align-items:center;justify-content:center;padding:1rem; }
+  .modal-overlay.hidden { display:none; }
+  .modal { background:var(--surface2);border:1px solid var(--border);border-radius:1rem;padding:1.5rem;width:100%;max-width:360px; }
+  .modal h3 { margin-bottom:1rem;font-size:1.1rem; }
+  .input-field { width:100%;background:var(--surface);border:1px solid var(--border);border-radius:.6rem;padding:.7rem 1rem;color:var(--text);font-size:.95rem;outline:none;margin-bottom:.7rem; }
+  .input-field:focus { border-color:var(--accent); }
+  .modal-btns { display:grid;grid-template-columns:1fr 1fr;gap:.6rem; }
 
-        .menu-button:active {
-            transform: translateY(0);
-        }
+  /* ===================== GAME SCREEN ===================== */
+  #gameScreen { background:#000;padding:0; }
+  #gameCanvas { display:block;touch-action:none; }
 
-        /* Rooms List */
-        #roomsList {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 90%;
-            max-width: 600px;
-            max-height: 80vh;
-            background: rgba(0, 0, 0, 0.9);
-            padding: 30px;
-            border-radius: 20px;
-            backdrop-filter: blur(20px);
-            z-index: 1000;
-            overflow-y: auto;
-            border: 2px solid rgba(255, 255, 255, 0.1);
-        }
+  /* HUD */
+  #hud { position:fixed;top:0;left:0;right:0;z-index:50;pointer-events:none; }
+  #topHud { display:flex;align-items:center;justify-content:space-between;padding:.4rem .6rem;background:linear-gradient(180deg,rgba(0,0,0,.8) 0%,transparent 100%); }
+  #healthBar { display:flex;align-items:center;gap:.4rem; }
+  .hp-label { font-size:.7rem;color:var(--green);font-weight:700; }
+  .hp-track { width:90px;height:8px;background:rgba(255,255,255,.15);border-radius:4px;overflow:hidden; }
+  .hp-fill { height:100%;background:linear-gradient(90deg,#ff1744,#ff6d00,#00e676);width:100%;transition:width .2s;transform-origin:left; }
+  #statsHud { font-size:.7rem;color:rgba(255,255,255,.7);display:flex;gap:.8rem; }
+  #roomNameTag { font-size:.7rem;color:var(--accent2); }
+  #leaveBtn { pointer-events:all;background:rgba(255,50,50,.2);border:1px solid rgba(255,50,50,.4);color:#ff6b6b;font-size:.7rem;padding:.3rem .6rem;border-radius:.4rem;cursor:pointer; }
 
-        .rooms-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 25px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
-        }
+  /* Kill feed */
+  #killFeed { position:fixed;top:3rem;right:.5rem;z-index:50;pointer-events:none;display:flex;flex-direction:column;gap:.2rem;align-items:flex-end; }
+  .kill-entry { background:rgba(0,0,0,.6);border-left:3px solid var(--red);padding:.2rem .5rem;border-radius:.2rem;font-size:.68rem;animation:killAnim 3s forwards; }
+  @keyframes killAnim { 0%{opacity:1;transform:translateX(20px)} 80%{opacity:1;transform:translateX(0)} 100%{opacity:0} }
 
-        .rooms-title {
-            font-size: 28px;
-            font-weight: 700;
-            background: linear-gradient(45deg, #fff, #667eea);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
+  /* Respawn overlay */
+  #respawnOverlay { position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.7);pointer-events:none; }
+  #respawnOverlay.hidden { display:none; }
+  #respawnText { font-size:1.5rem;font-weight:700;color:var(--red);text-shadow:0 0 20px red; }
 
-        .back-button {
-            padding: 10px 20px;
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-weight: 600;
-        }
+  /* Chat */
+  #chatContainer { position:fixed;bottom:80px;left:.5rem;z-index:50;width:200px;max-width:calc(50vw - 1rem); }
+  #chatMessages { display:flex;flex-direction:column;gap:.15rem;margin-bottom:.3rem;max-height:100px;overflow-y:auto; }
+  .chat-msg { font-size:.68rem;background:rgba(0,0,0,.55);border-radius:.3rem;padding:.15rem .35rem;word-break:break-word; }
+  .chat-msg .cn { color:var(--accent2);font-weight:700; }
+  #chatInputRow { display:flex;gap:.3rem;pointer-events:all; }
+  #chatInput { flex:1;background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.2);border-radius:.4rem;padding:.3rem .5rem;color:#fff;font-size:.75rem;outline:none;min-width:0; }
+  #chatSend { background:var(--accent);border:none;color:#fff;border-radius:.4rem;padding:.3rem .5rem;font-size:.7rem;cursor:pointer;pointer-events:all; }
 
-        .back-button:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: translateY(-1px);
-        }
+  /* Minimap */
+  #minimap { position:fixed;top:2.8rem;right:.5rem;z-index:50;pointer-events:none; }
+  #minimapCanvas { border:1px solid rgba(255,255,255,.2);border-radius:.3rem; }
 
-        #roomsContainer {
-            max-height: 400px;
-            overflow-y: auto;
-        }
+  /* ===================== MOBILE CONTROLS ===================== */
+  #mobileControls { position:fixed;bottom:0;left:0;right:0;height:80px;z-index:55;display:flex;align-items:center;justify-content:space-between;padding:0 .5rem;background:linear-gradient(0deg,rgba(0,0,0,.9) 0%,transparent 100%);pointer-events:none; }
 
-        .room-item {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 20px;
-            margin: 15px 0;
-            border-radius: 12px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: all 0.3s ease;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            cursor: pointer;
-        }
+  /* D-Pad left */
+  #dpad { display:flex;gap:.4rem;pointer-events:all; }
+  .ctrl-btn { width:52px;height:52px;border-radius:.7rem;border:2px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;font-size:1.3rem;cursor:pointer;user-select:none;-webkit-user-select:none;transition:background .1s; }
+  .ctrl-btn:active, .ctrl-btn.pressed { background:rgba(255,255,255,.25); }
 
-        .room-item:hover {
-            background: rgba(255, 255, 255, 0.1);
-            transform: translateX(5px);
-            border-color: rgba(102, 126, 234, 0.5);
-        }
+  /* Action buttons right */
+  #actionBtns { display:grid;grid-template-columns:1fr 1fr;gap:.4rem;pointer-events:all; }
+  .action-btn { width:52px;height:52px;border-radius:50%;border:2px solid rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:1.1rem;cursor:pointer;user-select:none;-webkit-user-select:none;transition:background .1s; }
+  .action-btn:active, .action-btn.pressed { opacity:.7; }
+  #btnJump  { background:rgba(0,200,100,.25);border-color:rgba(0,200,100,.5); }
+  #btnAtk   { background:rgba(255,50,50,.25);border-color:rgba(255,50,50,.5); }
+  #btnShoot { background:rgba(0,150,255,.25);border-color:rgba(0,150,255,.5); }
+  #btnChat  { background:rgba(200,200,0,.25);border-color:rgba(200,200,0,.5);border-radius:.7rem; }
 
-        .room-info {
-            flex: 1;
-        }
+  /* ===================== SCORE TABLE ===================== */
+  #scoreBoard { position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:80;background:rgba(10,10,20,.95);border:1px solid var(--border);border-radius:1rem;padding:1rem;width:300px;max-height:70vh;overflow-y:auto;display:none; }
+  #scoreBoard h3 { text-align:center;margin-bottom:.7rem;font-size:1rem; }
+  .score-row { display:flex;justify-content:space-between;padding:.35rem .5rem;border-radius:.4rem;font-size:.8rem; }
+  .score-row:nth-child(even) { background:rgba(255,255,255,.04); }
+  .score-row.me { background:rgba(124,77,255,.2); }
 
-        .room-name {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 5px;
-        }
+  /* Responsive desktop */
+  @media (min-width:768px) {
+    #mobileControls { height:90px; }
+    .ctrl-btn, .action-btn { width:60px;height:60px; }
+  }
 
-        .room-players {
-            font-size: 14px;
-            opacity: 0.7;
-        }
-
-        /* Game Canvas */
-        #gameCanvas {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-        }
-
-        /* HUD */
-        #hud {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 100;
-        }
-
-        .health-container {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            width: 200px;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 15px;
-            border-radius: 10px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .health-bar {
-            width: 100%;
-            height: 20px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 10px;
-            overflow: hidden;
-            margin-top: 10px;
-        }
-
-        #healthFill {
-            height: 100%;
-            width: 100%;
-            background: linear-gradient(90deg, #4CAF50, #66BB6A);
-            transition: all 0.3s ease;
-            border-radius: 10px;
-        }
-
-        .health-text {
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 5px;
-        }
-
-        .ammo-container {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 15px;
-            border-radius: 10px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            font-size: 18px;
-            font-weight: 600;
-        }
-
-        #teamIndicator {
-            position: absolute;
-            top: 80px;
-            left: 20px;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 14px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .team-blue {
-            background: rgba(33, 150, 243, 0.8);
-            color: white;
-        }
-
-        .team-red {
-            background: rgba(244, 67, 54, 0.8);
-            color: white;
-        }
-
-        #crosshair {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 20px;
-            height: 20px;
-            border: 2px solid white;
-            border-radius: 50%;
-            pointer-events: none;
-            z-index: 101;
-        }
-
-        /* Mobile Controls */
-        #mobileControls {
-            display: none;
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            right: 20px;
-            z-index: 102;
-        }
-
-        .controls-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 20px;
-        }
-
-        .touch-joystick {
-            width: 120px;
-            height: 120px;
-            background: rgba(255, 255, 255, 0.2);
-            border: 2px solid rgba(255, 255, 255, 0.4);
-            border-radius: 50%;
-            position: relative;
-            backdrop-filter: blur(10px);
-        }
-
-        .touch-button {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            border: 2px solid rgba(255, 255, 255, 0.4);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            font-weight: bold;
-            backdrop-filter: blur(10px);
-            transition: all 0.2s ease;
-        }
-
-        .touch-button:active {
-            transform: scale(0.9);
-            background: linear-gradient(45deg, #764ba2, #667eea);
-        }
-
-        .controls-info {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.7);
-            padding: 15px;
-            border-radius: 10px;
-            backdrop-filter: blur(10px);
-            text-align: center;
-            font-size: 14px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        /* Notification */
-        .notification {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.9);
-            color: white;
-            padding: 20px 30px;
-            border-radius: 15px;
-            font-size: 16px;
-            font-weight: 600;
-            z-index: 10000;
-            backdrop-filter: blur(20px);
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            animation: slideIn 0.3s ease;
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translate(-50%, -60%);
-            }
-            to {
-                opacity: 1;
-                transform: translate(-50%, -50%);
-            }
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            #mainMenu {
-                width: 90%;
-                padding: 30px 20px;
-            }
-
-            .game-title {
-                font-size: 36px;
-            }
-
-            .menu-button {
-                padding: 15px 20px;
-                font-size: 16px;
-            }
-
-            #roomsList {
-                width: 95%;
-                padding: 20px;
-            }
-
-            .health-container, .ammo-container {
-                padding: 10px;
-            }
-
-            .touch-joystick {
-                width: 100px;
-                height: 100px;
-            }
-
-            .touch-button {
-                width: 70px;
-                height: 70px;
-                font-size: 20px;
-            }
-        }
-
-        /* Prevent zoom on input focus */
-        input, textarea, select {
-            font-size: 16px;
-        }
-
-        /* Fullscreen styles */
-        :fullscreen {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-
-        :-webkit-full-screen {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-
-        :-moz-full-screen {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-
-        :-ms-fullscreen {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-    </style>
+  /* Empty state */
+  .empty-state { text-align:center;color:var(--muted);padding:1.5rem;font-size:.85rem; }
+  .pulse { animation:pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+  
+  /* notification */
+  #notif { position:fixed;top:.8rem;left:50%;transform:translateX(-50%);z-index:300;background:rgba(255,80,80,.9);color:#fff;padding:.5rem 1.2rem;border-radius:2rem;font-size:.85rem;transition:opacity .3s;pointer-events:none; }
+  #notif.hidden { opacity:0; }
+</style>
 </head>
 <body>
-    <div id="mainMenu">
-        <h1>🎮 Saski FPS</h1>
-        <button class="menu-button" onclick="findGame()">🔍 Oyun Bul</button>
-        <button class="menu-button" onclick="showRooms()">🏠 Odalar</button>
-        <button class="menu-button" onclick="createRoom()">➕ Oda Oluştur</button>
+
+<!-- ===================== LOADING SCREEN ===================== -->
+<div id="loadingScreen" class="screen">
+  <div class="logo">🎮 SaskiOyunu</div>
+  <div style="color:var(--muted);font-size:.9rem">Yükleniyor...</div>
+  <div class="loader-bar"><div class="loader-fill"></div></div>
+</div>
+
+<!-- ===================== LOBBY SCREEN ===================== -->
+<div id="lobbyScreen" class="screen hidden">
+  <div class="lobby-header">
+    <div class="lobby-title">🎮 SaskiOyunu</div>
+    <div class="player-badge">👤 <strong id="playerNameDisplay">Player</strong></div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-success btn-full" id="joinPublicBtn">🌍 Dünyaya Katıl</button>
+    <button class="btn btn-primary" id="quickJoinBtn">⚡ Hızlı Katıl</button>
+    <button class="btn btn-secondary" id="createRoomBtn">➕ Oda Oluştur</button>
+  </div>
+
+  <div class="lobby-section">
+    <div class="section-label">Aktif Odalar <span id="roomCountBadge" style="color:var(--accent2)"></span></div>
+    <div class="room-list" id="roomList">
+      <div class="empty-state pulse">Odalar yükleniyor...</div>
     </div>
+  </div>
 
-    <div id="userInfo">
-        <div id="userName"></div>
-        <div id="userId"></div>
+  <div style="text-align:center;margin-top:.5rem;">
+    <button class="btn btn-outline" style="padding:.4rem 1rem;font-size:.8rem;" id="refreshBtn">🔄 Yenile</button>
+  </div>
+</div>
+
+<!-- ===================== GAME SCREEN ===================== -->
+<div id="gameScreen" class="screen hidden">
+  <canvas id="gameCanvas"></canvas>
+
+  <!-- HUD -->
+  <div id="hud">
+    <div id="topHud">
+      <div id="healthBar">
+        <div class="hp-label">❤️</div>
+        <div class="hp-track"><div class="hp-fill" id="hpFill"></div></div>
+        <div class="hp-label" id="hpText">100</div>
+      </div>
+      <div id="statsHud">
+        <span>🗡️ <span id="killCount">0</span></span>
+        <span>💀 <span id="deathCount">0</span></span>
+      </div>
+      <div id="roomNameTag"></div>
+      <button id="leaveBtn">⬅ Çık</button>
     </div>
+  </div>
 
-    <div id="roomsList">
-        <h2>Mevcut Odalar</h2>
-        <div id="roomsContainer"></div>
-        <button class="menu-button" onclick="backToMenu()" style="margin-top: 20px;">⬅️ Geri</button>
+  <div id="killFeed"></div>
+  <canvas id="minimapCanvas" width="100" height="60" style="display:none;"></canvas>
+  <div id="minimap"><canvas id="minimapCanvas2" width="100" height="55"></canvas></div>
+
+  <div id="respawnOverlay" class="hidden">
+    <div id="respawnText">☠️ Yeniden doğuyorsunuz...</div>
+  </div>
+
+  <!-- Chat -->
+  <div id="chatContainer">
+    <div id="chatMessages"></div>
+    <div id="chatInputRow">
+      <input id="chatInput" type="text" placeholder="Mesaj..." maxlength="100">
+      <button id="chatSend">📨</button>
     </div>
+  </div>
 
-    <div id="loading">Bağlanıyor...</div>
+  <!-- Scoreboard -->
+  <div id="scoreBoard">
+    <h3>🏆 Skor Tablosu</h3>
+    <div id="scoreList"></div>
+  </div>
 
-    <canvas id="gameCanvas"></canvas>
-    
-    <div id="hud">
-        <div id="teamIndicator"></div>
-        <div id="healthBar">
-            <div id="healthFill"></div>
-        </div>
-        <div id="ammo">🔫 30 / ∞</div>
-        <div id="crosshair"></div>
+  <!-- Mobile Controls -->
+  <div id="mobileControls">
+    <div id="dpad">
+      <div class="ctrl-btn" id="btnLeft">◀</div>
+      <div class="ctrl-btn" id="btnRight">▶</div>
     </div>
-
-    <div class="controls-info">
-        WASD: Hareket | Boşluk: Zıpla | Sol Tık: Ateş Et | F: Odak Değiştir
+    <div id="actionBtns">
+      <div class="action-btn" id="btnJump">🦘</div>
+      <div class="action-btn" id="btnAtk">⚔️</div>
+      <div class="action-btn" id="btnShoot">🏹</div>
+      <div class="action-btn" id="btnChat">💬</div>
     </div>
+  </div>
+</div>
 
-    <div id="mobileControls">
-        <div class="touch-joystick" id="leftJoystick"></div>
-        <div class="touch-joystick" id="rightJoystick"></div>
-        <div class="touch-button" id="fireButton">🔫</div>
-        <div class="touch-button" id="jumpButton">⬆️</div>
-        <div class="touch-button" id="reloadButton">🔄</div>
+<!-- ===================== MODALS ===================== -->
+<!-- Create Room -->
+<div class="modal-overlay hidden" id="createRoomModal">
+  <div class="modal">
+    <h3>➕ Oda Oluştur</h3>
+    <input class="input-field" id="newRoomName" placeholder="Oda adı..." maxlength="30">
+    <input class="input-field" id="newRoomPass" type="password" placeholder="Şifre (opsiyonel)">
+    <div class="modal-btns">
+      <button class="btn btn-primary" id="confirmCreateRoom">Oluştur</button>
+      <button class="btn btn-outline" id="cancelCreateRoom">İptal</button>
     </div>
+  </div>
+</div>
 
-    <script src="game.js"></script>
+<!-- Join Room Password -->
+<div class="modal-overlay hidden" id="joinPasswordModal">
+  <div class="modal">
+    <h3>🔒 Şifre Gerekli</h3>
+    <input class="input-field" id="joinPassInput" type="password" placeholder="Oda şifresi...">
+    <div class="modal-btns">
+      <button class="btn btn-primary" id="confirmJoinPass">Gir</button>
+      <button class="btn btn-outline" id="cancelJoinPass">İptal</button>
+    </div>
+  </div>
+</div>
+
+<!-- Notification -->
+<div id="notif" class="hidden"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="game.js"></script>
 </body>
 </html>
