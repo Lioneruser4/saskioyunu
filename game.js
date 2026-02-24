@@ -257,6 +257,12 @@ function createSoldier(team, position) {
     rightLeg.castShadow = true;
     group.add(rightLeg);
 
+    group.position.set(position.x, position.y, position.z);
+    
+    return group;
+}
+
+// Socket.io Connection - Render Server
 function initSocket() {
     socket = io('https://saskioyunu-1-2d6i.onrender.com', {
         transports: ['websocket', 'polling'],
@@ -275,7 +281,7 @@ function initSocket() {
         
         // Show connection success message
         if (gameStarted) {
-            showMessage('🟢 Sunucuya yeniden bağlandı!');
+            showNotification('🟢 Sunucuya yeniden bağlandı!');
         }
         
         // Rejoin room if we were in one
@@ -289,28 +295,26 @@ function initSocket() {
         console.log('❌ Sunucu bağlantısı koptu:', reason);
         document.getElementById('loading').style.display = 'block';
         document.getElementById('loading').innerHTML = `
-            <div style="text-align: center;">
-                <div style="font-size: 48px; margin-bottom: 20px;">🔄</div>
-                <div style="font-size: 24px; margin-bottom: 10px;">Bağlantı Kesildi</div>
-                <div style="font-size: 16px; opacity: 0.8;">Yeniden bağlanılıyor...</div>
-                <div style="font-size: 14px; opacity: 0.6; margin-top: 20px;">Lütfen bekleyin, oyun duraklatıldı</div>
+            <div class="loading-content">
+                <div class="loading-spinner"></div>
+                <div class="loading-text">Bağlantı Kesildi</div>
+                <div class="loading-subtext">Yeniden bağlanılıyor...</div>
             </div>
         `;
         
         // Pause game when disconnected
         if (gameStarted) {
-            showMessage('🔴 Bağlantı koptu! Oyun duraklatıldı...');
+            showNotification('🔴 Bağlantı koptu! Oyun duraklatıldı...');
         }
     });
 
     socket.on('reconnect_attempt', (attemptNumber) => {
         console.log(`🔄 Yeniden bağlanma denemesi: ${attemptNumber}`);
         document.getElementById('loading').innerHTML = `
-            <div style="text-align: center;">
-                <div style="font-size: 48px; margin-bottom: 20px;">🔄</div>
-                <div style="font-size: 24px; margin-bottom: 10px;">Yeniden Bağlanılıyor</div>
-                <div style="font-size: 16px; opacity: 0.8;">Deneme: ${attemptNumber}</div>
-                <div style="font-size: 14px; opacity: 0.6; margin-top: 20px;">Sunucuya bağlanmaya çalışılıyor...</div>
+            <div class="loading-content">
+                <div class="loading-spinner"></div>
+                <div class="loading-text">Yeniden Bağlanılıyor</div>
+                <div class="loading-subtext">Deneme: ${attemptNumber}</div>
             </div>
         `;
     });
@@ -318,11 +322,10 @@ function initSocket() {
     socket.on('reconnect_failed', () => {
         console.log('❌ Yeniden bağlanma başarısız');
         document.getElementById('loading').innerHTML = `
-            <div style="text-align: center;">
+            <div class="loading-content">
                 <div style="font-size: 48px; margin-bottom: 20px;">❌</div>
-                <div style="font-size: 24px; margin-bottom: 10px;">Bağlantı Hatası</div>
-                <div style="font-size: 16px; opacity: 0.8;">Sunucuya ulaşılamıyor</div>
-                <div style="font-size: 14px; opacity: 0.6; margin-top: 20px;">Sayfayı yenileyin veya daha sonra tekrar deneyin</div>
+                <div class="loading-text">Bağlantı Hatası</div>
+                <div class="loading-subtext">Sunucuya ulaşılamıyor</div>
                 <button onclick="location.reload()" style="
                     margin-top: 20px;
                     padding: 10px 20px;
@@ -341,11 +344,10 @@ function initSocket() {
         console.log('❌ Bağlantı hatası:', error.message);
         document.getElementById('loading').style.display = 'block';
         document.getElementById('loading').innerHTML = `
-            <div style="text-align: center;">
+            <div class="loading-content">
                 <div style="font-size: 48px; margin-bottom: 20px;">⚠️</div>
-                <div style="font-size: 24px; margin-bottom: 10px;">Bağlantı Hatası</div>
-                <div style="font-size: 16px; opacity: 0.8;">${error.message}</div>
-                <div style="font-size: 14px; opacity: 0.6; margin-top: 20px;">Yeniden deneniyor...</div>
+                <div class="loading-text">Bağlantı Hatası</div>
+                <div class="loading-subtext">${error.message}</div>
             </div>
         `;
     });
@@ -358,7 +360,7 @@ function initSocket() {
         
         // Show join message
         if (gameStarted) {
-            showMessage(`🟢 ${data.name} oyuna katıldı`);
+            showNotification(`🟢 ${data.name} oyuna katıldı`);
         }
     });
 
@@ -371,7 +373,7 @@ function initSocket() {
             
             // Show leave message
             if (gameStarted) {
-                showMessage(`🔴 ${playerName} oyundan ayrıldı`);
+                showNotification(`🔴 ${playerName} oyundan ayrıldı`);
             }
         }
     });
@@ -398,16 +400,16 @@ function initSocket() {
             
             // Show damage message
             if (data.damage >= 100) {
-                showMessage('💀 Kafa vuruşu! Öldün!');
+                showNotification('💀 Kafa vuruşu! Öldün!');
             } else if (data.damage >= 35) {
-                showMessage('🎯 Vücut vuruşu!');
+                showNotification('🎯 Vücut vuruşu!');
             } else {
-                showMessage('🦶 Bacak vuruşu!');
+                showNotification('🦶 Bacak vuruşu!');
             }
             
             if (player.health <= 0) {
                 player.isDead = true;
-                showMessage('💀 Öldün! 5 saniye sonra yeniden doğacaksın...');
+                showNotification('💀 Öldün! 5 saniye sonra yeniden doğacaksın...');
                 setTimeout(() => {
                     respawn();
                 }, 5000);
@@ -428,7 +430,7 @@ function initSocket() {
             // Show respawn message
             if (data.playerId !== player.id) {
                 const playerName = playerMesh.userData.name;
-                showMessage(`🔄 ${playerName} yeniden doğdu!`);
+                showNotification(`🔄 ${playerName} yeniden doğdu!`);
             }
         }
     });
@@ -445,7 +447,13 @@ function initSocket() {
 
     socket.on('error', (error) => {
         console.error('Sunucu hatası:', error);
-        showMessage(`❌ Hata: ${error}`);
+        showNotification(`❌ Hata: ${error}`);
+    });
+}
+
+// Game Controls
+function initControls() {
+    // Initialize touch controls if mobile
     if (isMobile || isTouchDevice) {
         initTouchControls();
         document.getElementById('mobileControls').style.display = 'block';
@@ -498,11 +506,11 @@ function initSocket() {
 // Reload function
 function reload() {
     if (player.ammo < 30) {
-        showMessage('Mermiler dolduruluyor...');
+        showNotification('Mermiler dolduruluyor...');
         setTimeout(() => {
             player.ammo = 30;
             updateAmmo();
-            showMessage('Mermiler doldu!');
+            showNotification('Mermiler doldu!');
         }, 2000);
     }
 }
@@ -510,7 +518,7 @@ function reload() {
 // Shooting mechanics
 function shoot() {
     if (player.ammo <= 0) {
-        showMessage('Mermi bitti!');
+        showNotification('Mermi bitti!');
         return;
     }
 
@@ -695,27 +703,14 @@ function showTeamIndicator() {
     indicator.className = player.team === 'blue' ? 'team-blue' : 'team-red';
 }
 
-function showMessage(message) {
-    const messageDiv = document.createElement('div');
-    messageDiv.style.cssText = `
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: rgba(0, 0, 0, 0.8);
-        color: white;
-        padding: 20px;
-        border-radius: 10px;
-        font-size: 18px;
-        font-weight: bold;
-        z-index: 1000;
-        text-align: center;
-    `;
-    messageDiv.textContent = message;
-    document.body.appendChild(messageDiv);
+function showNotification(message) {
+    const notificationDiv = document.createElement('div');
+    notificationDiv.className = 'notification';
+    notificationDiv.textContent = message;
+    document.body.appendChild(notificationDiv);
     
     setTimeout(() => {
-        document.body.removeChild(messageDiv);
+        document.body.removeChild(notificationDiv);
     }, 3000);
 }
 
@@ -728,13 +723,19 @@ function respawn() {
         z: (Math.random() - 0.5) * 20
     };
     updateHealthBar();
-    showMessage('Yeniden doğdun!');
+    showNotification('Yeniden doğdun!');
 }
 
 // Menu Functions
 function findGame() {
     document.getElementById('loading').style.display = 'block';
-    document.getElementById('loading').textContent = 'Oyun aranıyor...';
+    document.getElementById('loading').innerHTML = `
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Oyun Aranıyor</div>
+            <div class="loading-subtext">Sunucuya bağlanılıyor...</div>
+        </div>
+    `;
     
     socket.emit('findGame', { player: player });
 }
@@ -789,7 +790,13 @@ function displayRooms(rooms) {
 
 function joinRoom(roomId) {
     document.getElementById('loading').style.display = 'block';
-    document.getElementById('loading').textContent = 'Odaya bağlanılıyor...';
+    document.getElementById('loading').innerHTML = `
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Odaya Bağlanılıyor</div>
+            <div class="loading-subtext">Lütfen bekleyin...</div>
+        </div>
+    `;
     
     socket.emit('joinRoom', { 
         roomId: roomId,
@@ -873,8 +880,105 @@ function handleOrientationChange() {
 
 window.addEventListener('resize', handleResize);
 
+// Initialize touch controls
+function initTouchControls() {
+    const leftJoystick = document.getElementById('leftJoystick');
+    const rightJoystick = document.getElementById('rightJoystick');
+    const fireButton = document.getElementById('fireButton');
+    const jumpButton = document.getElementById('jumpButton');
+    const reloadButton = document.getElementById('reloadButton');
+
+    leftJoystick.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        touchControls.leftJoystick.active = true;
+        const rect = leftJoystick.getBoundingClientRect();
+        touchControls.leftJoystick.x = e.touches[0].clientX - rect.left - rect.width / 2;
+        touchControls.leftJoystick.y = e.touches[0].clientY - rect.top - rect.height / 2;
+    });
+
+    leftJoystick.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        if (touchControls.leftJoystick.active) {
+            const rect = leftJoystick.getBoundingClientRect();
+            touchControls.leftJoystick.x = e.touches[0].clientX - rect.left - rect.width / 2;
+            touchControls.leftJoystick.y = e.touches[0].clientY - rect.top - rect.height / 2;
+        }
+    });
+
+    leftJoystick.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        touchControls.leftJoystick.active = false;
+        touchControls.leftJoystick.x = 0;
+        touchControls.leftJoystick.y = 0;
+    });
+
+    rightJoystick.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        touchControls.rightJoystick.active = true;
+        const rect = rightJoystick.getBoundingClientRect();
+        touchControls.rightJoystick.x = e.touches[0].clientX - rect.left - rect.width / 2;
+        touchControls.rightJoystick.y = e.touches[0].clientY - rect.top - rect.height / 2;
+    });
+
+    rightJoystick.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        if (touchControls.rightJoystick.active) {
+            const rect = rightJoystick.getBoundingClientRect();
+            touchControls.rightJoystick.x = e.touches[0].clientX - rect.left - rect.width / 2;
+            touchControls.rightJoystick.y = e.touches[0].clientY - rect.top - rect.height / 2;
+        }
+    });
+
+    rightJoystick.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        touchControls.rightJoystick.active = false;
+        touchControls.rightJoystick.x = 0;
+        touchControls.rightJoystick.y = 0;
+    });
+
+    fireButton.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        touchControls.fireButton.active = true;
+    });
+
+    fireButton.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        touchControls.fireButton.active = false;
+    });
+
+    jumpButton.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        touchControls.jumpButton.active = true;
+    });
+
+    jumpButton.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        touchControls.jumpButton.active = false;
+    });
+
+    reloadButton.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        touchControls.reloadButton.active = true;
+    });
+
+    reloadButton.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        touchControls.reloadButton.active = false;
+    });
+}
+
 // Initialize game
 window.addEventListener('load', () => {
+    // Show loading screen initially
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('loading').innerHTML = `
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Sunucuya Bağlanılıyor</div>
+            <div class="loading-subtext">Lütfen bekleyin...</div>
+        </div>
+    `;
+    
     initTelegram();
     initSocket();
     
@@ -906,70 +1010,3 @@ window.addEventListener('load', () => {
         lastTouchEnd = now;
     }, false);
 });
-
-// Initialize touch controls
-function initTouchControls() {
-    const leftJoystick = document.getElementById('leftJoystick');
-    const rightJoystick = document.getElementById('rightJoystick');
-    const fireButton = document.getElementById('fireButton');
-    const jumpButton = document.getElementById('jumpButton');
-    const reloadButton = document.getElementById('reloadButton');
-
-    leftJoystick.addEventListener('touchstart', (e) => {
-        touchControls.leftJoystick.active = true;
-        touchControls.leftJoystick.x = e.touches[0].clientX - leftJoystick.offsetLeft - leftJoystick.offsetWidth / 2;
-        touchControls.leftJoystick.y = e.touches[0].clientY - leftJoystick.offsetTop - leftJoystick.offsetHeight / 2;
-    });
-
-    leftJoystick.addEventListener('touchmove', (e) => {
-        if (touchControls.leftJoystick.active) {
-            touchControls.leftJoystick.x = e.touches[0].clientX - leftJoystick.offsetLeft - leftJoystick.offsetWidth / 2;
-            touchControls.leftJoystick.y = e.touches[0].clientY - leftJoystick.offsetTop - leftJoystick.offsetHeight / 2;
-        }
-    });
-
-    leftJoystick.addEventListener('touchend', () => {
-        touchControls.leftJoystick.active = false;
-    });
-
-    rightJoystick.addEventListener('touchstart', (e) => {
-        touchControls.rightJoystick.active = true;
-        touchControls.rightJoystick.x = e.touches[0].clientX - rightJoystick.offsetLeft - rightJoystick.offsetWidth / 2;
-        touchControls.rightJoystick.y = e.touches[0].clientY - rightJoystick.offsetTop - rightJoystick.offsetHeight / 2;
-    });
-
-    rightJoystick.addEventListener('touchmove', (e) => {
-        if (touchControls.rightJoystick.active) {
-            touchControls.rightJoystick.x = e.touches[0].clientX - rightJoystick.offsetLeft - rightJoystick.offsetWidth / 2;
-            touchControls.rightJoystick.y = e.touches[0].clientY - rightJoystick.offsetTop - rightJoystick.offsetHeight / 2;
-        }
-    });
-
-    rightJoystick.addEventListener('touchend', () => {
-        touchControls.rightJoystick.active = false;
-    });
-
-    fireButton.addEventListener('touchstart', () => {
-        touchControls.fireButton.active = true;
-    });
-
-    fireButton.addEventListener('touchend', () => {
-        touchControls.fireButton.active = false;
-    });
-
-    jumpButton.addEventListener('touchstart', () => {
-        touchControls.jumpButton.active = true;
-    });
-
-    jumpButton.addEventListener('touchend', () => {
-        touchControls.jumpButton.active = false;
-    });
-
-    reloadButton.addEventListener('touchstart', () => {
-        touchControls.reloadButton.active = true;
-    });
-
-    reloadButton.addEventListener('touchend', () => {
-        touchControls.reloadButton.active = false;
-    });
-}
