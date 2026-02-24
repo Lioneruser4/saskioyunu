@@ -2,275 +2,591 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>SaskiOyunu 🎮</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#090912">
+<title>SaskiOyunu</title>
 <style>
-  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  :root {
-    --bg: #0a0a0f;
-    --surface: #13131f;
-    --surface2: #1c1c2e;
-    --border: #2a2a45;
-    --accent: #7c4dff;
-    --accent2: #00e5ff;
-    --green: #00e676;
-    --red: #ff1744;
-    --text: #e0e0ff;
-    --muted: #7070a0;
-  }
-  html,body { width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'Segoe UI',sans-serif; touch-action:manipulation; }
+/* ════════════════════════════════════════════
+   RESET & ROOT
+════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#090912;--surf:#10101e;--surf2:#171728;--surf3:#1e1e35;
+  --border:#252545;--border2:#2e2e55;
+  --accent:#7c4dff;--accent2:#00e5ff;--accent3:#ff6d00;
+  --green:#00e676;--red:#ff1744;--yellow:#ffea00;--orange:#ff6d00;
+  --text:#e8e8ff;--muted:#6060a0;--muted2:#8888cc;
+  --radius:.8rem;--radius-sm:.4rem;
+  --shadow:0 8px 32px rgba(0,0,0,.6);
+  --glow-accent:0 0 20px rgba(124,77,255,.4);
+  --glow-green:0 0 20px rgba(0,230,118,.4);
+  --safe-top:env(safe-area-inset-top,0);
+  --safe-bot:env(safe-area-inset-bottom,0);
+}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);
+  font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;touch-action:none}
 
-  /* ===================== SCREENS ===================== */
-  .screen { position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .3s; }
-  .screen.hidden { opacity:0;pointer-events:none; }
+/* ════════════════════════════════════════════
+   SCREENS
+════════════════════════════════════════════ */
+.screen{position:fixed;inset:0;display:flex;flex-direction:column;
+  transition:opacity .25s,transform .25s;will-change:opacity,transform}
+.screen.out{opacity:0;transform:scale(.97);pointer-events:none}
+.screen.hidden{display:none!important}
 
-  /* ===================== LOADING ===================== */
-  #loadingScreen { background:var(--bg);z-index:100; }
-  .logo { font-size:2.5rem;font-weight:900;background:linear-gradient(135deg,#7c4dff,#00e5ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:1rem; }
-  .loader-bar { width:200px;height:4px;background:var(--border);border-radius:4px;overflow:hidden;margin-top:1.5rem; }
-  .loader-fill { height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0;animation:load 2s forwards; }
-  @keyframes load { to { width:100%; } }
+/* ════════════════════════════════════════════
+   LOADING SCREEN
+════════════════════════════════════════════ */
+#screenLoad{
+  align-items:center;justify-content:center;gap:1.2rem;
+  background:radial-gradient(ellipse at 50% 30%,#1a0a3a 0%,var(--bg) 65%);z-index:999}
+.load-logo{font-size:3rem;font-weight:900;letter-spacing:-1px;
+  background:linear-gradient(135deg,#a78bfa,#00e5ff);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.load-sub{font-size:.9rem;color:var(--muted2);letter-spacing:3px;text-transform:uppercase}
+.load-bar{width:220px;height:5px;background:rgba(255,255,255,.08);
+  border-radius:99px;overflow:hidden;margin-top:.5rem}
+.load-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent2));
+  border-radius:99px;animation:loadFill 2.4s cubic-bezier(.4,0,.2,1) forwards}
+.load-tip{font-size:.75rem;color:var(--muted);text-align:center;max-width:240px}
+@keyframes loadFill{to{width:100%}}
 
-  /* ===================== LOBBY ===================== */
-  #lobbyScreen { background:radial-gradient(ellipse at 50% 0%, #1a0a3a 0%, var(--bg) 70%);padding:1rem;overflow-y:auto;justify-content:flex-start;padding-top:2rem; }
-  .lobby-header { text-align:center;margin-bottom:1.5rem; }
-  .lobby-title { font-size:1.8rem;font-weight:900;background:linear-gradient(135deg,#7c4dff,#00e5ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent; }
-  .player-badge { display:inline-flex;align-items:center;gap:.5rem;background:var(--surface2);border:1px solid var(--border);border-radius:2rem;padding:.4rem 1rem;margin-top:.5rem;font-size:.85rem;color:var(--muted); }
-  .player-badge strong { color:var(--text); }
+/* ════════════════════════════════════════════
+   LOBBY SCREEN
+════════════════════════════════════════════ */
+#screenLobby{
+  background:radial-gradient(ellipse at 50% 0%,#1a0a3a 0%,var(--bg) 60%);
+  overflow-y:auto;align-items:stretch;padding-top:calc(var(--safe-top) + .8rem)}
+.lobby-inner{max-width:440px;margin:0 auto;width:100%;padding:.8rem}
+.lobby-hero{text-align:center;margin-bottom:1.2rem}
+.lobby-logo{font-size:2rem;font-weight:900;
+  background:linear-gradient(135deg,#a78bfa,#00e5ff);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.player-chip{display:inline-flex;align-items:center;gap:.5rem;
+  background:var(--surf2);border:1px solid var(--border2);
+  border-radius:99px;padding:.35rem .9rem;margin-top:.4rem;font-size:.82rem}
+.player-chip .dot{width:8px;height:8px;border-radius:50%;
+  background:var(--green);box-shadow:var(--glow-green);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+.player-chip strong{color:var(--text)}
+.online-count{font-size:.72rem;color:var(--muted);margin-top:.3rem}
 
-  .lobby-section { width:100%;max-width:480px;margin:0 auto .8rem; }
-  .section-label { font-size:.7rem;text-transform:uppercase;letter-spacing:2px;color:var(--muted);margin-bottom:.5rem; }
+/* Lobby Sections */
+.lsect{margin-bottom:1rem}
+.lsect-title{font-size:.65rem;text-transform:uppercase;letter-spacing:2px;
+  color:var(--muted);margin-bottom:.5rem;display:flex;align-items:center;gap:.4rem}
+.lsect-title::after{content:'';flex:1;height:1px;background:var(--border)}
 
-  /* Big Action Buttons */
-  .btn-row { display:grid;grid-template-columns:1fr 1fr;gap:.6rem;width:100%;max-width:480px;margin:0 auto .8rem; }
-  .btn { padding:.85rem 1rem;border:none;border-radius:.8rem;font-size:.95rem;font-weight:700;cursor:pointer;transition:all .15s;text-align:center;position:relative;overflow:hidden; }
-  .btn::after { content:'';position:absolute;inset:0;background:rgba(255,255,255,.08);opacity:0;transition:opacity .1s; }
-  .btn:active::after { opacity:1; }
-  .btn-primary { background:linear-gradient(135deg,#7c4dff,#4527a0);color:#fff;box-shadow:0 4px 20px rgba(124,77,255,.35); }
-  .btn-secondary { background:linear-gradient(135deg,#00b0ff,#0064b7);color:#fff; }
-  .btn-success { background:linear-gradient(135deg,#00e676,#00a040);color:#000;grid-column:1/-1; }
-  .btn-danger { background:linear-gradient(135deg,#ff1744,#b71c1c);color:#fff; }
-  .btn-full { grid-column:1/-1; }
-  .btn-outline { background:transparent;border:1px solid var(--border);color:var(--text); }
+/* Grid buttons */
+.lobby-grid{display:grid;gap:.6rem}
+.lobby-grid.col2{grid-template-columns:1fr 1fr}
+.lobby-grid.col1{grid-template-columns:1fr}
 
-  /* Room List */
-  .room-list { display:flex;flex-direction:column;gap:.5rem;max-height:280px;overflow-y:auto; }
-  .room-item { display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border:1px solid var(--border);border-radius:.7rem;padding:.7rem 1rem;cursor:pointer;transition:border-color .15s; }
-  .room-item:active { border-color:var(--accent); }
-  .room-info { flex:1; }
-  .room-name { font-weight:700;font-size:.9rem; }
-  .room-meta { font-size:.75rem;color:var(--muted);margin-top:.1rem; }
-  .room-count { font-size:.8rem;color:var(--muted);white-space:nowrap;margin-left:.5rem; }
-  .badge-lock { font-size:.75rem;margin-left:.3rem; }
+/* Buttons */
+.btn{
+  position:relative;overflow:hidden;border:none;border-radius:var(--radius);
+  font-size:.92rem;font-weight:700;cursor:pointer;padding:.85rem 1rem;
+  transition:filter .15s,transform .1s;text-align:center;
+  display:flex;align-items:center;justify-content:center;gap:.4rem}
+.btn:active{transform:scale(.96)}
+.btn::after{content:'';position:absolute;inset:0;background:rgba(255,255,255,.1);
+  opacity:0;transition:opacity .1s}
+.btn:active::after{opacity:1}
+.btn-primary{background:linear-gradient(135deg,#7c4dff,#4527a0);color:#fff;
+  box-shadow:0 4px 20px rgba(124,77,255,.35)}
+.btn-cyan{background:linear-gradient(135deg,#00b0ff,#006db3);color:#fff}
+.btn-green{background:linear-gradient(135deg,#00c853,#00701a);color:#000}
+.btn-red{background:linear-gradient(135deg,#ff1744,#8e0000);color:#fff}
+.btn-dark{background:var(--surf3);border:1px solid var(--border2);color:var(--text)}
+.btn-outline{background:transparent;border:1px solid var(--border2);color:var(--muted2)}
+.btn-sm{padding:.5rem .8rem;font-size:.8rem;border-radius:.5rem}
+.btn-full{grid-column:1/-1}
 
-  /* Create room modal */
-  .modal-overlay { position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:flex;align-items:center;justify-content:center;padding:1rem; }
-  .modal-overlay.hidden { display:none; }
-  .modal { background:var(--surface2);border:1px solid var(--border);border-radius:1rem;padding:1.5rem;width:100%;max-width:360px; }
-  .modal h3 { margin-bottom:1rem;font-size:1.1rem; }
-  .input-field { width:100%;background:var(--surface);border:1px solid var(--border);border-radius:.6rem;padding:.7rem 1rem;color:var(--text);font-size:.95rem;outline:none;margin-bottom:.7rem; }
-  .input-field:focus { border-color:var(--accent); }
-  .modal-btns { display:grid;grid-template-columns:1fr 1fr;gap:.6rem; }
+/* Room List */
+.room-scroll{max-height:260px;overflow-y:auto;
+  display:flex;flex-direction:column;gap:.45rem;
+  padding-right:.2rem}
+.room-scroll::-webkit-scrollbar{width:4px}
+.room-scroll::-webkit-scrollbar-track{background:transparent}
+.room-scroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:99px}
+.room-card{
+  display:flex;align-items:center;
+  background:var(--surf2);border:1px solid var(--border);
+  border-radius:.7rem;padding:.7rem .9rem;cursor:pointer;
+  transition:border-color .15s,background .15s;gap:.8rem}
+.room-card:active,.room-card:hover{border-color:var(--accent);background:var(--surf3)}
+.room-icon{font-size:1.3rem;flex-shrink:0}
+.room-info{flex:1;min-width:0}
+.room-name{font-weight:700;font-size:.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.room-meta{font-size:.72rem;color:var(--muted);margin-top:.1rem}
+.room-right{display:flex;flex-direction:column;align-items:flex-end;gap:.2rem;flex-shrink:0}
+.room-pill{font-size:.65rem;padding:.15rem .45rem;border-radius:99px;
+  background:var(--surf3);color:var(--muted2);border:1px solid var(--border)}
+.room-pill.open{color:var(--green);border-color:rgba(0,230,118,.3)}
+.room-pill.locked{color:var(--yellow);border-color:rgba(255,234,0,.3)}
+.room-bar{width:50px;height:4px;background:var(--border);border-radius:99px;overflow:hidden}
+.room-bar-fill{height:100%;background:linear-gradient(90deg,var(--green),var(--yellow),var(--red));
+  border-radius:99px;transition:width .3s}
+.empty-rooms{text-align:center;color:var(--muted);padding:1.5rem .5rem;font-size:.84rem}
 
-  /* ===================== GAME SCREEN ===================== */
-  #gameScreen { background:#000;padding:0; }
-  #gameCanvas { display:block;touch-action:none; }
+/* Character preview */
+.char-preview-row{display:flex;gap:.5rem;overflow-x:auto;padding:.3rem 0}
+.char-thumb{
+  flex-shrink:0;width:56px;height:72px;
+  background:var(--surf3);border:2px solid var(--border);
+  border-radius:.6rem;cursor:pointer;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;
+  transition:border-color .15s}
+.char-thumb.selected{border-color:var(--accent);box-shadow:var(--glow-accent)}
+.char-thumb canvas{display:block}
 
-  /* HUD */
-  #hud { position:fixed;top:0;left:0;right:0;z-index:50;pointer-events:none; }
-  #topHud { display:flex;align-items:center;justify-content:space-between;padding:.4rem .6rem;background:linear-gradient(180deg,rgba(0,0,0,.8) 0%,transparent 100%); }
-  #healthBar { display:flex;align-items:center;gap:.4rem; }
-  .hp-label { font-size:.7rem;color:var(--green);font-weight:700; }
-  .hp-track { width:90px;height:8px;background:rgba(255,255,255,.15);border-radius:4px;overflow:hidden; }
-  .hp-fill { height:100%;background:linear-gradient(90deg,#ff1744,#ff6d00,#00e676);width:100%;transition:width .2s;transform-origin:left; }
-  #statsHud { font-size:.7rem;color:rgba(255,255,255,.7);display:flex;gap:.8rem; }
-  #roomNameTag { font-size:.7rem;color:var(--accent2); }
-  #leaveBtn { pointer-events:all;background:rgba(255,50,50,.2);border:1px solid rgba(255,50,50,.4);color:#ff6b6b;font-size:.7rem;padding:.3rem .6rem;border-radius:.4rem;cursor:pointer; }
+/* ════════════════════════════════════════════
+   GAME SCREEN
+════════════════════════════════════════════ */
+#screenGame{background:#000;padding:0}
+#gameCanvas{display:block;touch-action:none;image-rendering:pixelated}
 
-  /* Kill feed */
-  #killFeed { position:fixed;top:3rem;right:.5rem;z-index:50;pointer-events:none;display:flex;flex-direction:column;gap:.2rem;align-items:flex-end; }
-  .kill-entry { background:rgba(0,0,0,.6);border-left:3px solid var(--red);padding:.2rem .5rem;border-radius:.2rem;font-size:.68rem;animation:killAnim 3s forwards; }
-  @keyframes killAnim { 0%{opacity:1;transform:translateX(20px)} 80%{opacity:1;transform:translateX(0)} 100%{opacity:0} }
+/* ════════════════════════════════════════════
+   HUD
+════════════════════════════════════════════ */
+#hud{
+  position:fixed;inset:0;pointer-events:none;z-index:60;
+  padding-top:calc(var(--safe-top) + .3rem)}
 
-  /* Respawn overlay */
-  #respawnOverlay { position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.7);pointer-events:none; }
-  #respawnOverlay.hidden { display:none; }
-  #respawnText { font-size:1.5rem;font-weight:700;color:var(--red);text-shadow:0 0 20px red; }
+/* Top bar */
+#hudTop{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:.35rem .6rem;
+  background:linear-gradient(180deg,rgba(0,0,0,.75) 0%,transparent 100%)}
 
-  /* Chat */
-  #chatContainer { position:fixed;bottom:80px;left:.5rem;z-index:50;width:200px;max-width:calc(50vw - 1rem); }
-  #chatMessages { display:flex;flex-direction:column;gap:.15rem;margin-bottom:.3rem;max-height:100px;overflow-y:auto; }
-  .chat-msg { font-size:.68rem;background:rgba(0,0,0,.55);border-radius:.3rem;padding:.15rem .35rem;word-break:break-word; }
-  .chat-msg .cn { color:var(--accent2);font-weight:700; }
-  #chatInputRow { display:flex;gap:.3rem;pointer-events:all; }
-  #chatInput { flex:1;background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.2);border-radius:.4rem;padding:.3rem .5rem;color:#fff;font-size:.75rem;outline:none;min-width:0; }
-  #chatSend { background:var(--accent);border:none;color:#fff;border-radius:.4rem;padding:.3rem .5rem;font-size:.7rem;cursor:pointer;pointer-events:all; }
+/* HP + Shield */
+.hud-vitals{display:flex;flex-direction:column;gap:.18rem;min-width:120px}
+.hud-bar-row{display:flex;align-items:center;gap:.35rem}
+.hud-bar-label{font-size:.65rem;font-weight:800;width:14px;text-align:center}
+.hud-hp-label{color:var(--red)}
+.hud-sh-label{color:var(--accent2)}
+.hud-track{flex:1;height:7px;background:rgba(255,255,255,.1);
+  border-radius:99px;overflow:hidden;max-width:90px}
+.hud-hp-fill{height:100%;border-radius:99px;transition:width .18s;
+  background:linear-gradient(90deg,#ff1744,#ff6d00,#00e676)}
+.hud-sh-fill{height:100%;border-radius:99px;transition:width .18s;
+  background:linear-gradient(90deg,var(--accent),var(--accent2))}
+.hud-val{font-size:.65rem;color:rgba(255,255,255,.7);min-width:24px}
 
-  /* Minimap */
-  #minimap { position:fixed;top:2.8rem;right:.5rem;z-index:50;pointer-events:none; }
-  #minimapCanvas { border:1px solid rgba(255,255,255,.2);border-radius:.3rem; }
+/* Center info */
+.hud-center{display:flex;flex-direction:column;align-items:center;gap:.1rem}
+.hud-room-name{font-size:.68rem;color:var(--accent2);font-weight:700;
+  text-shadow:0 0 8px rgba(0,229,255,.5)}
+.hud-player-count{font-size:.6rem;color:var(--muted2)}
 
-  /* ===================== MOBILE CONTROLS ===================== */
-  #mobileControls { position:fixed;bottom:0;left:0;right:0;height:80px;z-index:55;display:flex;align-items:center;justify-content:space-between;padding:0 .5rem;background:linear-gradient(0deg,rgba(0,0,0,.9) 0%,transparent 100%);pointer-events:none; }
+/* Right stats */
+.hud-stats{display:flex;flex-direction:column;align-items:flex-end;gap:.15rem}
+.hud-kd{font-size:.75rem;font-weight:700}
+.hud-kd span{color:var(--yellow)}
+.hud-arrows{font-size:.65rem;color:var(--muted2)}
+.hud-leave{pointer-events:all;background:rgba(255,30,30,.18);
+  border:1px solid rgba(255,30,30,.35);color:#ff6b6b;
+  font-size:.68rem;padding:.28rem .55rem;border-radius:.4rem;cursor:pointer;
+  transition:background .15s;margin-top:.15rem}
+.hud-leave:active{background:rgba(255,30,30,.4)}
 
-  /* D-Pad left */
-  #dpad { display:flex;gap:.4rem;pointer-events:all; }
-  .ctrl-btn { width:52px;height:52px;border-radius:.7rem;border:2px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;font-size:1.3rem;cursor:pointer;user-select:none;-webkit-user-select:none;transition:background .1s; }
-  .ctrl-btn:active, .ctrl-btn.pressed { background:rgba(255,255,255,.25); }
+/* Kill feed */
+#killFeed{
+  position:fixed;top:3.5rem;right:.5rem;z-index:61;
+  display:flex;flex-direction:column;gap:.2rem;align-items:flex-end;
+  pointer-events:none;padding-top:var(--safe-top)}
+.kf-entry{
+  background:rgba(0,0,0,.65);
+  border-left:3px solid var(--red);border-radius:.2rem;
+  padding:.2rem .5rem;font-size:.68rem;max-width:200px;
+  animation:kfIn .3s ease,kfOut .4s 2.8s ease forwards}
+.kf-entry.fall{border-color:var(--orange)}
+.kf-entry.bomb{border-color:var(--yellow)}
+@keyframes kfIn{from{opacity:0;transform:translateX(15px)}}
+@keyframes kfOut{to{opacity:0;transform:translateX(10px)}}
 
-  /* Action buttons right */
-  #actionBtns { display:grid;grid-template-columns:1fr 1fr;gap:.4rem;pointer-events:all; }
-  .action-btn { width:52px;height:52px;border-radius:50%;border:2px solid rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:1.1rem;cursor:pointer;user-select:none;-webkit-user-select:none;transition:background .1s; }
-  .action-btn:active, .action-btn.pressed { opacity:.7; }
-  #btnJump  { background:rgba(0,200,100,.25);border-color:rgba(0,200,100,.5); }
-  #btnAtk   { background:rgba(255,50,50,.25);border-color:rgba(255,50,50,.5); }
-  #btnShoot { background:rgba(0,150,255,.25);border-color:rgba(0,150,255,.5); }
-  #btnChat  { background:rgba(200,200,0,.25);border-color:rgba(200,200,0,.5);border-radius:.7rem; }
+/* Respawn overlay */
+#respawnScreen{
+  position:fixed;inset:0;z-index:80;
+  background:rgba(0,0,0,.72);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.6rem}
+#respawnScreen.hidden{display:none}
+.respawn-skull{font-size:3.5rem;animation:deathSpin 2s linear infinite}
+@keyframes deathSpin{to{transform:rotate(360deg)}}
+.respawn-text{font-size:1.4rem;font-weight:900;color:var(--red);
+  text-shadow:0 0 20px rgba(255,23,68,.7)}
+.respawn-sub{font-size:.85rem;color:var(--muted2)}
+.respawn-timer{font-size:2rem;font-weight:900;color:var(--yellow);
+  text-shadow:0 0 16px rgba(255,234,0,.7)}
 
-  /* ===================== SCORE TABLE ===================== */
-  #scoreBoard { position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:80;background:rgba(10,10,20,.95);border:1px solid var(--border);border-radius:1rem;padding:1rem;width:300px;max-height:70vh;overflow-y:auto;display:none; }
-  #scoreBoard h3 { text-align:center;margin-bottom:.7rem;font-size:1rem; }
-  .score-row { display:flex;justify-content:space-between;padding:.35rem .5rem;border-radius:.4rem;font-size:.8rem; }
-  .score-row:nth-child(even) { background:rgba(255,255,255,.04); }
-  .score-row.me { background:rgba(124,77,255,.2); }
+/* Minimap */
+#minimap{
+  position:fixed;bottom:calc(var(--safe-bot) + 90px);right:.5rem;z-index:62;pointer-events:none}
+#minimapCanvas{
+  border:1px solid rgba(255,255,255,.15);border-radius:.35rem;
+  box-shadow:0 2px 10px rgba(0,0,0,.5)}
 
-  /* Responsive desktop */
-  @media (min-width:768px) {
-    #mobileControls { height:90px; }
-    .ctrl-btn, .action-btn { width:60px;height:60px; }
-  }
+/* Damage number particles */
+.dmg-popup{
+  position:fixed;z-index:70;pointer-events:none;
+  font-size:.9rem;font-weight:800;color:var(--red);
+  text-shadow:0 0 8px rgba(0,0,0,.8);
+  animation:dmgFloat .8s ease-out forwards}
+@keyframes dmgFloat{
+  0%{opacity:1;transform:translateY(0) scale(1.2)}
+  100%{opacity:0;transform:translateY(-40px) scale(.8)}}
 
-  /* Empty state */
-  .empty-state { text-align:center;color:var(--muted);padding:1.5rem;font-size:.85rem; }
-  .pulse { animation:pulse 2s infinite; }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
-  
-  /* notification */
-  #notif { position:fixed;top:.8rem;left:50%;transform:translateX(-50%);z-index:300;background:rgba(255,80,80,.9);color:#fff;padding:.5rem 1.2rem;border-radius:2rem;font-size:.85rem;transition:opacity .3s;pointer-events:none; }
-  #notif.hidden { opacity:0; }
+/* Scoreboard */
+#scoreBoard{
+  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  z-index:90;background:rgba(9,9,18,.95);
+  border:1px solid var(--border2);border-radius:1rem;
+  padding:1.2rem;width:320px;max-height:75vh;overflow-y:auto;
+  box-shadow:var(--shadow);display:none}
+#scoreBoard h3{text-align:center;font-size:1rem;margin-bottom:.8rem;
+  color:var(--yellow)}
+.sc-row{
+  display:flex;align-items:center;gap:.5rem;
+  padding:.35rem .5rem;border-radius:.4rem;font-size:.78rem}
+.sc-row:nth-child(even){background:rgba(255,255,255,.04)}
+.sc-row.me{background:rgba(124,77,255,.18);border:1px solid rgba(124,77,255,.3)}
+.sc-rank{width:20px;text-align:center;color:var(--muted);font-size:.7rem}
+.sc-rank.top1{color:#ffd700}
+.sc-rank.top2{color:#c0c0c0}
+.sc-rank.top3{color:#cd7f32}
+.sc-name{flex:1;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sc-kd{color:var(--muted2)}
+
+/* ════════════════════════════════════════════
+   CHAT
+════════════════════════════════════════════ */
+#chatBox{
+  position:fixed;left:.5rem;z-index:62;width:190px;pointer-events:none;
+  bottom:calc(var(--safe-bot) + 90px)}
+#chatMessages{
+  display:flex;flex-direction:column;gap:.12rem;
+  max-height:110px;overflow-y:auto;margin-bottom:.3rem}
+#chatMessages::-webkit-scrollbar{width:3px}
+#chatMessages::-webkit-scrollbar-thumb{background:var(--border)}
+.chat-msg{
+  font-size:.65rem;background:rgba(0,0,8,.6);
+  border-radius:.3rem;padding:.12rem .35rem;
+  word-break:break-word;line-height:1.4;border-left:2px solid transparent}
+.chat-msg.sys{border-left-color:var(--muted);color:var(--muted2)}
+.chat-msg.normal{border-left-color:var(--accent)}
+.chat-msg .cn{font-weight:700;color:var(--accent2)}
+#chatInputWrap{
+  display:flex;gap:.3rem;pointer-events:all;
+  transition:opacity .2s}
+#chatInputWrap.collapsed{opacity:.5}
+#chatInput{
+  flex:1;min-width:0;background:rgba(0,0,0,.7);
+  border:1px solid rgba(255,255,255,.15);border-radius:.4rem;
+  padding:.32rem .5rem;color:#fff;font-size:.72rem;outline:none}
+#chatInput:focus{border-color:var(--accent)}
+#chatSendBtn{
+  pointer-events:all;background:var(--accent);border:none;
+  color:#fff;border-radius:.4rem;padding:.32rem .55rem;
+  font-size:.7rem;cursor:pointer}
+
+/* ════════════════════════════════════════════
+   MOBILE CONTROLS
+════════════════════════════════════════════ */
+#controls{
+  position:fixed;bottom:0;left:0;right:0;
+  height:calc(80px + var(--safe-bot));
+  z-index:65;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 .5rem;padding-bottom:var(--safe-bot);
+  background:linear-gradient(0deg,rgba(0,0,10,.9) 0%,transparent 100%);
+  pointer-events:none}
+
+/* D-Pad */
+#dpad{display:flex;gap:.35rem;pointer-events:all}
+.cbt{
+  width:54px;height:54px;border-radius:.75rem;
+  border:2px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.06);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.2rem;cursor:pointer;user-select:none;
+  -webkit-user-select:none;transition:background .08s,transform .08s}
+.cbt.pressed,.cbt:active{background:rgba(255,255,255,.22);transform:scale(.92)}
+
+/* Center buttons (jump/dash) */
+#centerBtns{display:flex;flex-direction:column;gap:.3rem;align-items:center;pointer-events:all}
+
+/* Action buttons */
+#actionBtns{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:.3rem;pointer-events:all}
+.abt{
+  width:54px;height:54px;border-radius:50%;
+  border:2px solid rgba(255,255,255,.12);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.1rem;cursor:pointer;user-select:none;
+  -webkit-user-select:none;transition:background .08s,transform .08s;
+  position:relative;overflow:hidden}
+.abt.pressed,.abt:active{transform:scale(.9);opacity:.8}
+.abt::after{content:'';position:absolute;inset:0;
+  background:rgba(255,255,255,.15);opacity:0;border-radius:50%}
+.abt:active::after{opacity:1}
+#abtJump{background:rgba(0,180,90,.2);border-color:rgba(0,230,118,.5)}
+#abtAtk{background:rgba(220,30,30,.2);border-color:rgba(255,23,68,.5)}
+#abtShoot{background:rgba(0,100,230,.2);border-color:rgba(0,200,255,.5)}
+#abtBomb{background:rgba(230,130,0,.2);border-color:rgba(255,165,0,.5)}
+#abtDash{background:rgba(150,50,255,.2);border-color:rgba(180,100,255,.5);
+  width:40px;height:40px;font-size:.85rem}
+#abtScore{background:rgba(60,60,80,.35);border-color:rgba(120,120,180,.3);
+  border-radius:.5rem;width:40px;height:40px;font-size:.85rem}
+
+/* Cooldown indicator */
+.cd-ring{
+  position:absolute;inset:-2px;border-radius:50%;
+  border:2px solid rgba(255,255,255,.0);
+  transition:border-color .1s;pointer-events:none}
+.abt.on-cooldown .cd-ring{border-color:rgba(255,255,255,.25);
+  animation:cdSpin 1s linear infinite}
+@keyframes cdSpin{to{transform:rotate(360deg)}}
+
+/* ════════════════════════════════════════════
+   MODALS
+════════════════════════════════════════════ */
+.modal-bg{
+  position:fixed;inset:0;z-index:200;
+  background:rgba(0,0,0,.75);backdrop-filter:blur(4px);
+  display:flex;align-items:center;justify-content:center;padding:1rem}
+.modal-bg.hidden{display:none}
+.modal{
+  background:var(--surf2);border:1px solid var(--border2);
+  border-radius:1.1rem;padding:1.4rem;width:100%;max-width:360px;
+  box-shadow:var(--shadow);animation:modalPop .2s cubic-bezier(.34,1.56,.64,1)}
+@keyframes modalPop{from{opacity:0;transform:scale(.9)}}
+.modal h3{font-size:1.05rem;margin-bottom:.1rem}
+.modal .modal-sub{font-size:.78rem;color:var(--muted);margin-bottom:1rem}
+.field{
+  width:100%;background:var(--surf);border:1px solid var(--border2);
+  border-radius:.6rem;padding:.72rem 1rem;color:var(--text);
+  font-size:.92rem;outline:none;margin-bottom:.65rem;transition:border-color .15s}
+.field:focus{border-color:var(--accent)}
+.modal-actions{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-top:.2rem}
+.modal-actions.single{grid-template-columns:1fr}
+
+/* ════════════════════════════════════════════
+   NOTIFICATIONS
+════════════════════════════════════════════ */
+#notifStack{
+  position:fixed;top:calc(var(--safe-top) + .5rem);left:50%;
+  transform:translateX(-50%);z-index:300;
+  display:flex;flex-direction:column;gap:.3rem;align-items:center;
+  pointer-events:none;width:90%;max-width:340px}
+.notif-item{
+  background:rgba(20,20,40,.95);border:1px solid var(--border2);
+  border-radius:.6rem;padding:.55rem 1rem;font-size:.82rem;
+  text-align:center;pointer-events:none;width:100%;
+  animation:notifIn .3s ease,notifOut .3s 2.4s ease forwards}
+.notif-item.err{border-color:rgba(255,23,68,.5);color:#ff8a80}
+.notif-item.ok{border-color:rgba(0,230,118,.5);color:#b9f6ca}
+.notif-item.info{border-color:rgba(0,200,255,.3);color:#b3e5fc}
+@keyframes notifIn{from{opacity:0;transform:translateY(-10px)}}
+@keyframes notifOut{to{opacity:0;transform:translateY(-5px)}}
+
+/* ════════════════════════════════════════════
+   SCROLLBAR (lobby)
+════════════════════════════════════════════ */
+#screenLobby::-webkit-scrollbar{width:4px}
+#screenLobby::-webkit-scrollbar-track{background:transparent}
+#screenLobby::-webkit-scrollbar-thumb{background:var(--border2);border-radius:99px}
+
+/* ════════════════════════════════════════════
+   RESPONSIVE
+════════════════════════════════════════════ */
+@media(min-width:600px){
+  .cbt,.abt{width:60px;height:60px}
+  #abtDash,#abtScore{width:46px;height:46px}
+  #controls{height:calc(90px + var(--safe-bot))}
+  #minimap{bottom:calc(var(--safe-bot) + 100px)}
+  #chatBox{bottom:calc(var(--safe-bot) + 100px)}
+}
 </style>
 </head>
 <body>
 
-<!-- ===================== LOADING SCREEN ===================== -->
-<div id="loadingScreen" class="screen">
-  <div class="logo">🎮 SaskiOyunu</div>
-  <div style="color:var(--muted);font-size:.9rem">Yükleniyor...</div>
-  <div class="loader-bar"><div class="loader-fill"></div></div>
+<!-- ═══════════════ LOADING ═══════════════ -->
+<div id="screenLoad" class="screen">
+  <div class="load-logo">⚔️ SaskiOyunu</div>
+  <div class="load-sub">Multiplayer Battle</div>
+  <div class="load-bar"><div class="load-fill"></div></div>
+  <div class="load-tip" id="loadTip">Sunucuya bağlanılıyor...</div>
 </div>
 
-<!-- ===================== LOBBY SCREEN ===================== -->
-<div id="lobbyScreen" class="screen hidden">
-  <div class="lobby-header">
-    <div class="lobby-title">🎮 SaskiOyunu</div>
-    <div class="player-badge">👤 <strong id="playerNameDisplay">Player</strong></div>
-  </div>
+<!-- ═══════════════ LOBBY ═══════════════ -->
+<div id="screenLobby" class="screen hidden">
+  <div class="lobby-inner">
 
-  <div class="btn-row">
-    <button class="btn btn-success btn-full" id="joinPublicBtn">🌍 Dünyaya Katıl</button>
-    <button class="btn btn-primary" id="quickJoinBtn">⚡ Hızlı Katıl</button>
-    <button class="btn btn-secondary" id="createRoomBtn">➕ Oda Oluştur</button>
-  </div>
-
-  <div class="lobby-section">
-    <div class="section-label">Aktif Odalar <span id="roomCountBadge" style="color:var(--accent2)"></span></div>
-    <div class="room-list" id="roomList">
-      <div class="empty-state pulse">Odalar yükleniyor...</div>
+    <div class="lobby-hero">
+      <div class="lobby-logo">⚔️ SaskiOyunu</div>
+      <div class="player-chip">
+        <span class="dot"></span>
+        Hoşgeldin, <strong id="displayName">Oyuncu</strong>
+      </div>
+      <div class="online-count" id="onlineCount">🌐 0 oyuncu online</div>
     </div>
-  </div>
 
-  <div style="text-align:center;margin-top:.5rem;">
-    <button class="btn btn-outline" style="padding:.4rem 1rem;font-size:.8rem;" id="refreshBtn">🔄 Yenile</button>
+    <!-- Character select -->
+    <div class="lsect">
+      <div class="lsect-title">🎨 Karakter Seç</div>
+      <div class="char-preview-row" id="charRow"></div>
+    </div>
+
+    <!-- Main actions -->
+    <div class="lsect">
+      <div class="lsect-title">🚀 Oyuna Gir</div>
+      <div class="lobby-grid col1">
+        <button class="btn btn-green" id="btnJoinPublic">🌍 Dünyaya Katıl (Public)</button>
+      </div>
+      <div class="lobby-grid col2" style="margin-top:.6rem">
+        <button class="btn btn-cyan"  id="btnQuickJoin">⚡ Hızlı Katıl</button>
+        <button class="btn btn-primary" id="btnCreateRoom">➕ Oda Oluştur</button>
+      </div>
+    </div>
+
+    <!-- Room list -->
+    <div class="lsect">
+      <div class="lsect-title">
+        🏠 Odalar
+        <span id="roomCountLabel" style="color:var(--accent2);font-size:.7rem;letter-spacing:0"></span>
+        <button class="btn btn-outline btn-sm" id="btnRefresh" style="margin-left:auto;padding:.2rem .5rem;font-size:.65rem">↻</button>
+      </div>
+      <div class="room-scroll" id="roomList">
+        <div class="empty-rooms">Yükleniyor...</div>
+      </div>
+    </div>
+
+    <!-- Controls help -->
+    <div class="lsect">
+      <div class="lsect-title">🎮 Kontroller</div>
+      <div style="background:var(--surf2);border-radius:.6rem;padding:.7rem;font-size:.72rem;color:var(--muted2);line-height:1.8">
+        ◀▶ Hareket &nbsp;|&nbsp; 🦘 Zıpla (2× çift zıplama)<br>
+        ⚔️ Yakın saldırı &nbsp;|&nbsp; 🏹 Ok at &nbsp;|&nbsp; 💣 Bomba<br>
+        ⚡ Dash &nbsp;|&nbsp; 2 parmak / Tab → Skor Tablosu<br>
+        Kalp topla → can kazan &nbsp;|&nbsp; Kalkan → hasar emer
+      </div>
+    </div>
+
   </div>
 </div>
 
-<!-- ===================== GAME SCREEN ===================== -->
-<div id="gameScreen" class="screen hidden">
+<!-- ═══════════════ GAME ═══════════════ -->
+<div id="screenGame" class="screen hidden">
   <canvas id="gameCanvas"></canvas>
 
   <!-- HUD -->
   <div id="hud">
-    <div id="topHud">
-      <div id="healthBar">
-        <div class="hp-label">❤️</div>
-        <div class="hp-track"><div class="hp-fill" id="hpFill"></div></div>
-        <div class="hp-label" id="hpText">100</div>
+    <div id="hudTop">
+      <div class="hud-vitals">
+        <div class="hud-bar-row">
+          <span class="hud-bar-label hud-hp-label">♥</span>
+          <div class="hud-track"><div class="hud-hp-fill" id="hpFill" style="width:100%"></div></div>
+          <span class="hud-val" id="hpVal">100</span>
+        </div>
+        <div class="hud-bar-row">
+          <span class="hud-bar-label hud-sh-label">⬡</span>
+          <div class="hud-track"><div class="hud-sh-fill" id="shFill" style="width:0%"></div></div>
+          <span class="hud-val" id="shVal">0</span>
+        </div>
       </div>
-      <div id="statsHud">
-        <span>🗡️ <span id="killCount">0</span></span>
-        <span>💀 <span id="deathCount">0</span></span>
+      <div class="hud-center">
+        <div class="hud-room-name" id="hudRoomName"></div>
+        <div class="hud-player-count" id="hudPlayerCount"></div>
       </div>
-      <div id="roomNameTag"></div>
-      <button id="leaveBtn">⬅ Çık</button>
+      <div class="hud-stats">
+        <div class="hud-kd">⚔️<span id="hudKills">0</span> 💀<span id="hudDeaths">0</span></div>
+        <div class="hud-arrows">🏹 <span id="hudArrows">10</span>/15</div>
+        <button class="hud-leave" id="hudLeave">← Çık</button>
+      </div>
     </div>
   </div>
 
+  <!-- Kill feed -->
   <div id="killFeed"></div>
-  <canvas id="minimapCanvas" width="100" height="60" style="display:none;"></canvas>
-  <div id="minimap"><canvas id="minimapCanvas2" width="100" height="55"></canvas></div>
 
-  <div id="respawnOverlay" class="hidden">
-    <div id="respawnText">☠️ Yeniden doğuyorsunuz...</div>
+  <!-- Respawn -->
+  <div id="respawnScreen" class="hidden">
+    <div class="respawn-skull">☠️</div>
+    <div class="respawn-text">ÖLDÜN!</div>
+    <div class="respawn-sub">Yeniden doğuyor...</div>
+    <div class="respawn-timer" id="respawnTimer">5</div>
+  </div>
+
+  <!-- Minimap -->
+  <div id="minimap">
+    <canvas id="minimapCanvas" width="110" height="60"></canvas>
   </div>
 
   <!-- Chat -->
-  <div id="chatContainer">
+  <div id="chatBox">
     <div id="chatMessages"></div>
-    <div id="chatInputRow">
-      <input id="chatInput" type="text" placeholder="Mesaj..." maxlength="100">
-      <button id="chatSend">📨</button>
+    <div id="chatInputWrap">
+      <input id="chatInput" type="text" placeholder="Mesaj yaz..." maxlength="120" autocomplete="off">
+      <button id="chatSendBtn">↑</button>
     </div>
   </div>
 
   <!-- Scoreboard -->
   <div id="scoreBoard">
     <h3>🏆 Skor Tablosu</h3>
-    <div id="scoreList"></div>
+    <div id="scoreBoardList"></div>
   </div>
 
-  <!-- Mobile Controls -->
-  <div id="mobileControls">
+  <!-- Controls -->
+  <div id="controls">
     <div id="dpad">
-      <div class="ctrl-btn" id="btnLeft">◀</div>
-      <div class="ctrl-btn" id="btnRight">▶</div>
+      <div class="cbt" id="cbtLeft">◀</div>
+      <div class="cbt" id="cbtRight">▶</div>
+    </div>
+    <div id="centerBtns">
+      <div class="abt" id="abtDash"><div class="cd-ring"></div>⚡</div>
+      <div class="abt" id="abtScore">📊</div>
     </div>
     <div id="actionBtns">
-      <div class="action-btn" id="btnJump">🦘</div>
-      <div class="action-btn" id="btnAtk">⚔️</div>
-      <div class="action-btn" id="btnShoot">🏹</div>
-      <div class="action-btn" id="btnChat">💬</div>
+      <div class="abt" id="abtJump">🦘</div>
+      <div class="abt" id="abtAtk"><div class="cd-ring"></div>⚔️</div>
+      <div class="abt" id="abtShoot"><div class="cd-ring"></div>🏹</div>
+      <div class="abt" id="abtBomb"><div class="cd-ring"></div>💣</div>
     </div>
   </div>
 </div>
 
-<!-- ===================== MODALS ===================== -->
-<!-- Create Room -->
-<div class="modal-overlay hidden" id="createRoomModal">
+<!-- ═══════════════ MODALS ═══════════════ -->
+<div class="modal-bg hidden" id="modalCreateRoom">
   <div class="modal">
     <h3>➕ Oda Oluştur</h3>
-    <input class="input-field" id="newRoomName" placeholder="Oda adı..." maxlength="30">
-    <input class="input-field" id="newRoomPass" type="password" placeholder="Şifre (opsiyonel)">
-    <div class="modal-btns">
-      <button class="btn btn-primary" id="confirmCreateRoom">Oluştur</button>
-      <button class="btn btn-outline" id="cancelCreateRoom">İptal</button>
+    <div class="modal-sub">Arkadaşlarınla oyna</div>
+    <input class="field" id="fRoomName" placeholder="Oda adı (zorunlu)" maxlength="30">
+    <input class="field" id="fRoomPass" type="password" placeholder="Şifre (opsiyonel)" maxlength="20">
+    <div class="modal-actions">
+      <button class="btn btn-primary" id="btnConfirmCreate">Oluştur</button>
+      <button class="btn btn-outline" id="btnCancelCreate">İptal</button>
     </div>
   </div>
 </div>
 
-<!-- Join Room Password -->
-<div class="modal-overlay hidden" id="joinPasswordModal">
+<div class="modal-bg hidden" id="modalPassword">
   <div class="modal">
-    <h3>🔒 Şifre Gerekli</h3>
-    <input class="input-field" id="joinPassInput" type="password" placeholder="Oda şifresi...">
-    <div class="modal-btns">
-      <button class="btn btn-primary" id="confirmJoinPass">Gir</button>
-      <button class="btn btn-outline" id="cancelJoinPass">İptal</button>
+    <h3>🔒 Şifreli Oda</h3>
+    <div class="modal-sub" id="modalPassRoomName">Bu oda için şifre gerekiyor</div>
+    <input class="field" id="fJoinPass" type="password" placeholder="Oda şifresi..." maxlength="20">
+    <div class="modal-actions">
+      <button class="btn btn-primary" id="btnConfirmPass">Gir</button>
+      <button class="btn btn-outline" id="btnCancelPass">İptal</button>
     </div>
   </div>
 </div>
 
-<!-- Notification -->
-<div id="notif" class="hidden"></div>
+<!-- Notifications -->
+<div id="notifStack"></div>
 
 <script src="/socket.io/socket.io.js"></script>
 <script src="game.js"></script>
