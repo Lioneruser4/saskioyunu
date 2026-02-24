@@ -1,26 +1,43 @@
 {
-  "name": "baxis-artirma-v2",
-  "version": "2.0.0",
-  "description": "Turbo.az toplu görüntülenme artırma sistemi",
+  "name": "saski-fps-game",
+  "version": "1.0.0",
+  "description": "Professional FPS multiplayer game with Telegram integration",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "postinstall": "apt-get update && apt-get install -y wget gnupg libxss1 libxtst6 libxshmfence1 libxcomposite1 libxcursor1 libxdamage1 libxi6 libxtst6 libnss3 libcups2 libxrandr2 libasound2 libatk-bridge2.0-0 libgtk-3-0 libgbm-dev libdrm2 libxkbcommon0 && echo 'Bağımlılıklar yüklendi'"
+    "dev": "nodemon server.js",
+    "build": "echo 'Build complete - ready for deployment'",
+    "test": "echo 'No tests specified'"
   },
+  "keywords": [
+    "fps",
+    "game",
+    "multiplayer",
+    "telegram",
+    "webgl",
+    "threejs",
+    "socket.io"
+  ],
+  "author": "Saski Game Studio",
+  "license": "MIT",
   "dependencies": {
     "express": "^4.18.2",
-    "express-session": "^1.17.3",
-    "puppeteer-extra": "^3.3.6",
-    "puppeteer-extra-plugin-stealth": "^2.11.2",
-    "puppeteer-extra-plugin-adblocker": "^2.13.6",
-    "puppeteer-extra-plugin-anonymize-ua": "^2.4.6",
-    "axios": "^1.6.2",
-    "uuid": "^9.0.1",
-    "bull": "^4.12.0",
-    "ioredis": "^5.3.2",
-    "cluster": "^0.7.7"
+    "socket.io": "^4.7.2",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
   },
   "engines": {
-    "node": ">=18.0.0"
-  }
+    "node": ">=14.0.0",
+    "npm": ">=6.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Lioneruser4/saski-fps-game.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Lioneruser4/saski-fps-game/issues"
+  },
+  "homepage": "https://github.com/Lioneruser4/saski-fps-game#readme"
 }
