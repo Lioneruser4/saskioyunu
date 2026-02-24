@@ -1,1012 +1,1090 @@
-// Game Variables
-let scene, camera, renderer;
-let socket;
-let player = {
-    id: null,
-    name: null,
-    team: null,
-    health: 100,
-    position: { x: 0, y: 0, z: 0 },
-    rotation: { x: 0, y: 0 },
-    velocity: { x: 0, y: 0, z: 0 },
-    isJumping: false,
-    isShooting: false,
-    ammo: 30,
-    isDead: false
-};
-
-let players = new Map();
-let bullets = [];
-let keys = {};
-let mouse = { x: 0, y: 0, isLocked: false };
-let currentRoom = null;
-let gameStarted = false;
-
-// Mobile Touch Controls
-let touchControls = {
-    leftJoystick: { active: false, x: 0, y: 0 },
-    rightJoystick: { active: false, x: 0, y: 0 },
-    fireButton: { active: false },
-    jumpButton: { active: false },
-    reloadButton: { active: false }
-};
-
-let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-let isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-
-// Telegram Integration
-let telegramUser = null;
-
-// Initialize Telegram WebApp
-function initTelegram() {
-    if (window.Telegram && window.Telegram.WebApp) {
-        const tg = window.Telegram.WebApp;
-        tg.ready();
-        telegramUser = tg.initDataUnsafe?.user;
-        
-        if (telegramUser) {
-            player.id = telegramUser.id;
-            player.name = telegramUser.first_name + (telegramUser.last_name ? ' ' + telegramUser.last_name : '');
-            
-            document.getElementById('userName').textContent = `Kullanıcı: ${player.name}`;
-            document.getElementById('userId').textContent = `ID: ${player.id}`;
-            document.getElementById('userInfo').style.display = 'block';
-        }
-        
-        // Enable fullscreen and orientation lock
-        tg.expand();
-        tg.requestFullscreen();
-        
-        // Lock to landscape orientation on mobile
-        if (isMobile) {
-            tg.lockOrientation();
-        }
-        
-        // Set theme colors
-        tg.setHeaderColor('#667eea');
-        tg.setBackgroundColor('#667eea');
-        
-        // Enable haptic feedback
-        tg.enableClosingConfirmation();
-        
-        // Handle visibility changes
-        tg.onEvent('viewportChanged', () => {
-            if (camera && renderer) {
-                handleResize();
-            }
-        });
-        
-        tg.onEvent('themeChanged', () => {
-            // Handle theme changes if needed
-        });
-        
-    } else {
-        // Demo mode for testing
-        player.id = Math.random().toString(36).substr(2, 9);
-        player.name = 'Demo Kullanıcı';
-        
-        document.getElementById('userName').textContent = `Kullanıcı: ${player.name}`;
-        document.getElementById('userId').textContent = `ID: ${player.id}`;
-        document.getElementById('userInfo').style.display = 'block';
-        
-        // Request fullscreen for desktop testing
-        if (document.documentElement.requestFullscreen) {
-            document.documentElement.requestFullscreen();
-        }
-    }
-}
-
-// Initialize Three.js
-function initThreeJS() {
-    scene = new THREE.Scene();
-    scene.fog = new THREE.Fog(0x404040, 10, 100);
-
-    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 5, 10);
-
-    renderer = new THREE.WebGLRenderer({ 
-        canvas: document.getElementById('gameCanvas'),
-        antialias: true,
-        powerPreference: isMobile ? 'low-power' : 'high-performance',
-        failIfMajorPerformanceCaveat: false
-    });
-    
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    
-    // Optimize for mobile
-    if (isMobile) {
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        renderer.shadowMap.enabled = false; // Disable shadows on mobile for performance
-    } else {
-        renderer.setPixelRatio(window.devicePixelRatio);
-    }
-
-    // Lighting
-    const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
-    scene.add(ambientLight);
-
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-    directionalLight.position.set(10, 20, 10);
-    directionalLight.castShadow = !isMobile;
-    if (!isMobile) {
-        directionalLight.shadow.camera.near = 0.1;
-        directionalLight.shadow.camera.far = 50;
-        directionalLight.shadow.camera.left = -30;
-        directionalLight.shadow.camera.right = 30;
-        directionalLight.shadow.camera.top = 30;
-        directionalLight.shadow.camera.bottom = -30;
-    }
-    scene.add(directionalLight);
-
-    createBackroomsEnvironment();
-}
-
-// Create Backrooms-style Environment
-function createBackroomsEnvironment() {
-    // Floor
-    const floorGeometry = new THREE.PlaneGeometry(100, 100);
-    const floorMaterial = new THREE.MeshLambertMaterial({ 
-        color: 0xffff00,
-        transparent: true,
-        opacity: 0.8
-    });
-    const floor = new THREE.Mesh(floorGeometry, floorMaterial);
-    floor.rotation.x = -Math.PI / 2;
-    floor.receiveShadow = true;
-    scene.add(floor);
-
-    // Walls - Backrooms style
-    const wallMaterial = new THREE.MeshLambertMaterial({ 
-        color: 0xcccccc,
-        transparent: true,
-        opacity: 0.9
-    });
-
-    // Create maze-like walls
-    const wallPositions = [
-        { x: -20, z: -20, w: 40, h: 2 },
-        { x: 20, z: -20, w: 2, h: 40 },
-        { x: -20, z: 20, w: 2, h: 40 },
-        { x: 0, z: 0, w: 20, h: 2 },
-        { x: -10, z: 10, w: 2, h: 20 },
-        { x: 10, z: -10, w: 2, h: 20 },
-        { x: 0, z: -30, w: 30, h: 2 },
-        { x: 30, z: 0, w: 2, h: 30 }
-    ];
-
-    wallPositions.forEach(wall => {
-        const wallGeometry = new THREE.BoxGeometry(wall.w, 8, wall.h);
-        const wallMesh = new THREE.Mesh(wallGeometry, wallMaterial);
-        wallMesh.position.set(wall.x, 4, wall.z);
-        wallMesh.castShadow = true;
-        wallMesh.receiveShadow = true;
-        scene.add(wallMesh);
-    });
-
-    // Add some random obstacles
-    for (let i = 0; i < 10; i++) {
-        const obstacleGeometry = new THREE.BoxGeometry(
-            Math.random() * 3 + 1,
-            Math.random() * 4 + 2,
-            Math.random() * 3 + 1
-        );
-        const obstacleMaterial = new THREE.MeshLambertMaterial({ 
-            color: new THREE.Color(0.8, 0.8, 0.8)
-        });
-        const obstacle = new THREE.Mesh(obstacleGeometry, obstacleMaterial);
-        obstacle.position.set(
-            (Math.random() - 0.5) * 40,
-            obstacle.geometry.parameters.height / 2,
-            (Math.random() - 0.5) * 40
-        );
-        obstacle.castShadow = true;
-        obstacle.receiveShadow = true;
-        scene.add(obstacle);
-    }
-}
-
-// Create Soldier Character
-function createSoldier(team, position) {
-    const group = new THREE.Group();
-
-    // Body
-    const bodyGeometry = new THREE.BoxGeometry(1, 2, 0.5);
-    const bodyMaterial = new THREE.MeshLambertMaterial({ 
-        color: team === 'blue' ? 0x2196F3 : 0xf44336 
-    });
-    const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
-    body.position.y = 1;
-    body.castShadow = true;
-    group.add(body);
-
-    // Head
-    const headGeometry = new THREE.SphereGeometry(0.3);
-    const headMaterial = new THREE.MeshLambertMaterial({ color: 0xffdbac });
-    const head = new THREE.Mesh(headGeometry, headMaterial);
-    head.position.y = 2.3;
-    head.castShadow = true;
-    group.add(head);
-
-    // Arms
-    const armGeometry = new THREE.BoxGeometry(0.3, 1.5, 0.3);
-    const armMaterial = new THREE.MeshLambertMaterial({ color: 0xffdbac });
-    
-    const leftArm = new THREE.Mesh(armGeometry, armMaterial);
-    leftArm.position.set(-0.7, 1, 0);
-    leftArm.castShadow = true;
-    group.add(leftArm);
-
-    const rightArm = new THREE.Mesh(armGeometry, armMaterial);
-    rightArm.position.set(0.7, 1, 0);
-    rightArm.castShadow = true;
-    group.add(rightArm);
-
-    // Legs
-    const legGeometry = new THREE.BoxGeometry(0.4, 1.5, 0.4);
-    const legMaterial = new THREE.MeshLambertMaterial({ color: 0x333333 });
-    
-    const leftLeg = new THREE.Mesh(legGeometry, legMaterial);
-    leftLeg.position.set(-0.2, -0.25, 0);
-    leftLeg.castShadow = true;
-    group.add(leftLeg);
-
-    const rightLeg = new THREE.Mesh(legGeometry, legMaterial);
-    rightLeg.position.set(0.2, -0.25, 0);
-    rightLeg.castShadow = true;
-    group.add(rightLeg);
-
-    group.position.set(position.x, position.y, position.z);
-    
-    return group;
-}
-
-// Socket.io Connection - Render Server
-function initSocket() {
-    socket = io('https://saskioyunu-1-2d6i.onrender.com', {
-        transports: ['websocket', 'polling'],
-        reconnection: true,
-        reconnectionDelay: 1000,
-        reconnectionAttempts: Infinity,
-        maxReconnectionAttempts: Infinity,
-        timeout: 20000,
-        forceNew: true,
-        autoConnect: true
-    });
-
-    socket.on('connect', () => {
-        console.log('✅ Sunucuya başarıyla bağlandı');
-        document.getElementById('loading').style.display = 'none';
-        
-        // Show connection success message
-        if (gameStarted) {
-            showNotification('🟢 Sunucuya yeniden bağlandı!');
-        }
-        
-        // Rejoin room if we were in one
-        if (currentRoom && player.id) {
-            console.log('🔄 Odaya yeniden katılınyor:', currentRoom);
-            socket.emit('rejoinRoom', { roomId: currentRoom, player: player });
-        }
-    });
-
-    socket.on('disconnect', (reason) => {
-        console.log('❌ Sunucu bağlantısı koptu:', reason);
-        document.getElementById('loading').style.display = 'block';
-        document.getElementById('loading').innerHTML = `
-            <div class="loading-content">
-                <div class="loading-spinner"></div>
-                <div class="loading-text">Bağlantı Kesildi</div>
-                <div class="loading-subtext">Yeniden bağlanılıyor...</div>
-            </div>
-        `;
-        
-        // Pause game when disconnected
-        if (gameStarted) {
-            showNotification('🔴 Bağlantı koptu! Oyun duraklatıldı...');
-        }
-    });
-
-    socket.on('reconnect_attempt', (attemptNumber) => {
-        console.log(`🔄 Yeniden bağlanma denemesi: ${attemptNumber}`);
-        document.getElementById('loading').innerHTML = `
-            <div class="loading-content">
-                <div class="loading-spinner"></div>
-                <div class="loading-text">Yeniden Bağlanılıyor</div>
-                <div class="loading-subtext">Deneme: ${attemptNumber}</div>
-            </div>
-        `;
-    });
-
-    socket.on('reconnect_failed', () => {
-        console.log('❌ Yeniden bağlanma başarısız');
-        document.getElementById('loading').innerHTML = `
-            <div class="loading-content">
-                <div style="font-size: 48px; margin-bottom: 20px;">❌</div>
-                <div class="loading-text">Bağlantı Hatası</div>
-                <div class="loading-subtext">Sunucuya ulaşılamıyor</div>
-                <button onclick="location.reload()" style="
-                    margin-top: 20px;
-                    padding: 10px 20px;
-                    background: #667eea;
-                    color: white;
-                    border: none;
-                    border-radius: 5px;
-                    cursor: pointer;
-                    font-size: 16px;
-                ">Sayfayı Yenile</button>
-            </div>
-        `;
-    });
-
-    socket.on('connect_error', (error) => {
-        console.log('❌ Bağlantı hatası:', error.message);
-        document.getElementById('loading').style.display = 'block';
-        document.getElementById('loading').innerHTML = `
-            <div class="loading-content">
-                <div style="font-size: 48px; margin-bottom: 20px;">⚠️</div>
-                <div class="loading-text">Bağlantı Hatası</div>
-                <div class="loading-subtext">${error.message}</div>
-            </div>
-        `;
-    });
-
-    socket.on('playerJoined', (data) => {
-        const newPlayer = createSoldier(data.team, data.position);
-        newPlayer.userData = { id: data.id, name: data.name, team: data.team };
-        players.set(data.id, newPlayer);
-        scene.add(newPlayer);
-        
-        // Show join message
-        if (gameStarted) {
-            showNotification(`🟢 ${data.name} oyuna katıldı`);
-        }
-    });
-
-    socket.on('playerLeft', (playerId) => {
-        const playerMesh = players.get(playerId);
-        if (playerMesh) {
-            const playerName = playerMesh.userData.name;
-            scene.remove(playerMesh);
-            players.delete(playerId);
-            
-            // Show leave message
-            if (gameStarted) {
-                showNotification(`🔴 ${playerName} oyundan ayrıldı`);
-            }
-        }
-    });
-
-    socket.on('gameState', (gameState) => {
-        // Update all players positions
-        if (gameState.players) {
-            gameState.players.forEach(p => {
-                if (p.id !== player.id) {
-                    const playerMesh = players.get(p.id);
-                    if (playerMesh) {
-                        playerMesh.position.set(p.position.x, p.position.y, p.position.z);
-                        playerMesh.rotation.y = p.rotation.y;
-                    }
-                }
-            });
-        }
-    });
-
-    socket.on('playerDamaged', (data) => {
-        if (data.targetId === player.id) {
-            player.health = data.newHealth;
-            updateHealthBar();
-            
-            // Show damage message
-            if (data.damage >= 100) {
-                showNotification('💀 Kafa vuruşu! Öldün!');
-            } else if (data.damage >= 35) {
-                showNotification('🎯 Vücut vuruşu!');
-            } else {
-                showNotification('🦶 Bacak vuruşu!');
-            }
-            
-            if (player.health <= 0) {
-                player.isDead = true;
-                showNotification('💀 Öldün! 5 saniye sonra yeniden doğacaksın...');
-                setTimeout(() => {
-                    respawn();
-                }, 5000);
-            }
-        }
-    });
-
-    socket.on('bulletHit', (data) => {
-        // Create hit effect
-        createHitEffect(data.position, data.damage);
-    });
-
-    socket.on('playerRespawned', (data) => {
-        const playerMesh = players.get(data.playerId);
-        if (playerMesh) {
-            playerMesh.position.set(data.position.x, data.position.y, data.position.z);
-            
-            // Show respawn message
-            if (data.playerId !== player.id) {
-                const playerName = playerMesh.userData.name;
-                showNotification(`🔄 ${playerName} yeniden doğdu!`);
-            }
-        }
-    });
-
-    socket.on('roomJoined', (data) => {
-        currentRoom = data.roomId;
-        player.team = data.team;
-        startGame();
-    });
-
-    socket.on('roomsList', (rooms) => {
-        displayRooms(rooms);
-    });
-
-    socket.on('error', (error) => {
-        console.error('Sunucu hatası:', error);
-        showNotification(`❌ Hata: ${error}`);
-    });
-}
-
-// Game Controls
-function initControls() {
-    // Initialize touch controls if mobile
-    if (isMobile || isTouchDevice) {
-        initTouchControls();
-        document.getElementById('mobileControls').style.display = 'block';
-        document.querySelector('.controls-info').style.display = 'none';
-    } else {
-        // Keyboard controls for desktop
-        document.addEventListener('keydown', (e) => {
-            keys[e.code] = true;
-            
-            if (e.code === 'Space' && !player.isJumping && !player.isDead) {
-                player.velocity.y = 0.3;
-                player.isJumping = true;
-            }
-        });
-
-        document.addEventListener('keyup', (e) => {
-            keys[e.code] = false;
-        });
-    }
-
-    // Mouse controls (for both desktop and mobile with touch)
-    const canvas = document.getElementById('gameCanvas');
-    
-    canvas.addEventListener('click', () => {
-        if (!mouse.isLocked && gameStarted && !player.isDead && !isMobile) {
-            canvas.requestPointerLock();
-        }
-    });
-
-    document.addEventListener('pointerlockchange', () => {
-        mouse.isLocked = document.pointerLockElement === canvas;
-        document.getElementById('crosshair').style.display = mouse.isLocked ? 'block' : 'none';
-    });
-
-    document.addEventListener('mousemove', (e) => {
-        if (mouse.isLocked && !isMobile) {
-            player.rotation.y -= e.movementX * 0.002;
-            player.rotation.x -= e.movementY * 0.002;
-            player.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, player.rotation.x));
-        }
-    });
-
-    document.addEventListener('mousedown', (e) => {
-        if (e.button === 0 && mouse.isLocked && !player.isDead && player.ammo > 0 && !isMobile) {
-            shoot();
-        }
-    });
-}
-
-// Reload function
-function reload() {
-    if (player.ammo < 30) {
-        showNotification('Mermiler dolduruluyor...');
-        setTimeout(() => {
-            player.ammo = 30;
-            updateAmmo();
-            showNotification('Mermiler doldu!');
-        }, 2000);
-    }
-}
-
-// Shooting mechanics
-function shoot() {
-    if (player.ammo <= 0) {
-        showNotification('Mermi bitti!');
-        return;
-    }
-
-    player.isShooting = true;
-    player.ammo--;
-    updateAmmo();
-
-    // Create bullet
-    const bullet = {
-        id: Date.now() + Math.random(),
-        position: { ...player.position },
-        velocity: {
-            x: Math.sin(player.rotation.y) * 0.5,
-            y: Math.sin(player.rotation.x) * 0.5,
-            z: -Math.cos(player.rotation.y) * 0.5
-        },
-        owner: player.id
-    };
-
-    bullets.push(bullet);
-
-    // Send to server
-    socket.emit('shoot', {
-        bullet: bullet,
-        rotation: player.rotation
-    });
-
-    // Auto-reload after 30 bullets
-    if (player.ammo <= 0) {
-        setTimeout(() => {
-            reload();
-        }, 1000);
-    }
-}
-
-// Update player movement
-function updatePlayer(deltaTime) {
-    if (player.isDead) return;
-
-    const speed = isMobile ? 0.08 : 0.1; // Slower speed on mobile for better control
-    const oldPosition = { ...player.position };
-
-    // Movement - Handle both keyboard and touch controls
-    let moveX = 0;
-    let moveZ = 0;
-    
-    if (isMobile || isTouchDevice) {
-        // Touch controls
-        if (touchControls.leftJoystick.active) {
-            moveX = touchControls.leftJoystick.x * speed;
-            moveZ = touchControls.leftJoystick.y * speed;
-        }
-        
-        // Rotation from right joystick
-        if (touchControls.rightJoystick.active) {
-            player.rotation.y += touchControls.rightJoystick.x * 0.03;
-            player.rotation.x += touchControls.rightJoystick.y * 0.02;
-            player.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, player.rotation.x));
-        }
-        
-        // Jump from touch button
-        if (touchControls.jumpButton.active && !player.isJumping) {
-            player.velocity.y = 0.3;
-            player.isJumping = true;
-        }
-        
-        // Shoot from touch button
-        if (touchControls.fireButton.active && player.ammo > 0) {
-            shoot();
-        }
-        
-        // Reload from touch button
-        if (touchControls.reloadButton.active) {
-            reload();
-        }
-    } else {
-        // Keyboard controls
-        if (keys['KeyW']) moveZ -= speed;
-        if (keys['KeyS']) moveZ += speed;
-        if (keys['KeyA']) moveX -= speed;
-        if (keys['KeyD']) moveX += speed;
-    }
-
-    // Apply movement relative to camera rotation
-    if (moveX !== 0 || moveZ !== 0) {
-        player.position.x += moveX * Math.cos(player.rotation.y) - moveZ * Math.sin(player.rotation.y);
-        player.position.z += moveX * Math.sin(player.rotation.y) + moveZ * Math.cos(player.rotation.y);
-    }
-
-    // Gravity
-    player.velocity.y -= 0.01;
-    player.position.y += player.velocity.y;
-
-    // Ground collision
-    if (player.position.y <= 0) {
-        player.position.y = 0;
-        player.velocity.y = 0;
-        player.isJumping = false;
-    }
-
-    // Wall collision (simple)
-    if (Math.abs(player.position.x) > 45) player.position.x = oldPosition.x;
-    if (Math.abs(player.position.z) > 45) player.position.z = oldPosition.z;
-
-    // Update camera
-    camera.position.set(player.position.x, player.position.y + 1.6, player.position.z);
-    camera.rotation.x = player.rotation.x;
-    camera.rotation.y = player.rotation.y;
-
-    // Send position to server
-    if (socket && socket.connected) {
-        socket.emit('playerUpdate', {
-            position: player.position,
-            rotation: player.rotation,
-            velocity: player.velocity
-        });
-    }
-}
-
-// Update bullets
-function updateBullets(deltaTime) {
-    bullets = bullets.filter(bullet => {
-        bullet.position.x += bullet.velocity.x;
-        bullet.position.y += bullet.velocity.y;
-        bullet.position.z += bullet.velocity.z;
-
-        // Remove bullets that are too far or hit ground
-        if (Math.abs(bullet.position.x) > 50 || 
-            Math.abs(bullet.position.z) > 50 || 
-            bullet.position.y < 0) {
-            return false;
-        }
-
-        return true;
-    });
-}
-
-// Create hit effect
-function createHitEffect(position, damage) {
-    const particleGeometry = new THREE.SphereGeometry(0.1);
-    const particleMaterial = new THREE.MeshBasicMaterial({ 
-        color: damage >= 100 ? 0xff0000 : 0xff6600 
-    });
-    
-    for (let i = 0; i < 10; i++) {
-        const particle = new THREE.Mesh(particleGeometry, particleMaterial);
-        particle.position.copy(position);
-        particle.velocity = new THREE.Vector3(
-            (Math.random() - 0.5) * 0.2,
-            (Math.random() - 0.5) * 0.2,
-            (Math.random() - 0.5) * 0.2
-        );
-        scene.add(particle);
-        
-        setTimeout(() => {
-            scene.remove(particle);
-        }, 1000);
-    }
-}
-
-// UI Functions
-function updateHealthBar() {
-    const healthPercent = Math.max(0, player.health);
-    document.getElementById('healthFill').style.width = healthPercent + '%';
-    
-    if (healthPercent > 60) {
-        document.getElementById('healthFill').style.background = 'linear-gradient(90deg, #4CAF50, #66BB6A)';
-    } else if (healthPercent > 30) {
-        document.getElementById('healthFill').style.background = 'linear-gradient(90deg, #ff9800, #ffb74d)';
-    } else {
-        document.getElementById('healthFill').style.background = 'linear-gradient(90deg, #ff4444, #ff6666)';
-    }
-}
-
-function updateAmmo() {
-    document.getElementById('ammo').textContent = `🔫 ${player.ammo} / ∞`;
-}
-
-function showTeamIndicator() {
-    const indicator = document.getElementById('teamIndicator');
-    indicator.textContent = player.team === 'blue' ? '🔵 MAVİ TAKIM' : '🔴 KIRMIZI TAKIM';
-    indicator.className = player.team === 'blue' ? 'team-blue' : 'team-red';
-}
-
-function showNotification(message) {
-    const notificationDiv = document.createElement('div');
-    notificationDiv.className = 'notification';
-    notificationDiv.textContent = message;
-    document.body.appendChild(notificationDiv);
-    
-    setTimeout(() => {
-        document.body.removeChild(notificationDiv);
-    }, 3000);
-}
-
-function respawn() {
-    player.health = 100;
-    player.isDead = false;
-    player.position = {
-        x: (Math.random() - 0.5) * 20,
-        y: 0,
-        z: (Math.random() - 0.5) * 20
-    };
-    updateHealthBar();
-    showNotification('Yeniden doğdun!');
-}
-
-// Menu Functions
-function findGame() {
-    document.getElementById('loading').style.display = 'block';
-    document.getElementById('loading').innerHTML = `
-        <div class="loading-content">
-            <div class="loading-spinner"></div>
-            <div class="loading-text">Oyun Aranıyor</div>
-            <div class="loading-subtext">Sunucuya bağlanılıyor...</div>
-        </div>
-    `;
-    
-    socket.emit('findGame', { player: player });
-}
-
-function showRooms() {
-    socket.emit('getRooms');
-    document.getElementById('mainMenu').style.display = 'none';
-    document.getElementById('roomsList').style.display = 'block';
-}
-
-function createRoom() {
-    const roomName = prompt('Oda adı girin:');
-    if (roomName) {
-        socket.emit('createRoom', { 
-            name: roomName,
-            player: player 
-        });
-    }
-}
-
-function backToMenu() {
-    document.getElementById('roomsList').style.display = 'none';
-    document.getElementById('mainMenu').style.display = 'block';
-}
-
-function displayRooms(rooms) {
-    const container = document.getElementById('roomsContainer');
-    container.innerHTML = '';
-    
-    rooms.forEach(room => {
-        const roomDiv = document.createElement('div');
-        roomDiv.className = 'room-item';
-        roomDiv.innerHTML = `
-            <div class="room-info">
-                <div class="room-name">${room.name}</div>
-                <div class="room-players">Oyuncular: ${room.players.length}/20</div>
-            </div>
-            <div>
-                <span style="color: ${room.players.length < 20 ? '#4CAF50' : '#f44336'}">
-                    ${room.players.length < 20 ? 'Katıl' : 'Dolu'}
-                </span>
-            </div>
-        `;
-        
-        if (room.players.length < 20) {
-            roomDiv.onclick = () => joinRoom(room.id);
-        }
-        
-        container.appendChild(roomDiv);
-    });
-}
-
-function joinRoom(roomId) {
-    document.getElementById('loading').style.display = 'block';
-    document.getElementById('loading').innerHTML = `
-        <div class="loading-content">
-            <div class="loading-spinner"></div>
-            <div class="loading-text">Odaya Bağlanılıyor</div>
-            <div class="loading-subtext">Lütfen bekleyin...</div>
-        </div>
-    `;
-    
-    socket.emit('joinRoom', { 
-        roomId: roomId,
-        player: player 
-    });
-}
-
-// Start Game
-function startGame() {
-    document.getElementById('mainMenu').style.display = 'none';
-    document.getElementById('roomsList').style.display = 'none';
-    document.getElementById('gameCanvas').style.display = 'block';
-    document.getElementById('hud').style.display = 'block';
-    
-    if (!isMobile) {
-        document.querySelector('.controls-info').style.display = 'block';
-    }
-    
-    gameStarted = true;
-    showTeamIndicator();
-    updateHealthBar();
-    updateAmmo();
-    
-    // Initialize game systems
-    initThreeJS();
-    initControls();
-    
-    // Start game loop
-    animate();
-    
-    // Handle orientation changes
-    window.addEventListener('orientationchange', handleOrientationChange);
-    window.addEventListener('resize', handleResize);
-}
-
-// Game Loop
+// =====================================================================
+// SaskiOyunu - Game Engine
+// =====================================================================
+'use strict';
+
+const SERVER_URL = 'https://saskioyunu.onrender.com';
+
+// ---- Socket ----
+const socket = io(SERVER_URL, { transports: ['websocket', 'polling'] });
+
+// ---- DOM ----
+const loadingScreen   = document.getElementById('loadingScreen');
+const lobbyScreen     = document.getElementById('lobbyScreen');
+const gameScreen      = document.getElementById('gameScreen');
+const canvas          = document.getElementById('gameCanvas');
+const ctx             = canvas.getContext('2d');
+const minimapCanvas   = document.getElementById('minimapCanvas2');
+const minimapCtx      = minimapCanvas.getContext('2d');
+
+// Lobby
+const playerNameDisplay = document.getElementById('playerNameDisplay');
+const roomListEl        = document.getElementById('roomList');
+const roomCountBadge    = document.getElementById('roomCountBadge');
+const joinPublicBtn     = document.getElementById('joinPublicBtn');
+const quickJoinBtn      = document.getElementById('quickJoinBtn');
+const createRoomBtn     = document.getElementById('createRoomBtn');
+const refreshBtn        = document.getElementById('refreshBtn');
+
+// HUD
+const hpFill        = document.getElementById('hpFill');
+const hpText        = document.getElementById('hpText');
+const killCountEl   = document.getElementById('killCount');
+const deathCountEl  = document.getElementById('deathCount');
+const roomNameTag   = document.getElementById('roomNameTag');
+const leaveBtn      = document.getElementById('leaveBtn');
+const killFeedEl    = document.getElementById('killFeed');
+const respawnOverlay= document.getElementById('respawnOverlay');
+const chatMessages  = document.getElementById('chatMessages');
+const chatInput     = document.getElementById('chatInput');
+const chatSend      = document.getElementById('chatSend');
+const scoreBoard    = document.getElementById('scoreBoard');
+const scoreList     = document.getElementById('scoreList');
+
+// Modals
+const createRoomModal    = document.getElementById('createRoomModal');
+const joinPasswordModal  = document.getElementById('joinPasswordModal');
+const newRoomName        = document.getElementById('newRoomName');
+const newRoomPass        = document.getElementById('newRoomPass');
+const joinPassInput      = document.getElementById('joinPassInput');
+const notifEl            = document.getElementById('notif');
+
+// =====================================================================
+// STATE
+// =====================================================================
+let myId = null;
+let myName = 'Player';
+let myAppearance = null;
+let myRoomId = null;
+let myRoomName = '';
+let platforms = [];
+let worldWidth = 4000;
+let worldHeight = 700;
+let players = {};        // id -> player state
+let appearances = {};    // id -> { name, appearance }
+let pickups = [];
+let projectiles = {};    // id -> { x,y,vx,vy }
+let activeEffects = [];  // visual effects
+let pendingRoomId = null;
+
+// Input state
+const keys = { left:false, right:false, jump:false, attack:false, shoot:false };
+
+// Camera
+let camX = 0, camY = 0;
+let targetCamX = 0, targetCamY = 0;
+
+// Touch tracking
+const touches = {};
+
+// Animation
 let lastTime = 0;
-function animate(currentTime = 0) {
-    requestAnimationFrame(animate);
-    
-    const deltaTime = currentTime - lastTime;
-    lastTime = currentTime;
-    
-    if (gameStarted && !player.isDead) {
-        updatePlayer(deltaTime);
-        updateBullets(deltaTime);
+let animFrames = {};  // id -> frame counter
+
+// Scoreboard toggle
+let showScore = false;
+
+// =====================================================================
+// UTILS
+// =====================================================================
+function showNotif(msg, color = '#ff4444') {
+  notifEl.textContent = msg;
+  notifEl.style.background = color;
+  notifEl.classList.remove('hidden');
+  setTimeout(() => notifEl.classList.add('hidden'), 2500);
+}
+
+function showScreen(name) {
+  loadingScreen.classList.add('hidden');
+  lobbyScreen.classList.add('hidden');
+  gameScreen.classList.add('hidden');
+  if (name === 'loading') loadingScreen.classList.remove('hidden');
+  else if (name === 'lobby') lobbyScreen.classList.remove('hidden');
+  else if (name === 'game') gameScreen.classList.remove('hidden');
+}
+
+// =====================================================================
+// TELEGRAM WebApp integration
+// =====================================================================
+let tgUser = null;
+function getTelegramUser() {
+  try {
+    const tg = window.Telegram?.WebApp;
+    if (tg && tg.initDataUnsafe?.user) {
+      tg.expand();
+      tg.enableClosingConfirmation();
+      return tg.initDataUnsafe.user;
     }
-    
-    // Update other players
-    players.forEach((playerMesh, playerId) => {
-        // Simple animation for other players
-        if (playerMesh.userData.animation) {
-            playerMesh.userData.animation += deltaTime;
-        }
-    });
-    
-    renderer.render(scene, camera);
+  } catch(e) {}
+  return null;
 }
 
-// Window resize
-function handleResize() {
-    if (camera && renderer) {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-    }
-}
-
-// Handle orientation change
-function handleOrientationChange() {
-    setTimeout(() => {
-        handleResize();
-        
-        // Adjust touch controls position for new orientation
-        if (isMobile) {
-            const orientation = window.orientation || screen.orientation?.angle || 0;
-            // Touch controls will automatically adjust via CSS
-        }
-    }, 100);
-}
-
-window.addEventListener('resize', handleResize);
-
-// Initialize touch controls
-function initTouchControls() {
-    const leftJoystick = document.getElementById('leftJoystick');
-    const rightJoystick = document.getElementById('rightJoystick');
-    const fireButton = document.getElementById('fireButton');
-    const jumpButton = document.getElementById('jumpButton');
-    const reloadButton = document.getElementById('reloadButton');
-
-    leftJoystick.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        touchControls.leftJoystick.active = true;
-        const rect = leftJoystick.getBoundingClientRect();
-        touchControls.leftJoystick.x = e.touches[0].clientX - rect.left - rect.width / 2;
-        touchControls.leftJoystick.y = e.touches[0].clientY - rect.top - rect.height / 2;
-    });
-
-    leftJoystick.addEventListener('touchmove', (e) => {
-        e.preventDefault();
-        if (touchControls.leftJoystick.active) {
-            const rect = leftJoystick.getBoundingClientRect();
-            touchControls.leftJoystick.x = e.touches[0].clientX - rect.left - rect.width / 2;
-            touchControls.leftJoystick.y = e.touches[0].clientY - rect.top - rect.height / 2;
-        }
-    });
-
-    leftJoystick.addEventListener('touchend', (e) => {
-        e.preventDefault();
-        touchControls.leftJoystick.active = false;
-        touchControls.leftJoystick.x = 0;
-        touchControls.leftJoystick.y = 0;
-    });
-
-    rightJoystick.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        touchControls.rightJoystick.active = true;
-        const rect = rightJoystick.getBoundingClientRect();
-        touchControls.rightJoystick.x = e.touches[0].clientX - rect.left - rect.width / 2;
-        touchControls.rightJoystick.y = e.touches[0].clientY - rect.top - rect.height / 2;
-    });
-
-    rightJoystick.addEventListener('touchmove', (e) => {
-        e.preventDefault();
-        if (touchControls.rightJoystick.active) {
-            const rect = rightJoystick.getBoundingClientRect();
-            touchControls.rightJoystick.x = e.touches[0].clientX - rect.left - rect.width / 2;
-            touchControls.rightJoystick.y = e.touches[0].clientY - rect.top - rect.height / 2;
-        }
-    });
-
-    rightJoystick.addEventListener('touchend', (e) => {
-        e.preventDefault();
-        touchControls.rightJoystick.active = false;
-        touchControls.rightJoystick.x = 0;
-        touchControls.rightJoystick.y = 0;
-    });
-
-    fireButton.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        touchControls.fireButton.active = true;
-    });
-
-    fireButton.addEventListener('touchend', (e) => {
-        e.preventDefault();
-        touchControls.fireButton.active = false;
-    });
-
-    jumpButton.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        touchControls.jumpButton.active = true;
-    });
-
-    jumpButton.addEventListener('touchend', (e) => {
-        e.preventDefault();
-        touchControls.jumpButton.active = false;
-    });
-
-    reloadButton.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        touchControls.reloadButton.active = true;
-    });
-
-    reloadButton.addEventListener('touchend', (e) => {
-        e.preventDefault();
-        touchControls.reloadButton.active = false;
-    });
-}
-
-// Initialize game
+// =====================================================================
+// INIT
+// =====================================================================
 window.addEventListener('load', () => {
-    // Show loading screen initially
-    document.getElementById('loading').style.display = 'block';
-    document.getElementById('loading').innerHTML = `
-        <div class="loading-content">
-            <div class="loading-spinner"></div>
-            <div class="loading-text">Sunucuya Bağlanılıyor</div>
-            <div class="loading-subtext">Lütfen bekleyin...</div>
-        </div>
-    `;
-    
-    initTelegram();
-    initSocket();
-    
-    // Prevent default touch behaviors
-    document.addEventListener('touchstart', (e) => {
-        if (e.target.closest('#mobileControls')) {
-            e.preventDefault();
-        }
-    }, { passive: false });
-    
-    document.addEventListener('touchmove', (e) => {
-        if (e.target.closest('#mobileControls')) {
-            e.preventDefault();
-        }
-    }, { passive: false });
-    
-    // Prevent context menu on long press
-    document.addEventListener('contextmenu', (e) => {
-        e.preventDefault();
-    });
-    
-    // Prevent double tap zoom
-    let lastTouchEnd = 0;
-    document.addEventListener('touchend', (e) => {
-        const now = Date.now();
-        if (now - lastTouchEnd <= 300) {
-            e.preventDefault();
-        }
-        lastTouchEnd = now;
-    }, false);
+  tgUser = getTelegramUser();
+
+  // After loading animation
+  setTimeout(() => {
+    let name, telegramId;
+
+    if (tgUser) {
+      name = tgUser.first_name + (tgUser.last_name ? ' ' + tgUser.last_name : '');
+      telegramId = String(tgUser.id);
+    } else {
+      // Web fallback - ask name or use stored
+      name = localStorage.getItem('sask_name') || '';
+      if (!name) {
+        name = prompt('Kullanıcı adın:') || 'Misafir' + Math.floor(Math.random()*9000+1000);
+        localStorage.setItem('sask_name', name);
+      }
+      telegramId = localStorage.getItem('sask_tgid') || null;
+    }
+
+    myName = name;
+    playerNameDisplay.textContent = myName;
+    socket.emit('joinLobby', { name: myName, telegramId });
+    showScreen('lobby');
+  }, 2200);
+
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+  setupControls();
 });
+
+// =====================================================================
+// CANVAS RESIZE
+// =====================================================================
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+
+// =====================================================================
+// SOCKET EVENTS
+// =====================================================================
+socket.on('connect', () => console.log('Connected:', socket.id));
+socket.on('disconnect', () => showNotif('Bağlantı kesildi! Yeniden bağlanıyor...'));
+socket.on('reconnect', () => { showNotif('Yeniden bağlandı!', '#00e676'); socket.emit('joinLobby', { name: myName, telegramId: tgUser?.id }); });
+
+socket.on('lobbyJoined', (data) => {
+  myId = data.playerId;
+  myAppearance = data.appearance;
+  platforms = data.platforms || [];
+  worldWidth = data.worldWidth;
+  worldHeight = data.worldHeight;
+  if (data.roomList) updateRoomList(data.roomList, data.publicInfo);
+});
+
+socket.on('roomList', (data) => updateRoomList(data.rooms, data.publicInfo));
+socket.on('roomListUpdate', (data) => {
+  if (gameScreen.classList.contains('hidden')) updateRoomList(data.rooms, data.publicInfo);
+});
+
+socket.on('roomJoined', (data) => {
+  myRoomId = data.roomId;
+  myRoomName = data.roomName;
+  platforms = data.platforms || platforms;
+  worldWidth = data.worldWidth || worldWidth;
+  worldHeight = data.worldHeight || worldHeight;
+
+  // Init players
+  players = {};
+  appearances = data.appearances || {};
+  animFrames = {};
+
+  // Load existing players
+  if (data.players) {
+    data.players.forEach(p => {
+      players[p.id] = { ...p };
+      animFrames[p.id] = 0;
+    });
+  }
+
+  // Add self
+  players[myId] = players[myId] || { id: myId, x: 500, y: 300, vx:0,vy:0, hp:100, alive:true, facing:1, state:'idle', kills:0, deaths:0 };
+  if (!appearances[myId]) appearances[myId] = { name: myName, appearance: myAppearance };
+  animFrames[myId] = 0;
+
+  // Pickups
+  pickups = data.pickups || [];
+  projectiles = {};
+
+  // Load chat
+  chatMessages.innerHTML = '';
+  if (data.chat) data.chat.forEach(m => addChatMsg(m.name, m.text));
+
+  roomNameTag.textContent = myRoomName;
+  showScreen('game');
+  startGameLoop();
+
+  // Close password modal if open
+  joinPasswordModal.classList.add('hidden');
+  createRoomModal.classList.add('hidden');
+});
+
+socket.on('joinError', (msg) => {
+  showNotif('❌ ' + msg);
+  joinPasswordModal.classList.add('hidden');
+});
+
+socket.on('stateUpdate', (data) => {
+  data.players.forEach(p => {
+    if (!players[p.id]) { players[p.id] = p; animFrames[p.id] = 0; }
+    else Object.assign(players[p.id], p);
+  });
+  // Update projectile positions
+  if (data.projs) {
+    data.projs.forEach(pr => {
+      if (projectiles[pr.id]) { projectiles[pr.id].x = pr.x; projectiles[pr.id].y = pr.y; }
+    });
+  }
+  // Update my HUD
+  const me = players[myId];
+  if (me) updateHUD(me);
+});
+
+socket.on('playerJoined', (p) => {
+  players[p.id] = p;
+  appearances[p.id] = { name: p.name, appearance: p.appearance };
+  animFrames[p.id] = 0;
+  addChatMsg('System', `👋 ${p.name} katıldı`, '#aaa');
+});
+
+socket.on('playerLeft', (id) => {
+  const nm = appearances[id]?.name || id;
+  addChatMsg('System', `🚪 ${nm} ayrıldı`, '#aaa');
+  delete players[id];
+  delete appearances[id];
+  delete animFrames[id];
+});
+
+socket.on('playerHit', (data) => {
+  if (players[data.id]) players[data.id].hp = data.hp;
+  if (data.id === myId) updateHUD(players[myId]);
+  // Flash
+  spawnHitEffect(players[data.id]);
+});
+
+socket.on('playerDied', (data) => {
+  if (players[data.id]) { players[data.id].alive = false; players[data.id].hp = 0; }
+  if (data.id === myId) {
+    respawnOverlay.classList.remove('hidden');
+    updateHUD({ hp: 0, kills: players[myId]?.kills || 0, deaths: players[myId]?.deaths || 0 });
+  }
+});
+
+socket.on('playerRespawn', (p) => {
+  players[p.id] = { ...players[p.id], ...p };
+  if (p.id === myId) {
+    respawnOverlay.classList.add('hidden');
+    updateHUD(p);
+  }
+});
+
+socket.on('killFeed', (data) => {
+  addKillFeed(data.killerName, data.victimName);
+  if (players[myId]) { updateHUD(players[myId]); }
+});
+
+socket.on('meleeEffect', (data) => {
+  activeEffects.push({ type:'melee', x:data.x, y:data.y, life:12, maxLife:12 });
+});
+
+socket.on('projCreate', (p) => {
+  projectiles[p.id] = { ...p };
+});
+
+socket.on('projRemove', (id) => {
+  if (projectiles[id]) {
+    const p = projectiles[id];
+    activeEffects.push({ type:'explosion', x:p.x, y:p.y, life:15, maxLife:15 });
+    delete projectiles[id];
+  }
+});
+
+socket.on('pickupSpawn', (id) => {
+  const pk = pickups.find(p => p.id === id);
+  if (pk) pk.active = true;
+});
+
+socket.on('pickupCollect', (data) => {
+  const pk = pickups.find(p => p.id === data.pkId);
+  if (pk) pk.active = false;
+  if (data.playerId === myId && players[myId]) {
+    players[myId].hp = data.hp;
+    updateHUD(players[myId]);
+    activeEffects.push({ type:'heal', x: players[myId].x + 16, y: players[myId].y, life:30, maxLife:30 });
+  }
+});
+
+socket.on('chatMsg', (data) => addChatMsg(data.name, data.text));
+
+// =====================================================================
+// HUD
+// =====================================================================
+function updateHUD(p) {
+  const pct = Math.max(0, Math.min(100, (p.hp / 100) * 100));
+  hpFill.style.width = pct + '%';
+  hpText.textContent = Math.max(0, Math.round(p.hp));
+  if (p.kills !== undefined) killCountEl.textContent = p.kills;
+  if (p.deaths !== undefined) deathCountEl.textContent = p.deaths;
+}
+
+function addKillFeed(killer, victim) {
+  const el = document.createElement('div');
+  el.className = 'kill-entry';
+  el.textContent = `⚔️ ${killer} → ${victim}`;
+  killFeedEl.appendChild(el);
+  setTimeout(() => el.remove(), 3100);
+}
+
+function addChatMsg(name, text, color = null) {
+  const el = document.createElement('div');
+  el.className = 'chat-msg';
+  el.innerHTML = `<span class="cn" style="${color ? 'color:'+color : ''}">${escHtml(name)}</span>: ${escHtml(text)}`;
+  chatMessages.appendChild(el);
+  if (chatMessages.children.length > 20) chatMessages.firstChild.remove();
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function spawnHitEffect(p) {
+  if (!p) return;
+  activeEffects.push({ type:'hit', x: p.x + 16, y: p.y + 10, life:10, maxLife:10 });
+}
+
+// =====================================================================
+// ROOM LIST UI
+// =====================================================================
+function updateRoomList(rooms, publicInfo) {
+  let html = '';
+
+  // Public world entry
+  const pubCount = publicInfo?.playerCount || 0;
+  html += `<div class="room-item" data-id="public" data-locked="false">
+    <div class="room-info">
+      <div class="room-name">🌍 Public World</div>
+      <div class="room-meta">${pubCount} / 20 oyuncu</div>
+    </div>
+  </div>`;
+
+  if (rooms.length === 0) {
+    html += '<div class="empty-state" style="margin-top:.5rem">Henüz özel oda yok</div>';
+  } else {
+    rooms.forEach(r => {
+      html += `<div class="room-item" data-id="${escHtml(r.id)}" data-locked="${r.hasPassword}">
+        <div class="room-info">
+          <div class="room-name">${escHtml(r.name)}${r.hasPassword ? ' 🔒' : ''}</div>
+          <div class="room-meta">${r.playerCount}/${r.maxPlayers} oyuncu</div>
+        </div>
+        <div class="room-count">${r.hasPassword ? '🔐' : '🔓'}</div>
+      </div>`;
+    });
+  }
+
+  roomListEl.innerHTML = html;
+  roomCountBadge.textContent = `(${rooms.length + 1})`;
+
+  // Bind click
+  roomListEl.querySelectorAll('.room-item').forEach(el => {
+    el.addEventListener('click', () => {
+      const id = el.dataset.id;
+      const locked = el.dataset.locked === 'true';
+      if (id === 'public') { socket.emit('joinPublic'); return; }
+      if (locked) {
+        pendingRoomId = id;
+        joinPassInput.value = '';
+        joinPasswordModal.classList.remove('hidden');
+      } else {
+        socket.emit('joinRoom', { roomId: id, password: '' });
+      }
+    });
+  });
+}
+
+// =====================================================================
+// GAME LOOP
+// =====================================================================
+let gameLoopId = null;
+function startGameLoop() {
+  if (gameLoopId) cancelAnimationFrame(gameLoopId);
+  lastTime = performance.now();
+  function loop(now) {
+    const dt = Math.min((now - lastTime) / 16.667, 3);
+    lastTime = now;
+    update(dt);
+    render();
+    gameLoopId = requestAnimationFrame(loop);
+  }
+  gameLoopId = requestAnimationFrame(loop);
+}
+
+// =====================================================================
+// UPDATE (client side prediction for smoothness)
+// =====================================================================
+let inputSendTimer = 0;
+function update(dt) {
+  inputSendTimer++;
+  if (inputSendTimer >= 2) {
+    inputSendTimer = 0;
+    socket.emit('input', {
+      left:   keys.left,
+      right:  keys.right,
+      jump:   keys.jump,
+      attack: keys.attack,
+      shoot:  keys.shoot
+    });
+    keys.attack = false;
+    keys.shoot  = false;
+  }
+
+  // Update animation counters
+  Object.keys(players).forEach(id => {
+    if (animFrames[id] === undefined) animFrames[id] = 0;
+    animFrames[id] += dt;
+  });
+
+  // Update effects
+  for (let i = activeEffects.length - 1; i >= 0; i--) {
+    activeEffects[i].life -= dt;
+    if (activeEffects[i].life <= 0) activeEffects.splice(i, 1);
+  }
+
+  // Smooth camera
+  const me = players[myId];
+  if (me) {
+    targetCamX = me.x + 16 - canvas.width / 2;
+    targetCamY = me.y + 28 - canvas.height / 2;
+    targetCamX = Math.max(0, Math.min(worldWidth - canvas.width, targetCamX));
+    targetCamY = Math.max(0, Math.min(worldHeight - canvas.height, targetCamY));
+  }
+  camX += (targetCamX - camX) * 0.12;
+  camY += (targetCamY - camY) * 0.12;
+}
+
+// =====================================================================
+// RENDER
+// =====================================================================
+function render() {
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  // Sky gradient
+  const sky = ctx.createLinearGradient(0, 0, 0, H);
+  sky.addColorStop(0, '#0d0d2b');
+  sky.addColorStop(1, '#1a1a4a');
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, W, H);
+
+  // Stars (parallax)
+  drawStars();
+
+  ctx.save();
+  ctx.translate(-Math.round(camX), -Math.round(camY));
+
+  // Background hills
+  drawBackground();
+
+  // Platforms
+  drawPlatforms();
+
+  // Pickups
+  drawPickups();
+
+  // Projectiles
+  Object.values(projectiles).forEach(p => drawProjectile(p));
+
+  // Players
+  Object.values(players).forEach(p => {
+    if (p.alive) drawPlayer(p);
+    else drawDeadPlayer(p);
+  });
+
+  // Effects
+  activeEffects.forEach(e => drawEffect(e));
+
+  ctx.restore();
+
+  // Minimap
+  drawMinimap();
+}
+
+// ---- Stars ----
+const STARS = Array.from({length:80}, () => ({
+  x: Math.random() * 4000, y: Math.random() * 300,
+  r: Math.random() * 1.5 + 0.3, speed: Math.random() * 0.3 + 0.1
+}));
+function drawStars() {
+  STARS.forEach(s => {
+    const sx = ((s.x - camX * s.speed) % canvas.width + canvas.width) % canvas.width;
+    const sy = s.y * (canvas.height / 700);
+    ctx.fillStyle = `rgba(255,255,255,${0.3 + s.r * 0.3})`;
+    ctx.beginPath();
+    ctx.arc(sx, sy, s.r, 0, Math.PI*2);
+    ctx.fill();
+  });
+}
+
+// ---- Background hills ----
+function drawBackground() {
+  // Far mountains
+  ctx.fillStyle = '#1e1e4a';
+  ctx.beginPath();
+  ctx.moveTo(0, worldHeight - 50);
+  for (let x = 0; x <= worldWidth; x += 200) {
+    const h = 120 + Math.sin(x * 0.003) * 80;
+    ctx.lineTo(x, worldHeight - 50 - h);
+  }
+  ctx.lineTo(worldWidth, worldHeight - 50);
+  ctx.closePath();
+  ctx.fill();
+
+  // Near hills
+  ctx.fillStyle = '#14142e';
+  ctx.beginPath();
+  ctx.moveTo(0, worldHeight - 50);
+  for (let x = 0; x <= worldWidth; x += 100) {
+    const h = 60 + Math.sin(x * 0.007 + 1) * 40;
+    ctx.lineTo(x, worldHeight - 50 - h);
+  }
+  ctx.lineTo(worldWidth, worldHeight - 50);
+  ctx.closePath();
+  ctx.fill();
+}
+
+// ---- Platforms ----
+function drawPlatforms() {
+  platforms.forEach((p, i) => {
+    if (i === 0) {
+      // Ground
+      const grad = ctx.createLinearGradient(0, p.y, 0, p.y + p.h);
+      grad.addColorStop(0, '#2d5a27');
+      grad.addColorStop(0.3, '#1e3d1b');
+      grad.addColorStop(1, '#0f1f0e');
+      ctx.fillStyle = grad;
+      ctx.fillRect(p.x, p.y, p.w, p.h);
+      // Grass top
+      ctx.fillStyle = '#4caf50';
+      ctx.fillRect(p.x, p.y, p.w, 5);
+    } else if (p.w <= 80) {
+      // Crate
+      const grad = ctx.createLinearGradient(p.x, p.y, p.x, p.y + p.h);
+      grad.addColorStop(0, '#8B6914');
+      grad.addColorStop(1, '#5a4010');
+      ctx.fillStyle = grad;
+      ctx.fillRect(p.x, p.y, p.w, p.h);
+      ctx.strokeStyle = '#6b4f11';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(p.x, p.y, p.w, p.h);
+      // Cross lines
+      ctx.beginPath();
+      ctx.moveTo(p.x + p.w/2, p.y); ctx.lineTo(p.x + p.w/2, p.y + p.h);
+      ctx.moveTo(p.x, p.y + p.h/2); ctx.lineTo(p.x + p.w, p.y + p.h/2);
+      ctx.stroke();
+    } else {
+      // Floating platform
+      const grad = ctx.createLinearGradient(p.x, p.y, p.x, p.y + p.h);
+      grad.addColorStop(0, '#4a3728');
+      grad.addColorStop(1, '#2d1f14');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.roundRect(p.x, p.y, p.w, p.h, 4);
+      ctx.fill();
+      // Top grass
+      ctx.fillStyle = '#5c8a3c';
+      ctx.beginPath();
+      ctx.roundRect(p.x, p.y, p.w, 5, [4, 4, 0, 0]);
+      ctx.fill();
+      // Border glow
+      ctx.strokeStyle = 'rgba(92,138,60,0.4)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+  });
+}
+
+// ---- Pickups ----
+function drawPickups() {
+  const t = Date.now() / 600;
+  pickups.forEach(pk => {
+    if (!pk.active) return;
+    const bob = Math.sin(t + pk.id) * 5;
+    const gx = pk.x, gy = pk.y + bob;
+
+    // Glow
+    const glow = ctx.createRadialGradient(gx, gy, 0, gx, gy, 20);
+    glow.addColorStop(0, 'rgba(0,230,118,0.3)');
+    glow.addColorStop(1, 'rgba(0,230,118,0)');
+    ctx.fillStyle = glow;
+    ctx.fillRect(gx - 20, gy - 20, 40, 40);
+
+    // Heart icon
+    ctx.fillStyle = '#e91e63';
+    ctx.font = '22px serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('❤️', gx, gy);
+  });
+}
+
+// ---- Projectiles ----
+function drawProjectile(p) {
+  ctx.save();
+  ctx.translate(p.x, p.y);
+
+  // Trail
+  ctx.fillStyle = 'rgba(255,200,0,0.3)';
+  ctx.beginPath();
+  ctx.ellipse(-p.vx * 2, 0, 8, 4, Math.atan2(p.vy, p.vx), 0, Math.PI*2);
+  ctx.fill();
+
+  // Arrow
+  ctx.fillStyle = '#ffca28';
+  ctx.beginPath();
+  ctx.arc(0, 0, 5, 0, Math.PI*2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+// ---- Draw Player ----
+const PLAYER_W = 32;
+const PLAYER_H = 56;
+
+function drawPlayer(p) {
+  const app = appearances[p.id]?.appearance || { skin:'#FFDBB4', hair:'#3B1F0A', shirt:'#E53935', pants:'#1565C0' };
+  const isMe = p.id === myId;
+  const frame = animFrames[p.id] || 0;
+
+  ctx.save();
+  ctx.translate(p.x + PLAYER_W / 2, p.y);
+
+  // Shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.35)';
+  ctx.beginPath();
+  ctx.ellipse(0, PLAYER_H + 2, 14, 4, 0, 0, Math.PI*2);
+  ctx.fill();
+
+  ctx.scale(p.facing, 1);
+
+  const isRunning = p.state === 'run';
+  const isJumping = p.state === 'jump' || p.state === 'fall';
+  const isAttacking = p.state === 'attack';
+
+  // Leg animation
+  const legSwing = isRunning ? Math.sin(frame * 0.35) * 12 : 0;
+  const bodyBob  = isRunning ? Math.abs(Math.sin(frame * 0.35)) * 2 : 0;
+  const jumpLean = isJumping ? -8 : 0;
+  const armSwing = isRunning ? Math.sin(frame * 0.35 + Math.PI) * 14 : (isAttacking ? 35 : 5);
+
+  // ---- LEGS ----
+  drawLimb(ctx, -7, PLAYER_H * 0.55 + bodyBob, 7, 25, app.pants, legSwing);
+  drawLimb(ctx,  7, PLAYER_H * 0.55 + bodyBob, 7, 25, app.pants, -legSwing);
+
+  // Shoes
+  ctx.fillStyle = '#222';
+  ctx.fillRect(-14, PLAYER_H - 9, 14, 8);
+  ctx.fillRect(  1, PLAYER_H - 9, 14, 8);
+
+  // ---- BODY ----
+  const bodyTop = PLAYER_H * 0.28 + bodyBob;
+  const bodyH   = PLAYER_H * 0.35;
+  ctx.fillStyle = app.shirt;
+  ctx.beginPath();
+  ctx.roundRect(-12, bodyTop, 24, bodyH, 3);
+  ctx.fill();
+
+  // Belt
+  ctx.fillStyle = '#333';
+  ctx.fillRect(-12, bodyTop + bodyH - 6, 24, 5);
+
+  // ---- ARMS ----
+  // Back arm
+  drawLimb(ctx, -8, bodyTop + 4, 6, 20, app.skin, -armSwing + jumpLean);
+  // Front arm
+  drawLimb(ctx,  8, bodyTop + 4, 6, 20, app.skin,  armSwing + jumpLean);
+
+  // Weapon in front hand (sword)
+  ctx.save();
+  ctx.translate(8, bodyTop + 4);
+  ctx.rotate((armSwing + jumpLean) * Math.PI / 180);
+  ctx.strokeStyle = '#ccc';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(0, 18);
+  ctx.lineTo(6, 40);
+  ctx.stroke();
+  ctx.strokeStyle = '#ffd700';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(-4, 20);
+  ctx.lineTo(4, 20);
+  ctx.stroke();
+  ctx.restore();
+
+  // ---- HEAD ----
+  const headY = bodyTop - 26;
+  // Neck
+  ctx.fillStyle = app.skin;
+  ctx.fillRect(-4, bodyTop - 8, 8, 10);
+
+  // Head
+  ctx.fillStyle = app.skin;
+  ctx.beginPath();
+  ctx.roundRect(-12, headY, 24, 24, 5);
+  ctx.fill();
+
+  // Eyes
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(-7, headY + 7, 5, 6);
+  ctx.fillRect( 2, headY + 7, 5, 6);
+  ctx.fillStyle = '#222';
+  ctx.fillRect(-5, headY + 9, 3, 4);
+  ctx.fillRect( 4, headY + 9, 3, 4);
+
+  // Eyebrows
+  ctx.fillStyle = app.hair;
+  ctx.fillRect(-8, headY + 5, 7, 2);
+  ctx.fillRect( 1, headY + 5, 7, 2);
+
+  // Mouth (smile)
+  ctx.strokeStyle = '#8b4513';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(0, headY + 17, 4, 0, Math.PI);
+  ctx.stroke();
+
+  // Hair
+  ctx.fillStyle = app.hair;
+  ctx.beginPath();
+  ctx.roundRect(-12, headY, 24, 10, [5, 5, 0, 0]);
+  ctx.fill();
+
+  ctx.restore(); // unscale facing
+
+  // Name tag + HP bar
+  drawNameTag(ctx, p, isMe, bodyBob);
+}
+
+function drawLimb(ctx, x, y, w, h, color, angleDeg) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(angleDeg * Math.PI / 180);
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.roundRect(-w/2, 0, w, h, 3);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawNameTag(ctx, p, isMe, bodyBob) {
+  ctx.save();
+  ctx.scale(p.facing, 1); // undo facing flip for text
+
+  const name = appearances[p.id]?.name || '?';
+  const tagY  = -28 + bodyBob;
+
+  // HP bar
+  const hpW = 40;
+  const hpPct = Math.max(0, p.hp / 100);
+  ctx.fillStyle = 'rgba(0,0,0,0.5)';
+  ctx.roundRect(-hpW/2, tagY - 8, hpW, 5, 2);
+  ctx.fill();
+  const hpColor = hpPct > 0.6 ? '#00e676' : hpPct > 0.3 ? '#ffeb3b' : '#f44336';
+  ctx.fillStyle = hpColor;
+  ctx.beginPath();
+  ctx.roundRect(-hpW/2, tagY - 8, hpW * hpPct, 5, 2);
+  ctx.fill();
+
+  // Name
+  ctx.font = isMe ? 'bold 10px sans-serif' : '9px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = isMe ? '#00e5ff' : '#eee';
+  ctx.shadowColor = 'rgba(0,0,0,.8)';
+  ctx.shadowBlur = 4;
+  ctx.fillText(name, 0, tagY - 11);
+  ctx.shadowBlur = 0;
+
+  ctx.restore();
+}
+
+function drawDeadPlayer(p) {
+  ctx.save();
+  ctx.globalAlpha = 0.4;
+  ctx.translate(p.x + PLAYER_W / 2, p.y + PLAYER_H * 0.8);
+  ctx.rotate(Math.PI / 2);
+  ctx.fillStyle = '#555';
+  ctx.fillRect(-PLAYER_W/2, -PLAYER_H/4, PLAYER_W, PLAYER_H/2);
+  ctx.globalAlpha = 1;
+  ctx.font = '20px serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('💀', 0, 0);
+  ctx.restore();
+}
+
+// ---- Effects ----
+function drawEffect(e) {
+  const t = e.life / e.maxLife;
+  ctx.save();
+
+  if (e.type === 'melee') {
+    ctx.globalAlpha = t;
+    ctx.strokeStyle = '#ffca28';
+    ctx.lineWidth = 3;
+    const sweep = (1-t) * 60;
+    ctx.beginPath();
+    ctx.arc(e.x, e.y, 25, -sweep * Math.PI/180, sweep * Math.PI/180);
+    ctx.stroke();
+    ctx.globalAlpha = 0.3 * t;
+    ctx.fillStyle = '#ffca28';
+    ctx.fill();
+  }
+
+  if (e.type === 'explosion') {
+    ctx.globalAlpha = t;
+    const r = (1-t) * 25 + 5;
+    const g = ctx.createRadialGradient(e.x, e.y, 0, e.x, e.y, r);
+    g.addColorStop(0, '#fff');
+    g.addColorStop(0.3,'#ffca28');
+    g.addColorStop(1,'rgba(255,80,0,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(e.x, e.y, r, 0, Math.PI*2);
+    ctx.fill();
+  }
+
+  if (e.type === 'hit') {
+    ctx.globalAlpha = t;
+    ctx.fillStyle = '#f44336';
+    ctx.font = `${14 + (1-t)*8}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText('💥', e.x, e.y - (1-t)*20);
+  }
+
+  if (e.type === 'heal') {
+    ctx.globalAlpha = t;
+    ctx.font = `${14 + (1-t)*6}px serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText('💚', e.x, e.y - (1-t)*30);
+  }
+
+  ctx.restore();
+}
+
+// ---- Minimap ----
+function drawMinimap() {
+  const mw = minimapCanvas.width;
+  const mh = minimapCanvas.height;
+  minimapCtx.clearRect(0, 0, mw, mh);
+
+  // Background
+  minimapCtx.fillStyle = 'rgba(0,0,20,0.7)';
+  minimapCtx.fillRect(0, 0, mw, mh);
+
+  const scX = mw / worldWidth;
+  const scY = mh / worldHeight;
+
+  // Ground
+  minimapCtx.fillStyle = '#2d5a27';
+  minimapCtx.fillRect(0, mh - 4, mw, 4);
+
+  // Platforms
+  minimapCtx.fillStyle = '#4a3728';
+  platforms.forEach((p, i) => {
+    if (i === 0) return;
+    minimapCtx.fillRect(p.x * scX, p.y * scY, p.w * scX, 2);
+  });
+
+  // Pickups
+  minimapCtx.fillStyle = '#e91e63';
+  pickups.forEach(pk => {
+    if (!pk.active) return;
+    minimapCtx.fillRect(pk.x * scX - 1, pk.y * scY - 1, 3, 3);
+  });
+
+  // Players
+  Object.values(players).forEach(p => {
+    if (!p.alive) return;
+    minimapCtx.fillStyle = p.id === myId ? '#00e5ff' : '#ff5722';
+    const mx = p.x * scX, my = p.y * scY;
+    minimapCtx.beginPath();
+    minimapCtx.arc(mx, my, 2.5, 0, Math.PI*2);
+    minimapCtx.fill();
+  });
+
+  // Camera view box
+  minimapCtx.strokeStyle = 'rgba(255,255,255,0.3)';
+  minimapCtx.lineWidth = 0.5;
+  minimapCtx.strokeRect(
+    camX * scX, camY * scY,
+    canvas.width * scX, canvas.height * scY
+  );
+
+  minimapCtx.strokeStyle = 'rgba(255,255,255,0.5)';
+  minimapCtx.lineWidth = 1;
+  minimapCtx.strokeRect(0, 0, mw, mh);
+}
+
+// =====================================================================
+// SCOREBOARD
+// =====================================================================
+function updateScoreboard() {
+  const sorted = Object.values(players).sort((a, b) => b.kills - a.kills);
+  let html = sorted.map(p => {
+    const nm = appearances[p.id]?.name || p.id;
+    const isMe = p.id === myId;
+    return `<div class="score-row ${isMe?'me':''}">
+      <span>${escHtml(nm)} ${isMe?'(Sen)':''}</span>
+      <span>⚔️${p.kills} 💀${p.deaths}</span>
+    </div>`;
+  }).join('');
+  scoreList.innerHTML = html || '<div style="color:#666;text-align:center">Veri yok</div>';
+}
+
+// =====================================================================
+// CONTROLS
+// =====================================================================
+function setupControls() {
+  // Keyboard
+  document.addEventListener('keydown', e => {
+    switch(e.code) {
+      case 'ArrowLeft':  case 'KeyA': keys.left  = true; break;
+      case 'ArrowRight': case 'KeyD': keys.right = true; break;
+      case 'ArrowUp': case 'KeyW': case 'Space':
+        if (!keys.jump) keys.jump = true;
+        break;
+      case 'KeyZ': case 'KeyJ': keys.attack = true; break;
+      case 'KeyX': case 'KeyK': keys.shoot  = true; break;
+      case 'Tab':
+        e.preventDefault();
+        showScore = !showScore;
+        scoreBoard.style.display = showScore ? 'block' : 'none';
+        if (showScore) updateScoreboard();
+        break;
+    }
+  });
+  document.addEventListener('keyup', e => {
+    switch(e.code) {
+      case 'ArrowLeft':  case 'KeyA': keys.left  = false; break;
+      case 'ArrowRight': case 'KeyD': keys.right = false; break;
+      case 'ArrowUp': case 'KeyW': case 'Space': keys.jump = false; break;
+    }
+  });
+
+  // Mobile buttons
+  function bindBtn(id, keyName, toggle = false) {
+    const btn = document.getElementById(id);
+    if (!btn) return;
+    btn.addEventListener('touchstart', e => { e.preventDefault(); keys[keyName] = true; btn.classList.add('pressed'); }, { passive:false });
+    btn.addEventListener('touchend',   e => { e.preventDefault(); if(!toggle) keys[keyName] = false; btn.classList.remove('pressed'); }, { passive:false });
+    btn.addEventListener('mousedown', () => { keys[keyName] = true; });
+    btn.addEventListener('mouseup',   () => { if(!toggle) keys[keyName] = false; });
+  }
+
+  bindBtn('btnLeft',  'left');
+  bindBtn('btnRight', 'right');
+  bindBtn('btnJump',  'jump');
+  bindBtn('btnAtk',   'attack', true);
+  bindBtn('btnShoot', 'shoot', true);
+
+  // Chat button
+  const btnChat = document.getElementById('btnChat');
+  btnChat.addEventListener('click', () => {
+    if (chatInput.style.display === 'none' || !chatInput.style.display) {
+      chatInput.style.display = 'block';
+      chatInput.focus();
+    } else {
+      chatInput.style.display = 'none';
+    }
+  });
+
+  // Lobby buttons
+  joinPublicBtn.addEventListener('click', () => socket.emit('joinPublic'));
+  quickJoinBtn.addEventListener('click',  () => socket.emit('quickJoin'));
+  refreshBtn.addEventListener('click',    () => socket.emit('getRoomList'));
+
+  createRoomBtn.addEventListener('click', () => {
+    newRoomName.value = '';
+    newRoomPass.value = '';
+    createRoomModal.classList.remove('hidden');
+  });
+  document.getElementById('confirmCreateRoom').addEventListener('click', () => {
+    const n = newRoomName.value.trim() || `${myName}'s Room`;
+    const p = newRoomPass.value.trim();
+    socket.emit('createRoom', { name: n, password: p });
+  });
+  document.getElementById('cancelCreateRoom').addEventListener('click', () => createRoomModal.classList.add('hidden'));
+
+  document.getElementById('confirmJoinPass').addEventListener('click', () => {
+    if (!pendingRoomId) return;
+    socket.emit('joinRoom', { roomId: pendingRoomId, password: joinPassInput.value });
+  });
+  document.getElementById('cancelJoinPass').addEventListener('click', () => {
+    joinPasswordModal.classList.add('hidden');
+    pendingRoomId = null;
+  });
+
+  // In-game leave
+  leaveBtn.addEventListener('click', () => {
+    if (confirm('Odadan çıkmak istiyor musun?')) {
+      socket.emit('leaveRoom');
+      if (gameLoopId) cancelAnimationFrame(gameLoopId);
+      gameLoopId = null;
+      players = {}; appearances = {}; pickups = []; projectiles = {};
+      showScreen('lobby');
+      socket.emit('getRoomList');
+    }
+  });
+
+  // Chat send
+  chatSend.addEventListener('click', sendChat);
+  chatInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { sendChat(); e.preventDefault(); }
+    e.stopPropagation();
+  });
+  chatInput.addEventListener('keyup',  e => e.stopPropagation());
+
+  // Touch on canvas for scoreboard
+  canvas.addEventListener('touchstart', e => {
+    if (e.touches.length === 2) {
+      e.preventDefault();
+      showScore = !showScore;
+      scoreBoard.style.display = showScore ? 'block' : 'none';
+      if (showScore) updateScoreboard();
+    }
+  }, { passive:false });
+}
+
+function sendChat() {
+  const txt = chatInput.value.trim();
+  if (!txt || !myRoomId) return;
+  socket.emit('chat', txt);
+  chatInput.value = '';
+}
+
+// =====================================================================
+// ROUNDRECT POLYFILL (older browsers)
+// =====================================================================
+if (!CanvasRenderingContext2D.prototype.roundRect) {
+  CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+    if (typeof r === 'number') r = [r, r, r, r];
+    const [tl, tr, br, bl] = Array.isArray(r) ? [...r, ...r].slice(0, 4) : [r, r, r, r];
+    this.beginPath();
+    this.moveTo(x + tl, y);
+    this.lineTo(x + w - tr, y);
+    this.arcTo(x + w, y, x + w, y + tr, tr);
+    this.lineTo(x + w, y + h - br);
+    this.arcTo(x + w, y + h, x + w - br, y + h, br);
+    this.lineTo(x + bl, y + h);
+    this.arcTo(x, y + h, x, y + h - bl, bl);
+    this.lineTo(x, y + tl);
+    this.arcTo(x, y, x + tl, y, tl);
+    this.closePath();
+    return this;
+  };
+}
