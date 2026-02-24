@@ -1,43 +1,17 @@
 {
-  "name": "saski-fps-game",
+  "name": "saskioyunu",
   "version": "1.0.0",
-  "description": "Professional FPS multiplayer game with Telegram integration",
+  "description": "Multiplayer 2.5D platform battle game",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js",
-    "build": "echo 'Build complete - ready for deployment'",
-    "test": "echo 'No tests specified'"
+    "dev": "nodemon server.js"
   },
-  "keywords": [
-    "fps",
-    "game",
-    "multiplayer",
-    "telegram",
-    "webgl",
-    "threejs",
-    "socket.io"
-  ],
-  "author": "Saski Game Studio",
-  "license": "MIT",
   "dependencies": {
     "express": "^4.18.2",
-    "socket.io": "^4.7.2",
-    "cors": "^2.8.5"
-  },
-  "devDependencies": {
-    "nodemon": "^3.0.1"
+    "socket.io": "^4.7.2"
   },
   "engines": {
-    "node": ">=14.0.0",
-    "npm": ">=6.0.0"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/Lioneruser4/saski-fps-game.git"
-  },
-  "bugs": {
-    "url": "https://github.com/Lioneruser4/saski-fps-game/issues"
-  },
-  "homepage": "https://github.com/Lioneruser4/saski-fps-game#readme"
+    "node": ">=18.0.0"
+  }
 }
