@@ -1,1089 +1,1004 @@
-/**
- * SaskiOyunu v2.1 – Fixed & Professional Game Engine
- */
-'use strict';
+// game.js
+// Backrooms Multiplayer Oyunu - İstemci Tarafı Ana Oyun Mantığı
 
-// ═══════════════════════════════════════════════════════════════
-// CONFIG
-// ═══════════════════════════════════════════════════════════════
-const SERVER_URL = 'https://saskioyunu.onrender.com';
-const PLAYER_W   = 30;
-const PLAYER_H   = 52;
-const MAX_HP     = 100;
-const MAX_SHIELD = 50;
-const CAM_LERP   = 0.1;
+// ==================== GLOBAL DEĞİŞKENLER ====================
+let socket = null;
+let scene, camera, renderer;
+let playerId = null;
+let players = {};
+let rooms = {};
+let currentRoom = null;
+let keys = {};
+let chasers = {};
+let gameActive = false;
+let hasKey = false;
+let isGameStarted = false;
 
-// ═══════════════════════════════════════════════════════════════
-// DOM REFS
-// ═══════════════════════════════════════════════════════════════
-const $ = id => document.getElementById(id);
-const canvas   = $('gameCanvas');
-const ctx      = canvas.getContext('2d');
-const mmCanvas = $('minimapCanvas');
-const mmCtx    = mmCanvas.getContext('2d');
+// Fizik değişkenleri
+let velocity = new THREE.Vector3();
+let gravity = 0.02;
+let playerHeight = 2;
+let moveSpeed = 0.15;
+let isGrounded = true;
+let jumpPower = 0.3;
 
-// ═══════════════════════════════════════════════════════════════
-// STATE
-// ═══════════════════════════════════════════════════════════════
-let socket;
-let myId, myName = '', myAppearance = null, myRoomId = null, myRoomName = '';
-let platforms = [], worldW = 6000, worldH = 800;
-let players = {}, appMap = {}, pickups = [], projectiles = {}, particles = [];
-let pendingRoomId = null, pendingRoomName = '';
-let selectedCharIdx = 0;
-let APPEARANCES_CLIENT = [];
-let raf = 0, lastTs = 0;
-let camX = 0, camY = 0;
-let scoreVisible = false;
-let respawnInterval = null;
+// Animasyon değişkenleri
+let mixer = null;
+let clock = new THREE.Clock();
+let animations = {};
+let playerModel = null;
 
-// Input state
-const inp = { left:false, right:false };
-let jumpQ=false, atkQ=false, shootQ=false, bombQ=false, dashQ=false;
+// Hareket durumu
+const moveState = {
+    forward: false,
+    backward: false,
+    left: false,
+    right: false,
+    jump: false,
+    sprint: false
+};
 
-// ═══════════════════════════════════════════════════════════════
-// SCREEN MANAGEMENT
-// ═══════════════════════════════════════════════════════════════
-const SCREENS = ['screenLoad','screenLobby','screenGame'];
+// Işınlanma koruması için son pozisyon
+let lastValidPosition = new THREE.Vector3(0, 2, 0);
+let positionHistory = [];
 
-function showScreen(id) {
-  SCREENS.forEach(s => {
-    const el = $(s);
-    if (!el) return;
-    if (s === id) {
-      el.style.display = 'flex';
-      el.style.opacity = '0';
-      el.style.pointerEvents = 'all';
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => { el.style.opacity = '1'; });
-      });
-    } else {
-      el.style.opacity = '0';
-      el.style.pointerEvents = 'none';
-      setTimeout(() => { if (el.style.opacity === '0') el.style.display = 'none'; }, 300);
-    }
-  });
+// Kolay ID oluşturucu
+function generateId() {
+    return Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
 }
 
-// ═══════════════════════════════════════════════════════════════
-// NOTIFICATION
-// ═══════════════════════════════════════════════════════════════
-function notif(msg, type = 'info') {
-  const stack = $('notifStack');
-  if (!stack) return;
-  const el = document.createElement('div');
-  el.className = `notif-item ${type}`;
-  el.textContent = msg;
-  stack.appendChild(el);
-  setTimeout(() => el.remove(), 2800);
+// ==================== TELEGRAM INTEGRATION ====================
+const telegram = window.Telegram?.WebApp;
+let telegramId = null;
+let playerName = "Oyuncu";
+
+if (telegram) {
+    telegram.ready();
+    telegram.expand();
+    telegramId = telegram.initDataUnsafe?.user?.id?.toString() || 'guest_' + generateId();
+    playerName = telegram.initDataUnsafe?.user?.first_name || 'Telegram Kullanıcısı';
+    
+    // Telegram tema renklerini al
+    document.documentElement.style.setProperty('--tg-theme-bg-color', telegram.themeParams.bg_color || '#1a1a2e');
+    document.documentElement.style.setProperty('--tg-theme-text-color', telegram.themeParams.text_color || '#ffffff');
+    document.documentElement.style.setProperty('--tg-theme-button-color', telegram.themeParams.button_color || '#ffd700');
+    document.documentElement.style.setProperty('--tg-theme-button-text-color', telegram.themeParams.button_text_color || '#000000');
+} else {
+    telegramId = 'guest_' + generateId();
+    playerName = 'Misafir_' + Math.floor(Math.random() * 1000);
 }
 
-// ═══════════════════════════════════════════════════════════════
-// UTILS
-// ═══════════════════════════════════════════════════════════════
-function clamp(v,a,b){ return v<a?a:v>b?b:v; }
-function lerp(a,b,t){ return a+(b-a)*t; }
-function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-function roundRect(c, x, y, w, h, r) {
-  r = typeof r==='number'?[r,r,r,r]:r;
-  const [tl,tr,br,bl] = r.length===4 ? r : [r[0],r[0],r[0],r[0]];
-  c.beginPath();
-  c.moveTo(x+tl,y);
-  c.lineTo(x+w-tr,y); c.arcTo(x+w,y,x+w,y+tr,tr);
-  c.lineTo(x+w,y+h-br); c.arcTo(x+w,y+h,x+w-br,y+h,br);
-  c.lineTo(x+bl,y+h); c.arcTo(x,y+h,x,y+h-bl,bl);
-  c.lineTo(x,y+tl); c.arcTo(x,y,x+tl,y,tl);
-  c.closePath();
+console.log('Telegram ID:', telegramId, 'İsim:', playerName);
+
+// ==================== OYUN BAŞLATMA ====================
+function initGame() {
+    console.log('Oyun başlatılıyor...');
+    
+    // Three.js kurulumu
+    initThree();
+    
+    // Event listener'ları kur
+    setupEventListeners();
+    
+    // Sunucuya bağlan
+    connectToServer();
+    
+    // Loading ekranını gizle
+    setTimeout(() => {
+        document.getElementById('loading-screen').classList.add('hidden');
+    }, 1500);
 }
 
-// ═══════════════════════════════════════════════════════════════
-// ENTRY POINT
-// ═══════════════════════════════════════════════════════════════
-window.addEventListener('DOMContentLoaded', () => {
-  resizeCanvas();
-  window.addEventListener('resize', resizeCanvas);
-
-  // Apply CSS transitions
-  SCREENS.forEach(s => {
-    const el = $(s);
-    if (el) el.style.transition = 'opacity 0.3s ease';
-  });
-
-  // Loading screen status
-  const loadStatus = $('loadStatus');
-
-  // Get name
-  const tgUser = getTelegramUser();
-  if (tgUser) {
-    myName = (tgUser.first_name + (tgUser.last_name ? ' ' + tgUser.last_name : '')).slice(0,20);
-  } else {
-    myName = localStorage.getItem('sask_name') || '';
-    if (!myName) {
-      myName = prompt('Kullanıcı adın:')?.trim() || 'Savaşçı' + Math.floor(Math.random()*9000+1000);
-      localStorage.setItem('sask_name', myName);
-    }
-  }
-
-  if (loadStatus) loadStatus.textContent = 'Sunucuya bağlanılıyor...';
-
-  // Init socket
-  try {
-    socket = io(SERVER_URL, {
-      transports: ['websocket', 'polling'],
-      reconnection: true,
-      reconnectionAttempts: Infinity,
-      reconnectionDelay: 2000,
-      timeout: 30000
+// ==================== THREE.JS KURULUMU ====================
+function initThree() {
+    console.log('Three.js başlatılıyor...');
+    
+    // Scene
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x111122);
+    scene.fog = new THREE.Fog(0x111122, 20, 50);
+    
+    // Camera
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, playerHeight, 5);
+    
+    // Renderer
+    const canvas = document.getElementById('game-canvas');
+    renderer = new THREE.WebGLRenderer({ 
+        canvas: canvas,
+        antialias: true,
+        powerPreference: "high-performance"
     });
-  } catch(e) {
-    if (loadStatus) loadStatus.textContent = 'Socket.IO yüklenemedi: ' + e.message;
-    return;
-  }
-
-  socket.on('connect', () => {
-    console.log('[Socket] Connected:', socket.id);
-    if (loadStatus) loadStatus.textContent = 'Bağlandı! Giriş yapılıyor...';
-    socket.emit('joinLobby', { name: myName, telegramId: tgUser?.id || null });
-  });
-
-  socket.on('connect_error', (err) => {
-    console.error('[Socket] connect_error:', err.message);
-    if (loadStatus) loadStatus.textContent = '⚠️ Bağlanamadı: ' + err.message + ' — yeniden deneniyor...';
-  });
-
-  socket.on('disconnect', (reason) => {
-    console.warn('[Socket] disconnect:', reason);
-    notif('Bağlantı kesildi: ' + reason, 'err');
-  });
-
-  socket.on('reconnect', () => {
-    notif('Yeniden bağlandı!', 'ok');
-    socket.emit('joinLobby', { name: myName, telegramId: tgUser?.id || null });
-  });
-
-  setupSocketHandlers();
-  setupUI();
-  setupControls();
-});
-
-// ═══════════════════════════════════════════════════════════════
-// TELEGRAM
-// ═══════════════════════════════════════════════════════════════
-function getTelegramUser() {
-  try {
-    const tg = window.Telegram?.WebApp;
-    if (tg?.initDataUnsafe?.user) {
-      tg.expand();
-      tg.enableClosingConfirmation();
-      return tg.initDataUnsafe.user;
-    }
-  } catch(e) {}
-  return null;
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    
+    // Işıklandırma
+    setupLights();
+    
+    // Test odası oluştur (sunucu bağlanana kadar)
+    createTestEnvironment();
+    
+    // Animasyon döngüsünü başlat
+    animate();
 }
 
-// ═══════════════════════════════════════════════════════════════
-// SOCKET HANDLERS
-// ═══════════════════════════════════════════════════════════════
-function setupSocketHandlers() {
+function setupLights() {
+    // Ambient ışık
+    const ambientLight = new THREE.AmbientLight(0x404060);
+    scene.add(ambientLight);
+    
+    // Ana ışık (gölgeli)
+    const dirLight = new THREE.DirectionalLight(0xffeedd, 1.2);
+    dirLight.position.set(5, 20, 10);
+    dirLight.castShadow = true;
+    dirLight.receiveShadow = true;
+    dirLight.shadow.mapSize.width = 1024;
+    dirLight.shadow.mapSize.height = 1024;
+    const d = 30;
+    dirLight.shadow.camera.left = -d;
+    dirLight.shadow.camera.right = d;
+    dirLight.shadow.camera.top = d;
+    dirLight.shadow.camera.bottom = -d;
+    dirLight.shadow.camera.near = 1;
+    dirLight.shadow.camera.far = 50;
+    scene.add(dirLight);
+    
+    // İkinci ışık (arka plan)
+    const backLight = new THREE.PointLight(0x4466ff, 0.5);
+    backLight.position.set(-5, 5, -10);
+    scene.add(backLight);
+    
+    // Flaş efekti için ışık
+    const flickerLight = new THREE.PointLight(0xffaa00, 0.3);
+    flickerLight.position.set(0, 3, 0);
+    scene.add(flickerLight);
+}
 
-  socket.on('lobbyReady', data => {
-    console.log('[Socket] lobbyReady received');
-    myId = data.playerId;
-    platforms = data.platforms || [];
-    worldW = data.worldW || 6000;
-    worldH = data.worldH || 800;
-    APPEARANCES_CLIENT = data.appearances || [];
-    myAppearance = data.appearance || APPEARANCES_CLIENT[0] || null;
-
-    $('displayName').textContent = myName;
-    buildCharPreviews();
-    showScreen('screenLobby');
-    socket.emit('getRooms');
-  });
-
-  socket.on('roomList', list => {
-    renderRoomList(list);
-    let n = 0; list.forEach(r => n += r.playerCount);
-    $('onlineCount').textContent = `🌐 ${n} oyuncu online`;
-    $('roomCountLabel').textContent = `(${list.length})`;
-  });
-
-  socket.on('roomListUpdate', list => {
-    if ($('screenLobby').style.display !== 'none') renderRoomList(list);
-    let n = 0; list.forEach(r => n += r.playerCount);
-    const el = $('onlineCount');
-    if (el) el.textContent = `🌐 ${n} oyuncu online`;
-  });
-
-  socket.on('roomJoined', data => {
-    myRoomId   = data.roomId;
-    myRoomName = data.roomName;
-    platforms  = data.platforms || platforms;
-    worldW     = data.worldW || worldW;
-    worldH     = data.worldH || worldH;
-
-    players = {}; appMap = data.appMap || {};
-    pickups = data.pickups || [];
-    projectiles = {}; particles = [];
-
-    if (data.players) data.players.forEach(p => { players[p.id] = p; });
-    if (data.self)    players[myId] = data.self;
-    if (!appMap[myId]) appMap[myId] = { name: myName, appearance: myAppearance };
-
-    $('hudRoomName').textContent = myRoomName;
-    $('chatMessages').innerHTML  = '';
-    if (data.chat) data.chat.forEach(m => appendChat(m.name, m.text, 'normal'));
-
-    $('modalPassword').style.display    = 'none';
-    $('modalCreateRoom').style.display  = 'none';
-
-    updateHUD();
-    showScreen('screenGame');
-
-    if (raf) cancelAnimationFrame(raf);
-    lastTs = performance.now();
-    raf = requestAnimationFrame(gameLoop);
-  });
-
-  socket.on('joinError', msg => {
-    notif('❌ ' + msg, 'err');
-    $('modalPassword').style.display = 'none';
-  });
-
-  socket.on('tick', data => {
-    if (data.players) data.players.forEach(p => {
-      if (!players[p.id]) players[p.id] = p;
-      else Object.assign(players[p.id], p);
+// ==================== TEST ORTAMI ====================
+function createTestEnvironment() {
+    console.log('Test ortamı oluşturuluyor...');
+    
+    // Zemin
+    const floorGeometry = new THREE.CircleGeometry(30, 32);
+    const floorMaterial = new THREE.MeshStandardMaterial({ 
+        color: 0x2a2a3a,
+        roughness: 0.7,
+        metalness: 0.1
     });
-    if (data.projs) data.projs.forEach(pr => {
-      if (projectiles[pr.id]) { projectiles[pr.id].x = pr.x; projectiles[pr.id].y = pr.y; }
+    const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = 0;
+    floor.receiveShadow = true;
+    scene.add(floor);
+    
+    // Zemin deseni (backrooms hissi için)
+    const gridHelper = new THREE.GridHelper(60, 20, 0xffd700, 0x3366ff);
+    gridHelper.position.y = 0.01;
+    scene.add(gridHelper);
+    
+    // Duvarlar
+    const wallMaterial = new THREE.MeshStandardMaterial({ 
+        color: 0x4a4a6a,
+        roughness: 0.6,
+        emissive: new THREE.Color(0x111122)
     });
-    const me = players[myId];
-    if (me) updateHUD(me);
-  });
-
-  socket.on('playerJoined', data => {
-    players[data.state.id] = data.state;
-    appMap[data.state.id]  = { name: data.name, appearance: data.appearance };
-    appendChat('', `👋 ${esc(data.name)} katıldı`, 'sys');
-    updateHUDCount();
-    spawnParticles(data.state.x+15, data.state.y+20, '#00e5ff', 12);
-  });
-
-  socket.on('playerLeft', id => {
-    const nm = appMap[id]?.name || '?';
-    appendChat('', `🚪 ${esc(nm)} ayrıldı`, 'sys');
-    delete players[id]; delete appMap[id];
-    updateHUDCount();
-  });
-
-  socket.on('playerHurt', data => {
-    if (players[data.id]) { players[data.id].hp = data.hp; players[data.id].shield = data.shield; }
-    if (data.id === myId) updateHUD(players[myId]);
-    const p = players[data.id];
-    if (p) spawnParticles(p.x+15, p.y+20, '#ff1744', 6);
-  });
-
-  socket.on('killed', data => {
-    if (players[data.victimId]) { players[data.victimId].alive = false; players[data.victimId].hp = 0; }
-    if (data.victimId === myId) {
-      startRespawnTimer(data.respawnIn || 5000);
-      updateHUD({ hp:0, shield:0, kills: players[myId]?.kills||0, deaths:(players[myId]?.deaths||0)+1, arrows:players[myId]?.arrows||0 });
-    }
-    const vp = players[data.victimId];
-    if (vp) spawnParticles(vp.x+15, vp.y+20, '#ff1744', 20);
-    addKillFeed(data.killerName, data.victimName, data.reason);
-    if (data.killerName === myName) notif('💀 Kill! +1', 'ok');
-  });
-
-  socket.on('respawned', data => {
-    players[data.id] = { ...(players[data.id]||{}), ...data };
-    if (data.id === myId) {
-      endRespawnTimer();
-      updateHUD(data);
-      spawnParticles(data.x+15, data.y+20, '#00e676', 15);
-    }
-  });
-
-  socket.on('projCreated', p  => { projectiles[p.id] = { ...p }; });
-
-  socket.on('projsRemoved', list => {
-    list.forEach(item => {
-      const p = projectiles[item.id];
-      if (p) spawnParticles(p.x, p.y, item.type==='bomb'?'#ff6d00':'#ffea00', item.type==='bomb'?30:8);
-      delete projectiles[item.id];
-    });
-  });
-
-  socket.on('bombExplode', data => {
-    spawnExplosion(data.x, data.y, data.radius);
-  });
-
-  socket.on('meleeSwing', data => {
-    spawnMeleeEffect(data.x, data.y, data.facing);
-    (data.hitIds||[]).forEach(id => {
-      const p = players[id];
-      if (p) spawnParticles(p.x+15, p.y+20, '#ff1744', 8);
-    });
-  });
-
-  socket.on('pickupCollected', data => {
-    const pk = pickups.find(p => p.id===data.pkId);
-    if (pk) { pk.active = false; spawnParticles(pk.x, pk.y, '#00e676', 10); }
-    if (data.playerId === myId) {
-      if (players[myId]) { players[myId].hp = data.hp; players[myId].shield = data.shield; }
-      updateHUD(players[myId]);
-    }
-  });
-
-  socket.on('pickupSpawned', id => {
-    const pk = pickups.find(p => p.id===id);
-    if (pk) { pk.active = true; spawnParticles(pk.x, pk.y, '#00e5ff', 6); }
-  });
-
-  socket.on('chatMessage', data => appendChat(data.name, data.text, 'normal'));
-}
-
-// ═══════════════════════════════════════════════════════════════
-// GAME LOOP
-// ═══════════════════════════════════════════════════════════════
-let inputTick = 0;
-function gameLoop(ts) {
-  raf = requestAnimationFrame(gameLoop);
-  const dt = clamp((ts - lastTs) / 16.667, 0.1, 4);
-  lastTs = ts;
-
-  // Send input every 2 frames (~30/sec)
-  inputTick++;
-  if (inputTick >= 2) {
-    inputTick = 0;
-    const j=jumpQ; jumpQ=false;
-    const a=atkQ;  atkQ=false;
-    const s=shootQ; shootQ=false;
-    const b=bombQ;  bombQ=false;
-    const d=dashQ;  dashQ=false;
-    socket.emit('input', { left:inp.left, right:inp.right, jump:j||inp.jump, attack:a, shoot:s, bomb:b, dash:d, aimAngle:0 });
-  }
-
-  updateParticles(dt);
-  updateCamera(dt);
-  renderFrame();
-}
-
-// ═══════════════════════════════════════════════════════════════
-// CAMERA
-// ═══════════════════════════════════════════════════════════════
-function updateCamera(dt) {
-  const me = players[myId];
-  if (!me) return;
-  const tx = clamp(me.x + PLAYER_W/2 - canvas.width/2,  0, Math.max(0, worldW - canvas.width));
-  const ty = clamp(me.y + PLAYER_H/2 - canvas.height/2, 0, Math.max(0, worldH - canvas.height));
-  camX = lerp(camX, tx, CAM_LERP * dt * 2);
-  camY = lerp(camY, ty, CAM_LERP * dt * 2);
-}
-
-// ═══════════════════════════════════════════════════════════════
-// RENDER
-// ═══════════════════════════════════════════════════════════════
-let pkTime = 0, cloudT = 0, starT = 0;
-
-// Pre-generate stars
-const STARS = Array.from({length:120}, () => ({
-  wx: Math.random()*6000, wy: Math.random()*380,
-  r: Math.random()*1.4+0.3,
-  twinkle: Math.random()*Math.PI*2,
-  speed: 0.05+Math.random()*0.15
-}));
-
-// Pre-generate clouds
-const CLOUDS = Array.from({length:18}, () => ({
-  x: Math.random()*8000-500, y: 60+Math.random()*220,
-  w: 120+Math.random()*200, h: 40+Math.random()*55,
-  speed: 0.06+Math.random()*0.1, alpha: 0.04+Math.random()*0.07
-}));
-
-function renderFrame() {
-  const W = canvas.width, H = canvas.height;
-  ctx.clearRect(0, 0, W, H);
-  starT  += 0.015; pkTime += 0.04; cloudT += 0.003;
-
-  // Sky
-  const sky = ctx.createLinearGradient(0,0,0,H);
-  sky.addColorStop(0, '#030310'); sky.addColorStop(0.7,'#0a0a22'); sky.addColorStop(1,'#141432');
-  ctx.fillStyle = sky; ctx.fillRect(0,0,W,H);
-
-  // Stars (screen-space with parallax)
-  STARS.forEach(s => {
-    const sx = ((s.wx - camX * s.speed) % W + W) % W;
-    const sy = s.wy * (H / 380);
-    ctx.globalAlpha = 0.3 + 0.35 * Math.sin(starT + s.twinkle);
-    ctx.fillStyle = '#c8c8ff';
-    ctx.beginPath(); ctx.arc(sx, sy, s.r, 0, Math.PI*2); ctx.fill();
-  });
-  ctx.globalAlpha = 1;
-
-  ctx.save();
-  ctx.translate(-Math.round(camX), -Math.round(camY));
-
-  // Clouds (world-space)
-  CLOUDS.forEach(c => {
-    const cx = ((c.x + cloudT * 40 * c.speed) % (worldW+800)) - 400;
-    ctx.globalAlpha = c.alpha;
-    ctx.fillStyle = '#9090cc';
-    ctx.beginPath(); ctx.ellipse(cx, c.y, c.w/2, c.h/2, 0, 0, Math.PI*2); ctx.fill();
-  });
-  ctx.globalAlpha = 1;
-
-  drawPlatforms();
-  drawPickups();
-  drawProjectiles();
-  drawAllPlayers();
-  drawParticles();
-
-  ctx.restore();
-  drawMinimap();
-}
-
-// ──────────── PLATFORMS ────────────
-const platGradCache = {};
-function getPlatGrad(type, y, h) {
-  const key = type + '_' + Math.round(y);
-  if (platGradCache[key]) return platGradCache[key];
-  const g = ctx.createLinearGradient(0, y, 0, y+h);
-  switch(type) {
-    case 'ground': g.addColorStop(0,'#2d5a27'); g.addColorStop(.12,'#1a3616'); g.addColorStop(1,'#080f07'); break;
-    case 'wood':   g.addColorStop(0,'#9a7430'); g.addColorStop(1,'#4a3206'); break;
-    case 'stone':  g.addColorStop(0,'#62626e'); g.addColorStop(1,'#2a2a3a'); break;
-    case 'cloud':  g.addColorStop(0,'rgba(190,210,255,.22)'); g.addColorStop(1,'rgba(110,130,220,.08)'); break;
-    case 'crate':  g.addColorStop(0,'#b07838'); g.addColorStop(1,'#5a3810'); break;
-    default:       g.addColorStop(0,'#555'); g.addColorStop(1,'#222');
-  }
-  platGradCache[key] = g;
-  return g;
-}
-
-function drawPlatforms() {
-  platforms.forEach((p, i) => {
-    if (p.x+p.w < camX-5 || p.x > camX+canvas.width+5) return;
-    ctx.fillStyle = getPlatGrad(p.type||'wood', p.y, p.h);
-
-    if (p.type === 'cloud') {
-      roundRect(ctx, p.x, p.y, p.w, p.h, 8); ctx.fill();
-      ctx.strokeStyle = 'rgba(160,180,255,.3)'; ctx.lineWidth = 1.5; ctx.stroke();
-    } else if (p.type === 'crate') {
-      ctx.fillRect(p.x, p.y, p.w, p.h);
-      ctx.strokeStyle = '#3a2008'; ctx.lineWidth = 1.5;
-      ctx.strokeRect(p.x+.5, p.y+.5, p.w-1, p.h-1);
-      ctx.strokeStyle = 'rgba(0,0,0,.25)'; ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(p.x+p.w/2,p.y); ctx.lineTo(p.x+p.w/2,p.y+p.h);
-      ctx.moveTo(p.x,p.y+p.h/2); ctx.lineTo(p.x+p.w,p.y+p.h/2);
-      ctx.stroke();
-    } else {
-      ctx.fillRect(p.x, p.y, p.w, p.h);
-      if (i === 0) {
-        // Ground grass
-        ctx.fillStyle = '#4caf50'; ctx.fillRect(p.x, p.y, p.w, 6);
-        ctx.fillStyle = '#66bb6a';
-        for (let gx = p.x+8; gx < p.x+p.w; gx+=16) {
-          ctx.fillRect(gx, p.y-3, 2, 4); ctx.fillRect(gx+7, p.y-2, 2, 3);
+    
+    const wallHeight = 5;
+    const wallThickness = 0.5;
+    const roomSize = 25;
+    
+    // Arka duvar
+    const backWall = new THREE.Mesh(new THREE.BoxGeometry(roomSize, wallHeight, wallThickness), wallMaterial);
+    backWall.position.set(0, wallHeight/2, -roomSize/2);
+    backWall.castShadow = true;
+    backWall.receiveShadow = true;
+    scene.add(backWall);
+    
+    // Ön duvar (kapı boşluğu ile)
+    const frontWallLeft = new THREE.Mesh(new THREE.BoxGeometry(10, wallHeight, wallThickness), wallMaterial);
+    frontWallLeft.position.set(-7.5, wallHeight/2, roomSize/2);
+    frontWallLeft.castShadow = true;
+    frontWallLeft.receiveShadow = true;
+    scene.add(frontWallLeft);
+    
+    const frontWallRight = new THREE.Mesh(new THREE.BoxGeometry(10, wallHeight, wallThickness), wallMaterial);
+    frontWallRight.position.set(7.5, wallHeight/2, roomSize/2);
+    frontWallRight.castShadow = true;
+    frontWallRight.receiveShadow = true;
+    scene.add(frontWallRight);
+    
+    // Sol duvar
+    const leftWall = new THREE.Mesh(new THREE.BoxGeometry(wallThickness, wallHeight, roomSize), wallMaterial);
+    leftWall.position.set(-roomSize/2, wallHeight/2, 0);
+    leftWall.castShadow = true;
+    leftWall.receiveShadow = true;
+    scene.add(leftWall);
+    
+    // Sağ duvar
+    const rightWall = new THREE.Mesh(new THREE.BoxGeometry(wallThickness, wallHeight, roomSize), wallMaterial);
+    rightWall.position.set(roomSize/2, wallHeight/2, 0);
+    rightWall.castShadow = true;
+    rightWall.receiveShadow = true;
+    scene.add(rightWall);
+    
+    // Tavan (backrooms hissi için floresan lambalar)
+    const ceilingMaterial = new THREE.MeshStandardMaterial({ color: 0x333344 });
+    const ceiling = new THREE.Mesh(new THREE.BoxGeometry(roomSize, 0.3, roomSize), ceilingMaterial);
+    ceiling.position.set(0, wallHeight, 0);
+    ceiling.castShadow = true;
+    ceiling.receiveShadow = true;
+    scene.add(ceiling);
+    
+    // Floresan lambalar
+    for (let i = -2; i <= 2; i++) {
+        for (let j = -2; j <= 2; j++) {
+            const lamp = new THREE.Mesh(
+                new THREE.BoxGeometry(1, 0.1, 1),
+                new THREE.MeshStandardMaterial({ color: 0xffdd99, emissive: 0x442200 })
+            );
+            lamp.position.set(i * 5, wallHeight - 0.2, j * 5);
+            lamp.castShadow = true;
+            scene.add(lamp);
         }
-      } else {
-        ctx.fillStyle = 'rgba(255,255,255,.1)'; ctx.fillRect(p.x, p.y, p.w, 3);
-        ctx.fillStyle = 'rgba(0,0,0,.4)';       ctx.fillRect(p.x, p.y+p.h-3, p.w, 3);
-        if (p.type === 'stone') {
-          ctx.strokeStyle = 'rgba(80,80,100,.5)'; ctx.lineWidth = .8;
-          for (let bx = p.x+20; bx < p.x+p.w; bx+=20) {
-            ctx.beginPath(); ctx.moveTo(bx,p.y); ctx.lineTo(bx,p.y+p.h); ctx.stroke();
-          }
+    }
+    
+    // Sütunlar
+    const pillarMaterial = new THREE.MeshStandardMaterial({ color: 0x5a5a7a });
+    for (let i = -2; i <= 2; i+=2) {
+        for (let j = -2; j <= 2; j+=2) {
+            const pillar = new THREE.Mesh(new THREE.BoxGeometry(0.8, wallHeight-0.5, 0.8), pillarMaterial);
+            pillar.position.set(i * 4, wallHeight/2, j * 4);
+            pillar.castShadow = true;
+            pillar.receiveShadow = true;
+            scene.add(pillar);
         }
-      }
     }
-  });
+    
+    // Anahtar (geçici)
+    createKey(new THREE.Vector3(5, 1, 5), 'test_key');
 }
 
-// ──────────── PICKUPS ────────────
-function drawPickups() {
-  pickups.forEach(pk => {
-    if (!pk.active) return;
-    if (pk.x+25 < camX || pk.x-25 > camX+canvas.width) return;
-    const bob = Math.sin(pkTime*2 + pk.id*0.7) * 4;
-    const gx = pk.x, gy = pk.y + bob;
-    const col = {health:'#ff1744',shield:'#00e5ff',speed:'#ffea00',ammo:'#ff9800'}[pk.type]||'#fff';
-    const glow = ctx.createRadialGradient(gx,gy,0,gx,gy,22);
-    glow.addColorStop(0, col+'55'); glow.addColorStop(1, col+'00');
-    ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(gx,gy,22,0,Math.PI*2); ctx.fill();
-    ctx.save(); ctx.translate(gx,gy);
-    ctx.scale(1+Math.sin(pkTime*3+pk.id)*.04, 1+Math.sin(pkTime*3+pk.id)*.04);
-    ctx.font = '20px serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText({health:'❤️',shield:'🛡️',speed:'⚡',ammo:'🏹'}[pk.type]||'?', 0, 0);
-    ctx.restore();
-  });
-}
-
-// ──────────── PROJECTILES ────────────
-function drawProjectiles() {
-  Object.values(projectiles).forEach(p => {
-    if (p.x < camX-20 || p.x > camX+canvas.width+20) return;
-    ctx.save(); ctx.translate(p.x, p.y);
-    if (p.type === 'arrow') {
-      const angle = Math.atan2(p.vy||0, p.vx||0);
-      ctx.rotate(angle);
-      ctx.strokeStyle='#8B6914'; ctx.lineWidth=2.5;
-      ctx.beginPath(); ctx.moveTo(-14,0); ctx.lineTo(10,0); ctx.stroke();
-      ctx.fillStyle='#c0c0c0';
-      ctx.beginPath(); ctx.moveTo(10,0); ctx.lineTo(4,-3); ctx.lineTo(4,3); ctx.closePath(); ctx.fill();
-      ctx.fillStyle='#fff';
-      ctx.beginPath(); ctx.moveTo(-14,0); ctx.lineTo(-10,-4); ctx.lineTo(-8,0); ctx.closePath(); ctx.fill();
-      ctx.beginPath(); ctx.moveTo(-14,0); ctx.lineTo(-10,4);  ctx.lineTo(-8,0); ctx.closePath(); ctx.fill();
-    } else if (p.type === 'bomb') {
-      ctx.fillStyle='#1a1a1a'; ctx.beginPath(); ctx.arc(0,0,7,0,Math.PI*2); ctx.fill();
-      ctx.fillStyle='#555';    ctx.beginPath(); ctx.arc(-2,-2,3,0,Math.PI*2); ctx.fill();
-      const t=(Date.now()%500)/500;
-      ctx.fillStyle=`rgba(255,${Math.floor(150+100*t)},0,${0.7+t*.3})`;
-      ctx.beginPath(); ctx.arc(0,-7-t*3,2+t,0,Math.PI*2); ctx.fill();
+function createKey(position, id) {
+    const keyGroup = new THREE.Group();
+    
+    // Anahtar başı (daire)
+    const headGeo = new THREE.TorusGeometry(0.2, 0.05, 16, 32);
+    const headMat = new THREE.MeshStandardMaterial({ color: 0xffd700, emissive: 0x442200 });
+    const head = new THREE.Mesh(headGeo, headMat);
+    head.rotation.x = Math.PI / 2;
+    head.rotation.z = Math.PI / 4;
+    keyGroup.add(head);
+    
+    // Anahtar gövdesi
+    const bodyGeo = new THREE.BoxGeometry(0.1, 0.5, 0.05);
+    const bodyMat = new THREE.MeshStandardMaterial({ color: 0xffd700 });
+    const body = new THREE.Mesh(bodyGeo, bodyMat);
+    body.position.set(0.2, -0.2, 0);
+    keyGroup.add(body);
+    
+    // Anahtar dişleri
+    for (let i = 0; i < 3; i++) {
+        const toothGeo = new THREE.BoxGeometry(0.1, 0.1, 0.1);
+        const toothMat = new THREE.MeshStandardMaterial({ color: 0xffaa00 });
+        const tooth = new THREE.Mesh(toothGeo, toothMat);
+        tooth.position.set(0.3, -0.4 - (i * 0.1), 0);
+        keyGroup.add(tooth);
     }
-    ctx.restore();
-  });
+    
+    // Işık efekti
+    const light = new THREE.PointLight(0xffaa00, 0.5, 3);
+    light.position.set(0, 0, 0);
+    keyGroup.add(light);
+    
+    keyGroup.position.copy(position);
+    keyGroup.userData = { id: id, type: 'key' };
+    
+    scene.add(keyGroup);
+    keys[id] = keyGroup;
+    
+    // Döndürme animasyonu için
+    keyGroup.userData.rotateSpeed = 0.02;
 }
 
-// ──────────── PLAYERS ────────────
-function drawAllPlayers() {
-  const sorted = Object.values(players).sort((a,b) => (a.id===myId?1:0)-(b.id===myId?1:0));
-  sorted.forEach(p => {
-    if (p.x+PLAYER_W < camX-10 || p.x > camX+canvas.width+10) return;
-    if (!p.alive) { drawDeadPlayer(p); return; }
-    drawPlayer(p);
-  });
-}
-
-function drawPlayer(p) {
-  const app  = appMap[p.id]?.appearance || APPEARANCES_CLIENT[0] || {};
-  const skin  = app.skin  || '#FFDBB4';
-  const hair  = app.hair  || '#1a0a00';
-  const shirt = app.shirt || '#E53935';
-  const pants = app.pants || '#1565c0';
-  const belt  = app.belt  || '#3e2723';
-  const shoe  = app.shoe  || '#212121';
-  const isMe  = p.id === myId;
-  const t     = Date.now() * 0.001;
-
-  ctx.save();
-  ctx.translate(p.x + PLAYER_W/2, p.y);
-  ctx.scale(p.facing||1, 1);
-
-  const anim  = p.anim || 'idle';
-  const isRun = anim==='run';
-  const isJmp = anim==='jump';
-  const isAtk = anim==='attack';
-  const isDsh = anim==='dash';
-
-  const legA  = isRun ? Math.sin(t*10)*28 : 0;
-  const armA  = isRun ? Math.sin(t*10+Math.PI)*20 : isAtk ? 38 : isJmp ? -12 : 5;
-  const lean  = isDsh ? 0.18 : 0;
-
-  ctx.rotate(lean);
-
-  // Shadow
-  ctx.fillStyle = 'rgba(0,0,0,.28)';
-  ctx.beginPath(); ctx.ellipse(0, PLAYER_H+2, 13, 4, 0, 0, Math.PI*2); ctx.fill();
-
-  // === LEGS ===
-  drawLimb(ctx, -7, PLAYER_H*.56, 8, 22, pants,  legA);
-  drawLimb(ctx,  7, PLAYER_H*.56, 8, 22, pants, -legA);
-  // Shoes
-  ctx.fillStyle = shoe;
-  ctx.fillRect(-15, PLAYER_H-9, 15, 8);
-  ctx.fillRect(  1, PLAYER_H-9, 15, 8);
-
-  // === BODY ===
-  const torsoY = PLAYER_H*.28, torsoH = PLAYER_H*.35;
-  ctx.fillStyle = shirt;
-  roundRect(ctx, -12, torsoY, 24, torsoH, 3); ctx.fill();
-  ctx.fillStyle = 'rgba(255,255,255,.1)'; ctx.fillRect(-12, torsoY, 12, torsoH*.5);
-  ctx.fillStyle = belt; ctx.fillRect(-12, torsoY+torsoH-7, 24, 6);
-
-  // === ARMS ===
-  drawLimb(ctx, -10, torsoY+2, 7, 20, skin,  armA);
-  drawLimb(ctx,  10, torsoY+2, 7, 20, skin, -armA+5);
-
-  // Sword (front hand)
-  ctx.save();
-  ctx.translate(10, torsoY+2);
-  ctx.rotate((-armA+5)*Math.PI/180);
-  ctx.fillStyle = '#795548'; ctx.fillRect(-2,18,5,8);
-  ctx.fillStyle = '#9e9e9e'; ctx.fillRect(-5,16,11,4);
-  const bladeG = ctx.createLinearGradient(-1,0,3,0);
-  bladeG.addColorStop(0,'#e0e0e0'); bladeG.addColorStop(1,'#9e9e9e');
-  ctx.fillStyle = bladeG;
-  ctx.beginPath(); ctx.moveTo(-1,16); ctx.lineTo(3,16); ctx.lineTo(2,-6); ctx.lineTo(1,-8); ctx.lineTo(0,-6); ctx.closePath(); ctx.fill();
-  ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.fillRect(0,0,1,12);
-  ctx.restore();
-
-  // === HEAD ===
-  const headY = torsoY-26;
-  ctx.fillStyle = skin; ctx.fillRect(-4, torsoY-8, 8, 10); // neck
-  ctx.fillStyle = skin; roundRect(ctx,-12,headY,24,24,5); ctx.fill();
-  ctx.fillStyle = skin; ctx.fillRect(10,headY+8,3,6); // ear
-
-  // Eyes
-  ctx.fillStyle='#fff'; ctx.fillRect(-8,headY+8,5,6); ctx.fillRect(3,headY+8,5,6);
-  ctx.fillStyle='#1a1a2e'; ctx.fillRect(-7,headY+9,3,4); ctx.fillRect(4,headY+9,3,4);
-  ctx.fillStyle='#fff'; ctx.fillRect(-6,headY+9,1,2); ctx.fillRect(5,headY+9,1,2);
-
-  // Eyebrows
-  ctx.fillStyle=hair; ctx.fillRect(-9,headY+5,7,2); ctx.fillRect(2,headY+5,7,2);
-
-  // Nose
-  ctx.fillStyle='rgba(0,0,0,.12)'; ctx.fillRect(1,headY+13,2,3);
-
-  // Mouth
-  ctx.strokeStyle='rgba(80,30,0,.6)'; ctx.lineWidth=1.5;
-  ctx.beginPath();
-  if (isAtk) { ctx.arc(0,headY+19,4,0.15,Math.PI-.15); }
-  else        { ctx.arc(0,headY+20,3,Math.PI+.35,-.35); }
-  ctx.stroke();
-
-  // Hair
-  ctx.fillStyle=hair; roundRect(ctx,-12,headY,24,9,[5,5,0,0]); ctx.fill();
-  ctx.fillRect(-13,headY+2,3,8);
-
-  // My player glow ring
-  if (isMe) {
-    ctx.strokeStyle='rgba(0,229,255,.4)'; ctx.lineWidth=1.5;
-    ctx.beginPath(); ctx.arc(0,headY+12,14,0,Math.PI*2); ctx.stroke();
-  }
-
-  // Shield aura
-  if (p.shield > 0) {
-    const sa = p.shield/MAX_SHIELD;
-    ctx.strokeStyle=`rgba(0,229,255,${sa*.5})`; ctx.lineWidth=2+sa*2;
-    ctx.beginPath(); ctx.arc(0,PLAYER_H/2,PLAYER_W/2+7,0,Math.PI*2); ctx.stroke();
-  }
-
-  // Dash trail
-  if (isDsh) { ctx.globalAlpha=.25; ctx.fillStyle='#9c4dff'; ctx.fillRect(-15,0,30,PLAYER_H); ctx.globalAlpha=1; }
-
-  ctx.restore(); // unscale facing
-
-  // Nametag (always right-way)
-  drawNameTag(p, isMe);
-}
-
-function drawLimb(c, ox, oy, w, h, color, angleDeg) {
-  c.save();
-  c.translate(ox, oy);
-  c.rotate(angleDeg*Math.PI/180);
-  c.fillStyle = color;
-  roundRect(c,-w/2,0,w,h,3); c.fill();
-  c.fillStyle='rgba(255,255,255,.1)'; c.fillRect(-w/2,0,w/2,h*.55);
-  c.restore();
-}
-
-function drawNameTag(p, isMe) {
-  const cx = p.x + PLAYER_W/2;
-  const ty = p.y - 30;
-  const hpPct = clamp((p.hp||0)/MAX_HP, 0, 1);
-  const name  = appMap[p.id]?.name || '?';
-
-  // HP bar
-  ctx.fillStyle='rgba(0,0,0,.5)';
-  roundRect(ctx,cx-22,ty-8,44,6,3); ctx.fill();
-  ctx.fillStyle = hpPct>.6?'#00e676':hpPct>.3?'#ffea00':'#ff1744';
-  roundRect(ctx,cx-22,ty-8,44*hpPct,6,3); ctx.fill();
-
-  // Shield bar
-  if (p.shield > 0) {
-    ctx.fillStyle='rgba(0,0,0,.4)'; roundRect(ctx,cx-22,ty-15,44,4,2); ctx.fill();
-    ctx.fillStyle='#00e5ff'; roundRect(ctx,cx-22,ty-15,44*(p.shield/MAX_SHIELD),4,2); ctx.fill();
-  }
-
-  // Name
-  ctx.save();
-  ctx.font     = isMe ? 'bold 10px system-ui' : '9px system-ui';
-  ctx.textAlign='center'; ctx.textBaseline='bottom';
-  ctx.fillStyle   = isMe ? '#00e5ff' : '#e0e0ff';
-  ctx.shadowColor = 'rgba(0,0,0,.9)'; ctx.shadowBlur=5;
-  ctx.fillText(name, cx, ty-17);
-  ctx.shadowBlur=0; ctx.restore();
-}
-
-function drawDeadPlayer(p) {
-  const cx = p.x+PLAYER_W/2, cy = p.y+PLAYER_H*.65;
-  ctx.save();
-  ctx.globalAlpha=.35;
-  ctx.translate(cx,cy); ctx.rotate(Math.PI/2);
-  ctx.fillStyle=(appMap[p.id]?.appearance?.shirt)||'#555';
-  ctx.fillRect(-PLAYER_W/2,-10,PLAYER_W,20);
-  ctx.globalAlpha=.7; ctx.font='20px serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
-  ctx.fillText('💀',0,0);
-  ctx.restore();
-}
-
-// ──────────── PARTICLES ────────────
-function spawnParticles(x, y, color, count) {
-  for (let i=0; i<count; i++) {
-    const a=Math.random()*Math.PI*2, sp=1+Math.random()*4;
-    particles.push({ x,y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp-2, life:.8+Math.random()*.4, maxLife:1.2, r:2+Math.random()*3, color, g:.15 });
-  }
-}
-function spawnMeleeEffect(x, y, facing) {
-  for (let i=0; i<8; i++) {
-    particles.push({ x:x+(facing>0?20:-20), y:y+15, vx:(facing>0?1:-1)*(3+Math.random()*5), vy:(Math.random()-.5)*4-1, life:.4, maxLife:.4, r:4+Math.random()*4, color:'#ffca28', g:.1 });
-  }
-}
-function spawnExplosion(x, y, radius) {
-  const colors=['#ff6d00','#ffea00','#ff1744','#fff'];
-  for (let i=0; i<30; i++) {
-    const a=(i/30)*Math.PI*2, sp=2+Math.random()*6;
-    particles.push({ x,y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp-2, life:.8+Math.random()*.5, maxLife:1.3, r:3+Math.random()*6, color:colors[i%4], g:.2 });
-  }
-  particles.push({ x,y, vx:0,vy:0, life:.35,maxLife:.35, r:radius, color:'rgba(255,180,80,0.35)', type:'ring', g:0 });
-}
-function updateParticles(dt) {
-  for (let i=particles.length-1; i>=0; i--) {
-    const p=particles[i];
-    p.x+=p.vx*dt; p.y+=p.vy*dt; p.vy+=p.g*dt;
-    p.life-=dt*.06; p.vx*=.96; p.vy*=.97;
-    if (p.life<=0) particles.splice(i,1);
-  }
-}
-function drawParticles() {
-  particles.forEach(p => {
-    const a = clamp(p.life/p.maxLife,0,1);
-    ctx.save(); ctx.globalAlpha=a;
-    if (p.type==='ring') {
-      ctx.strokeStyle=p.color; ctx.lineWidth=3;
-      ctx.beginPath(); ctx.arc(p.x,p.y,p.r*(1.2-(a*.5))+5,0,Math.PI*2); ctx.stroke();
-    } else {
-      ctx.fillStyle=p.color; ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
-    }
-    ctx.restore();
-  });
-}
-
-// ──────────── MINIMAP ────────────
-function drawMinimap() {
-  const mW=mmCanvas.width, mH=mmCanvas.height;
-  mmCtx.clearRect(0,0,mW,mH);
-  mmCtx.fillStyle='rgba(4,4,16,.78)'; mmCtx.fillRect(0,0,mW,mH);
-  const sx=mW/worldW, sy=mH/worldH;
-
-  // Ground line
-  mmCtx.fillStyle='#2d5a27'; mmCtx.fillRect(0,mH-4,mW,4);
-
-  // Platforms
-  platforms.forEach((p,i)=>{
-    if(i===0) return;
-    mmCtx.fillStyle=p.type==='cloud'?'rgba(150,160,255,.4)':p.type==='stone'?'#5a5a6e':'#8B6914';
-    mmCtx.fillRect(p.x*sx, p.y*sy, Math.max(p.w*sx,2), 2);
-  });
-
-  // Pickups
-  pickups.forEach(pk=>{
-    if(!pk.active) return;
-    mmCtx.fillStyle={health:'#ff1744',shield:'#00e5ff',speed:'#ffea00',ammo:'#ff9800'}[pk.type]||'#fff';
-    mmCtx.fillRect(pk.x*sx-1,pk.y*sy-1,3,3);
-  });
-
-  // Players
-  Object.values(players).forEach(p=>{
-    if(!p.alive) return;
-    const mx=p.x*sx, my=p.y*sy;
-    if(p.id===myId){
-      mmCtx.fillStyle='#00e5ff';
-      mmCtx.beginPath(); mmCtx.arc(mx,my,3,0,Math.PI*2); mmCtx.fill();
-      mmCtx.strokeStyle='rgba(0,229,255,.5)'; mmCtx.lineWidth=1;
-      mmCtx.beginPath(); mmCtx.arc(mx,my,5,0,Math.PI*2); mmCtx.stroke();
-    } else {
-      mmCtx.fillStyle='#ff5722';
-      mmCtx.beginPath(); mmCtx.arc(mx,my,2.5,0,Math.PI*2); mmCtx.fill();
-    }
-  });
-
-  // Camera rect
-  mmCtx.strokeStyle='rgba(255,255,255,.18)'; mmCtx.lineWidth=.6;
-  mmCtx.strokeRect(camX*sx,camY*sy,canvas.width*sx,canvas.height*sy);
-  mmCtx.strokeStyle='rgba(255,255,255,.22)'; mmCtx.lineWidth=1;
-  mmCtx.strokeRect(0,0,mW,mH);
-}
-
-// ═══════════════════════════════════════════════════════════════
-// HUD
-// ═══════════════════════════════════════════════════════════════
-function updateHUD(p) {
-  const me = p || players[myId];
-  if (!me) return;
-  const hp = clamp(me.hp||0, 0, MAX_HP);
-  const sh = clamp(me.shield||0, 0, MAX_SHIELD);
-  const hpEl=$('hpFill'), shEl=$('shFill'), hpVEl=$('hpVal'), shVEl=$('shVal');
-  if(hpEl) hpEl.style.width=(hp/MAX_HP*100)+'%';
-  if(shEl) shEl.style.width=(sh/MAX_SHIELD*100)+'%';
-  if(hpVEl) hpVEl.textContent=Math.round(hp);
-  if(shVEl) shVEl.textContent=Math.round(sh);
-  const kEl=$('hudKills'),dEl=$('hudDeaths'),aEl=$('hudArrows');
-  if(kEl) kEl.textContent=me.kills||0;
-  if(dEl) dEl.textContent=me.deaths||0;
-  if(aEl && me.arrows!==undefined) aEl.textContent=me.arrows;
-  updateHUDCount();
-}
-function updateHUDCount() {
-  const el=$('hudPlayerCount');
-  if(el) el.textContent=Object.keys(players).length+' oyuncu';
-}
-
-function addKillFeed(killerName, victimName, reason) {
-  const icons={melee:'⚔️',arrow:'🏹',bomb:'💣',fall:'💨'};
-  const el=document.createElement('div');
-  el.className='kf-entry '+(reason||'');
-  el.textContent=(killerName?`${icons[reason]||'💀'} ${killerName} → ${victimName}`:`${icons[reason]||'💀'} ${victimName} düştü!`);
-  $('killFeed').appendChild(el);
-  setTimeout(()=>el.remove(),3200);
-}
-
-function startRespawnTimer(ms) {
-  $('respawnScreen').classList.remove('hidden');
-  let rem=Math.ceil(ms/1000);
-  $('respawnTimer').textContent=rem;
-  clearInterval(respawnInterval);
-  respawnInterval=setInterval(()=>{
-    rem--; $('respawnTimer').textContent=Math.max(0,rem);
-    if(rem<=0) endRespawnTimer();
-  },1000);
-}
-function endRespawnTimer() {
-  clearInterval(respawnInterval);
-  $('respawnScreen').classList.add('hidden');
-}
-
-function appendChat(name, text, type) {
-  const el=document.createElement('div');
-  el.className='chat-msg '+(type||'normal');
-  if(type==='sys') el.textContent=text;
-  else el.innerHTML=`<span class="cn">${esc(name)}</span>: ${esc(text)}`;
-  const box=$('chatMessages'); box.appendChild(el);
-  if(box.children.length>25) box.firstChild.remove();
-  box.scrollTop=box.scrollHeight;
-}
-
-// ═══════════════════════════════════════════════════════════════
-// ROOM LIST UI
-// ═══════════════════════════════════════════════════════════════
-function renderRoomList(list) {
-  const container=$('roomList');
-  if(!container) return;
-  if(!list||list.length===0){
-    container.innerHTML='<div class="empty-rooms">Oda yok — ilk odayı sen oluştur!</div>'; return;
-  }
-  container.innerHTML=list.map(r=>{
-    const pct=(r.playerCount/r.maxPlayers)*100;
-    const fill=pct<50?'var(--green)':pct<80?'var(--yellow)':'var(--red)';
-    const icon=r.isPublic?'🌍':r.hasPassword?'🔒':'🏠';
-    const lock=r.hasPassword?'<span class="room-pill locked">🔐</span>':'<span class="room-pill open">🔓</span>';
-    return `<div class="room-card" data-id="${esc(r.id)}" data-locked="${!!r.hasPassword}" data-name="${esc(r.name)}">
-      <div class="room-icon">${icon}</div>
-      <div class="room-info"><div class="room-name">${esc(r.name)}</div><div class="room-meta">${r.playerCount}/${r.maxPlayers}</div></div>
-      <div class="room-right">${lock}<div class="room-bar"><div class="room-bar-fill" style="width:${pct}%;background:${fill}"></div></div></div>
-    </div>`;
-  }).join('');
-  container.querySelectorAll('.room-card').forEach(card=>{
-    card.addEventListener('click',()=>{
-      const id=card.dataset.id, locked=card.dataset.locked==='true', name=card.dataset.name;
-      if(id==='public'){socket.emit('joinPublic');return;}
-      if(locked){
-        pendingRoomId=id; pendingRoomName=name;
-        $('modalPassRoomName').textContent=`"${name}" için şifre gerekli`;
-        $('fJoinPass').value='';
-        $('modalPassword').style.display='flex';
-      } else socket.emit('joinRoom',{roomId:id,password:''});
+// ==================== SUNUCU BAĞLANTISI ====================
+function connectToServer() {
+    const serverUrl = 'https://saskioyunu-1-2d6i.onrender.com';
+    
+    console.log('Sunucuya bağlanılıyor:', serverUrl);
+    
+    socket = io(serverUrl, {
+        reconnection: true,
+        reconnectionAttempts: Infinity,
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 5000,
+        timeout: 20000,
+        transports: ['websocket', 'polling']
     });
-  });
-}
-
-// ═══════════════════════════════════════════════════════════════
-// SCOREBOARD
-// ═══════════════════════════════════════════════════════════════
-function renderScoreboard() {
-  const sorted=Object.values(players).map(p=>({...p,name:appMap[p.id]?.name||'?'})).sort((a,b)=>(b.kills-b.deaths)-(a.kills-a.deaths));
-  $('scoreBoardList').innerHTML=sorted.map((p,i)=>{
-    const icon=i===0?'🥇':i===1?'🥈':i===2?'🥉':`#${i+1}`;
-    return `<div class="sc-row ${p.id===myId?'me':''}">
-      <span class="sc-rank">${icon}</span>
-      <span class="sc-name" style="color:${appMap[p.id]?.appearance?.shirt||'#eee'}">${esc(p.name)}${p.id===myId?' ★':''}</span>
-      <span class="sc-kd">⚔️${p.kills||0} 💀${p.deaths||0}</span>
-    </div>`;
-  }).join('');
-}
-
-// ═══════════════════════════════════════════════════════════════
-// CHARACTER PREVIEW
-// ═══════════════════════════════════════════════════════════════
-function buildCharPreviews() {
-  const row=$('charRow'); if(!row) return;
-  row.innerHTML='';
-  APPEARANCES_CLIENT.forEach((app,i)=>{
-    const wrap=document.createElement('div');
-    wrap.className='char-thumb'+(i===selectedCharIdx?' selected':'');
-    const c=document.createElement('canvas'); c.width=56; c.height=72;
-    drawCharThumb(c.getContext('2d'),app);
-    wrap.appendChild(c);
-    const lbl=document.createElement('div');
-    lbl.style.cssText='font-size:.5rem;text-align:center;color:#8888cc;padding:.1rem';
-    lbl.textContent=(app.name||'').split(' ')[0];
-    wrap.appendChild(lbl);
-    wrap.addEventListener('click',()=>{
-      selectedCharIdx=i; myAppearance=app;
-      row.querySelectorAll('.char-thumb').forEach(e=>e.classList.remove('selected'));
-      wrap.classList.add('selected');
+    
+    socket.on('connect', () => {
+        console.log('✅ Sunucuya bağlandı!', socket.id);
+        playerId = socket.id;
+        
+        // Sunucuya oyuncu bilgilerini gönder
+        socket.emit('player-join', {
+            id: playerId,
+            telegramId: telegramId,
+            name: playerName
+        });
+        
+        // Bağlantı durumunu göster
+        showNotification('Sunucuya bağlandı', 'success');
     });
-    row.appendChild(wrap);
-  });
+    
+    socket.on('disconnect', (reason) => {
+        console.log('❌ Sunucu bağlantısı koptu:', reason);
+        showNotification('Sunucu bağlantısı koptu, yeniden bağlanılıyor...', 'error');
+    });
+    
+    socket.on('reconnect', (attemptNumber) => {
+        console.log('🔄 Sunucuya yeniden bağlandı! Deneme:', attemptNumber);
+        showNotification('Sunucuya yeniden bağlandı', 'success');
+        
+        if (currentRoom) {
+            socket.emit('rejoin-room', { 
+                roomId: currentRoom, 
+                playerId: playerId,
+                lastPosition: camera.position
+            });
+        }
+    });
+    
+    socket.on('reconnect_attempt', (attempt) => {
+        console.log('Yeniden bağlanma denemesi:', attempt);
+    });
+    
+    socket.on('error', (error) => {
+        console.error('Sunucu hatası:', error);
+        showNotification('Sunucu hatası: ' + error, 'error');
+    });
+    
+    // Oyun durumu güncellemeleri
+    socket.on('game-state', (state) => {
+        console.log('Oyun durumu alındı');
+        players = state.players || {};
+        rooms = state.rooms || {};
+        updatePlayerCount();
+    });
+    
+    // Oda oluşturuldu
+    socket.on('room-created', (roomData) => {
+        console.log('Oda oluşturuldu:', roomData);
+        currentRoom = roomData.id;
+        document.getElementById('chaser-selector').classList.add('active');
+    });
+    
+    // Odaya katılma
+    socket.on('room-joined', (roomData) => {
+        console.log('Odaya katılındı:', roomData);
+        currentRoom = roomData.id;
+        gameActive = true;
+        isGameStarted = true;
+        
+        document.getElementById('menu-screen').classList.add('hidden');
+        document.getElementById('hud').style.display = 'flex';
+        
+        // Mobil kontroller
+        if (window.innerWidth <= 768) {
+            document.getElementById('mobile-controls').classList.add('active');
+        }
+        
+        // Odayı yükle
+        loadRoom(roomData);
+        
+        showNotification('Odaya katıldınız!', 'success');
+    });
+    
+    // Oyuncu hareketi
+    socket.on('player-moved', (data) => {
+        if (players[data.id]) {
+            players[data.id].position = data.position;
+            players[data.id].rotation = data.rotation;
+        }
+    });
+    
+    // Anahtar toplandı
+    socket.on('key-collected', (data) => {
+        console.log('Anahtar toplandı:', data);
+        
+        if (data.playerId === playerId) {
+            hasKey = true;
+            document.getElementById('key-status').innerHTML = '🔑 <span style="color: #00ff00;">Anahtar alındı!</span>';
+            document.getElementById('key-status').classList.add('has-key');
+        }
+        
+        if (keys[data.keyId]) {
+            scene.remove(keys[data.keyId]);
+            delete keys[data.keyId];
+        }
+    });
+    
+    // Kovalayıcı seçildi
+    socket.on('chaser-selected', (data) => {
+        console.log('Kovalayıcı seçildi:', data);
+        chasers[data.roomId] = data.chaserId;
+        
+        if (data.chaserId === playerId) {
+            showNotification('Siz kovalayıcısınız!', 'warning');
+        }
+    });
+    
+    // Oyun başladı
+    socket.on('game-start', (data) => {
+        console.log('Oyun başladı!', data);
+        isGameStarted = true;
+        
+        // Anahtarı yerleştir
+        if (data.keyPosition) {
+            createKey(
+                new THREE.Vector3(data.keyPosition.x, data.keyPosition.y, data.keyPosition.z),
+                'game_key'
+            );
+        }
+        
+        showNotification('Oyun başladı! Anahtarı bul ve kaç!', 'info');
+    });
+    
+    // Oyuncu yakalandı
+    socket.on('player-caught', (data) => {
+        console.log('Oyuncu yakalandı:', data);
+        
+        if (data.playerId === playerId) {
+            showNotification('YAKALANDIN! Oyun bitti.', 'error');
+            setTimeout(() => resetGame(), 2000);
+        }
+    });
+    
+    // Oyun kazanıldı
+    socket.on('game-won', (data) => {
+        console.log('Oyun kazanıldı:', data);
+        
+        if (data.playerId === playerId) {
+            showNotification('🎉 TEBRİKLER! KAÇIŞ BAŞARILI! 🎉', 'success');
+            
+            // Partikül efekti
+            createWinEffect();
+            
+            setTimeout(() => resetGame(), 3000);
+        }
+    });
+    
+    // Yeni oyuncu katıldı
+    socket.on('player-joined', (player) => {
+        console.log('Oyuncu katıldı:', player);
+        players[player.id] = player;
+        updatePlayerCount();
+        showNotification(`${player.name} odaya katıldı`, 'info');
+    });
+    
+    // Oyuncu ayrıldı
+    socket.on('player-disconnected', (playerId) => {
+        console.log('Oyuncu ayrıldı:', playerId);
+        delete players[playerId];
+        updatePlayerCount();
+    });
+    
+    // Oda listesi güncellendi
+    socket.on('room-list-update', (roomsList) => {
+        console.log('Odalar güncellendi');
+        rooms = roomsList;
+    });
 }
 
-function drawCharThumb(c, app) {
-  if(!app) return;
-  c.clearRect(0,0,56,72);
-  const cx=28, by=68;
-  const skin=app.skin||'#FFDBB4',hair=app.hair||'#1a0a00',shirt=app.shirt||'#E53935',pants=app.pants||'#1565c0',shoe=app.shoe||'#212121';
-  c.fillStyle='rgba(0,0,0,.2)'; c.beginPath(); c.ellipse(cx,by,10,3,0,0,Math.PI*2); c.fill();
-  c.fillStyle=pants; c.fillRect(cx-9,by-20,8,18); c.fillRect(cx+1,by-20,8,18);
-  c.fillStyle=shoe;  c.fillRect(cx-10,by-7,10,7); c.fillRect(cx+1,by-7,10,7);
-  c.fillStyle=shirt; c.beginPath(); c.roundRect?c.roundRect(cx-11,by-40,22,22,3):c.rect(cx-11,by-40,22,22); c.fill();
-  c.fillStyle='rgba(255,255,255,.1)'; c.fillRect(cx-11,by-40,11,22*.5);
-  c.fillStyle=app.belt||'#3e2723'; c.fillRect(cx-11,by-22,22,5);
-  c.fillStyle=skin; c.fillRect(cx-16,by-38,6,16); c.fillRect(cx+10,by-38,6,16);
-  c.fillStyle=skin; c.fillRect(cx-4,by-44,8,6);
-  c.fillStyle=skin; c.beginPath(); c.roundRect?c.roundRect(cx-11,by-62,22,20,5):c.rect(cx-11,by-62,22,20); c.fill();
-  c.fillStyle='#fff'; c.fillRect(cx-8,by-57,4,5); c.fillRect(cx+4,by-57,4,5);
-  c.fillStyle='#1a1a2e'; c.fillRect(cx-7,by-56,2,3); c.fillRect(cx+5,by-56,2,3);
-  c.strokeStyle='rgba(80,30,0,.6)'; c.lineWidth=1.2;
-  c.beginPath(); c.arc(cx,by-47,3,Math.PI+.4,-.4); c.stroke();
-  c.fillStyle=hair; c.beginPath(); c.roundRect?c.roundRect(cx-11,by-62,22,8,[5,5,0,0]):c.rect(cx-11,by-62,22,8); c.fill();
+// ==================== ODA İŞLEMLERİ ====================
+function joinGame() {
+    console.log('Oyun aranıyor...');
+    socket.emit('find-game');
+    showNotification('Oyun aranıyor...', 'info');
 }
 
-// ═══════════════════════════════════════════════════════════════
-// LEAVE ROOM
-// ═══════════════════════════════════════════════════════════════
-function leaveRoom() {
-  if(!confirm('Odadan çıkmak istiyor musun?')) return;
-  socket.emit('leaveRoom');
-  if(raf){ cancelAnimationFrame(raf); raf=0; }
-  players={}; appMap={}; pickups=[]; projectiles=[]; particles=[];
-  showScreen('screenLobby');
-  socket.emit('getRooms');
+function showRooms() {
+    console.log('Odalar listeleniyor');
+    socket.emit('get-rooms', (roomsList) => {
+        let roomText = 'Aktif Odalar:\n';
+        Object.values(roomsList).forEach(room => {
+            roomText += `\n🪐 Oda ${room.id}: ${room.players?.length || 0}/4 oyuncu`;
+        });
+        alert(roomText);
+    });
 }
 
-// ═══════════════════════════════════════════════════════════════
-// UI EVENTS
-// ═══════════════════════════════════════════════════════════════
-function setupUI() {
-  $('btnJoinPublic').addEventListener('click', ()=> socket.emit('joinPublic'));
-  $('btnQuickJoin').addEventListener('click',  ()=> socket.emit('quickJoin'));
-  $('btnRefresh').addEventListener('click',    ()=> socket.emit('getRooms'));
-
-  $('btnCreateRoom').addEventListener('click', ()=>{
-    $('fRoomName').value=''; $('fRoomPass').value='';
-    $('modalCreateRoom').style.display='flex';
-  });
-  $('btnConfirmCreate').addEventListener('click', ()=>{
-    const name=$('fRoomName').value.trim()||`${myName}'ın Odası`;
-    socket.emit('createRoom',{name,password:$('fRoomPass').value.trim()});
-  });
-  $('btnCancelCreate').addEventListener('click', ()=>{ $('modalCreateRoom').style.display='none'; });
-
-  $('btnConfirmPass').addEventListener('click', ()=>{
-    if(!pendingRoomId) return;
-    socket.emit('joinRoom',{roomId:pendingRoomId,password:$('fJoinPass').value});
-  });
-  $('btnCancelPass').addEventListener('click', ()=>{ $('modalPassword').style.display='none'; pendingRoomId=null; });
-  $('fJoinPass').addEventListener('keydown', e=>{ if(e.key==='Enter') $('btnConfirmPass').click(); });
-  $('fRoomName').addEventListener('keydown',  e=>{ if(e.key==='Enter') $('btnConfirmCreate').click(); });
-
-  $('hudLeave').addEventListener('click', leaveRoom);
-
-  $('chatSendBtn').addEventListener('click', sendChat);
-  $('chatInput').addEventListener('keydown', e=>{ if(e.key==='Enter'){ sendChat(); e.preventDefault(); } e.stopPropagation(); });
-  $('chatInput').addEventListener('keyup', e=> e.stopPropagation());
-  $('chatInput').addEventListener('touchstart', e=> e.stopPropagation(), {passive:true});
-
-  $('abtScore').addEventListener('click', toggleScore);
-  document.addEventListener('keydown', e=>{ if(e.key==='Tab'){ e.preventDefault(); toggleScore(); } });
-
-  // 2-finger scoreboard on canvas
-  canvas.addEventListener('touchstart', e=>{
-    if(e.touches.length===2){ e.preventDefault(); toggleScore(); }
-  },{passive:false});
+function createRoom() {
+    console.log('Oda oluşturma menüsü açıldı');
+    document.getElementById('chaser-selector').classList.add('active');
 }
 
-function toggleScore() {
-  scoreVisible=!scoreVisible;
-  const sb=$('scoreBoard');
-  sb.style.display=scoreVisible?'block':'none';
-  if(scoreVisible) renderScoreboard();
+function selectChaser(type) {
+    console.log('Kovalayıcı tipi seçildi:', type);
+    document.getElementById('chaser-selector').classList.remove('active');
+    
+    socket.emit('create-room', {
+        chaserType: type,
+        playerId: playerId,
+        playerName: playerName
+    });
 }
 
-function sendChat() {
-  const input=$('chatInput'), txt=input.value.trim();
-  if(!txt||!myRoomId) return;
-  socket.emit('chat',txt); input.value='';
+function loadRoom(roomData) {
+    console.log('Oda yükleniyor:', roomData);
+    
+    // Mevcut odadaki objeleri temizle
+    clearRoom();
+    
+    // Yeni odayı oluştur
+    if (roomData.walls) {
+        // Gerçek oda duvarlarını yükle
+    }
 }
 
-// ═══════════════════════════════════════════════════════════════
-// CONTROLS
-// ═══════════════════════════════════════════════════════════════
-function setupControls() {
-  // Keyboard
-  const keyDown = {ArrowLeft:'left',KeyA:'left',ArrowRight:'right',KeyD:'right'};
-  document.addEventListener('keydown', e=>{
-    if(keyDown[e.code]) inp[keyDown[e.code]]=true;
-    if(['ArrowUp','KeyW','Space'].includes(e.code)){ e.preventDefault(); jumpQ=true; }
-    if(['KeyZ','KeyJ'].includes(e.code)) atkQ=true;
-    if(['KeyX','KeyK'].includes(e.code)) shootQ=true;
-    if(['KeyC','KeyB'].includes(e.code)) bombQ=true;
-    if(['ShiftLeft','ShiftRight'].includes(e.code)) dashQ=true;
-  });
-  document.addEventListener('keyup', e=>{
-    if(keyDown[e.code]) inp[keyDown[e.code]]=false;
-  });
-
-  // Touch buttons
-  holdBtn('cbtLeft',  ()=>inp.left=true,  ()=>inp.left=false);
-  holdBtn('cbtRight', ()=>inp.right=true, ()=>inp.right=false);
-  tapBtn('abtJump',   ()=>jumpQ=true);
-  tapBtn('abtAtk',    ()=>{ atkQ=true;   cdVis('abtAtk',550); });
-  tapBtn('abtShoot',  ()=>{ shootQ=true; cdVis('abtShoot',900); });
-  tapBtn('abtBomb',   ()=>{ bombQ=true;  cdVis('abtBomb',4000); });
-  tapBtn('abtDash',   ()=>{ dashQ=true;  cdVis('abtDash',1200); });
+function clearRoom() {
+    // Anahtarları temizle
+    Object.values(keys).forEach(key => scene.remove(key));
+    keys = {};
 }
 
-function holdBtn(id, onDown, onUp) {
-  const el=$(id); if(!el) return;
-  const dn=()=>{ onDown(); el.classList.add('pressed'); };
-  const up=()=>{ onUp(); el.classList.remove('pressed'); };
-  el.addEventListener('pointerdown', dn);
-  el.addEventListener('pointerup',   up);
-  el.addEventListener('pointerleave',up);
-  el.addEventListener('touchstart', e=>{ e.preventDefault(); dn(); },{passive:false});
-  el.addEventListener('touchend',   e=>{ e.preventDefault(); up(); },{passive:false});
+// ==================== HUD GÜNCELLEME ====================
+function updatePlayerCount() {
+    const count = Object.keys(players).length;
+    document.getElementById('player-count').innerHTML = `👥 <span style="color: #ffd700;">${count}</span> oyuncu`;
 }
 
-function tapBtn(id, onDown) {
-  const el=$(id); if(!el) return;
-  el.addEventListener('pointerdown', e=>{ e.preventDefault(); onDown(); el.classList.add('pressed'); });
-  el.addEventListener('pointerup',   ()=> el.classList.remove('pressed'));
-  el.addEventListener('pointerleave',()=> el.classList.remove('pressed'));
+// ==================== BİLDİRİM SİSTEMİ ====================
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: ${type === 'success' ? 'rgba(0,255,0,0.2)' : type === 'error' ? 'rgba(255,0,0,0.2)' : 'rgba(255,215,0,0.2)'};
+        color: white;
+        padding: 15px 30px;
+        border-radius: 50px;
+        border: 2px solid ${type === 'success' ? '#00ff00' : type === 'error' ? '#ff0000' : '#ffd700'};
+        backdrop-filter: blur(10px);
+        z-index: 1000;
+        font-size: 1.1rem;
+        text-align: center;
+        animation: slideDown 0.3s ease;
+    `;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.animation = 'slideUp 0.3s ease';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
 }
 
-function cdVis(id, ms) {
-  const el=$(id); if(!el) return;
-  el.classList.add('on-cooldown');
-  setTimeout(()=>el.classList.remove('on-cooldown'),ms);
+// ==================== KONTROLLER ====================
+function setupEventListeners() {
+    // Klavye kontrolleri
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('keyup', handleKeyUp);
+    
+    // Fare kilidi
+    document.getElementById('game-canvas').addEventListener('click', () => {
+        if (gameActive && document.pointerLockElement !== document.body) {
+            document.body.requestPointerLock();
+        }
+    });
+    
+    // Fare hareketi (bakış)
+    document.addEventListener('mousemove', handleMouseMove);
+    
+    // Mobil kontroller
+    setupMobileControls();
+    
+    // Pencere yeniden boyutlandırma
+    window.addEventListener('resize', handleResize);
+    
+    // Pointer lock değişimi
+    document.addEventListener('pointerlockchange', handlePointerLockChange);
 }
 
-// ═══════════════════════════════════════════════════════════════
-// CANVAS RESIZE
-// ═══════════════════════════════════════════════════════════════
-function resizeCanvas() {
-  canvas.width  = window.innerWidth;
-  canvas.height = window.innerHeight;
+function handleKeyDown(e) {
+    if (!gameActive) return;
+    
+    switch(e.code) {
+        case 'KeyW':
+        case 'ArrowUp':
+            moveState.forward = true;
+            e.preventDefault();
+            break;
+        case 'KeyS':
+        case 'ArrowDown':
+            moveState.backward = true;
+            e.preventDefault();
+            break;
+        case 'KeyA':
+        case 'ArrowLeft':
+            moveState.left = true;
+            e.preventDefault();
+            break;
+        case 'KeyD':
+        case 'ArrowRight':
+            moveState.right = true;
+            e.preventDefault();
+            break;
+        case 'Space':
+            moveState.jump = true;
+            e.preventDefault();
+            break;
+        case 'ShiftLeft':
+        case 'ShiftRight':
+            moveState.sprint = true;
+            moveSpeed = 0.25;
+            e.preventDefault();
+            break;
+        case 'KeyE':
+            // Etkileşim (anahtar toplama)
+            checkKeyPickup();
+            e.preventDefault();
+            break;
+    }
 }
+
+function handleKeyUp(e) {
+    switch(e.code) {
+        case 'KeyW':
+        case 'ArrowUp':
+            moveState.forward = false;
+            break;
+        case 'KeyS':
+        case 'ArrowDown':
+            moveState.backward = false;
+            break;
+        case 'KeyA':
+        case 'ArrowLeft':
+            moveState.left = false;
+            break;
+        case 'KeyD':
+        case 'ArrowRight':
+            moveState.right = false;
+            break;
+        case 'Space':
+            moveState.jump = false;
+            break;
+        case 'ShiftLeft':
+        case 'ShiftRight':
+            moveState.sprint = false;
+            moveSpeed = 0.15;
+            break;
+    }
+}
+
+function handleMouseMove(e) {
+    if (!gameActive || document.pointerLockElement !== document.body) return;
+    
+    const sensitivity = 0.002;
+    const deltaX = e.movementX * sensitivity;
+    const deltaY = e.movementY * sensitivity;
+    
+    // Yatay hareket (sol-sağ)
+    camera.rotation.y -= deltaX;
+    
+    // Dikey hareket (yukarı-aşağı) - sınırlı
+    camera.rotation.x -= deltaY;
+    camera.rotation.x = Math.max(-Math.PI/2.5, Math.min(Math.PI/2.5, camera.rotation.x));
+}
+
+function handlePointerLockChange() {
+    if (document.pointerLockElement === document.body) {
+        console.log('Fare kilitlendi');
+    } else {
+        console.log('Fare çözüldü');
+    }
+}
+
+function setupMobileControls() {
+    // Joystick (basit)
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let joystickActive = false;
+    
+    const joystick = document.getElementById('movement-joystick');
+    const jumpBtn = document.getElementById('jump-btn');
+    const interactBtn = document.getElementById('interact-btn');
+    
+    joystick.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        const touch = e.touches[0];
+        touchStartX = touch.clientX;
+        touchStartY = touch.clientY;
+        joystickActive = true;
+    });
+    
+    joystick.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        if (!joystickActive || !gameActive) return;
+        
+        const touch = e.touches[0];
+        const deltaX = touch.clientX - touchStartX;
+        const deltaY = touch.clientY - touchStartY;
+        
+        // Hareket yönünü belirle
+        moveState.forward = deltaY < -20;
+        moveState.backward = deltaY > 20;
+        moveState.left = deltaX < -20;
+        moveState.right = deltaX > 20;
+    });
+    
+    joystick.addEventListener('touchend', () => {
+        joystickActive = false;
+        moveState.forward = false;
+        moveState.backward = false;
+        moveState.left = false;
+        moveState.right = false;
+    });
+    
+    jumpBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        moveState.jump = true;
+    });
+    
+    jumpBtn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        moveState.jump = false;
+    });
+    
+    interactBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        checkKeyPickup();
+    });
+    
+    // Mobil bakış için (ekrana dokunup sürükle)
+    let lastTouchX = 0;
+    let lastTouchY = 0;
+    
+    document.getElementById('game-canvas').addEventListener('touchstart', (e) => {
+        if (!gameActive) return;
+        const touch = e.touches[0];
+        lastTouchX = touch.clientX;
+        lastTouchY = touch.clientY;
+    });
+    
+    document.getElementById('game-canvas').addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        if (!gameActive) return;
+        
+        const touch = e.touches[0];
+        const deltaX = touch.clientX - lastTouchX;
+        const deltaY = touch.clientY - lastTouchY;
+        
+        // Kamerayı döndür (mobil için hassasiyet düşük)
+        camera.rotation.y -= deltaX * 0.005;
+        camera.rotation.x -= deltaY * 0.005;
+        camera.rotation.x = Math.max(-Math.PI/3, Math.min(Math.PI/3, camera.rotation.x));
+        
+        lastTouchX = touch.clientX;
+        lastTouchY = touch.clientY;
+    });
+}
+
+function handleResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+// ==================== OYUN MEKANİKLERİ ====================
+function checkKeyPickup() {
+    if (!gameActive || hasKey) return;
+    
+    // Kameranın baktığı yönde ışın gönder
+    const raycaster = new THREE.Raycaster();
+    const direction = new THREE.Vector3(0, 0, -1);
+    direction.applyQuaternion(camera.quaternion);
+    
+    raycaster.set(camera.position, direction);
+    
+    // Anahtarları kontrol et
+    for (let keyId in keys) {
+        const key = keys[keyId];
+        const intersects = raycaster.intersectObject(key, true);
+        
+        if (intersects.length > 0 && intersects[0].distance < 3) {
+            console.log('Anahtar toplanıyor:', keyId);
+            socket.emit('collect-key', { 
+                keyId: keyId, 
+                playerId: playerId, 
+                roomId: currentRoom 
+            });
+            break;
+        }
+    }
+}
+
+function updateMovement() {
+    if (!gameActive) return;
+    
+    // Hareket hızı
+    let currentSpeed = moveSpeed;
+    
+    // Hareket vektörü
+    const moveX = (moveState.right ? 1 : 0) - (moveState.left ? 1 : 0);
+    const moveZ = (moveState.forward ? 1 : 0) - (moveState.backward ? 1 : 0);
+    
+    if (moveX !== 0 || moveZ !== 0) {
+        // Kameranın yönüne göre hareket et
+        const angle = camera.rotation.y;
+        
+        // İleri/geri hareket
+        if (moveZ !== 0) {
+            velocity.z -= Math.sin(angle) * moveZ * currentSpeed;
+            velocity.x -= Math.cos(angle) * moveZ * currentSpeed;
+        }
+        
+        // Sağa/sola hareket (strafe)
+        if (moveX !== 0) {
+            velocity.z += Math.cos(angle) * moveX * currentSpeed;
+            velocity.x -= Math.sin(angle) * moveX * currentSpeed;
+        }
+    }
+    
+    // Zıplama
+    if (moveState.jump && isGrounded) {
+        velocity.y = jumpPower;
+        isGrounded = false;
+    }
+    
+    // Yerçekimi
+    if (!isGrounded) {
+        velocity.y -= gravity;
+    }
+    
+    // Yeni pozisyon
+    const newPos = camera.position.clone().add(velocity);
+    
+    // Basit çarpışma kontrolü (duvarlar)
+    if (Math.abs(newPos.x) < 24 && Math.abs(newPos.z) < 24) {
+        camera.position.copy(newPos);
+    } else {
+        // Duvara çarpınca hızı sıfırla
+        velocity.x = 0;
+        velocity.z = 0;
+    }
+    
+    // Y pozisyonu kontrolü (zemin/tavan)
+    if (camera.position.y < playerHeight) {
+        camera.position.y = playerHeight;
+        velocity.y = 0;
+        isGrounded = true;
+    } else if (camera.position.y > 8) {
+        camera.position.y = 8;
+        velocity.y = 0;
+    }
+    
+    // Sürtünme
+    velocity.x *= 0.9;
+    velocity.z *= 0.9;
+    
+    // Pozisyon geçmişine ekle (ışınlanma koruması)
+    positionHistory.push(camera.position.clone());
+    if (positionHistory.length > 10) {
+        positionHistory.shift();
+    }
+    
+    // Sunucuya gönder (saniyede 20 kez)
+    if (socket && socket.connected && Math.random() < 0.05) {
+        socket.emit('player-move', {
+            position: {
+                x: camera.position.x,
+                y: camera.position.y,
+                z: camera.position.z
+            },
+            rotation: {
+                x: camera.rotation.x,
+                y: camera.rotation.y,
+                z: camera.rotation.z
+            }
+        });
+    }
+}
+
+// ==================== ANİMASYON DÖNGÜSÜ ====================
+function animate() {
+    requestAnimationFrame(animate);
+    
+    const delta = clock.getDelta();
+    
+    // Oyun aktifse hareket et
+    if (gameActive) {
+        updateMovement();
+    }
+    
+    // Anahtarları döndür
+    Object.values(keys).forEach(key => {
+        key.rotation.y += 0.02;
+        key.position.y += Math.sin(Date.now() * 0.005) * 0.005;
+    });
+    
+    // Diğer oyuncuları güncelle (ileride eklenecek)
+    
+    // Render
+    renderer.render(scene, camera);
+}
+
+// ==================== OYUN BİTİRME ====================
+function resetGame() {
+    console.log('Oyun sıfırlanıyor...');
+    
+    gameActive = false;
+    isGameStarted = false;
+    hasKey = false;
+    
+    // Kamera pozisyonunu sıfırla
+    camera.position.set(0, playerHeight, 5);
+    camera.rotation.set(0, 0, 0);
+    
+    // UI'ı sıfırla
+    document.getElementById('menu-screen').classList.remove('hidden');
+    document.getElementById('hud').style.display = 'none';
+    document.getElementById('mobile-controls').classList.remove('active');
+    document.getElementById('key-status').innerHTML = '🔑 Anahtar yok';
+    document.getElementById('key-status').classList.remove('has-key');
+    
+    // Anahtarları temizle
+    Object.values(keys).forEach(key => scene.remove(key));
+    keys = {};
+    
+    // Test anahtarını geri ekle
+    createKey(new THREE.Vector3(5, 1, 5), 'test_key');
+}
+
+function createWinEffect() {
+    // Partikül efekti
+    const particleCount = 100;
+    const particles = [];
+    
+    for (let i = 0; i < particleCount; i++) {
+        const geometry = new THREE.SphereGeometry(0.1, 4, 4);
+        const material = new THREE.MeshStandardMaterial({ 
+            color: Math.random() * 0xffffff,
+            emissive: 0x442200
+        });
+        const particle = new THREE.Mesh(geometry, material);
+        
+        particle.position.copy(camera.position);
+        particle.userData = {
+            velocity: new THREE.Vector3(
+                (Math.random() - 0.5) * 0.2,
+                Math.random() * 0.2,
+                (Math.random() - 0.5) * 0.2
+            )
+        };
+        
+        scene.add(particle);
+        particles.push(particle);
+    }
+    
+    // Partikülleri yok et
+    setTimeout(() => {
+        particles.forEach(p => scene.remove(p));
+    }, 2000);
+}
+
+// ==================== BAŞLANGIÇ ====================
+window.onload = initGame;
+
+// CSS animasyonları ekle
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideDown {
+        from { transform: translate(-50%, -100px); opacity: 0; }
+        to { transform: translate(-50%, 0); opacity: 1; }
+    }
+    
+    @keyframes slideUp {
+        from { transform: translate(-50%, 0); opacity: 1; }
+        to { transform: translate(-50%, -100px); opacity: 0; }
+    }
+`;
+document.head.appendChild(style);
