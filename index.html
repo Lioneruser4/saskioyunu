@@ -1,511 +1,556 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>BACKROOMS - MOBILE</title>
+    <title>PRO FPS - Takım Savaşı</title>
+    
+    <!-- Telegram WebApp -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    
+    <!-- Three.js Kütüphaneleri -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/PointerLockControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/stats.min.js"></script>
+    
+    <!-- Socket.IO -->
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-        }
-
-        :root {
-            --tg-bg: #0a0c10;
-            --tg-text: #ffffff;
-            --tg-button: #8774e1;
-            --tg-hint: #8b8e9b;
-            --primary: #6c5ce7;
-            --secondary: #00cec9;
-            --danger: #fd79a8;
-            --warning: #fdcb6e;
-            --dark: #2d3436;
-            --light: #f5f6fa;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
         body {
-            background: var(--tg-bg);
-            color: var(--tg-text);
             overflow: hidden;
-            height: 100vh;
-            width: 100vw;
+            background: #000;
+            color: white;
+        }
+
+        /* Menü Stili */
+        #menu {
             position: fixed;
-            touch-action: none;
-        }
-
-        /* Telegram WebApp uyumluluğu */
-        body.telegram {
-            --tg-bg: var(--tg-theme-bg-color, #0a0c10);
-            --tg-text: var(--tg-theme-text-color, #ffffff);
-            --tg-button: var(--tg-theme-button-color, #8774e1);
-        }
-
-        #game-container {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-        }
-
-        /* Canvas - Oyun alanı */
-        #game-canvas {
-            width: 100%;
-            height: 100%;
-            display: block;
-            touch-action: none;
-        }
-
-        /* UI Overlay */
-        #ui-overlay {
-            position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            pointer-events: none;
-            z-index: 10;
-        }
-
-        /* Ana Menü */
-        #main-menu {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(180deg, #0f0f1a 0%, #1a1b2e 100%);
+            background: linear-gradient(135deg, #0a0f1e, #1a1f2e);
             display: flex;
-            flex-direction: column;
-            pointer-events: all;
-            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 100;
-            overflow-y: auto;
-            padding: 20px;
-        }
-
-        #main-menu.hidden {
-            transform: translateY(100%);
-        }
-
-        /* Header - Kullanıcı Bilgileri */
-        .menu-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 16px 0;
-            margin-bottom: 24px;
-        }
-
-        .user-profile {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            background: rgba(255,255,255,0.05);
-            padding: 10px 16px;
-            border-radius: 30px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 20px;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            display: flex;
-            align-items: center;
             justify-content: center;
-            font-weight: bold;
-            font-size: 18px;
-            color: white;
-            box-shadow: 0 4px 15px rgba(108, 92, 231, 0.3);
-        }
-
-        .user-info {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .user-name {
-            font-weight: 700;
-            font-size: 16px;
-            color: white;
-        }
-
-        .user-status {
-            font-size: 12px;
-            color: #4cd137;
-            display: flex;
             align-items: center;
-            gap: 4px;
+            z-index: 1000;
+            transition: opacity 0.5s;
         }
 
-        .user-status::before {
-            content: '';
-            width: 8px;
-            height: 8px;
-            background: #4cd137;
-            border-radius: 4px;
-            display: inline-block;
+        .menu-container {
+            width: 100%;
+            max-width: 500px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border-radius: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
         }
 
-        .menu-title {
-            font-size: 32px;
-            font-weight: 900;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            background: linear-gradient(135deg, #fff, #a29bfe);
+        .menu-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .menu-header h1 {
+            font-size: 48px;
+            font-weight: 800;
+            background: linear-gradient(45deg, #ff4444, #ff8844);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px rgba(255, 68, 68, 0.3);
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+
+        .menu-header p {
+            color: #8899aa;
+            font-size: 16px;
+        }
+
+        .input-group {
+            margin-bottom: 25px;
+        }
+
+        .input-group label {
+            display: block;
+            color: #ccddee;
             margin-bottom: 8px;
-        }
-
-        .menu-subtitle {
-            color: var(--tg-hint);
             font-size: 14px;
-            margin-bottom: 32px;
-        }
-
-        /* Ana Butonlar */
-        .action-buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            margin-bottom: 32px;
-        }
-
-        .btn {
-            padding: 18px 24px;
-            border-radius: 16px;
-            border: none;
-            font-weight: 700;
-            font-size: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            background: rgba(255,255,255,0.05);
-            color: white;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.1);
-            pointer-events: all;
-            width: 100%;
             text-transform: uppercase;
             letter-spacing: 1px;
         }
 
-        .btn:active {
-            transform: scale(0.97);
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, var(--primary), #a363d9);
-            border: none;
-            box-shadow: 0 8px 20px rgba(108, 92, 231, 0.3);
-        }
-
-        .btn-secondary {
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.2);
-        }
-
-        /* Odalar Bölümü */
-        .rooms-section {
-            flex: 1;
-            margin-top: 24px;
-        }
-
-        .section-title {
+        .input-group input {
+            width: 100%;
+            padding: 15px 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            color: white;
             font-size: 18px;
-            font-weight: 700;
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            color: rgba(255,255,255,0.8);
+            transition: all 0.3s;
         }
 
-        .rooms-list {
+        .input-group input:focus {
+            border-color: #ff4444;
+            outline: none;
+            box-shadow: 0 0 20px rgba(255, 68, 68, 0.3);
+        }
+
+        .team-select {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .team-btn {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            max-height: 300px;
-            overflow-y: auto;
-            padding: 4px;
-        }
-
-        /* Oda Kartı */
-        .room-card {
-            background: rgba(255,255,255,0.05);
-            border-radius: 20px;
-            padding: 16px;
-            border: 1px solid rgba(255,255,255,0.1);
-            backdrop-filter: blur(10px);
-            cursor: pointer;
-            pointer-events: all;
-            transition: all 0.2s;
-        }
-
-        .room-card:active {
-            transform: scale(0.98);
-            background: rgba(255,255,255,0.08);
-        }
-
-        .room-header {
-            display: flex;
-            justify-content: space-between;
             align-items: center;
-            margin-bottom: 12px;
+            gap: 5px;
         }
 
-        .room-name {
+        .team-btn.red {
+            border-color: #ff4444;
+        }
+
+        .team-btn.blue {
+            border-color: #4444ff;
+        }
+
+        .team-btn.selected {
+            background: rgba(255, 68, 68, 0.2);
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(255, 68, 68, 0.3);
+        }
+
+        .team-btn.blue.selected {
+            background: rgba(68, 68, 255, 0.2);
+            box-shadow: 0 0 30px rgba(68, 68, 255, 0.3);
+        }
+
+        .team-icon {
+            font-size: 32px;
+        }
+
+        .team-count {
+            font-size: 14px;
+            color: #8899aa;
+        }
+
+        #start-btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(45deg, #ff4444, #ff8844);
+            border: none;
+            border-radius: 15px;
+            color: white;
+            font-size: 24px;
             font-weight: 700;
-            font-size: 16px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .room-badge {
-            padding: 4px 8px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
             text-transform: uppercase;
+            letter-spacing: 2px;
+            box-shadow: 0 10px 20px rgba(255, 68, 68, 0.3);
         }
 
-        .badge-ai {
-            background: rgba(255, 71, 87, 0.2);
-            color: #ff4757;
-            border: 1px solid #ff4757;
+        #start-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(255, 68, 68, 0.4);
         }
 
-        .badge-player {
-            background: rgba(0, 206, 201, 0.2);
-            color: #00cec9;
-            border: 1px solid #00cec9;
+        #start-btn:active {
+            transform: translateY(0);
         }
 
-        .room-creator {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 13px;
-            color: rgba(255,255,255,0.6);
-        }
-
-        .creator-avatar {
-            width: 20px;
-            height: 20px;
-            border-radius: 10px;
-            background: var(--primary);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 10px;
-        }
-
-        .room-stats {
-            display: flex;
-            gap: 16px;
-            margin-top: 12px;
-            font-size: 13px;
-            color: rgba(255,255,255,0.6);
-        }
-
-        .stat {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .player-count {
-            color: #4cd137;
-            font-weight: 600;
-        }
-
-        /* HUD - Oyun İçi */
-        #game-hud {
-            position: absolute;
+        /* HUD Stili */
+        #hud {
+            position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             pointer-events: none;
+            z-index: 100;
             display: none;
         }
 
-        #game-hud.active {
-            display: block;
+        #crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            z-index: 200;
         }
 
-        /* Üst HUD */
-        .hud-top {
+        .crosshair-part {
+            position: absolute;
+            background: white;
+            box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+        }
+
+        .crosshair-h {
+            width: 20px;
+            height: 2px;
+            top: 19px;
+            left: 10px;
+        }
+
+        .crosshair-v {
+            width: 2px;
+            height: 20px;
+            left: 19px;
+            top: 10px;
+        }
+
+        #health-bar {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 400px;
+            height: 30px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            overflow: hidden;
+            backdrop-filter: blur(5px);
+        }
+
+        #health-fill {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, #00ff00, #ffff00, #ff0000);
+            transition: width 0.2s;
+        }
+
+        #health-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px black;
+            z-index: 2;
+        }
+
+        #ammo-bar {
+            position: absolute;
+            bottom: 80px;
+            right: 50px;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            padding: 15px 25px;
+            border-radius: 50px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            font-size: 32px;
+            font-weight: bold;
+            color: white;
+            text-align: center;
+        }
+
+        #ammo-current {
+            color: #ffaa00;
+        }
+
+        #ammo-max {
+            color: #8899aa;
+            font-size: 24px;
+        }
+
+        #scoreboard {
             position: absolute;
             top: 20px;
-            left: 20px;
             right: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            pointer-events: none;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            min-width: 250px;
+            pointer-events: auto;
         }
 
-        .hud-card {
-            background: rgba(0,0,0,0.7);
-            backdrop-filter: blur(10px);
-            border-radius: 30px;
-            padding: 12px 20px;
-            border: 1px solid rgba(255,255,255,0.1);
-            color: white;
-            font-weight: 600;
+        .scoreboard-header {
             display: flex;
-            align-items: center;
-            gap: 8px;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .team-score {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .team-score.red { color: #ff4444; }
+        .team-score.blue { color: #4444ff; }
+
+        .scoreboard-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 10px;
+            margin: 5px 0;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
             font-size: 14px;
         }
 
-        .hud-card i {
-            color: var(--warning);
-        }
-
-        .hud-players {
-            background: rgba(0,0,0,0.7);
-            backdrop-filter: blur(10px);
-            border-radius: 30px;
-            padding: 12px 20px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .player-avatar-mini {
-            width: 30px;
-            height: 30px;
-            border-radius: 15px;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            font-weight: bold;
-            border: 2px solid white;
-        }
-
-        .player-avatar-mini.monster {
-            background: linear-gradient(135deg, #ff4757, #c0392b);
-        }
-
-        /* Oyuncu Etiketleri (3D'de gösterilecek) */
-        .player-name-tag {
-            position: absolute;
-            background: rgba(0,0,0,0.8);
+        .player-name {
             color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            white-space: nowrap;
-            border: 1px solid rgba(255,255,255,0.2);
-            backdrop-filter: blur(5px);
-            transform: translate(-50%, -50%);
-            pointer-events: none;
-            z-index: 1000;
         }
 
-        .player-name-tag.monster {
-            background: rgba(255, 71, 87, 0.9);
-            border-color: #ff4757;
+        .player-kills {
+            color: #ffaa00;
+            font-weight: bold;
+        }
+
+        .player-deaths {
+            color: #ff4444;
+        }
+
+        #kill-feed {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 300px;
+            z-index: 200;
+        }
+
+        .kill-message {
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            border-left: 4px solid #ff4444;
+            padding: 10px 15px;
+            margin-bottom: 5px;
+            border-radius: 5px;
+            animation: slideIn 0.3s, fadeOut 3s forwards;
+            font-size: 14px;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes fadeOut {
+            0% { opacity: 1; }
+            70% { opacity: 1; }
+            100% { opacity: 0; }
         }
 
         /* Mobil Kontroller */
         #mobile-controls {
-            position: absolute;
+            position: fixed;
             bottom: 30px;
             left: 0;
             right: 0;
-            display: flex;
+            display: none;
             justify-content: space-between;
             padding: 0 30px;
-            pointer-events: none;
-            z-index: 50;
+            pointer-events: auto;
+            z-index: 300;
         }
 
-        .joystick-container {
-            width: 100px;
-            height: 100px;
-            background: rgba(0,0,0,0.5);
+        #joystick {
+            width: 120px;
+            height: 120px;
+            background: rgba(255, 255, 255, 0.15);
             backdrop-filter: blur(10px);
-            border-radius: 50px;
-            border: 2px solid rgba(255,255,255,0.2);
-            pointer-events: all;
+            border-radius: 60px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
             position: relative;
+            touch-action: none;
         }
 
-        .joystick {
+        #joystick-handle {
             width: 50px;
             height: 50px;
-            background: var(--primary);
+            background: rgba(255, 255, 255, 0.5);
             border-radius: 25px;
             position: absolute;
-            top: 25px;
-            left: 25px;
-            box-shadow: 0 0 20px rgba(108, 92, 231, 0.5);
+            top: 35px;
+            left: 35px;
+            transition: transform 0.05s;
         }
 
-        .action-buttons {
+        #fire-btn {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, #ff4444, #ff0000);
+            border-radius: 50px;
+            border: 3px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 0 30px rgba(255, 0, 0, 0.5);
             display: flex;
-            gap: 15px;
-            pointer-events: all;
-        }
-
-        .action-btn {
-            width: 70px;
-            height: 70px;
-            background: rgba(0,0,0,0.5);
-            backdrop-filter: blur(10px);
-            border-radius: 35px;
-            border: 2px solid rgba(255,255,255,0.2);
-            display: flex;
-            align-items: center;
             justify-content: center;
-            font-size: 30px;
+            align-items: center;
+            font-size: 24px;
+            font-weight: bold;
             color: white;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            text-transform: uppercase;
+            touch-action: none;
         }
 
-        .action-btn:active {
-            transform: scale(0.9);
-            background: var(--primary);
+        #fire-btn.active {
+            transform: scale(0.95);
+            background: linear-gradient(135deg, #ff0000, #aa0000);
+        }
+
+        #sprint-btn {
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 40px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            color: white;
+            touch-action: none;
+        }
+
+        #jump-btn {
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 40px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            color: white;
+            touch-action: none;
+        }
+
+        .controls-right {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        #killcam {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            z-index: 1000;
+            display: none;
+            border: 2px solid #ff4444;
+        }
+
+        #respawn-timer {
+            font-size: 48px;
+            font-weight: bold;
+            color: #ff4444;
+            margin: 20px 0;
+        }
+
+        #respawn-btn {
+            padding: 15px 40px;
+            background: #ff4444;
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        #respawn-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 30px rgba(255, 68, 68, 0.5);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            #mobile-controls {
+                display: flex;
+            }
+            
+            #health-bar {
+                width: 300px;
+            }
+            
+            #ammo-bar {
+                bottom: 30px;
+                right: 20px;
+                padding: 10px 20px;
+                font-size: 24px;
+            }
+            
+            #scoreboard {
+                top: 10px;
+                right: 10px;
+                left: 10px;
+                min-width: auto;
+                font-size: 12px;
+            }
+            
+            .menu-container {
+                margin: 20px;
+                padding: 20px;
+            }
+            
+            .menu-header h1 {
+                font-size: 36px;
+            }
         }
 
         /* Loading */
-        #loading-screen {
-            position: absolute;
+        #loading {
+            position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: var(--tg-bg);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            background: #000;
+            display: none;
             justify-content: center;
-            z-index: 1000;
-            gap: 20px;
+            align-items: center;
+            z-index: 2000;
         }
 
-        .loading-spinner {
+        .spinner {
             width: 60px;
             height: 60px;
-            border: 4px solid rgba(255,255,255,0.1);
-            border-top-color: var(--primary);
-            border-radius: 30px;
+            border: 5px solid #333;
+            border-top-color: #ff4444;
+            border-radius: 50%;
             animation: spin 1s linear infinite;
         }
 
@@ -513,200 +558,518 @@
             to { transform: rotate(360deg); }
         }
 
-        /* Canavar Seçim Ekranı */
-        #monster-selector {
+        #minimap {
             position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 90%;
-            max-width: 350px;
-            background: rgba(20,20,30,0.95);
-            backdrop-filter: blur(20px);
-            border-radius: 30px;
-            padding: 24px;
-            border: 1px solid rgba(255,255,255,0.1);
-            z-index: 200;
-            display: none;
-            pointer-events: all;
-        }
-
-        #monster-selector.active {
-            display: block;
-        }
-
-        .selector-title {
-            font-size: 22px;
-            font-weight: 700;
-            margin-bottom: 20px;
-            text-align: center;
-            background: linear-gradient(135deg, #ff4757, #ff6b81);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .monster-options {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .monster-option {
-            padding: 18px;
-            border-radius: 20px;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .monster-option:active {
-            background: rgba(255,71,87,0.2);
-            border-color: #ff4757;
-        }
-
-        .monster-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 25px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 30px;
-        }
-
-        .monster-info {
-            flex: 1;
-        }
-
-        .monster-name {
-            font-weight: 700;
-            font-size: 16px;
-            margin-bottom: 4px;
-        }
-
-        .monster-desc {
-            font-size: 12px;
-            color: rgba(255,255,255,0.5);
+            bottom: 30px;
+            left: 30px;
+            width: 200px;
+            height: 200px;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            border-radius: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            overflow: hidden;
         }
     </style>
 </head>
 <body>
-    <div id="loading-screen">
-        <div class="loading-spinner"></div>
-        <div style="font-size: 18px; font-weight: 600;">BACKROOMS</div>
-        <div style="color: rgba(255,255,255,0.5);">Sunucuya bağlanıyor...</div>
-    </div>
-
-    <div id="game-container">
-        <canvas id="game-canvas"></canvas>
-
-        <div id="ui-overlay">
-            <!-- Ana Menü -->
-            <div id="main-menu">
-                <div class="menu-header">
-                    <div class="user-profile" id="user-profile">
-                        <div class="user-avatar" id="user-avatar">👤</div>
-                        <div class="user-info">
-                            <span class="user-name" id="user-name">Yükleniyor...</span>
-                            <span class="user-status">Çevrimiçi</span>
-                        </div>
-                    </div>
-                    <div style="font-size: 24px;">🏆</div>
+    <!-- Menü -->
+    <div id="menu">
+        <div class="menu-container">
+            <div class="menu-header">
+                <h1>PRO FPS</h1>
+                <p>TAKIM SAVAŞI • ARENA v1.0</p>
+            </div>
+            
+            <div class="input-group">
+                <label>OYUNCU ADI</label>
+                <input type="text" id="player-name" maxlength="20" placeholder="Nickname" value="Savaşçı">
+            </div>
+            
+            <div class="team-select">
+                <div class="team-btn red" id="team-red" onclick="selectTeam('red')">
+                    <span class="team-icon">🔴</span>
+                    <span>KIRMIZI TAKIM</span>
+                    <span class="team-count" id="red-count">0/10</span>
                 </div>
-
-                <div class="menu-title">BACKROOMS</div>
-                <div class="menu-subtitle">Kaçış başlasın</div>
-
-                <div class="action-buttons">
-                    <button class="btn btn-primary" id="quick-play-btn">
-                        <span>⚡</span> OYUN BAŞLA
-                    </button>
-                    <button class="btn btn-secondary" id="create-room-btn">
-                        <span>➕</span> ODA OLUŞTUR
-                    </button>
-                </div>
-
-                <div class="rooms-section">
-                    <div class="section-title">
-                        <span>AKTİF ODALAR</span>
-                        <span style="color: var(--tg-hint);" id="room-count">0</span>
-                    </div>
-                    <div class="rooms-list" id="rooms-list">
-                        <!-- Odalar buraya dinamik eklenecek -->
-                        <div class="room-card">
-                            <div class="room-header">
-                                <div class="room-name">
-                                    <span>🚪 Oda #1</span>
-                                    <span class="room-badge badge-ai">🤖 YAPAY ZEKA</span>
-                                </div>
-                                <div class="room-creator">
-                                    <div class="creator-avatar">A</div>
-                                    <span>Ahmet</span>
-                                </div>
-                            </div>
-                            <div class="room-stats">
-                                <div class="stat"><span>👥</span> <span class="player-count">3/10</span></div>
-                                <div class="stat"><span>🎮</span> Oynanıyor</div>
-                            </div>
-                        </div>
-                    </div>
+                <div class="team-btn blue" id="team-blue" onclick="selectTeam('blue')">
+                    <span class="team-icon">🔵</span>
+                    <span>MAVİ TAKIM</span>
+                    <span class="team-count" id="blue-count">0/10</span>
                 </div>
             </div>
-
-            <!-- Canavar Seçici -->
-            <div id="monster-selector">
-                <div class="selector-title">KOVALAYICI SEÇ</div>
-                <div class="monster-options">
-                    <div class="monster-option" onclick="selectMonster('ai')">
-                        <div class="monster-icon">🤖</div>
-                        <div class="monster-info">
-                            <div class="monster-name">Yapay Zeka</div>
-                            <div class="monster-desc">Akıllı ve acımasız</div>
-                        </div>
-                    </div>
-                    <div class="monster-option" onclick="selectMonster('player')">
-                        <div class="monster-icon">👤</div>
-                        <div class="monster-info">
-                            <div class="monster-name">Rastgele Oyuncu</div>
-                            <div class="monster-desc">Bir oyuncu canavar olacak</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Oyun HUD -->
-            <div id="game-hud">
-                <div class="hud-top">
-                    <div class="hud-card">
-                        <span>🔑</span>
-                        <span id="key-status">Anahtar Yok</span>
-                    </div>
-                    <div class="hud-players" id="hud-players">
-                        <!-- Oyuncular dinamik -->
-                    </div>
-                </div>
-            </div>
-
-            <!-- Mobil Kontroller -->
-            <div id="mobile-controls">
-                <div class="joystick-container" id="joystick-area">
-                    <div class="joystick" id="joystick"></div>
-                </div>
-                <div class="action-buttons">
-                    <div class="action-btn" id="jump-btn">⬆️</div>
-                    <div class="action-btn" id="interact-btn">🔑</div>
-                </div>
+            
+            <button id="start-btn">SAVAŞA BAŞLA</button>
+            
+            <div style="text-align: center; margin-top: 20px; color: #8899aa; font-size: 12px;">
+                Telegram WebApp • v1.0.0
             </div>
         </div>
     </div>
+    
+    <!-- Oyun HUD -->
+    <div id="hud">
+        <!-- Nişangah -->
+        <div id="crosshair">
+            <div class="crosshair-part crosshair-h"></div>
+            <div class="crosshair-part crosshair-v"></div>
+        </div>
+        
+        <!-- Sağlık Barı -->
+        <div id="health-bar">
+            <div id="health-fill"></div>
+            <div id="health-text">100 HP</div>
+        </div>
+        
+        <!-- Mermi Sayısı -->
+        <div id="ammo-bar">
+            <span id="ammo-current">12</span>/<span id="ammo-max">12</span>
+        </div>
+        
+        <!-- Skor Tablosu -->
+        <div id="scoreboard">
+            <div class="scoreboard-header">
+                <span class="team-score red" id="red-score">0</span>
+                <span>🔴 vs 🔵</span>
+                <span class="team-score blue" id="blue-score">0</span>
+            </div>
+            <div id="scoreboard-content"></div>
+        </div>
+        
+        <!-- Kill Feed -->
+        <div id="kill-feed"></div>
+        
+        <!-- Mini Harita -->
+        <div id="minimap">
+            <canvas id="minimap-canvas" width="200" height="200"></canvas>
+        </div>
+    </div>
+    
+    <!-- Mobil Kontroller -->
+    <div id="mobile-controls">
+        <div id="joystick">
+            <div id="joystick-handle"></div>
+        </div>
+        
+        <div class="controls-right">
+            <div id="fire-btn">🔥</div>
+            <div id="jump-btn">⬆️</div>
+            <div id="sprint-btn">⚡</div>
+        </div>
+    </div>
+    
+    <!-- Killcam / Ölüm Ekranı -->
+    <div id="killcam">
+        <h2>ÖLDÜRÜLDÜN!</h2>
+        <div id="killcam-text"></div>
+        <div id="respawn-timer">3</div>
+        <button id="respawn-btn">YENİDEN DOĞ</button>
+    </div>
+    
+    <!-- Loading -->
+    <div id="loading">
+        <div class="spinner"></div>
+    </div>
 
-    <!-- Scripts -->
-    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="game.js"></script>
+    <script>
+        // Telegram WebApp
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.disableVerticalSwipes();
+        
+        // Global değişkenler
+        let selectedTeam = null;
+        let socket = null;
+        let gameScene = null;
+        let myPlayerId = null;
+        let players = new Map();
+        let mapData = null;
+        
+        // Takım seçimi
+        window.selectTeam = function(team) {
+            selectedTeam = team;
+            document.getElementById('team-red').classList.remove('selected');
+            document.getElementById('team-blue').classList.remove('selected');
+            document.getElementById(`team-${team}`).classList.add('selected');
+        };
+        
+        // Socket bağlantısı
+        function connectToServer() {
+            // Render sunucu adresin
+            socket = io('https://saskioyunu-1-2d6i.onrender.com');
+            
+            socket.on('connect', () => {
+                console.log('Sunucuya bağlandı');
+                document.getElementById('loading').style.display = 'none';
+            });
+            
+            socket.on('map-data', (data) => {
+                mapData = data;
+            });
+            
+            socket.on('game-ready', (data) => {
+                myPlayerId = data.id;
+                startGame(data);
+            });
+            
+            socket.on('player-joined', (data) => {
+                addPlayer(data);
+            });
+            
+            socket.on('player-left', (data) => {
+                removePlayer(data.id);
+            });
+            
+            socket.on('game-update', (data) => {
+                updateGame(data);
+            });
+            
+            socket.on('player-hit', (data) => {
+                if (data.victim === myPlayerId) {
+                    hitEffect(data.damage);
+                }
+            });
+            
+            socket.on('shot-fired', (data) => {
+                createMuzzleFlash(data);
+            });
+            
+            socket.on('kill-feed', (data) => {
+                addKillFeed(data);
+            });
+        }
+        
+        // Oyunu başlat
+        function startGame(data) {
+            document.getElementById('menu').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('menu').style.display = 'none';
+                document.getElementById('hud').style.display = 'block';
+                initGame(data);
+            }, 500);
+        }
+        
+        // Oyun motorunu başlat
+        function initGame(data) {
+            // Three.js sahnesi
+            const scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x87CEEB);
+            scene.fog = new THREE.Fog(0x87CEEB, 100, 200);
+            
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(data.position.x, data.position.y + 1.5, data.position.z);
+            
+            const renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            document.body.appendChild(renderer.domElement);
+            
+            // Işıklandırma
+            const ambientLight = new THREE.AmbientLight(0x404060);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+            directionalLight.position.set(50, 50, 50);
+            directionalLight.castShadow = true;
+            directionalLight.shadow.mapSize.width = 2048;
+            directionalLight.shadow.mapSize.height = 2048;
+            directionalLight.shadow.camera.near = 0.5;
+            directionalLight.shadow.camera.far = 200;
+            directionalLight.shadow.camera.left = -100;
+            directionalLight.shadow.camera.right = 100;
+            directionalLight.shadow.camera.top = 100;
+            directionalLight.shadow.camera.bottom = -100;
+            scene.add(directionalLight);
+            
+            // Haritayı oluştur
+            createMap(scene, mapData);
+            
+            // Diğer oyuncuları ekle
+            data.players.forEach(playerData => {
+                if (playerData.id !== myPlayerId) {
+                    addPlayerToScene(playerData);
+                }
+            });
+            
+            // Animasyon döngüsü
+            function animate() {
+                requestAnimationFrame(animate);
+                
+                // Oyuncu pozisyonunu güncelle
+                if (myPlayer) {
+                    camera.position.copy(myPlayer.position);
+                    camera.position.y += 1.5;
+                }
+                
+                renderer.render(scene, camera);
+            }
+            
+            animate();
+        }
+        
+        // Harita oluşturma
+        function createMap(scene, mapData) {
+            // Zemin
+            const groundGeometry = new THREE.PlaneGeometry(200, 200);
+            const groundMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0x3a6b4b,
+                roughness: 0.8,
+                metalness: 0.2
+            });
+            const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+            ground.rotation.x = -Math.PI / 2;
+            ground.position.y = 0;
+            ground.receiveShadow = true;
+            scene.add(ground);
+            
+            // Izgara
+            const gridHelper = new THREE.GridHelper(200, 20, 0xffff00, 0x444444);
+            gridHelper.position.y = 0.01;
+            scene.add(gridHelper);
+            
+            // Duvarlar
+            mapData.walls.forEach(wall => {
+                const geometry = new THREE.BoxGeometry(wall.size.x, wall.size.y, wall.size.z);
+                const material = new THREE.MeshStandardMaterial({ 
+                    color: wall.size.y > 5 ? 0x888888 : 0x8b4513,
+                    transparent: wall.size.y > 5 ? true : false,
+                    opacity: wall.size.y > 5 ? 0.3 : 1
+                });
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.position.set(wall.position.x, wall.position.y, wall.position.z);
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+                scene.add(mesh);
+            });
+            
+            // Dekoratif objeler
+            for (let i = 0; i < 20; i++) {
+                const barrelGeo = new THREE.CylinderGeometry(0.5, 0.5, 1);
+                const barrelMat = new THREE.MeshStandardMaterial({ color: 0x884422 });
+                const barrel = new THREE.Mesh(barrelGeo, barrelMat);
+                barrel.position.set(
+                    Math.random() * 80 - 40,
+                    0.5,
+                    Math.random() * 80 - 40
+                );
+                barrel.castShadow = true;
+                barrel.receiveShadow = true;
+                scene.add(barrel);
+            }
+        }
+        
+        // Oyuncu ekleme
+        function addPlayerToScene(playerData) {
+            const playerGroup = new THREE.Group();
+            
+            // Gövde
+            const bodyGeo = new THREE.CylinderGeometry(0.5, 0.5, 2);
+            const bodyMat = new THREE.MeshStandardMaterial({ 
+                color: playerData.team === 'red' ? 0xff4444 : 0x4444ff,
+                emissive: playerData.team === 'red' ? 0x330000 : 0x000033
+            });
+            const body = new THREE.Mesh(bodyGeo, bodyMat);
+            body.position.y = 1;
+            body.castShadow = true;
+            body.receiveShadow = true;
+            playerGroup.add(body);
+            
+            // Kafa
+            const headGeo = new THREE.SphereGeometry(0.4, 32);
+            const headMat = new THREE.MeshStandardMaterial({ color: 0xffcc99 });
+            const head = new THREE.Mesh(headGeo, headMat);
+            head.position.y = 2.2;
+            head.castShadow = true;
+            head.receiveShadow = true;
+            playerGroup.add(head);
+            
+            // Silah
+            const weaponGroup = new THREE.Group();
+            
+            const barrelGeo = new THREE.BoxGeometry(0.2, 0.2, 1);
+            const barrelMat = new THREE.MeshStandardMaterial({ color: 0x333333 });
+            const barrel = new THREE.Mesh(barrelGeo, barrelMat);
+            barrel.position.set(0.5, 1.2, 1);
+            barrel.castShadow = true;
+            weaponGroup.add(barrel);
+            
+            const gripGeo = new THREE.BoxGeometry(0.2, 0.5, 0.2);
+            const gripMat = new THREE.MeshStandardMaterial({ color: 0x8b4513 });
+            const grip = new THREE.Mesh(gripGeo, gripMat);
+            grip.position.set(0.5, 1.0, 0.6);
+            grip.castShadow = true;
+            weaponGroup.add(grip);
+            
+            playerGroup.add(weaponGroup);
+            
+            playerGroup.position.set(playerData.position.x, playerData.position.y, playerData.position.z);
+            
+            scene.add(playerGroup);
+            
+            players.set(playerData.id, playerGroup);
+        }
+        
+        // Vuruş efekti
+        function hitEffect(damage) {
+            document.body.style.backgroundColor = 'rgba(255, 0, 0, 0.3)';
+            setTimeout(() => {
+                document.body.style.backgroundColor = '';
+            }, 100);
+            
+            // Sağlık barını güncelle
+            // ... (sağlık güncelleme kodu)
+        }
+        
+        // Kill feed ekle
+        function addKillFeed(data) {
+            const feed = document.getElementById('kill-feed');
+            const element = document.createElement('div');
+            element.className = 'kill-message';
+            element.innerHTML = `
+                <span style="color: #ff4444">${data.killer}</span>
+                <span style="color: white"> → </span>
+                <span style="color: #4444ff">${data.victim}</span>
+                <span style="color: #ffaa00"> ${data.weapon}</span>
+            `;
+            feed.appendChild(element);
+            
+            setTimeout(() => {
+                element.remove();
+            }, 3000);
+        }
+        
+        // Başlat butonu
+        document.getElementById('start-btn').addEventListener('click', () => {
+            const playerName = document.getElementById('player-name').value;
+            document.getElementById('loading').style.display = 'flex';
+            
+            connectToServer();
+            
+            setTimeout(() => {
+                socket.emit('join-game', {
+                    name: playerName,
+                    team: selectedTeam
+                });
+            }, 1000);
+        });
+        
+        // Mobil kontroller
+        setupMobileControls();
+        
+        function setupMobileControls() {
+            const joystick = document.getElementById('joystick');
+            const handle = document.getElementById('joystick-handle');
+            const fireBtn = document.getElementById('fire-btn');
+            const jumpBtn = document.getElementById('jump-btn');
+            const sprintBtn = document.getElementById('sprint-btn');
+            
+            let joystickActive = false;
+            
+            joystick.addEventListener('touchstart', (e) => {
+                joystickActive = true;
+            });
+            
+            joystick.addEventListener('touchmove', (e) => {
+                if (!joystickActive) return;
+                e.preventDefault();
+                
+                const touch = e.touches[0];
+                const rect = joystick.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                
+                let deltaX = touch.clientX - centerX;
+                let deltaY = touch.clientY - centerY;
+                
+                const distance = Math.sqrt(deltaX**2 + deltaY**2);
+                const maxDistance = rect.width / 2;
+                
+                if (distance > maxDistance) {
+                    deltaX = (deltaX / distance) * maxDistance;
+                    deltaY = (deltaY / distance) * maxDistance;
+                }
+                
+                handle.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+                
+                // Hareket inputu gönder
+                socket.emit('player-input', {
+                    inputs: {
+                        forward: deltaY < -10,
+                        backward: deltaY > 10,
+                        left: deltaX < -10,
+                        right: deltaX > 10
+                    }
+                });
+            });
+            
+            joystick.addEventListener('touchend', () => {
+                joystickActive = false;
+                handle.style.transform = 'translate(0px, 0px)';
+                
+                socket.emit('player-input', {
+                    inputs: {
+                        forward: false,
+                        backward: false,
+                        left: false,
+                        right: false
+                    }
+                });
+            });
+            
+            // Ateş butonu
+            fireBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                fireBtn.classList.add('active');
+                socket.emit('player-input', {
+                    inputs: { shoot: true }
+                });
+            });
+            
+            fireBtn.addEventListener('touchend', () => {
+                fireBtn.classList.remove('active');
+                socket.emit('player-input', {
+                    inputs: { shoot: false }
+                });
+            });
+            
+            // Zıplama
+            jumpBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                socket.emit('player-input', {
+                    inputs: { jump: true }
+                });
+            });
+            
+            jumpBtn.addEventListener('touchend', () => {
+                socket.emit('player-input', {
+                    inputs: { jump: false }
+                });
+            });
+            
+            // Sprint
+            sprintBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                socket.emit('player-input', {
+                    inputs: { sprint: true }
+                });
+            });
+            
+            sprintBtn.addEventListener('touchend', () => {
+                socket.emit('player-input', {
+                    inputs: { sprint: false }
+                });
+            });
+        }
+        
+        // Pencere boyutu değişince
+        window.addEventListener('resize', () => {
+            if (camera) {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+        });
+    </script>
 </body>
 </html>
