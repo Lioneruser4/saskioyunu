@@ -3,189 +3,114 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>PRO FPS - Takım Savaşı</title>
-    
-    <!-- Telegram WebApp -->
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    
-    <!-- Three.js Kütüphaneleri -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/PointerLockControls.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/stats.min.js"></script>
-    
-    <!-- Socket.IO -->
-    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
-    
+    <title>PROFESYONEL FPS - TAKIM SAVAŞI</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
             user-select: none;
-            -webkit-tap-highlight-color: transparent;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Arial Black', sans-serif;
         }
 
         body {
             overflow: hidden;
             background: #000;
-            color: white;
         }
 
-        /* Menü Stili */
+        /* Menü */
         #menu {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(135deg, #0a0f1e, #1a1f2e);
+            background: linear-gradient(45deg, #0a0f1f, #1a1f2f);
             display: flex;
             justify-content: center;
             align-items: center;
             z-index: 1000;
-            transition: opacity 0.5s;
         }
 
-        .menu-container {
-            width: 100%;
-            max-width: 500px;
-            padding: 30px;
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(20px);
+        .menu-box {
+            background: rgba(20, 30, 40, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 40px;
             border-radius: 30px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-        }
-
-        .menu-header {
+            border: 2px solid #ff4444;
+            box-shadow: 0 0 50px rgba(255, 68, 68, 0.3);
+            width: 90%;
+            max-width: 500px;
             text-align: center;
-            margin-bottom: 40px;
         }
 
-        .menu-header h1 {
+        .menu-box h1 {
+            color: white;
             font-size: 48px;
-            font-weight: 800;
-            background: linear-gradient(45deg, #ff4444, #ff8844);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: 0 0 30px rgba(255, 68, 68, 0.3);
-            letter-spacing: 2px;
             margin-bottom: 10px;
+            text-shadow: 0 0 20px #ff4444;
         }
 
-        .menu-header p {
+        .menu-box h2 {
             color: #8899aa;
-            font-size: 16px;
-        }
-
-        .input-group {
-            margin-bottom: 25px;
-        }
-
-        .input-group label {
-            display: block;
-            color: #ccddee;
-            margin-bottom: 8px;
-            font-size: 14px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .input-group input {
-            width: 100%;
-            padding: 15px 20px;
-            background: rgba(0, 0, 0, 0.3);
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-            color: white;
             font-size: 18px;
-            transition: all 0.3s;
+            margin-bottom: 30px;
         }
 
-        .input-group input:focus {
-            border-color: #ff4444;
-            outline: none;
-            box-shadow: 0 0 20px rgba(255, 68, 68, 0.3);
-        }
-
-        .team-select {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 25px;
-        }
-
-        .team-btn {
-            flex: 1;
+        .menu-input {
+            width: 100%;
             padding: 15px;
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 15px;
+            margin: 10px 0;
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid #ff4444;
+            border-radius: 10px;
             color: white;
             font-size: 18px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 5px;
+            text-align: center;
         }
 
-        .team-btn.red {
-            border-color: #ff4444;
-        }
-
-        .team-btn.blue {
-            border-color: #4444ff;
-        }
-
-        .team-btn.selected {
-            background: rgba(255, 68, 68, 0.2);
-            transform: scale(1.05);
-            box-shadow: 0 0 30px rgba(255, 68, 68, 0.3);
-        }
-
-        .team-btn.blue.selected {
-            background: rgba(68, 68, 255, 0.2);
-            box-shadow: 0 0 30px rgba(68, 68, 255, 0.3);
-        }
-
-        .team-icon {
-            font-size: 32px;
-        }
-
-        .team-count {
-            font-size: 14px;
-            color: #8899aa;
-        }
-
-        #start-btn {
+        .menu-btn {
             width: 100%;
-            padding: 18px;
+            padding: 15px;
+            margin: 10px 0;
             background: linear-gradient(45deg, #ff4444, #ff8844);
             border: none;
-            border-radius: 15px;
+            border-radius: 10px;
             color: white;
-            font-size: 24px;
-            font-weight: 700;
+            font-size: 20px;
+            font-weight: bold;
             cursor: pointer;
-            transition: all 0.3s;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            box-shadow: 0 10px 20px rgba(255, 68, 68, 0.3);
+            transition: 0.3s;
         }
 
-        #start-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 15px 30px rgba(255, 68, 68, 0.4);
+        .menu-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px #ff4444;
         }
 
-        #start-btn:active {
-            transform: translateY(0);
+        .rooms-list {
+            margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
         }
 
-        /* HUD Stili */
+        .room-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            margin: 5px 0;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .room-item:hover {
+            background: #ff4444;
+        }
+
+        /* Oyun HUD */
         #hud {
             position: fixed;
             top: 0;
@@ -193,8 +118,8 @@
             width: 100%;
             height: 100%;
             pointer-events: none;
-            z-index: 100;
             display: none;
+            z-index: 100;
         }
 
         #crosshair {
@@ -204,23 +129,24 @@
             transform: translate(-50%, -50%);
             width: 40px;
             height: 40px;
-            z-index: 200;
         }
 
-        .crosshair-part {
+        #crosshair::before,
+        #crosshair::after {
+            content: '';
             position: absolute;
             background: white;
-            box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+            box-shadow: 0 0 10px #ff4444;
         }
 
-        .crosshair-h {
+        #crosshair::before {
             width: 20px;
             height: 2px;
             top: 19px;
             left: 10px;
         }
 
-        .crosshair-v {
+        #crosshair::after {
             width: 2px;
             height: 20px;
             left: 19px;
@@ -234,18 +160,17 @@
             transform: translateX(-50%);
             width: 400px;
             height: 30px;
-            background: rgba(0, 0, 0, 0.5);
+            background: #333;
+            border: 2px solid white;
             border-radius: 15px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
             overflow: hidden;
-            backdrop-filter: blur(5px);
         }
 
         #health-fill {
             height: 100%;
             width: 100%;
             background: linear-gradient(90deg, #00ff00, #ffff00, #ff0000);
-            transition: width 0.2s;
+            transition: 0.3s;
         }
 
         #health-text {
@@ -255,103 +180,68 @@
             transform: translate(-50%, -50%);
             color: white;
             font-weight: bold;
-            text-shadow: 1px 1px 2px black;
-            z-index: 2;
+            text-shadow: 2px 2px 0 black;
         }
 
-        #ammo-bar {
+        #ammo {
             position: absolute;
             bottom: 80px;
             right: 50px;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(5px);
-            padding: 15px 25px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px 30px;
             border-radius: 50px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 2px solid #ff4444;
+            color: white;
             font-size: 32px;
             font-weight: bold;
-            color: white;
-            text-align: center;
-        }
-
-        #ammo-current {
-            color: #ffaa00;
-        }
-
-        #ammo-max {
-            color: #8899aa;
-            font-size: 24px;
         }
 
         #scoreboard {
             position: absolute;
             top: 20px;
             right: 20px;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(10px);
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #ff4444;
             border-radius: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
             padding: 15px;
             min-width: 250px;
-            pointer-events: auto;
+            color: white;
         }
 
-        .scoreboard-header {
+        .score-header {
             display: flex;
             justify-content: space-between;
             margin-bottom: 15px;
             padding-bottom: 10px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            border-bottom: 1px solid #444;
         }
 
-        .team-score {
-            font-size: 24px;
-            font-weight: bold;
-        }
+        .red-score { color: #ff4444; font-size: 24px; }
+        .blue-score { color: #4444ff; font-size: 24px; }
 
-        .team-score.red { color: #ff4444; }
-        .team-score.blue { color: #4444ff; }
-
-        .scoreboard-row {
+        .player-row {
             display: flex;
             justify-content: space-between;
-            padding: 8px 10px;
-            margin: 5px 0;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 8px;
-            font-size: 14px;
+            padding: 5px;
+            margin: 2px 0;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
         }
 
-        .player-name {
-            color: white;
-        }
-
-        .player-kills {
-            color: #ffaa00;
-            font-weight: bold;
-        }
-
-        .player-deaths {
-            color: #ff4444;
-        }
-
-        #kill-feed {
+        #killfeed {
             position: absolute;
             top: 20px;
             left: 20px;
             width: 300px;
-            z-index: 200;
         }
 
         .kill-message {
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(5px);
+            background: rgba(0, 0, 0, 0.8);
             border-left: 4px solid #ff4444;
-            padding: 10px 15px;
-            margin-bottom: 5px;
-            border-radius: 5px;
+            padding: 10px;
+            margin: 5px 0;
+            color: white;
             animation: slideIn 0.3s, fadeOut 3s forwards;
-            font-size: 14px;
         }
 
         @keyframes slideIn {
@@ -365,7 +255,7 @@
             100% { opacity: 0; }
         }
 
-        /* Mobil Kontroller */
+        /* Mobil kontroller */
         #mobile-controls {
             position: fixed;
             bottom: 30px;
@@ -375,108 +265,74 @@
             justify-content: space-between;
             padding: 0 30px;
             pointer-events: auto;
-            z-index: 300;
+            z-index: 200;
         }
 
         #joystick {
             width: 120px;
             height: 120px;
-            background: rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.2);
             backdrop-filter: blur(10px);
             border-radius: 60px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
+            border: 2px solid white;
             position: relative;
-            touch-action: none;
         }
 
         #joystick-handle {
             width: 50px;
             height: 50px;
-            background: rgba(255, 255, 255, 0.5);
+            background: #ff4444;
             border-radius: 25px;
             position: absolute;
             top: 35px;
             left: 35px;
-            transition: transform 0.05s;
+            transition: 0.05s;
         }
 
         #fire-btn {
             width: 100px;
             height: 100px;
-            background: linear-gradient(135deg, #ff4444, #ff0000);
+            background: #ff4444;
             border-radius: 50px;
-            border: 3px solid rgba(255, 255, 255, 0.5);
-            box-shadow: 0 0 30px rgba(255, 0, 0, 0.5);
+            border: 3px solid white;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 24px;
-            font-weight: bold;
+            font-size: 30px;
             color: white;
-            text-transform: uppercase;
-            touch-action: none;
+            box-shadow: 0 0 30px #ff4444;
         }
 
-        #fire-btn.active {
-            transform: scale(0.95);
-            background: linear-gradient(135deg, #ff0000, #aa0000);
-        }
-
-        #sprint-btn {
-            width: 80px;
-            height: 80px;
-            background: rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(10px);
-            border-radius: 40px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 20px;
-            color: white;
-            touch-action: none;
-        }
-
-        #jump-btn {
-            width: 80px;
-            height: 80px;
-            background: rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(10px);
-            border-radius: 40px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 20px;
-            color: white;
-            touch-action: none;
-        }
-
-        .controls-right {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        #killcam {
+        /* Ölüm ekranı */
+        #death-screen {
             position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             background: rgba(0, 0, 0, 0.9);
-            padding: 40px;
-            border-radius: 20px;
-            text-align: center;
-            z-index: 1000;
             display: none;
-            border: 2px solid #ff4444;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .death-box {
+            text-align: center;
+            color: white;
+        }
+
+        .death-box h1 {
+            font-size: 64px;
+            color: #ff4444;
+            margin-bottom: 20px;
         }
 
         #respawn-timer {
-            font-size: 48px;
+            font-size: 72px;
             font-weight: bold;
             color: #ff4444;
-            margin: 20px 0;
+            margin: 30px 0;
         }
 
         #respawn-btn {
@@ -485,53 +341,11 @@
             border: none;
             border-radius: 10px;
             color: white;
-            font-size: 20px;
+            font-size: 24px;
             font-weight: bold;
             cursor: pointer;
-            transition: all 0.3s;
         }
 
-        #respawn-btn:hover {
-            transform: scale(1.1);
-            box-shadow: 0 0 30px rgba(255, 68, 68, 0.5);
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            #mobile-controls {
-                display: flex;
-            }
-            
-            #health-bar {
-                width: 300px;
-            }
-            
-            #ammo-bar {
-                bottom: 30px;
-                right: 20px;
-                padding: 10px 20px;
-                font-size: 24px;
-            }
-            
-            #scoreboard {
-                top: 10px;
-                right: 10px;
-                left: 10px;
-                min-width: auto;
-                font-size: 12px;
-            }
-            
-            .menu-container {
-                margin: 20px;
-                padding: 20px;
-            }
-            
-            .menu-header h1 {
-                font-size: 36px;
-            }
-        }
-
-        /* Loading */
         #loading {
             position: fixed;
             top: 0;
@@ -542,7 +356,7 @@
             display: none;
             justify-content: center;
             align-items: center;
-            z-index: 2000;
+            z-index: 3000;
         }
 
         .spinner {
@@ -558,510 +372,549 @@
             to { transform: rotate(360deg); }
         }
 
-        #minimap {
-            position: absolute;
-            bottom: 30px;
-            left: 30px;
-            width: 200px;
-            height: 200px;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(5px);
-            border-radius: 15px;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            overflow: hidden;
+        @media (max-width: 768px) {
+            #mobile-controls { display: flex; }
+            #health-bar { width: 300px; }
+            #ammo { bottom: 30px; right: 20px; font-size: 24px; }
         }
     </style>
 </head>
 <body>
     <!-- Menü -->
     <div id="menu">
-        <div class="menu-container">
-            <div class="menu-header">
-                <h1>PRO FPS</h1>
-                <p>TAKIM SAVAŞI • ARENA v1.0</p>
-            </div>
+        <div class="menu-box">
+            <h1>⚡ PRO FPS ⚡</h1>
+            <h2>TAKIM SAVAŞI</h2>
             
-            <div class="input-group">
-                <label>OYUNCU ADI</label>
-                <input type="text" id="player-name" maxlength="20" placeholder="Nickname" value="Savaşçı">
-            </div>
+            <input type="text" id="player-name" class="menu-input" placeholder="NICKNAME" value="ASLAN">
             
-            <div class="team-select">
-                <div class="team-btn red" id="team-red" onclick="selectTeam('red')">
-                    <span class="team-icon">🔴</span>
-                    <span>KIRMIZI TAKIM</span>
-                    <span class="team-count" id="red-count">0/10</span>
-                </div>
-                <div class="team-btn blue" id="team-blue" onclick="selectTeam('blue')">
-                    <span class="team-icon">🔵</span>
-                    <span>MAVİ TAKIM</span>
-                    <span class="team-count" id="blue-count">0/10</span>
-                </div>
-            </div>
+            <button class="menu-btn" onclick="createRoom()">🔴 ODA OLUŞTUR</button>
             
-            <button id="start-btn">SAVAŞA BAŞLA</button>
+            <div style="margin: 20px 0; color: white;">— VEYA —</div>
             
-            <div style="text-align: center; margin-top: 20px; color: #8899aa; font-size: 12px;">
-                Telegram WebApp • v1.0.0
+            <div class="rooms-list" id="rooms-list">
+                <div style="color: #8899aa;">Aktif oda yok</div>
             </div>
         </div>
     </div>
-    
+
     <!-- Oyun HUD -->
     <div id="hud">
-        <!-- Nişangah -->
-        <div id="crosshair">
-            <div class="crosshair-part crosshair-h"></div>
-            <div class="crosshair-part crosshair-v"></div>
-        </div>
+        <div id="crosshair"></div>
         
-        <!-- Sağlık Barı -->
         <div id="health-bar">
             <div id="health-fill"></div>
             <div id="health-text">100 HP</div>
         </div>
         
-        <!-- Mermi Sayısı -->
-        <div id="ammo-bar">
+        <div id="ammo">
             <span id="ammo-current">12</span>/<span id="ammo-max">12</span>
         </div>
         
-        <!-- Skor Tablosu -->
         <div id="scoreboard">
-            <div class="scoreboard-header">
-                <span class="team-score red" id="red-score">0</span>
-                <span>🔴 vs 🔵</span>
-                <span class="team-score blue" id="blue-score">0</span>
+            <div class="score-header">
+                <span class="red-score" id="red-score">0</span>
+                <span>🔴 RED VS BLUE 🔵</span>
+                <span class="blue-score" id="blue-score">0</span>
             </div>
-            <div id="scoreboard-content"></div>
+            <div id="players-list"></div>
         </div>
         
-        <!-- Kill Feed -->
-        <div id="kill-feed"></div>
-        
-        <!-- Mini Harita -->
-        <div id="minimap">
-            <canvas id="minimap-canvas" width="200" height="200"></canvas>
-        </div>
+        <div id="killfeed"></div>
     </div>
-    
+
     <!-- Mobil Kontroller -->
     <div id="mobile-controls">
         <div id="joystick">
             <div id="joystick-handle"></div>
         </div>
-        
-        <div class="controls-right">
-            <div id="fire-btn">🔥</div>
-            <div id="jump-btn">⬆️</div>
-            <div id="sprint-btn">⚡</div>
+        <div id="fire-btn">🔥</div>
+    </div>
+
+    <!-- Ölüm Ekranı -->
+    <div id="death-screen">
+        <div class="death-box">
+            <h1>☠️ ÖLDÜRÜLDÜN ☠️</h1>
+            <div id="respawn-timer">3</div>
+            <button id="respawn-btn" onclick="respawn()">YENİDEN DOĞ</button>
         </div>
     </div>
-    
-    <!-- Killcam / Ölüm Ekranı -->
-    <div id="killcam">
-        <h2>ÖLDÜRÜLDÜN!</h2>
-        <div id="killcam-text"></div>
-        <div id="respawn-timer">3</div>
-        <button id="respawn-btn">YENİDEN DOĞ</button>
-    </div>
-    
+
     <!-- Loading -->
     <div id="loading">
         <div class="spinner"></div>
     </div>
 
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+
     <script>
         // Telegram WebApp
-        const tg = window.Telegram.WebApp;
-        tg.expand();
-        tg.disableVerticalSwipes();
-        
+        const tg = window.Telegram?.WebApp;
+        if (tg) {
+            tg.expand();
+            tg.disableVerticalSwipes();
+        }
+
         // Global değişkenler
-        let selectedTeam = null;
         let socket = null;
-        let gameScene = null;
-        let myPlayerId = null;
+        let scene, camera, renderer;
         let players = new Map();
-        let mapData = null;
-        
-        // Takım seçimi
-        window.selectTeam = function(team) {
-            selectedTeam = team;
-            document.getElementById('team-red').classList.remove('selected');
-            document.getElementById('team-blue').classList.remove('selected');
-            document.getElementById(`team-${team}`).classList.add('selected');
-        };
-        
+        let myPlayerId = null;
+        let myTeam = null;
+        let mapWalls = [];
+        let roomId = null;
+        let gameActive = false;
+        let respawnTimer = null;
+
+        // Joystick değişkenleri
+        let joystickActive = false;
+        let joystickVector = { x: 0, y: 0 };
+        let isShooting = false;
+
         // Socket bağlantısı
-        function connectToServer() {
-            // Render sunucu adresin
+        function connectSocket() {
             socket = io('https://saskioyunu-1-2d6i.onrender.com');
             
             socket.on('connect', () => {
-                console.log('Sunucuya bağlandı');
+                console.log('✅ Sunucuya bağlandı');
                 document.getElementById('loading').style.display = 'none';
+                loadRooms();
             });
-            
-            socket.on('map-data', (data) => {
-                mapData = data;
+
+            socket.on('rooms-list', (rooms) => {
+                updateRoomsList(rooms);
             });
-            
-            socket.on('game-ready', (data) => {
-                myPlayerId = data.id;
+
+            socket.on('room-created', (id) => {
+                roomId = id;
+                joinRoom(id);
+            });
+
+            socket.on('room-joined', (data) => {
+                myPlayerId = data.playerId;
+                myTeam = data.team;
                 startGame(data);
             });
-            
-            socket.on('player-joined', (data) => {
-                addPlayer(data);
+
+            socket.on('player-joined', (player) => {
+                addPlayer(player);
             });
-            
-            socket.on('player-left', (data) => {
-                removePlayer(data.id);
+
+            socket.on('player-left', (playerId) => {
+                removePlayer(playerId);
             });
-            
+
             socket.on('game-update', (data) => {
                 updateGame(data);
             });
-            
+
             socket.on('player-hit', (data) => {
-                if (data.victim === myPlayerId) {
-                    hitEffect(data.damage);
+                if (data.health <= 0) {
+                    document.getElementById('death-screen').style.display = 'flex';
+                    startRespawnTimer();
+                }
+                
+                document.body.style.backgroundColor = 'rgba(255,0,0,0.3)';
+                setTimeout(() => {
+                    document.body.style.backgroundColor = '';
+                }, 100);
+                
+                updateHealth(data.health);
+            });
+
+            socket.on('player-died', (data) => {
+                addKillMessage(data.killerName, data.victimName);
+            });
+
+            socket.on('respawned', (data) => {
+                document.getElementById('death-screen').style.display = 'none';
+                if (myPlayer) {
+                    myPlayer.position.set(data.position.x, data.position.y, data.position.z);
+                }
+                updateHealth(100);
+                updateAmmo(data.ammo, 12);
+            });
+
+            socket.on('shot-fired', (data) => {
+                createMuzzleFlash(data.position);
+            });
+        }
+
+        // Oda listesini güncelle
+        function updateRoomsList(rooms) {
+            const container = document.getElementById('rooms-list');
+            
+            if (rooms.length === 0) {
+                container.innerHTML = '<div style="color: #8899aa;">Aktif oda yok</div>';
+                return;
+            }
+
+            container.innerHTML = rooms.map(room => `
+                <div class="room-item" onclick="joinRoom('${room.id}')">
+                    <span>🎮 Oda ${room.id.substring(0,4)}</span>
+                    <span>${room.players}/${room.maxPlayers} 👤</span>
+                </div>
+            `).join('');
+        }
+
+        // Oda oluştur
+        window.createRoom = function() {
+            const playerName = document.getElementById('player-name').value || 'Oyuncu';
+            document.getElementById('loading').style.display = 'flex';
+            socket.emit('create-room', { playerName: playerName });
+        };
+
+        // Odaya katıl
+        window.joinRoom = function(id) {
+            const playerName = document.getElementById('player-name').value || 'Oyuncu';
+            document.getElementById('loading').style.display = 'flex';
+            roomId = id;
+            socket.emit('join-room', {
+                roomId: id,
+                playerName: playerName
+            });
+        };
+
+        // Oyunu başlat
+        function startGame(data) {
+            document.getElementById('menu').style.display = 'none';
+            document.getElementById('hud').style.display = 'block';
+            
+            initThree();
+            createMap(data.map);
+            
+            data.players.forEach(player => {
+                if (player.id !== myPlayerId) {
+                    addPlayer(player);
                 }
             });
             
-            socket.on('shot-fired', (data) => {
-                createMuzzleFlash(data);
-            });
+            gameActive = true;
             
-            socket.on('kill-feed', (data) => {
-                addKillFeed(data);
-            });
+            // Skor tablosunu güncelle
+            updateScoreboard(data.players, data.scores);
         }
-        
-        // Oyunu başlat
-        function startGame(data) {
-            document.getElementById('menu').style.opacity = '0';
-            setTimeout(() => {
-                document.getElementById('menu').style.display = 'none';
-                document.getElementById('hud').style.display = 'block';
-                initGame(data);
-            }, 500);
-        }
-        
-        // Oyun motorunu başlat
-        function initGame(data) {
-            // Three.js sahnesi
-            const scene = new THREE.Scene();
+
+        // Three.js başlat
+        function initThree() {
+            scene = new THREE.Scene();
             scene.background = new THREE.Color(0x87CEEB);
-            scene.fog = new THREE.Fog(0x87CEEB, 100, 200);
-            
-            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(data.position.x, data.position.y + 1.5, data.position.z);
-            
-            const renderer = new THREE.WebGLRenderer({ antialias: true });
+            scene.fog = new THREE.Fog(0x87CEEB, 50, 150);
+
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 2, 0);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.shadowMap.enabled = true;
-            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
             document.body.appendChild(renderer.domElement);
-            
+
             // Işıklandırma
             const ambientLight = new THREE.AmbientLight(0x404060);
             scene.add(ambientLight);
-            
+
             const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-            directionalLight.position.set(50, 50, 50);
+            directionalLight.position.set(10, 20, 10);
             directionalLight.castShadow = true;
-            directionalLight.shadow.mapSize.width = 2048;
-            directionalLight.shadow.mapSize.height = 2048;
-            directionalLight.shadow.camera.near = 0.5;
-            directionalLight.shadow.camera.far = 200;
-            directionalLight.shadow.camera.left = -100;
-            directionalLight.shadow.camera.right = 100;
-            directionalLight.shadow.camera.top = 100;
-            directionalLight.shadow.camera.bottom = -100;
+            directionalLight.shadow.mapSize.width = 1024;
+            directionalLight.shadow.mapSize.height = 1024;
             scene.add(directionalLight);
-            
-            // Haritayı oluştur
-            createMap(scene, mapData);
-            
-            // Diğer oyuncuları ekle
-            data.players.forEach(playerData => {
-                if (playerData.id !== myPlayerId) {
-                    addPlayerToScene(playerData);
-                }
-            });
-            
-            // Animasyon döngüsü
-            function animate() {
-                requestAnimationFrame(animate);
-                
-                // Oyuncu pozisyonunu güncelle
-                if (myPlayer) {
-                    camera.position.copy(myPlayer.position);
-                    camera.position.y += 1.5;
-                }
-                
-                renderer.render(scene, camera);
-            }
-            
-            animate();
-        }
-        
-        // Harita oluşturma
-        function createMap(scene, mapData) {
+
             // Zemin
-            const groundGeometry = new THREE.PlaneGeometry(200, 200);
-            const groundMaterial = new THREE.MeshStandardMaterial({ 
-                color: 0x3a6b4b,
-                roughness: 0.8,
-                metalness: 0.2
-            });
+            const groundGeometry = new THREE.PlaneGeometry(60, 60);
+            const groundMaterial = new THREE.MeshStandardMaterial({ color: 0x3a6b4b });
             const ground = new THREE.Mesh(groundGeometry, groundMaterial);
             ground.rotation.x = -Math.PI / 2;
             ground.position.y = 0;
             ground.receiveShadow = true;
             scene.add(ground);
-            
+
             // Izgara
-            const gridHelper = new THREE.GridHelper(200, 20, 0xffff00, 0x444444);
+            const gridHelper = new THREE.GridHelper(60, 20, 0xff4444, 0x333333);
             gridHelper.position.y = 0.01;
             scene.add(gridHelper);
-            
-            // Duvarlar
+
+            animate();
+        }
+
+        // Harita oluştur
+        function createMap(mapData) {
             mapData.walls.forEach(wall => {
-                const geometry = new THREE.BoxGeometry(wall.size.x, wall.size.y, wall.size.z);
-                const material = new THREE.MeshStandardMaterial({ 
-                    color: wall.size.y > 5 ? 0x888888 : 0x8b4513,
-                    transparent: wall.size.y > 5 ? true : false,
-                    opacity: wall.size.y > 5 ? 0.3 : 1
-                });
+                const geometry = new THREE.BoxGeometry(wall.size[0], wall.size[1], wall.size[2]);
+                const material = new THREE.MeshStandardMaterial({ color: wall.color });
                 const mesh = new THREE.Mesh(geometry, material);
-                mesh.position.set(wall.position.x, wall.position.y, wall.position.z);
+                mesh.position.set(wall.pos[0], wall.pos[1], wall.pos[2]);
                 mesh.castShadow = true;
                 mesh.receiveShadow = true;
                 scene.add(mesh);
+                mapWalls.push(mesh);
             });
-            
-            // Dekoratif objeler
-            for (let i = 0; i < 20; i++) {
-                const barrelGeo = new THREE.CylinderGeometry(0.5, 0.5, 1);
-                const barrelMat = new THREE.MeshStandardMaterial({ color: 0x884422 });
-                const barrel = new THREE.Mesh(barrelGeo, barrelMat);
-                barrel.position.set(
-                    Math.random() * 80 - 40,
-                    0.5,
-                    Math.random() * 80 - 40
-                );
-                barrel.castShadow = true;
-                barrel.receiveShadow = true;
-                scene.add(barrel);
-            }
         }
-        
-        // Oyuncu ekleme
-        function addPlayerToScene(playerData) {
-            const playerGroup = new THREE.Group();
-            
+
+        // Oyuncu ekle
+        function addPlayer(playerData) {
+            const group = new THREE.Group();
+
             // Gövde
             const bodyGeo = new THREE.CylinderGeometry(0.5, 0.5, 2);
             const bodyMat = new THREE.MeshStandardMaterial({ 
-                color: playerData.team === 'red' ? 0xff4444 : 0x4444ff,
-                emissive: playerData.team === 'red' ? 0x330000 : 0x000033
+                color: playerData.team === 'red' ? 0xff4444 : 0x4444ff 
             });
             const body = new THREE.Mesh(bodyGeo, bodyMat);
             body.position.y = 1;
             body.castShadow = true;
-            body.receiveShadow = true;
-            playerGroup.add(body);
-            
+            group.add(body);
+
             // Kafa
-            const headGeo = new THREE.SphereGeometry(0.4, 32);
+            const headGeo = new THREE.SphereGeometry(0.4);
             const headMat = new THREE.MeshStandardMaterial({ color: 0xffcc99 });
             const head = new THREE.Mesh(headGeo, headMat);
             head.position.y = 2.2;
             head.castShadow = true;
-            head.receiveShadow = true;
-            playerGroup.add(head);
-            
+            group.add(head);
+
             // Silah
-            const weaponGroup = new THREE.Group();
-            
-            const barrelGeo = new THREE.BoxGeometry(0.2, 0.2, 1);
-            const barrelMat = new THREE.MeshStandardMaterial({ color: 0x333333 });
-            const barrel = new THREE.Mesh(barrelGeo, barrelMat);
-            barrel.position.set(0.5, 1.2, 1);
-            barrel.castShadow = true;
-            weaponGroup.add(barrel);
-            
-            const gripGeo = new THREE.BoxGeometry(0.2, 0.5, 0.2);
-            const gripMat = new THREE.MeshStandardMaterial({ color: 0x8b4513 });
-            const grip = new THREE.Mesh(gripGeo, gripMat);
-            grip.position.set(0.5, 1.0, 0.6);
-            grip.castShadow = true;
-            weaponGroup.add(grip);
-            
-            playerGroup.add(weaponGroup);
-            
-            playerGroup.position.set(playerData.position.x, playerData.position.y, playerData.position.z);
-            
-            scene.add(playerGroup);
-            
-            players.set(playerData.id, playerGroup);
+            const weaponGeo = new THREE.BoxGeometry(0.2, 0.2, 1);
+            const weaponMat = new THREE.MeshStandardMaterial({ color: 0x333333 });
+            const weapon = new THREE.Mesh(weaponGeo, weaponMat);
+            weapon.position.set(0.5, 1.2, 0.8);
+            weapon.castShadow = true;
+            group.add(weapon);
+
+            group.position.set(playerData.position.x, playerData.position.y, playerData.position.z);
+
+            scene.add(group);
+            players.set(playerData.id, group);
         }
-        
-        // Vuruş efekti
-        function hitEffect(damage) {
-            document.body.style.backgroundColor = 'rgba(255, 0, 0, 0.3)';
-            setTimeout(() => {
-                document.body.style.backgroundColor = '';
-            }, 100);
-            
-            // Sağlık barını güncelle
-            // ... (sağlık güncelleme kodu)
+
+        // Oyuncu kaldır
+        function removePlayer(playerId) {
+            const player = players.get(playerId);
+            if (player) {
+                scene.remove(player);
+                players.delete(playerId);
+            }
         }
-        
-        // Kill feed ekle
-        function addKillFeed(data) {
-            const feed = document.getElementById('kill-feed');
-            const element = document.createElement('div');
-            element.className = 'kill-message';
-            element.innerHTML = `
-                <span style="color: #ff4444">${data.killer}</span>
+
+        // Oyun güncelleme
+        function updateGame(data) {
+            data.players.forEach(playerUpdate => {
+                if (playerUpdate.id === myPlayerId) {
+                    if (!myPlayer) {
+                        myPlayer = players.get(myPlayerId);
+                    }
+                    updateHealth(playerUpdate.health);
+                } else {
+                    const player = players.get(playerUpdate.id);
+                    if (player) {
+                        player.position.set(
+                            playerUpdate.position.x,
+                            playerUpdate.position.y,
+                            playerUpdate.position.z
+                        );
+                        player.rotation.y = playerUpdate.rotation.y;
+                    }
+                }
+            });
+            
+            updateScoreboard(data.players, data.scores);
+        }
+
+        // Skor tablosu güncelle
+        function updateScoreboard(players, scores) {
+            document.getElementById('red-score').textContent = scores.red;
+            document.getElementById('blue-score').textContent = scores.blue;
+
+            const list = document.getElementById('players-list');
+            list.innerHTML = players
+                .sort((a, b) => b.kills - a.kills)
+                .map(p => `
+                    <div class="player-row" style="border-left: 3px solid ${p.team === 'red' ? '#ff4444' : '#4444ff'}">
+                        <span>${p.name}</span>
+                        <span>${p.kills}/${p.deaths}</span>
+                    </div>
+                `).join('');
+        }
+
+        // Sağlık güncelle
+        function updateHealth(health) {
+            const fill = document.getElementById('health-fill');
+            const text = document.getElementById('health-text');
+            
+            fill.style.width = health + '%';
+            text.textContent = health + ' HP';
+            
+            if (health < 30) {
+                fill.style.background = 'linear-gradient(90deg, #ff0000, #ff4444)';
+            }
+        }
+
+        // Mermi güncelle
+        function updateAmmo(current, max) {
+            document.getElementById('ammo-current').textContent = current;
+            document.getElementById('ammo-max').textContent = max;
+        }
+
+        // Kill mesajı ekle
+        function addKillMessage(killer, victim) {
+            const feed = document.getElementById('killfeed');
+            const msg = document.createElement('div');
+            msg.className = 'kill-message';
+            msg.innerHTML = `
+                <span style="color: #ff4444">${killer}</span>
                 <span style="color: white"> → </span>
-                <span style="color: #4444ff">${data.victim}</span>
-                <span style="color: #ffaa00"> ${data.weapon}</span>
+                <span style="color: #4444ff">${victim}</span>
             `;
-            feed.appendChild(element);
+            feed.appendChild(msg);
             
-            setTimeout(() => {
-                element.remove();
-            }, 3000);
+            setTimeout(() => msg.remove(), 3000);
         }
-        
-        // Başlat butonu
-        document.getElementById('start-btn').addEventListener('click', () => {
-            const playerName = document.getElementById('player-name').value;
-            document.getElementById('loading').style.display = 'flex';
+
+        // Mermi efekti
+        function createMuzzleFlash(position) {
+            const light = new THREE.PointLight(0xffaa00, 2, 10);
+            light.position.set(position.x, position.y + 1.5, position.z);
+            scene.add(light);
             
-            connectToServer();
+            setTimeout(() => scene.remove(light), 50);
+        }
+
+        // Yeniden doğma
+        window.respawn = function() {
+            socket.emit('respawn');
+        };
+
+        function startRespawnTimer() {
+            let time = 3;
+            const timerEl = document.getElementById('respawn-timer');
             
-            setTimeout(() => {
-                socket.emit('join-game', {
-                    name: playerName,
-                    team: selectedTeam
-                });
+            if (respawnTimer) clearInterval(respawnTimer);
+            
+            respawnTimer = setInterval(() => {
+                time--;
+                timerEl.textContent = time;
+                
+                if (time <= 0) {
+                    clearInterval(respawnTimer);
+                    document.getElementById('respawn-btn').click();
+                }
             }, 1000);
+        }
+
+        // Hareket girdileri
+        function sendInput() {
+            if (!gameActive || !socket) return;
+
+            socket.emit('player-input', {
+                inputs: {
+                    forward: keys['KeyW'] || (joystickActive && joystickVector.y < -0.3),
+                    backward: keys['KeyS'] || (joystickActive && joystickVector.y > 0.3),
+                    left: keys['KeyA'] || (joystickActive && joystickVector.x < -0.3),
+                    right: keys['KeyD'] || (joystickActive && joystickVector.x > 0.3),
+                    sprint: keys['ShiftLeft'],
+                    jump: keys['Space'],
+                    shoot: isShooting
+                }
+            });
+        }
+
+        // Klavye kontrolleri
+        const keys = {};
+        document.addEventListener('keydown', (e) => keys[e.code] = true);
+        document.addEventListener('keyup', (e) => keys[e.code] = false);
+
+        // Fare kontrolü
+        document.addEventListener('click', () => {
+            renderer.domElement.requestPointerLock();
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (document.pointerLockElement === renderer.domElement && gameActive) {
+                socket.emit('player-input', {
+                    rotation: { x: e.movementX, y: e.movementY }
+                });
+            }
+        });
+
+        // Mobil joystick
+        const joystick = document.getElementById('joystick');
+        const handle = document.getElementById('joystick-handle');
+
+        joystick.addEventListener('touchstart', (e) => {
+            joystickActive = true;
+            e.preventDefault();
+        });
+
+        joystick.addEventListener('touchmove', (e) => {
+            if (!joystickActive) return;
+            e.preventDefault();
+
+            const touch = e.touches[0];
+            const rect = joystick.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+
+            let deltaX = touch.clientX - centerX;
+            let deltaY = touch.clientY - centerY;
+
+            const distance = Math.sqrt(deltaX**2 + deltaY**2);
+            const maxDistance = rect.width / 2;
+
+            if (distance > maxDistance) {
+                deltaX = (deltaX / distance) * maxDistance;
+                deltaY = (deltaY / distance) * maxDistance;
+            }
+
+            handle.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+            
+            joystickVector.x = deltaX / maxDistance;
+            joystickVector.y = deltaY / maxDistance;
+            
+            sendInput();
+        });
+
+        joystick.addEventListener('touchend', () => {
+            joystickActive = false;
+            handle.style.transform = 'translate(0px, 0px)';
+            joystickVector = { x: 0, y: 0 };
+            sendInput();
+        });
+
+        // Ateş butonu
+        const fireBtn = document.getElementById('fire-btn');
+        fireBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            isShooting = true;
+            fireBtn.style.transform = 'scale(0.9)';
+            sendInput();
         });
         
-        // Mobil kontroller
-        setupMobileControls();
-        
-        function setupMobileControls() {
-            const joystick = document.getElementById('joystick');
-            const handle = document.getElementById('joystick-handle');
-            const fireBtn = document.getElementById('fire-btn');
-            const jumpBtn = document.getElementById('jump-btn');
-            const sprintBtn = document.getElementById('sprint-btn');
+        fireBtn.addEventListener('touchend', () => {
+            isShooting = false;
+            fireBtn.style.transform = 'scale(1)';
+            sendInput();
+        });
+
+        // Her frame'de input gönder
+        setInterval(sendInput, 50);
+
+        // Animasyon döngüsü
+        function animate() {
+            requestAnimationFrame(animate);
             
-            let joystickActive = false;
+            if (camera && myPlayer) {
+                // Kamerayı oyuncuya ata
+                camera.position.copy(myPlayer.position);
+                camera.position.y += 1.5;
+            }
             
-            joystick.addEventListener('touchstart', (e) => {
-                joystickActive = true;
-            });
-            
-            joystick.addEventListener('touchmove', (e) => {
-                if (!joystickActive) return;
-                e.preventDefault();
-                
-                const touch = e.touches[0];
-                const rect = joystick.getBoundingClientRect();
-                const centerX = rect.left + rect.width / 2;
-                const centerY = rect.top + rect.height / 2;
-                
-                let deltaX = touch.clientX - centerX;
-                let deltaY = touch.clientY - centerY;
-                
-                const distance = Math.sqrt(deltaX**2 + deltaY**2);
-                const maxDistance = rect.width / 2;
-                
-                if (distance > maxDistance) {
-                    deltaX = (deltaX / distance) * maxDistance;
-                    deltaY = (deltaY / distance) * maxDistance;
-                }
-                
-                handle.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
-                
-                // Hareket inputu gönder
-                socket.emit('player-input', {
-                    inputs: {
-                        forward: deltaY < -10,
-                        backward: deltaY > 10,
-                        left: deltaX < -10,
-                        right: deltaX > 10
-                    }
-                });
-            });
-            
-            joystick.addEventListener('touchend', () => {
-                joystickActive = false;
-                handle.style.transform = 'translate(0px, 0px)';
-                
-                socket.emit('player-input', {
-                    inputs: {
-                        forward: false,
-                        backward: false,
-                        left: false,
-                        right: false
-                    }
-                });
-            });
-            
-            // Ateş butonu
-            fireBtn.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                fireBtn.classList.add('active');
-                socket.emit('player-input', {
-                    inputs: { shoot: true }
-                });
-            });
-            
-            fireBtn.addEventListener('touchend', () => {
-                fireBtn.classList.remove('active');
-                socket.emit('player-input', {
-                    inputs: { shoot: false }
-                });
-            });
-            
-            // Zıplama
-            jumpBtn.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                socket.emit('player-input', {
-                    inputs: { jump: true }
-                });
-            });
-            
-            jumpBtn.addEventListener('touchend', () => {
-                socket.emit('player-input', {
-                    inputs: { jump: false }
-                });
-            });
-            
-            // Sprint
-            sprintBtn.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                socket.emit('player-input', {
-                    inputs: { sprint: true }
-                });
-            });
-            
-            sprintBtn.addEventListener('touchend', () => {
-                socket.emit('player-input', {
-                    inputs: { sprint: false }
-                });
-            });
+            if (renderer && scene && camera) {
+                renderer.render(scene, camera);
+            }
         }
-        
+
         // Pencere boyutu değişince
         window.addEventListener('resize', () => {
             if (camera) {
@@ -1070,6 +923,14 @@
                 renderer.setSize(window.innerWidth, window.innerHeight);
             }
         });
+
+        // Oda listesini yükle
+        function loadRooms() {
+            socket.emit('get-rooms');
+        }
+
+        // Bağlantıyı başlat
+        connectSocket();
     </script>
 </body>
 </html>
