@@ -12,120 +12,105 @@ const io = new Server(server, {
     }
 });
 
-// Statik dosyaları serve et
+// Statik dosyalar
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Oyun konfigürasyonu
-const CONFIG = {
-    MAP_SIZE: 100,
-    PLAYER_SPEED: 5,
-    JUMP_FORCE: 8,
-    GRAVITY: 20,
-    MAX_PLAYERS_PER_TEAM: 10,
-    RESPAWN_TIME: 3000, // 3 saniye
-    ROUND_TIME: 600000, // 10 dakika
-    WEAPONS: {
-        PISTOL: { damage: 25, range: 50, fireRate: 200, ammo: 12 },
-        RIFLE: { damage: 34, range: 100, fireRate: 100, ammo: 30 },
-        SHOTGUN: { damage: 80, range: 20, fireRate: 800, ammo: 8 }
-    }
-};
+// Oyun odaları
+const rooms = new Map();
 
-// Oyun durumu
-class GameState {
-    constructor() {
+class GameRoom {
+    constructor(id) {
+        this.id = id;
         this.players = new Map();
+        this.maxPlayers = 6;
+        this.status = 'waiting'; // waiting, playing
         this.teams = { red: [], blue: [] };
         this.scores = { red: 0, blue: 0 };
-        this.projectiles = [];
-        this.pickups = this.generatePickups();
-        this.roundTimer = CONFIG.ROUND_TIME;
-        this.gameStarted = false;
+        this.map = this.generateMap();
     }
 
-    generatePickups() {
-        return [
-            // Sağlık paketleri
-            { type: 'health', position: { x: 20, y: 1, z: 20 }, respawn: 10000 },
-            { type: 'health', position: { x: -20, y: 1, z: -20 }, respawn: 10000 },
-            { type: 'health', position: { x: 30, y: 1, z: -30 }, respawn: 10000 },
-            // Mermi paketleri
-            { type: 'ammo', position: { x: -30, y: 1, z: 30 }, respawn: 5000 },
-            { type: 'ammo', position: { x: 0, y: 1, z: 40 }, respawn: 5000 },
-            // Silah yükseltmeleri
-            { type: 'weapon', weapon: 'RIFLE', position: { x: 40, y: 1, z: 0 }, respawn: 15000 },
-            { type: 'weapon', weapon: 'SHOTGUN', position: { x: -40, y: 1, z: 0 }, respawn: 15000 }
-        ];
+    generateMap() {
+        return {
+            walls: [
+                // Harita sınırları
+                { pos: [0, 2.5, -25], size: [50, 5, 2], color: 0x666666 },
+                { pos: [0, 2.5, 25], size: [50, 5, 2], color: 0x666666 },
+                { pos: [-25, 2.5, 0], size: [2, 5, 50], color: 0x666666 },
+                { pos: [25, 2.5, 0], size: [2, 5, 50], color: 0x666666 },
+                
+                // Engel olarak kutular
+                { pos: [-10, 1, -10], size: [3, 2, 3], color: 0x8B4513 },
+                { pos: [10, 1, 10], size: [3, 2, 3], color: 0x8B4513 },
+                { pos: [-15, 1, 15], size: [4, 2, 4], color: 0x8B4513 },
+                { pos: [15, 1, -15], size: [4, 2, 4], color: 0x8B4513 },
+                { pos: [-5, 1, 5], size: [2, 2, 2], color: 0x8B4513 },
+                { pos: [5, 1, -5], size: [2, 2, 2], color: 0x8B4513 }
+            ],
+            spawnPoints: {
+                red: [
+                    { x: -20, y: 1, z: -20 },
+                    { x: -20, y: 1, z: -15 },
+                    { x: -20, y: 1, z: -10 }
+                ],
+                blue: [
+                    { x: 20, y: 1, z: 20 },
+                    { x: 20, y: 1, z: 15 },
+                    { x: 20, y: 1, z: 10 }
+                ]
+            }
+        };
+    }
+
+    addPlayer(player) {
+        this.players.set(player.id, player);
+        
+        // Takım seçimi
+        const team = this.teams.red.length <= this.teams.blue.length ? 'red' : 'blue';
+        player.team = team;
+        this.teams[team].push(player.id);
+        
+        return team;
+    }
+
+    removePlayer(playerId) {
+        const player = this.players.get(playerId);
+        if (player) {
+            this.teams[player.team] = this.teams[player.team].filter(id => id !== playerId);
+            this.players.delete(playerId);
+        }
+    }
+
+    getState() {
+        return {
+            id: this.id,
+            players: Array.from(this.players.values()).map(p => p.getPublicData()),
+            teams: this.teams,
+            scores: this.scores,
+            map: this.map
+        };
     }
 }
 
-const gameState = new GameState();
-
-// Harita verileri
-const MAP = {
-    walls: [
-        // Ana duvarlar (harita sınırları)
-        { position: { x: 0, y: 5, z: -50 }, size: { x: 100, y: 10, z: 2 } },
-        { position: { x: 0, y: 5, z: 50 }, size: { x: 100, y: 10, z: 2 } },
-        { position: { x: -50, y: 5, z: 0 }, size: { x: 2, y: 10, z: 100 } },
-        { position: { x: 50, y: 5, z: 0 }, size: { x: 2, y: 10, z: 100 } },
-        
-        // İç duvarlar ve engeller
-        { position: { x: -30, y: 2, z: -30 }, size: { x: 5, y: 4, z: 5 } },
-        { position: { x: 30, y: 2, z: 30 }, size: { x: 5, y: 4, z: 5 } },
-        { position: { x: -20, y: 3, z: 20 }, size: { x: 8, y: 6, z: 2 } },
-        { position: { x: 20, y: 3, z: -20 }, size: { x: 8, y: 6, z: 2 } },
-        { position: { x: 0, y: 1, z: 0 }, size: { x: 10, y: 2, z: 10 } }, // Merkez platform
-        
-        // Siperler
-        { position: { x: -40, y: 1, z: -40 }, size: { x: 3, y: 2, z: 3 } },
-        { position: { x: 40, y: 1, z: 40 }, size: { x: 3, y: 2, z: 3 } },
-        { position: { x: -40, y: 1, z: 40 }, size: { x: 3, y: 2, z: 3 } },
-        { position: { x: 40, y: 1, z: -40 }, size: { x: 3, y: 2, z: 3 } }
-    ],
-    
-    spawnPoints: {
-        red: [
-            { x: -45, y: 1, z: -45 },
-            { x: -45, y: 1, z: -40 },
-            { x: -45, y: 1, z: -35 },
-            { x: -40, y: 1, z: -45 },
-            { x: -35, y: 1, z: -45 }
-        ],
-        blue: [
-            { x: 45, y: 1, z: 45 },
-            { x: 45, y: 1, z: 40 },
-            { x: 45, y: 1, z: 35 },
-            { x: 40, y: 1, z: 45 },
-            { x: 35, y: 1, z: 45 }
-        ]
-    },
-    
-    ground: {
-        size: { x: 200, z: 200 },
-        texture: 'ground'
-    }
-};
-
-// Oyuncu sınıfı
 class Player {
-    constructor(id, name, team) {
+    constructor(id, name) {
         this.id = id;
         this.name = name;
-        this.team = team;
+        this.team = null;
         this.health = 100;
         this.maxHealth = 100;
-        this.position = this.getSpawnPosition(team);
-        this.rotation = { x: 0, y: 0, z: 0 };
+        this.position = { x: 0, y: 1, z: 0 };
+        this.rotation = { x: 0, y: 0 };
         this.velocity = { x: 0, y: 0, z: 0 };
         this.isGrounded = true;
         this.isAlive = true;
         this.kills = 0;
         this.deaths = 0;
-        this.score = 0;
         this.weapon = {
-            type: 'PISTOL',
-            ammo: CONFIG.WEAPONS.PISTOL.ammo,
+            name: 'Pistol',
+            damage: 34,
+            ammo: 12,
+            maxAmmo: 12,
+            fireRate: 200,
             lastShot: 0
         };
         this.inputs = {
@@ -135,252 +120,257 @@ class Player {
             right: false,
             jump: false,
             sprint: false,
-            shoot: false,
-            aim: false
+            shoot: false
         };
-        this.lastRespawn = 0;
     }
 
-    getSpawnPosition(team) {
-        const spawns = MAP.spawnPoints[team];
-        const randomSpawn = spawns[Math.floor(Math.random() * spawns.length)];
-        return { ...randomSpawn };
-    }
-
-    takeDamage(amount, attackerId) {
-        this.health -= amount;
-        if (this.health <= 0) {
-            this.die(attackerId);
-        }
-        return this.health <= 0;
-    }
-
-    die(killerId) {
-        this.isAlive = false;
-        this.deaths++;
-        this.lastRespawn = Date.now();
-        
-        const killer = gameState.players.get(killerId);
-        if (killer) {
-            killer.kills++;
-            killer.score += 100;
-            gameState.scores[killer.team]++;
-        }
-    }
-
-    respawn() {
-        this.isAlive = true;
-        this.health = this.maxHealth;
-        this.position = this.getSpawnPosition(this.team);
-        this.weapon = {
-            type: 'PISTOL',
-            ammo: CONFIG.WEAPONS.PISTOL.ammo,
-            lastShot: 0
+    getPublicData() {
+        return {
+            id: this.id,
+            name: this.name,
+            team: this.team,
+            health: this.health,
+            position: this.position,
+            rotation: this.rotation,
+            isAlive: this.isAlive,
+            kills: this.kills,
+            deaths: this.deaths,
+            weapon: this.weapon.name
         };
     }
 
     update(deltaTime) {
-        if (!this.isAlive) {
-            if (Date.now() - this.lastRespawn > CONFIG.RESPAWN_TIME) {
-                this.respawn();
-            }
-            return;
-        }
+        if (!this.isAlive) return;
 
-        // Hareket fiziği
-        const moveSpeed = this.inputs.sprint ? CONFIG.PLAYER_SPEED * 1.5 : CONFIG.PLAYER_SPEED;
+        // Hareket
+        const speed = this.inputs.sprint ? 8 : 5;
         
         if (this.inputs.forward) {
-            this.velocity.x -= Math.sin(this.rotation.y) * moveSpeed * deltaTime;
-            this.velocity.z -= Math.cos(this.rotation.y) * moveSpeed * deltaTime;
+            this.position.x -= Math.sin(this.rotation.y) * speed * deltaTime;
+            this.position.z -= Math.cos(this.rotation.y) * speed * deltaTime;
         }
         if (this.inputs.backward) {
-            this.velocity.x += Math.sin(this.rotation.y) * moveSpeed * deltaTime;
-            this.velocity.z += Math.cos(this.rotation.y) * moveSpeed * deltaTime;
+            this.position.x += Math.sin(this.rotation.y) * speed * deltaTime;
+            this.position.z += Math.cos(this.rotation.y) * speed * deltaTime;
         }
         if (this.inputs.left) {
-            this.velocity.x -= Math.cos(this.rotation.y) * moveSpeed * deltaTime;
-            this.velocity.z += Math.sin(this.rotation.y) * moveSpeed * deltaTime;
+            this.position.x -= Math.cos(this.rotation.y) * speed * deltaTime;
+            this.position.z += Math.sin(this.rotation.y) * speed * deltaTime;
         }
         if (this.inputs.right) {
-            this.velocity.x += Math.cos(this.rotation.y) * moveSpeed * deltaTime;
-            this.velocity.z -= Math.sin(this.rotation.y) * moveSpeed * deltaTime;
+            this.position.x += Math.cos(this.rotation.y) * speed * deltaTime;
+            this.position.z -= Math.sin(this.rotation.y) * speed * deltaTime;
         }
 
         // Zıplama
         if (this.inputs.jump && this.isGrounded) {
-            this.velocity.y = CONFIG.JUMP_FORCE;
+            this.velocity.y = 8;
             this.isGrounded = false;
         }
 
         // Yerçekimi
-        this.velocity.y -= CONFIG.GRAVITY * deltaTime;
+        this.velocity.y -= 20 * deltaTime;
+        this.position.y += this.velocity.y * deltaTime;
 
-        // Pozisyon güncelleme
-        this.position.x += this.velocity.x;
-        this.position.y += this.velocity.y;
-        this.position.z += this.velocity.z;
-
-        // Yer ile çarpışma
+        // Yer kontrolü
         if (this.position.y < 1) {
             this.position.y = 1;
             this.velocity.y = 0;
             this.isGrounded = true;
         }
 
-        // Duvar çarpışma kontrolü
-        this.checkCollisions();
-
-        // Sürtünme
-        this.velocity.x *= 0.9;
-        this.velocity.z *= 0.9;
-    }
-
-    checkCollisions() {
-        for (const wall of MAP.walls) {
-            if (this.checkBoxCollision(
-                this.position, { x: 0.5, y: 1, z: 0.5 },
-                wall.position, wall.size
-            )) {
-                // Çarpışma çözümü
-                this.resolveCollision(wall);
-            }
-        }
-    }
-
-    checkBoxCollision(pos1, size1, pos2, size2) {
-        return Math.abs(pos1.x - pos2.x) < (size1.x + size2.x) / 2 &&
-               Math.abs(pos1.y - pos2.y) < (size1.y + size2.y) / 2 &&
-               Math.abs(pos1.z - pos2.z) < (size1.z + size2.z) / 2;
-    }
-
-    resolveCollision(wall) {
-        // Basit çarpışma çözümü
-        const dx = this.position.x - wall.position.x;
-        const dz = this.position.z - wall.position.z;
-        
-        if (Math.abs(dx) > Math.abs(dz)) {
-            this.position.x = wall.position.x + (dx > 0 ? 1 : -1) * (wall.size.x / 2 + 0.5);
-        } else {
-            this.position.z = wall.position.z + (dz > 0 ? 1 : -1) * (wall.size.z / 2 + 0.5);
-        }
+        // Harita sınırları
+        this.position.x = Math.max(-22, Math.min(22, this.position.x));
+        this.position.z = Math.max(-22, Math.min(22, this.position.z));
     }
 
     shoot() {
         const now = Date.now();
-        const weapon = CONFIG.WEAPONS[this.weapon.type];
-        
-        if (now - this.weapon.lastShot < weapon.fireRate) return null;
+        if (now - this.weapon.lastShot < this.weapon.fireRate) return null;
         if (this.weapon.ammo <= 0) return null;
-        
+
         this.weapon.lastShot = now;
         this.weapon.ammo--;
-        
+
         return {
             position: { ...this.position },
             direction: {
-                x: Math.sin(this.rotation.y) * Math.cos(this.rotation.x),
-                y: Math.sin(this.rotation.x),
-                z: Math.cos(this.rotation.y) * Math.cos(this.rotation.x)
+                x: Math.sin(this.rotation.y),
+                z: Math.cos(this.rotation.y)
             },
-            damage: weapon.damage,
-            range: weapon.range,
+            damage: this.weapon.damage,
             shooterId: this.id
         };
+    }
+
+    takeDamage(amount) {
+        this.health -= amount;
+        if (this.health <= 0) {
+            this.health = 0;
+            this.isAlive = false;
+        }
+        return this.health <= 0;
+    }
+
+    respawn(team) {
+        this.health = this.maxHealth;
+        this.isAlive = true;
+        this.weapon.ammo = this.weapon.maxAmmo;
+        
+        // Spawn noktası seç
+        const room = Array.from(rooms.values()).find(r => r.players.has(this.id));
+        if (room) {
+            const spawns = room.map.spawnPoints[team];
+            this.position = { ...spawns[Math.floor(Math.random() * spawns.length)] };
+        }
     }
 }
 
 // Socket.IO bağlantıları
 io.on('connection', (socket) => {
-    console.log(`🎮 Oyuncu bağlandı: ${socket.id}`);
+    console.log('🔵 Yeni oyuncu bağlandı:', socket.id);
 
-    // Oyun durumunu gönder
-    socket.emit('map-data', MAP);
+    // Ana odaya katıl
+    socket.join('lobby');
 
-    // Oyuna katılma
-    socket.on('join-game', (data) => {
-        const { name, team } = data;
+    // Oyun listesini gönder
+    const roomsList = Array.from(rooms.values()).map(room => ({
+        id: room.id,
+        players: room.players.size,
+        maxPlayers: room.maxPlayers,
+        status: room.status
+    }));
+    
+    socket.emit('rooms-list', roomsList);
+
+    // Oda oluştur
+    socket.on('create-room', (data) => {
+        const roomId = Math.random().toString(36).substring(7);
+        const room = new GameRoom(roomId);
+        rooms.set(roomId, room);
         
-        // Takım seçimi (otomatik dengeleme)
-        let selectedTeam = team;
-        if (!selectedTeam) {
-            selectedTeam = gameState.teams.red.length <= gameState.teams.blue.length ? 'red' : 'blue';
-        }
-        
-        // Takım kapasite kontrolü
-        if (gameState.teams[selectedTeam].length >= CONFIG.MAX_PLAYERS_PER_TEAM) {
-            socket.emit('team-full', selectedTeam);
+        socket.emit('room-created', roomId);
+        io.emit('rooms-list', Array.from(rooms.values()).map(r => ({
+            id: r.id,
+            players: r.players.size,
+            maxPlayers: r.maxPlayers,
+            status: r.status
+        })));
+    });
+
+    // Odaya katıl
+    socket.on('join-room', (data) => {
+        const room = rooms.get(data.roomId);
+        if (!room) {
+            socket.emit('error', 'Oda bulunamadı');
             return;
         }
 
-        // Yeni oyuncu oluştur
-        const player = new Player(socket.id, name || 'Oyuncu', selectedTeam);
-        gameState.players.set(socket.id, player);
-        gameState.teams[selectedTeam].push(socket.id);
+        if (room.players.size >= room.maxPlayers) {
+            socket.emit('error', 'Oda dolu');
+            return;
+        }
 
-        // Oyuncuya hazır olduğunu bildir
-        socket.emit('game-ready', {
-            id: socket.id,
-            team: selectedTeam,
-            position: player.position,
-            players: Array.from(gameState.players.values()).map(p => ({
-                id: p.id,
-                name: p.name,
-                team: p.team,
-                position: p.position,
-                health: p.health,
-                isAlive: p.isAlive
-            })),
-            pickups: gameState.pickups,
-            scores: gameState.scores
+        // Oyuncuyu oluştur
+        const player = new Player(socket.id, data.playerName || 'Oyuncu');
+        const team = room.addPlayer(player);
+
+        // Socket'i odaya ekle
+        socket.leave('lobby');
+        socket.join(room.id);
+
+        // Oyuncuya oda durumunu gönder
+        socket.emit('room-joined', {
+            roomId: room.id,
+            playerId: socket.id,
+            team: team,
+            players: Array.from(room.players.values()).map(p => p.getPublicData()),
+            map: room.map,
+            scores: room.scores
         });
 
         // Diğer oyunculara yeni oyuncuyu bildir
-        socket.broadcast.emit('player-joined', {
-            id: socket.id,
-            name: player.name,
-            team: player.team,
-            position: player.position
-        });
+        socket.to(room.id).emit('player-joined', player.getPublicData());
 
-        console.log(`✅ ${player.name} (${selectedTeam}) oyuna katıldı`);
+        // Oda listesini güncelle
+        io.emit('rooms-list', Array.from(rooms.values()).map(r => ({
+            id: r.id,
+            players: r.players.size,
+            maxPlayers: r.maxPlayers,
+            status: r.status
+        })));
+
+        console.log(`${player.name} odaya katıldı: ${room.id}`);
     });
 
     // Oyuncu girdileri
-    socket.on('player-input', (inputData) => {
-        const player = gameState.players.get(socket.id);
-        if (!player) return;
+    socket.on('player-input', (data) => {
+        // Oyuncunun odasını bul
+        let playerRoom = null;
+        let player = null;
+
+        for (const room of rooms.values()) {
+            if (room.players.has(socket.id)) {
+                playerRoom = room;
+                player = room.players.get(socket.id);
+                break;
+            }
+        }
+
+        if (!player || !playerRoom) return;
 
         // Girdileri güncelle
-        player.inputs = { ...player.inputs, ...inputData.inputs };
-        
-        // Fare hareketi
-        if (inputData.rotation) {
-            player.rotation.x += inputData.rotation.x;
-            player.rotation.y += inputData.rotation.y;
-            
-            // Dikey rotasyon sınırı
-            player.rotation.x = Math.max(-Math.PI/2, Math.min(Math.PI/2, player.rotation.x));
+        if (data.inputs) {
+            player.inputs = { ...player.inputs, ...data.inputs };
+        }
+
+        if (data.rotation) {
+            player.rotation.y += data.rotation.x * 0.002;
+            player.rotation.x += data.rotation.y * 0.002;
+            player.rotation.x = Math.max(-1, Math.min(1, player.rotation.x));
         }
 
         // Ateş etme
         if (player.inputs.shoot && player.isAlive) {
             const shot = player.shoot();
             if (shot) {
-                // Raycast vuruş kontrolü
-                const hit = performRaycast(shot);
-                if (hit) {
-                    io.emit('player-hit', {
-                        shooter: socket.id,
-                        victim: hit.playerId,
-                        damage: shot.damage,
-                        position: hit.position
-                    });
+                // Vuruş kontrolü
+                for (const target of playerRoom.players.values()) {
+                    if (target.id === player.id || !target.isAlive) continue;
+
+                    const dx = target.position.x - player.position.x;
+                    const dz = target.position.z - player.position.z;
+                    const dist = Math.sqrt(dx*dx + dz*dz);
+
+                    if (dist < 30) {
+                        const angle = Math.atan2(dx, dz);
+                        const angleDiff = Math.abs(player.rotation.y - angle);
+                        
+                        if (angleDiff < 0.5) {
+                            target.takeDamage(shot.damage);
+                            
+                            if (!target.isAlive) {
+                                player.kills++;
+                                playerRoom.scores[player.team]++;
+                                
+                                io.to(playerRoom.id).emit('player-died', {
+                                    killer: player.id,
+                                    victim: target.id,
+                                    killerName: player.name,
+                                    victimName: target.name
+                                });
+                            }
+                            
+                            io.to(target.id).emit('player-hit', {
+                                health: target.health,
+                                attacker: player.id
+                            });
+                        }
+                    }
                 }
-                
-                // Mermi efektini herkese gönder
-                io.emit('shot-fired', {
-                    shooter: socket.id,
+
+                io.to(playerRoom.id).emit('shot-fired', {
+                    shooter: player.id,
                     position: shot.position,
                     direction: shot.direction
                 });
@@ -388,157 +378,90 @@ io.on('connection', (socket) => {
         }
     });
 
-    // Pickup toplama
-    socket.on('collect-pickup', (pickupIndex) => {
-        const player = gameState.players.get(socket.id);
-        if (!player || !player.isAlive) return;
-
-        const pickup = gameState.pickups[pickupIndex];
-        if (!pickup) return;
-
-        // Pickup etkisini uygula
-        switch (pickup.type) {
-            case 'health':
-                player.health = Math.min(player.maxHealth, player.health + 50);
-                break;
-            case 'ammo':
-                player.weapon.ammo += 15;
-                break;
-            case 'weapon':
-                if (pickup.weapon) {
-                    player.weapon.type = pickup.weapon;
-                    player.weapon.ammo = CONFIG.WEAPONS[pickup.weapon].ammo;
-                }
-                break;
-        }
-
-        // Pickup'ı gizle (respawn mekanizması)
-        pickup.available = false;
-        setTimeout(() => {
-            pickup.available = true;
-            io.emit('pickup-respawned', pickupIndex);
-        }, pickup.respawn);
-
-        io.emit('pickup-collected', {
-            playerId: socket.id,
-            pickupIndex: pickupIndex,
-            type: pickup.type
-        });
-    });
-
     // Yeniden doğma
-    socket.on('request-respawn', () => {
-        const player = gameState.players.get(socket.id);
-        if (player && !player.isAlive) {
-            player.respawn();
-            socket.emit('respawned', {
-                position: player.position,
-                health: player.health,
-                weapon: player.weapon
-            });
+    socket.on('respawn', () => {
+        for (const room of rooms.values()) {
+            const player = room.players.get(socket.id);
+            if (player && !player.isAlive) {
+                player.respawn(player.team);
+                socket.emit('respawned', {
+                    position: player.position,
+                    health: player.health,
+                    ammo: player.weapon.ammo
+                });
+                break;
+            }
         }
     });
 
     // Bağlantı kesilme
     socket.on('disconnect', () => {
-        const player = gameState.players.get(socket.id);
-        if (player) {
-            // Takımdan çıkar
-            gameState.teams[player.team] = gameState.teams[player.team].filter(id => id !== socket.id);
-            gameState.players.delete(socket.id);
-            
-            // Diğer oyunculara bildir
-            io.emit('player-left', {
-                id: socket.id,
-                name: player.name
-            });
-            
-            console.log(`❌ ${player.name} oyundan ayrıldı`);
+        console.log('🔴 Oyuncu ayrıldı:', socket.id);
+
+        for (const room of rooms.values()) {
+            if (room.players.has(socket.id)) {
+                room.removePlayer(socket.id);
+                io.to(room.id).emit('player-left', socket.id);
+
+                // Oda boşsa sil
+                if (room.players.size === 0) {
+                    rooms.delete(room.id);
+                }
+
+                // Oda listesini güncelle
+                io.emit('rooms-list', Array.from(rooms.values()).map(r => ({
+                    id: r.id,
+                    players: r.players.size,
+                    maxPlayers: r.maxPlayers,
+                    status: r.status
+                })));
+
+                break;
+            }
         }
     });
 });
-
-// Raycast vuruş kontrolü
-function performRaycast(shot) {
-    let closestHit = null;
-    let closestDist = Infinity;
-
-    for (const [id, player] of gameState.players) {
-        if (id === shot.shooterId || !player.isAlive) continue;
-
-        // Oyuncuya vektör
-        const toPlayer = {
-            x: player.position.x - shot.position.x,
-            y: player.position.y - shot.position.y,
-            z: player.position.z - shot.position.z
-        };
-
-        // Mesafe kontrolü
-        const dist = Math.sqrt(toPlayer.x**2 + toPlayer.y**2 + toPlayer.z**2);
-        if (dist > shot.range) continue;
-
-        // Yön vektörü ile nokta çarpımı (açı kontrolü)
-        const dir = shot.direction;
-        const dot = (toPlayer.x * dir.x + toPlayer.y * dir.y + toPlayer.z * dir.z) / dist;
-        
-        // 10 derecelik koni içinde mi? (cos(10°) ≈ 0.985)
-        if (dot > 0.985 && dist < closestDist) {
-            closestDist = dist;
-            closestHit = {
-                playerId: id,
-                position: player.position,
-                distance: dist
-            };
-        }
-    }
-
-    if (closestHit) {
-        const victim = gameState.players.get(closestHit.playerId);
-        victim.takeDamage(shot.damage, shot.shooterId);
-    }
-
-    return closestHit;
-}
 
 // Oyun döngüsü
 let lastTime = Date.now();
 setInterval(() => {
     const currentTime = Date.now();
-    const deltaTime = (currentTime - lastTime) / 1000; // saniye cinsinden
+    const deltaTime = (currentTime - lastTime) / 100;
     lastTime = currentTime;
 
-    // Tüm oyuncuları güncelle
-    for (const player of gameState.players.values()) {
-        player.update(deltaTime);
+    for (const room of rooms.values()) {
+        const updates = [];
+
+        for (const player of room.players.values()) {
+            player.update(deltaTime);
+            
+            updates.push({
+                id: player.id,
+                position: player.position,
+                rotation: player.rotation,
+                health: player.health,
+                isAlive: player.isAlive,
+                kills: player.kills,
+                deaths: player.deaths
+            });
+        }
+
+        if (updates.length > 0) {
+            io.to(room.id).emit('game-update', {
+                players: updates,
+                scores: room.scores
+            });
+        }
     }
-
-    // Oyun durumunu tüm oyunculara gönder
-    const gameUpdate = {
-        players: Array.from(gameState.players.values()).map(p => ({
-            id: p.id,
-            position: p.position,
-            rotation: p.rotation,
-            health: p.health,
-            isAlive: p.isAlive,
-            team: p.team,
-            weapon: p.weapon.type
-        })),
-        scores: gameState.scores,
-        pickups: gameState.pickups.filter(p => p.available)
-    };
-
-    io.emit('game-update', gameUpdate);
-
-}, 50); // 20 FPS güncelleme
+}, 50);
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
     console.log(`
     ╔════════════════════════════════════╗
-    ║   TAKIM SAVAŞI FPS SUNUCUSU       ║
-    ║   Port: ${PORT}                         ║
-    ║   Harita: Arena v1.0               ║
-    ║   Oyuncular: 0/20                  ║
+    ║     PROFESYONEL FPS SUNUCUSU       ║
+    ║     Port: ${PORT}                         ║
+    ║     Status: ÇALIŞIYOR               ║
     ╚════════════════════════════════════╝
     `);
 });
