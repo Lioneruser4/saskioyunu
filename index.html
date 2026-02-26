@@ -1,936 +1,856 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>PROFESYONEL FPS - TAKIM SAVAŞI</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            user-select: none;
-            font-family: 'Arial Black', sans-serif;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>BACKROOMS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Creepster&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        body {
-            overflow: hidden;
-            background: #000;
-        }
+  :root {
+    --bg: #0d0a04;
+    --wall: #8B7355;
+    --accent: #c8a84b;
+    --danger: #cc2200;
+    --safe: #1aaa55;
+    --text: #e8d5a0;
+    --panel: rgba(20,15,5,0.92);
+    --border: rgba(200,168,75,0.3);
+    --glow: 0 0 20px rgba(200,168,75,0.4);
+  }
 
-        /* Menü */
-        #menu {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(45deg, #0a0f1f, #1a1f2f);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    touch-action: none;
+  }
 
-        .menu-box {
-            background: rgba(20, 30, 40, 0.9);
-            backdrop-filter: blur(10px);
-            padding: 40px;
-            border-radius: 30px;
-            border: 2px solid #ff4444;
-            box-shadow: 0 0 50px rgba(255, 68, 68, 0.3);
-            width: 90%;
-            max-width: 500px;
-            text-align: center;
-        }
+  /* ===== LOADING SCREEN ===== */
+  #loading {
+    position: fixed; inset: 0; z-index: 1000;
+    background: #000;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 24px;
+  }
+  .load-title {
+    font-family: 'Creepster', cursive;
+    font-size: clamp(48px, 12vw, 88px);
+    color: var(--accent);
+    letter-spacing: 8px;
+    text-shadow: 0 0 40px rgba(200,168,75,0.8), 0 0 80px rgba(200,168,75,0.3);
+    animation: flicker 3s infinite;
+  }
+  @keyframes flicker {
+    0%,100%{opacity:1} 92%{opacity:1} 93%{opacity:0.6} 95%{opacity:1} 97%{opacity:0.7} 98%{opacity:1}
+  }
+  .load-bar-wrap {
+    width: 240px; height: 4px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 2px; overflow: hidden;
+  }
+  .load-bar {
+    height: 100%;
+    background: var(--accent);
+    width: 0%;
+    animation: loadbar 1.5s ease-out forwards;
+    box-shadow: 0 0 10px var(--accent);
+  }
+  @keyframes loadbar { to { width: 100%; } }
+  .load-sub {
+    font-size: 13px;
+    color: rgba(200,168,75,0.6);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    animation: blink 1.2s infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
-        .menu-box h1 {
-            color: white;
-            font-size: 48px;
-            margin-bottom: 10px;
-            text-shadow: 0 0 20px #ff4444;
-        }
+  /* ===== MAIN MENU ===== */
+  #menu {
+    position: fixed; inset: 0; z-index: 100;
+    background: radial-gradient(ellipse at center, #1a1008 0%, #000 100%);
+    display: none; flex-direction: column;
+    align-items: center; justify-content: space-between;
+    padding: 24px 20px;
+    overflow-y: auto;
+  }
+  .menu-header {
+    text-align: center;
+    padding-top: 12px;
+  }
+  .menu-title {
+    font-family: 'Creepster', cursive;
+    font-size: clamp(36px, 10vw, 72px);
+    color: var(--accent);
+    text-shadow: 0 0 30px rgba(200,168,75,0.7);
+    animation: flicker 4s infinite;
+    letter-spacing: 6px;
+  }
+  .menu-subtitle {
+    font-size: 11px;
+    color: rgba(200,168,75,0.5);
+    letter-spacing: 4px;
+    margin-top: 4px;
+    text-transform: uppercase;
+  }
+  .player-info {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 24px;
+    text-align: center;
+    margin-top: 8px;
+  }
+  .player-info .pname {
+    font-size: 18px;
+    color: var(--accent);
+    font-weight: bold;
+  }
+  .player-info .plabel {
+    font-size: 10px;
+    color: rgba(200,168,75,0.4);
+    letter-spacing: 2px;
+  }
 
-        .menu-box h2 {
-            color: #8899aa;
-            font-size: 18px;
-            margin-bottom: 30px;
-        }
+  .menu-actions {
+    display: flex; flex-direction: column;
+    gap: 12px; width: 100%; max-width: 340px;
+  }
 
-        .menu-input {
-            width: 100%;
-            padding: 15px;
-            margin: 10px 0;
-            background: rgba(0, 0, 0, 0.5);
-            border: 2px solid #ff4444;
-            border-radius: 10px;
-            color: white;
-            font-size: 18px;
-            text-align: center;
-        }
+  .btn-main {
+    width: 100%; padding: 18px;
+    background: var(--accent);
+    color: #0d0a04;
+    border: none; border-radius: 10px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: clamp(16px, 4.5vw, 20px);
+    font-weight: bold;
+    letter-spacing: 3px;
+    cursor: pointer;
+    text-transform: uppercase;
+    box-shadow: 0 0 20px rgba(200,168,75,0.4), inset 0 1px 0 rgba(255,255,255,0.2);
+    transition: all 0.15s;
+    position: relative; overflow: hidden;
+  }
+  .btn-main::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(255,255,255,0.1) 0%, transparent 50%);
+    pointer-events: none;
+  }
+  .btn-main:active { transform: scale(0.97); box-shadow: 0 0 10px rgba(200,168,75,0.3); }
+  .btn-main.danger {
+    background: linear-gradient(135deg, #880000, #cc2200);
+    color: #fff;
+    box-shadow: 0 0 20px rgba(200,0,0,0.4);
+  }
+  .btn-main.secondary {
+    background: rgba(200,168,75,0.12);
+    color: var(--accent);
+    border: 1px solid var(--border);
+  }
 
-        .menu-btn {
-            width: 100%;
-            padding: 15px;
-            margin: 10px 0;
-            background: linear-gradient(45deg, #ff4444, #ff8844);
-            border: none;
-            border-radius: 10px;
-            color: white;
-            font-size: 20px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.3s;
-        }
+  /* ===== ROOMS SCREEN ===== */
+  #rooms {
+    position: fixed; inset: 0; z-index: 100;
+    background: radial-gradient(ellipse at center, #1a1008 0%, #000 100%);
+    display: none; flex-direction: column;
+    padding: 0;
+  }
+  .rooms-header {
+    background: rgba(0,0,0,0.7);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 20px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .rooms-header h2 {
+    font-family: 'Creepster', cursive;
+    font-size: 22px;
+    color: var(--accent);
+    flex: 1;
+  }
+  .btn-back {
+    background: rgba(200,168,75,0.15);
+    border: 1px solid var(--border);
+    color: var(--accent);
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .btn-create {
+    background: var(--accent);
+    border: none;
+    color: #000;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  .rooms-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .room-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .room-card:active { transform: scale(0.98); border-color: var(--accent); }
+  .room-card-info { flex: 1; }
+  .room-card-name { font-size: 15px; color: var(--accent); font-weight: bold; }
+  .room-card-meta { font-size: 11px; color: rgba(200,168,75,0.5); margin-top: 3px; }
+  .room-card-status {
+    text-align: right; font-size: 11px;
+  }
+  .room-badge {
+    display: inline-block; padding: 3px 8px; border-radius: 4px;
+    font-size: 10px; font-weight: bold; letter-spacing: 1px;
+  }
+  .badge-waiting { background: rgba(26,170,85,0.2); color: #1aaa55; border: 1px solid #1aaa55; }
+  .badge-playing { background: rgba(200,34,0,0.2); color: #ff4422; border: 1px solid #cc2200; }
+  .room-slots { font-size: 13px; color: var(--text); margin-top: 4px; }
+  .empty-rooms {
+    text-align: center; padding: 60px 20px;
+    color: rgba(200,168,75,0.3);
+    font-size: 14px;
+  }
 
-        .menu-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 0 30px #ff4444;
-        }
+  /* Create room modal */
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 300;
+    background: rgba(0,0,0,0.85);
+    display: none; align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .modal {
+    background: #1a1208;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    width: 100%; max-width: 320px;
+  }
+  .modal h3 {
+    font-family: 'Creepster', cursive;
+    font-size: 24px; color: var(--accent);
+    margin-bottom: 20px; text-align: center;
+  }
+  .modal-label { font-size: 11px; color: rgba(200,168,75,0.5); letter-spacing: 2px; margin-bottom: 8px; }
+  .modal-row { margin-bottom: 16px; }
+  .monster-choice {
+    display: flex; gap: 8px;
+  }
+  .monster-btn {
+    flex: 1; padding: 12px 8px;
+    background: rgba(200,168,75,0.08);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text); font-family: 'Share Tech Mono', monospace;
+    font-size: 12px; text-align: center; cursor: pointer;
+    transition: all 0.15s;
+  }
+  .monster-btn.active {
+    background: rgba(200,168,75,0.2);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .monster-btn:active { transform: scale(0.97); }
+  .modal-actions { display: flex; gap: 8px; margin-top: 20px; }
+  .modal-actions .btn-main { padding: 14px; font-size: 14px; }
 
-        .rooms-list {
-            margin-top: 20px;
-            max-height: 200px;
-            overflow-y: auto;
-        }
+  /* ===== GAME SCREEN ===== */
+  #game {
+    position: fixed; inset: 0; z-index: 50;
+    display: none;
+    background: #000;
+  }
+  #gameCanvas {
+    display: block;
+    width: 100%; height: 100%;
+    touch-action: none;
+  }
+  
+  /* Game overlay UI */
+  #gameUI {
+    position: absolute; inset: 0;
+    pointer-events: none;
+  }
+  
+  /* Death/escape overlay */
+  #gameOverlay {
+    position: absolute; inset: 0; z-index: 200;
+    display: none; flex-direction: column;
+    align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.85);
+    gap: 20px;
+    pointer-events: all;
+  }
+  .overlay-title {
+    font-family: 'Creepster', cursive;
+    font-size: clamp(40px, 10vw, 72px);
+    text-align: center;
+    line-height: 1;
+  }
+  .overlay-title.death { color: #ff2200; text-shadow: 0 0 40px #ff2200; }
+  .overlay-title.escape { color: #00ff88; text-shadow: 0 0 40px #00ff88; }
+  .overlay-sub { font-size: 14px; color: rgba(255,255,255,0.5); text-align: center; }
+  #btnBackMenu {
+    pointer-events: all;
+    padding: 16px 40px;
+    margin-top: 8px;
+  }
 
-        .room-item {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 15px;
-            margin: 5px 0;
-            border-radius: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-            transition: 0.3s;
-        }
+  /* Waiting room overlay */
+  #waitingOverlay {
+    position: absolute; inset: 0; z-index: 150;
+    background: rgba(0,0,0,0.75);
+    display: none; flex-direction: column;
+    align-items: center; justify-content: center; gap: 16px;
+    pointer-events: none;
+  }
+  .waiting-title {
+    font-family: 'Creepster', cursive;
+    font-size: 32px; color: var(--accent);
+    animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+  .waiting-count { font-size: 14px; color: rgba(200,168,75,0.6); }
+  
+  /* Side panel info (landscape desktop) */
+  #sidePanel {
+    position: absolute;
+    right: 0; top: 0; bottom: 0;
+    width: 220px;
+    background: rgba(10,8,3,0.85);
+    border-left: 1px solid var(--border);
+    display: none; flex-direction: column;
+    padding: 12px;
+    gap: 8px;
+    pointer-events: none;
+    z-index: 10;
+    overflow: hidden;
+  }
+  .side-title {
+    font-family: 'Creepster', cursive;
+    font-size: 16px; color: var(--accent);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px; margin-bottom: 4px;
+  }
+  .side-player {
+    font-size: 11px; color: var(--text);
+    padding: 4px 6px;
+    border-radius: 4px;
+    background: rgba(200,168,75,0.05);
+    border: 1px solid rgba(200,168,75,0.1);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .side-player.monster { color: #ff4422; border-color: rgba(200,0,0,0.3); }
+  .side-player.you { color: #00ff88; border-color: rgba(0,255,136,0.3); }
 
-        .room-item:hover {
-            background: #ff4444;
-        }
+  /* Toast notifications */
+  #toasts {
+    position: fixed; top: 44px; left: 50%; transform: translateX(-50%);
+    z-index: 500; display: flex; flex-direction: column; gap: 6px;
+    pointer-events: none; min-width: 200px; max-width: 90vw;
+    align-items: center;
+  }
+  .toast {
+    background: rgba(0,0,0,0.9);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-size: 13px;
+    text-align: center;
+    animation: toastIn 0.2s ease, toastOut 0.3s ease 2.5s forwards;
+  }
+  @keyframes toastIn { from{opacity:0;transform:translateY(-10px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes toastOut { to{opacity:0;transform:translateY(-10px)} }
+  .toast.success { border-color: #1aaa55; color: #4cff91; }
+  .toast.danger { border-color: var(--danger); color: #ff6644; }
+  .toast.info { border-color: var(--accent); color: var(--accent); }
 
-        /* Oyun HUD */
-        #hud {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            display: none;
-            z-index: 100;
-        }
+  /* Noise overlay */
+  .noise {
+    position: fixed; inset: 0; z-index: 1;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none; opacity: 0.04;
+  }
 
-        #crosshair {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 40px;
-            height: 40px;
-        }
+  /* Connection status */
+  #connStatus {
+    position: fixed; bottom: 10px; left: 10px; z-index: 999;
+    font-size: 10px; color: rgba(200,168,75,0.4);
+    letter-spacing: 1px;
+  }
+  #connStatus.connected { color: #1aaa55; }
+  #connStatus.disconnected { color: var(--danger); }
 
-        #crosshair::before,
-        #crosshair::after {
-            content: '';
-            position: absolute;
-            background: white;
-            box-shadow: 0 0 10px #ff4444;
-        }
-
-        #crosshair::before {
-            width: 20px;
-            height: 2px;
-            top: 19px;
-            left: 10px;
-        }
-
-        #crosshair::after {
-            width: 2px;
-            height: 20px;
-            left: 19px;
-            top: 10px;
-        }
-
-        #health-bar {
-            position: absolute;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 400px;
-            height: 30px;
-            background: #333;
-            border: 2px solid white;
-            border-radius: 15px;
-            overflow: hidden;
-        }
-
-        #health-fill {
-            height: 100%;
-            width: 100%;
-            background: linear-gradient(90deg, #00ff00, #ffff00, #ff0000);
-            transition: 0.3s;
-        }
-
-        #health-text {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: white;
-            font-weight: bold;
-            text-shadow: 2px 2px 0 black;
-        }
-
-        #ammo {
-            position: absolute;
-            bottom: 80px;
-            right: 50px;
-            background: rgba(0, 0, 0, 0.8);
-            padding: 15px 30px;
-            border-radius: 50px;
-            border: 2px solid #ff4444;
-            color: white;
-            font-size: 32px;
-            font-weight: bold;
-        }
-
-        #scoreboard {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: rgba(0, 0, 0, 0.8);
-            border: 2px solid #ff4444;
-            border-radius: 15px;
-            padding: 15px;
-            min-width: 250px;
-            color: white;
-        }
-
-        .score-header {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #444;
-        }
-
-        .red-score { color: #ff4444; font-size: 24px; }
-        .blue-score { color: #4444ff; font-size: 24px; }
-
-        .player-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 5px;
-            margin: 2px 0;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 5px;
-        }
-
-        #killfeed {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            width: 300px;
-        }
-
-        .kill-message {
-            background: rgba(0, 0, 0, 0.8);
-            border-left: 4px solid #ff4444;
-            padding: 10px;
-            margin: 5px 0;
-            color: white;
-            animation: slideIn 0.3s, fadeOut 3s forwards;
-        }
-
-        @keyframes slideIn {
-            from { transform: translateX(-100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-
-        @keyframes fadeOut {
-            0% { opacity: 1; }
-            70% { opacity: 1; }
-            100% { opacity: 0; }
-        }
-
-        /* Mobil kontroller */
-        #mobile-controls {
-            position: fixed;
-            bottom: 30px;
-            left: 0;
-            right: 0;
-            display: none;
-            justify-content: space-between;
-            padding: 0 30px;
-            pointer-events: auto;
-            z-index: 200;
-        }
-
-        #joystick {
-            width: 120px;
-            height: 120px;
-            background: rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(10px);
-            border-radius: 60px;
-            border: 2px solid white;
-            position: relative;
-        }
-
-        #joystick-handle {
-            width: 50px;
-            height: 50px;
-            background: #ff4444;
-            border-radius: 25px;
-            position: absolute;
-            top: 35px;
-            left: 35px;
-            transition: 0.05s;
-        }
-
-        #fire-btn {
-            width: 100px;
-            height: 100px;
-            background: #ff4444;
-            border-radius: 50px;
-            border: 3px solid white;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 30px;
-            color: white;
-            box-shadow: 0 0 30px #ff4444;
-        }
-
-        /* Ölüm ekranı */
-        #death-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.9);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 2000;
-        }
-
-        .death-box {
-            text-align: center;
-            color: white;
-        }
-
-        .death-box h1 {
-            font-size: 64px;
-            color: #ff4444;
-            margin-bottom: 20px;
-        }
-
-        #respawn-timer {
-            font-size: 72px;
-            font-weight: bold;
-            color: #ff4444;
-            margin: 30px 0;
-        }
-
-        #respawn-btn {
-            padding: 15px 40px;
-            background: #ff4444;
-            border: none;
-            border-radius: 10px;
-            color: white;
-            font-size: 24px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        #loading {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #000;
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 3000;
-        }
-
-        .spinner {
-            width: 60px;
-            height: 60px;
-            border: 5px solid #333;
-            border-top-color: #ff4444;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        @media (max-width: 768px) {
-            #mobile-controls { display: flex; }
-            #health-bar { width: 300px; }
-            #ammo { bottom: 30px; right: 20px; font-size: 24px; }
-        }
-    </style>
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  
+  @media (min-width: 768px) and (orientation: landscape) {
+    #sidePanel { display: flex; }
+    #gameCanvas { width: calc(100% - 220px); }
+  }
+</style>
 </head>
 <body>
-    <!-- Menü -->
-    <div id="menu">
-        <div class="menu-box">
-            <h1>⚡ PRO FPS ⚡</h1>
-            <h2>TAKIM SAVAŞI</h2>
-            
-            <input type="text" id="player-name" class="menu-input" placeholder="NICKNAME" value="ASLAN">
-            
-            <button class="menu-btn" onclick="createRoom()">🔴 ODA OLUŞTUR</button>
-            
-            <div style="margin: 20px 0; color: white;">— VEYA —</div>
-            
-            <div class="rooms-list" id="rooms-list">
-                <div style="color: #8899aa;">Aktif oda yok</div>
-            </div>
-        </div>
+
+<div class="noise"></div>
+
+<!-- Loading -->
+<div id="loading">
+  <div class="load-title">BACKROOMS</div>
+  <div class="load-bar-wrap"><div class="load-bar"></div></div>
+  <div class="load-sub">Karanlığa hazırlanıyor...</div>
+</div>
+
+<!-- Main Menu -->
+<div id="menu">
+  <div class="menu-header">
+    <div class="menu-title">BACKROOMS</div>
+    <div class="menu-subtitle">Kaçmaya çalış</div>
+    <div class="player-info" id="playerInfo">
+      <div class="plabel">OYUNCU</div>
+      <div class="pname" id="playerNameDisplay">---</div>
     </div>
+  </div>
+  <div class="menu-actions">
+    <button class="btn-main" id="btnQuickPlay">⚡ OYUNA BAŞLA</button>
+    <button class="btn-main secondary" id="btnRooms">🚪 ODALAR</button>
+    <button class="btn-main secondary" id="btnCreateRoom">➕ ODA OLUŞTUR</button>
+  </div>
+  <div style="font-size:10px;color:rgba(200,168,75,0.2);letter-spacing:2px;padding-bottom:8px;">
+    LEVEL ∞ — GERİ DÖNÜŞ YOK
+  </div>
+</div>
 
-    <!-- Oyun HUD -->
-    <div id="hud">
-        <div id="crosshair"></div>
-        
-        <div id="health-bar">
-            <div id="health-fill"></div>
-            <div id="health-text">100 HP</div>
+<!-- Rooms Screen -->
+<div id="rooms">
+  <div class="rooms-header">
+    <button class="btn-back" id="btnBackFromRooms">← GERİ</button>
+    <h2>🚪 ODALAR</h2>
+    <button class="btn-create" id="btnCreateRoom2">+ ODA</button>
+  </div>
+  <div class="rooms-list" id="roomsList"></div>
+</div>
+
+<!-- Create Room Modal -->
+<div class="modal-overlay" id="createModal">
+  <div class="modal">
+    <h3>ODA OLUŞTUR</h3>
+    <div class="modal-row">
+      <div class="modal-label">CANAVAR SEÇ</div>
+      <div class="monster-choice">
+        <div class="monster-btn active" data-val="ai" id="btnMonsterAI">
+          🤖<br>YAPAY ZEKA
         </div>
-        
-        <div id="ammo">
-            <span id="ammo-current">12</span>/<span id="ammo-max">12</span>
+        <div class="monster-btn" data-val="player" id="btnMonsterPlayer">
+          👤<br>RANDOM OYUNCU
         </div>
-        
-        <div id="scoreboard">
-            <div class="score-header">
-                <span class="red-score" id="red-score">0</span>
-                <span>🔴 RED VS BLUE 🔵</span>
-                <span class="blue-score" id="blue-score">0</span>
-            </div>
-            <div id="players-list"></div>
-        </div>
-        
-        <div id="killfeed"></div>
+      </div>
     </div>
+    <div class="modal-actions">
+      <button class="btn-main secondary" id="btnCancelCreate">İPTAL</button>
+      <button class="btn-main" id="btnConfirmCreate">OLUŞTUR</button>
+    </div>
+  </div>
+</div>
 
-    <!-- Mobil Kontroller -->
-    <div id="mobile-controls">
-        <div id="joystick">
-            <div id="joystick-handle"></div>
+<!-- Game Screen -->
+<div id="game">
+  <canvas id="gameCanvas"></canvas>
+  
+  <!-- Side panel (landscape) -->
+  <div id="sidePanel">
+    <div class="side-title">👥 OYUNCULAR</div>
+    <div id="sidePlayers"></div>
+  </div>
+  
+  <!-- Game overlay for death/escape -->
+  <div id="gameOverlay">
+    <div class="overlay-title" id="overlayTitle"></div>
+    <div class="overlay-sub" id="overlaySub"></div>
+    <button class="btn-main" id="btnBackMenu" onclick="backToMenu()">ANA MENÜYE DÖN</button>
+  </div>
+  
+  <!-- Waiting overlay -->
+  <div id="waitingOverlay">
+    <div class="waiting-title">ODA BEKLENİYOR...</div>
+    <div class="waiting-count" id="waitingCount">Bağlanılıyor...</div>
+    <div style="font-size:11px;color:rgba(200,168,75,0.3);margin-top:8px;">Oyun 10 kişi dolunca veya 3 saniye sonra başlar</div>
+  </div>
+</div>
+
+<!-- Toasts -->
+<div id="toasts"></div>
+
+<!-- Connection status -->
+<div id="connStatus">● BAĞLANIYOR</div>
+
+<!-- Scripts -->
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<script src="game.js"></script>
+<script>
+// ==================== APP STATE ====================
+const SERVER_URL = 'https://saskioyunu-1-2d6i.onrender.com';
+let socket = null;
+let game = null;
+let playerName = 'Misafir';
+let playerId = null;
+let currentRoomId = null;
+let isMonster = false;
+let monsterType = 'ai';
+let pendingMonsterType = 'ai';
+
+const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+window.isMobile = isMobile;
+
+// ==================== TELEGRAM ====================
+function initTelegram() {
+  if (window.Telegram?.WebApp) {
+    const tg = window.Telegram.WebApp;
+    tg.ready();
+    tg.expand();
+    tg.setHeaderColor('#0d0a04');
+    tg.setBackgroundColor('#0d0a04');
+    const user = tg.initDataUnsafe?.user;
+    if (user) {
+      playerName = user.first_name + (user.last_name ? ' ' + user.last_name : '');
+      localStorage.setItem('backrooms_name', playerName);
+      return;
+    }
+  }
+  // Fallback: load from localStorage or generate
+  const saved = localStorage.getItem('backrooms_name');
+  if (saved) {
+    playerName = saved;
+  } else {
+    playerName = 'Oyuncu_' + Math.floor(Math.random() * 9999);
+    localStorage.setItem('backrooms_name', playerName);
+  }
+}
+
+// ==================== SOCKET ====================
+function initSocket() {
+  socket = io(SERVER_URL, {
+    transports: ['websocket', 'polling'],
+    reconnection: true,
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 5000,
+    reconnectionAttempts: Infinity
+  });
+
+  socket.on('connect', () => {
+    playerId = socket.id;
+    updateConnStatus(true);
+    
+    // Try rejoin if we had a room
+    const savedRoom = sessionStorage.getItem('backrooms_room');
+    if (savedRoom) {
+      try {
+        const data = JSON.parse(savedRoom);
+        socket.emit('rejoin', { roomId: data.roomId, playerData: { name: playerName } });
+      } catch(e) {}
+    }
+  });
+
+  socket.on('disconnect', () => {
+    updateConnStatus(false);
+    showToast('⚠️ Bağlantı kesildi, yeniden bağlanılıyor...', 'danger');
+  });
+
+  socket.on('connect_error', () => updateConnStatus(false));
+
+  socket.on('roomList', (list) => renderRoomList(list));
+  socket.on('roomListUpdate', (list) => renderRoomList(list));
+
+  socket.on('joinedRoom', (data) => {
+    currentRoomId = data.roomId;
+    isMonster = data.isMonster;
+    playerId = data.playerId;
+    
+    sessionStorage.setItem('backrooms_room', JSON.stringify({ roomId: data.roomId }));
+    
+    startGame(data);
+  });
+
+  socket.on('youAreMonster', ({ spawn }) => {
+    isMonster = true;
+    showToast('👹 SEN CANAVARSIN! Oyuncuları yakala!', 'danger');
+  });
+
+  socket.on('error', (msg) => {
+    showToast('❌ ' + msg, 'danger');
+  });
+
+  socket.on('rejoined', (data) => {
+    if (data.room) {
+      showToast('🔄 Oyuna geri döndün', 'success');
+    }
+  });
+}
+
+function updateConnStatus(connected) {
+  const el = document.getElementById('connStatus');
+  if (connected) {
+    el.textContent = '● BAĞLI';
+    el.className = 'connected';
+  } else {
+    el.textContent = '● BAĞLANTI KESİK';
+    el.className = 'disconnected';
+  }
+}
+
+// ==================== GAME INIT ====================
+function startGame(data) {
+  showScreen('game');
+  
+  const canvas = document.getElementById('gameCanvas');
+  resizeCanvas(canvas);
+  
+  // Destroy old game
+  if (game) { game.running = false; }
+  
+  game = new BackroomsGame(canvas, socket, data.playerId, playerName, data.isMonster);
+  game.setRoom(data.room, data.players, data.spawn);
+  game.start();
+  
+  // Side panel
+  updateSidePlayers(data.players, data.room);
+  
+  // Waiting overlay
+  if (data.room.status !== 'playing') {
+    document.getElementById('waitingOverlay').style.display = 'flex';
+    document.getElementById('waitingCount').textContent = `${Object.keys(data.players).length + 1}/10 oyuncu`;
+  } else {
+    document.getElementById('waitingOverlay').style.display = 'none';
+  }
+  
+  // Socket events for game screen
+  socket.on('gameStart', () => {
+    document.getElementById('waitingOverlay').style.display = 'none';
+  });
+  
+  socket.on('playerJoined', (p) => {
+    if (game) {
+      const count = Object.keys(game.players).length + 2;
+      document.getElementById('waitingCount').textContent = `${count}/10 oyuncu`;
+    }
+  });
+
+  // Game over / death
+  window.showDeathScreen = () => {
+    const ov = document.getElementById('gameOverlay');
+    document.getElementById('overlayTitle').textContent = '💀 YAKALANDINN';
+    document.getElementById('overlayTitle').className = 'overlay-title death';
+    document.getElementById('overlaySub').textContent = 'Kaçamadın...';
+    ov.style.display = 'flex';
+  };
+
+  window.showGameOver = (reason) => {
+    const ov = document.getElementById('gameOverlay');
+    if (reason === 'escaped') {
+      document.getElementById('overlayTitle').textContent = '🏆 KAÇILDI!';
+      document.getElementById('overlayTitle').className = 'overlay-title escape';
+      document.getElementById('overlaySub').textContent = 'Backrooms\'dan kaçıldı!';
+    } else {
+      document.getElementById('overlayTitle').textContent = '💀 OYUN BİTTİ';
+      document.getElementById('overlayTitle').className = 'overlay-title death';
+      document.getElementById('overlaySub').textContent = 'Herkes yakalandı.';
+    }
+    ov.style.display = 'flex';
+  };
+  
+  // Window resize
+  window.addEventListener('resize', () => {
+    resizeCanvas(canvas);
+    if (game) game.resize(canvas.width, canvas.height);
+  });
+}
+
+function updateSidePlayers(players, room) {
+  const el = document.getElementById('sidePlayers');
+  if (!el) return;
+  let html = '';
+  html += `<div class="side-player you">👤 ${playerName} (SEN)</div>`;
+  for (const [id, p] of Object.entries(players || {})) {
+    const isMon = id === room?.monsterPlayerId;
+    html += `<div class="side-player ${isMon ? 'monster' : ''}">
+      ${isMon ? '👹' : '👤'} ${p.name}
+    </div>`;
+  }
+  el.innerHTML = html;
+}
+
+function resizeCanvas(canvas) {
+  const sideW = window.innerWidth >= 768 && window.innerWidth > window.innerHeight ? 220 : 0;
+  canvas.width = window.innerWidth - sideW;
+  canvas.height = window.innerHeight;
+}
+
+// ==================== SCREENS ====================
+function showScreen(name) {
+  document.getElementById('menu').style.display = 'none';
+  document.getElementById('rooms').style.display = 'none';
+  document.getElementById('game').style.display = 'none';
+  document.getElementById('gameOverlay').style.display = 'none';
+  
+  if (name === 'menu') document.getElementById('menu').style.display = 'flex';
+  else if (name === 'rooms') document.getElementById('rooms').style.display = 'flex';
+  else if (name === 'game') document.getElementById('game').style.display = 'block';
+}
+
+function backToMenu() {
+  if (game) { game.running = false; game = null; }
+  sessionStorage.removeItem('backrooms_room');
+  currentRoomId = null;
+  showScreen('menu');
+  showToast('Ana menüye döndün', 'info');
+}
+window.backToMenu = backToMenu;
+
+// ==================== ROOM LIST ====================
+function renderRoomList(list) {
+  const el = document.getElementById('roomsList');
+  if (!list || list.length === 0) {
+    el.innerHTML = '<div class="empty-rooms">🕯️ Henüz oda yok<br><br>İlk odayı sen oluştur!</div>';
+    return;
+  }
+  
+  el.innerHTML = list.map(r => `
+    <div class="room-card" onclick="joinRoomById('${r.id}')">
+      <div class="room-card-info">
+        <div class="room-card-name">🚪 ${escHtml(r.creatorName)}'in Odası</div>
+        <div class="room-card-meta">
+          ${r.monsterType === 'ai' ? '🤖 Yapay Zeka' : '👤 Oyuncu Canavarı'} • 
+          ${r.playerCount}/${r.maxPlayers} kişi
         </div>
-        <div id="fire-btn">🔥</div>
-    </div>
-
-    <!-- Ölüm Ekranı -->
-    <div id="death-screen">
-        <div class="death-box">
-            <h1>☠️ ÖLDÜRÜLDÜN ☠️</h1>
-            <div id="respawn-timer">3</div>
-            <button id="respawn-btn" onclick="respawn()">YENİDEN DOĞ</button>
+      </div>
+      <div class="room-card-status">
+        <div class="room-badge ${r.status === 'waiting' ? 'badge-waiting' : 'badge-playing'}">
+          ${r.status === 'waiting' ? 'BEKLENYOR' : 'OYUNDA'}
         </div>
+        <div class="room-slots">${r.maxPlayers - r.playerCount} yer var</div>
+      </div>
     </div>
-
-    <!-- Loading -->
-    <div id="loading">
-        <div class="spinner"></div>
-    </div>
-
-    <!-- Three.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
-
-    <script>
-        // Telegram WebApp
-        const tg = window.Telegram?.WebApp;
-        if (tg) {
-            tg.expand();
-            tg.disableVerticalSwipes();
-        }
-
-        // Global değişkenler
-        let socket = null;
-        let scene, camera, renderer;
-        let players = new Map();
-        let myPlayerId = null;
-        let myTeam = null;
-        let mapWalls = [];
-        let roomId = null;
-        let gameActive = false;
-        let respawnTimer = null;
-
-        // Joystick değişkenleri
-        let joystickActive = false;
-        let joystickVector = { x: 0, y: 0 };
-        let isShooting = false;
-
-        // Socket bağlantısı
-        function connectSocket() {
-            socket = io('https://saskioyunu-1-2d6i.onrender.com');
-            
-            socket.on('connect', () => {
-                console.log('✅ Sunucuya bağlandı');
-                document.getElementById('loading').style.display = 'none';
-                loadRooms();
-            });
-
-            socket.on('rooms-list', (rooms) => {
-                updateRoomsList(rooms);
-            });
-
-            socket.on('room-created', (id) => {
-                roomId = id;
-                joinRoom(id);
-            });
-
-            socket.on('room-joined', (data) => {
-                myPlayerId = data.playerId;
-                myTeam = data.team;
-                startGame(data);
-            });
-
-            socket.on('player-joined', (player) => {
-                addPlayer(player);
-            });
-
-            socket.on('player-left', (playerId) => {
-                removePlayer(playerId);
-            });
-
-            socket.on('game-update', (data) => {
-                updateGame(data);
-            });
-
-            socket.on('player-hit', (data) => {
-                if (data.health <= 0) {
-                    document.getElementById('death-screen').style.display = 'flex';
-                    startRespawnTimer();
-                }
-                
-                document.body.style.backgroundColor = 'rgba(255,0,0,0.3)';
-                setTimeout(() => {
-                    document.body.style.backgroundColor = '';
-                }, 100);
-                
-                updateHealth(data.health);
-            });
-
-            socket.on('player-died', (data) => {
-                addKillMessage(data.killerName, data.victimName);
-            });
-
-            socket.on('respawned', (data) => {
-                document.getElementById('death-screen').style.display = 'none';
-                if (myPlayer) {
-                    myPlayer.position.set(data.position.x, data.position.y, data.position.z);
-                }
-                updateHealth(100);
-                updateAmmo(data.ammo, 12);
-            });
-
-            socket.on('shot-fired', (data) => {
-                createMuzzleFlash(data.position);
-            });
-        }
-
-        // Oda listesini güncelle
-        function updateRoomsList(rooms) {
-            const container = document.getElementById('rooms-list');
-            
-            if (rooms.length === 0) {
-                container.innerHTML = '<div style="color: #8899aa;">Aktif oda yok</div>';
-                return;
-            }
-
-            container.innerHTML = rooms.map(room => `
-                <div class="room-item" onclick="joinRoom('${room.id}')">
-                    <span>🎮 Oda ${room.id.substring(0,4)}</span>
-                    <span>${room.players}/${room.maxPlayers} 👤</span>
-                </div>
-            `).join('');
-        }
-
-        // Oda oluştur
-        window.createRoom = function() {
-            const playerName = document.getElementById('player-name').value || 'Oyuncu';
-            document.getElementById('loading').style.display = 'flex';
-            socket.emit('create-room', { playerName: playerName });
-        };
-
-        // Odaya katıl
-        window.joinRoom = function(id) {
-            const playerName = document.getElementById('player-name').value || 'Oyuncu';
-            document.getElementById('loading').style.display = 'flex';
-            roomId = id;
-            socket.emit('join-room', {
-                roomId: id,
-                playerName: playerName
-            });
-        };
-
-        // Oyunu başlat
-        function startGame(data) {
-            document.getElementById('menu').style.display = 'none';
-            document.getElementById('hud').style.display = 'block';
-            
-            initThree();
-            createMap(data.map);
-            
-            data.players.forEach(player => {
-                if (player.id !== myPlayerId) {
-                    addPlayer(player);
-                }
-            });
-            
-            gameActive = true;
-            
-            // Skor tablosunu güncelle
-            updateScoreboard(data.players, data.scores);
-        }
-
-        // Three.js başlat
-        function initThree() {
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x87CEEB);
-            scene.fog = new THREE.Fog(0x87CEEB, 50, 150);
-
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, 2, 0);
-
-            renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.shadowMap.enabled = true;
-            document.body.appendChild(renderer.domElement);
-
-            // Işıklandırma
-            const ambientLight = new THREE.AmbientLight(0x404060);
-            scene.add(ambientLight);
-
-            const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-            directionalLight.position.set(10, 20, 10);
-            directionalLight.castShadow = true;
-            directionalLight.shadow.mapSize.width = 1024;
-            directionalLight.shadow.mapSize.height = 1024;
-            scene.add(directionalLight);
-
-            // Zemin
-            const groundGeometry = new THREE.PlaneGeometry(60, 60);
-            const groundMaterial = new THREE.MeshStandardMaterial({ color: 0x3a6b4b });
-            const ground = new THREE.Mesh(groundGeometry, groundMaterial);
-            ground.rotation.x = -Math.PI / 2;
-            ground.position.y = 0;
-            ground.receiveShadow = true;
-            scene.add(ground);
-
-            // Izgara
-            const gridHelper = new THREE.GridHelper(60, 20, 0xff4444, 0x333333);
-            gridHelper.position.y = 0.01;
-            scene.add(gridHelper);
-
-            animate();
-        }
-
-        // Harita oluştur
-        function createMap(mapData) {
-            mapData.walls.forEach(wall => {
-                const geometry = new THREE.BoxGeometry(wall.size[0], wall.size[1], wall.size[2]);
-                const material = new THREE.MeshStandardMaterial({ color: wall.color });
-                const mesh = new THREE.Mesh(geometry, material);
-                mesh.position.set(wall.pos[0], wall.pos[1], wall.pos[2]);
-                mesh.castShadow = true;
-                mesh.receiveShadow = true;
-                scene.add(mesh);
-                mapWalls.push(mesh);
-            });
-        }
-
-        // Oyuncu ekle
-        function addPlayer(playerData) {
-            const group = new THREE.Group();
-
-            // Gövde
-            const bodyGeo = new THREE.CylinderGeometry(0.5, 0.5, 2);
-            const bodyMat = new THREE.MeshStandardMaterial({ 
-                color: playerData.team === 'red' ? 0xff4444 : 0x4444ff 
-            });
-            const body = new THREE.Mesh(bodyGeo, bodyMat);
-            body.position.y = 1;
-            body.castShadow = true;
-            group.add(body);
-
-            // Kafa
-            const headGeo = new THREE.SphereGeometry(0.4);
-            const headMat = new THREE.MeshStandardMaterial({ color: 0xffcc99 });
-            const head = new THREE.Mesh(headGeo, headMat);
-            head.position.y = 2.2;
-            head.castShadow = true;
-            group.add(head);
-
-            // Silah
-            const weaponGeo = new THREE.BoxGeometry(0.2, 0.2, 1);
-            const weaponMat = new THREE.MeshStandardMaterial({ color: 0x333333 });
-            const weapon = new THREE.Mesh(weaponGeo, weaponMat);
-            weapon.position.set(0.5, 1.2, 0.8);
-            weapon.castShadow = true;
-            group.add(weapon);
-
-            group.position.set(playerData.position.x, playerData.position.y, playerData.position.z);
-
-            scene.add(group);
-            players.set(playerData.id, group);
-        }
-
-        // Oyuncu kaldır
-        function removePlayer(playerId) {
-            const player = players.get(playerId);
-            if (player) {
-                scene.remove(player);
-                players.delete(playerId);
-            }
-        }
-
-        // Oyun güncelleme
-        function updateGame(data) {
-            data.players.forEach(playerUpdate => {
-                if (playerUpdate.id === myPlayerId) {
-                    if (!myPlayer) {
-                        myPlayer = players.get(myPlayerId);
-                    }
-                    updateHealth(playerUpdate.health);
-                } else {
-                    const player = players.get(playerUpdate.id);
-                    if (player) {
-                        player.position.set(
-                            playerUpdate.position.x,
-                            playerUpdate.position.y,
-                            playerUpdate.position.z
-                        );
-                        player.rotation.y = playerUpdate.rotation.y;
-                    }
-                }
-            });
-            
-            updateScoreboard(data.players, data.scores);
-        }
-
-        // Skor tablosu güncelle
-        function updateScoreboard(players, scores) {
-            document.getElementById('red-score').textContent = scores.red;
-            document.getElementById('blue-score').textContent = scores.blue;
-
-            const list = document.getElementById('players-list');
-            list.innerHTML = players
-                .sort((a, b) => b.kills - a.kills)
-                .map(p => `
-                    <div class="player-row" style="border-left: 3px solid ${p.team === 'red' ? '#ff4444' : '#4444ff'}">
-                        <span>${p.name}</span>
-                        <span>${p.kills}/${p.deaths}</span>
-                    </div>
-                `).join('');
-        }
-
-        // Sağlık güncelle
-        function updateHealth(health) {
-            const fill = document.getElementById('health-fill');
-            const text = document.getElementById('health-text');
-            
-            fill.style.width = health + '%';
-            text.textContent = health + ' HP';
-            
-            if (health < 30) {
-                fill.style.background = 'linear-gradient(90deg, #ff0000, #ff4444)';
-            }
-        }
-
-        // Mermi güncelle
-        function updateAmmo(current, max) {
-            document.getElementById('ammo-current').textContent = current;
-            document.getElementById('ammo-max').textContent = max;
-        }
-
-        // Kill mesajı ekle
-        function addKillMessage(killer, victim) {
-            const feed = document.getElementById('killfeed');
-            const msg = document.createElement('div');
-            msg.className = 'kill-message';
-            msg.innerHTML = `
-                <span style="color: #ff4444">${killer}</span>
-                <span style="color: white"> → </span>
-                <span style="color: #4444ff">${victim}</span>
-            `;
-            feed.appendChild(msg);
-            
-            setTimeout(() => msg.remove(), 3000);
-        }
-
-        // Mermi efekti
-        function createMuzzleFlash(position) {
-            const light = new THREE.PointLight(0xffaa00, 2, 10);
-            light.position.set(position.x, position.y + 1.5, position.z);
-            scene.add(light);
-            
-            setTimeout(() => scene.remove(light), 50);
-        }
-
-        // Yeniden doğma
-        window.respawn = function() {
-            socket.emit('respawn');
-        };
-
-        function startRespawnTimer() {
-            let time = 3;
-            const timerEl = document.getElementById('respawn-timer');
-            
-            if (respawnTimer) clearInterval(respawnTimer);
-            
-            respawnTimer = setInterval(() => {
-                time--;
-                timerEl.textContent = time;
-                
-                if (time <= 0) {
-                    clearInterval(respawnTimer);
-                    document.getElementById('respawn-btn').click();
-                }
-            }, 1000);
-        }
-
-        // Hareket girdileri
-        function sendInput() {
-            if (!gameActive || !socket) return;
-
-            socket.emit('player-input', {
-                inputs: {
-                    forward: keys['KeyW'] || (joystickActive && joystickVector.y < -0.3),
-                    backward: keys['KeyS'] || (joystickActive && joystickVector.y > 0.3),
-                    left: keys['KeyA'] || (joystickActive && joystickVector.x < -0.3),
-                    right: keys['KeyD'] || (joystickActive && joystickVector.x > 0.3),
-                    sprint: keys['ShiftLeft'],
-                    jump: keys['Space'],
-                    shoot: isShooting
-                }
-            });
-        }
-
-        // Klavye kontrolleri
-        const keys = {};
-        document.addEventListener('keydown', (e) => keys[e.code] = true);
-        document.addEventListener('keyup', (e) => keys[e.code] = false);
-
-        // Fare kontrolü
-        document.addEventListener('click', () => {
-            renderer.domElement.requestPointerLock();
-        });
-
-        document.addEventListener('mousemove', (e) => {
-            if (document.pointerLockElement === renderer.domElement && gameActive) {
-                socket.emit('player-input', {
-                    rotation: { x: e.movementX, y: e.movementY }
-                });
-            }
-        });
-
-        // Mobil joystick
-        const joystick = document.getElementById('joystick');
-        const handle = document.getElementById('joystick-handle');
-
-        joystick.addEventListener('touchstart', (e) => {
-            joystickActive = true;
-            e.preventDefault();
-        });
-
-        joystick.addEventListener('touchmove', (e) => {
-            if (!joystickActive) return;
-            e.preventDefault();
-
-            const touch = e.touches[0];
-            const rect = joystick.getBoundingClientRect();
-            const centerX = rect.left + rect.width / 2;
-            const centerY = rect.top + rect.height / 2;
-
-            let deltaX = touch.clientX - centerX;
-            let deltaY = touch.clientY - centerY;
-
-            const distance = Math.sqrt(deltaX**2 + deltaY**2);
-            const maxDistance = rect.width / 2;
-
-            if (distance > maxDistance) {
-                deltaX = (deltaX / distance) * maxDistance;
-                deltaY = (deltaY / distance) * maxDistance;
-            }
-
-            handle.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
-            
-            joystickVector.x = deltaX / maxDistance;
-            joystickVector.y = deltaY / maxDistance;
-            
-            sendInput();
-        });
-
-        joystick.addEventListener('touchend', () => {
-            joystickActive = false;
-            handle.style.transform = 'translate(0px, 0px)';
-            joystickVector = { x: 0, y: 0 };
-            sendInput();
-        });
-
-        // Ateş butonu
-        const fireBtn = document.getElementById('fire-btn');
-        fireBtn.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            isShooting = true;
-            fireBtn.style.transform = 'scale(0.9)';
-            sendInput();
-        });
-        
-        fireBtn.addEventListener('touchend', () => {
-            isShooting = false;
-            fireBtn.style.transform = 'scale(1)';
-            sendInput();
-        });
-
-        // Her frame'de input gönder
-        setInterval(sendInput, 50);
-
-        // Animasyon döngüsü
-        function animate() {
-            requestAnimationFrame(animate);
-            
-            if (camera && myPlayer) {
-                // Kamerayı oyuncuya ata
-                camera.position.copy(myPlayer.position);
-                camera.position.y += 1.5;
-            }
-            
-            if (renderer && scene && camera) {
-                renderer.render(scene, camera);
-            }
-        }
-
-        // Pencere boyutu değişince
-        window.addEventListener('resize', () => {
-            if (camera) {
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, window.innerHeight);
-            }
-        });
-
-        // Oda listesini yükle
-        function loadRooms() {
-            socket.emit('get-rooms');
-        }
-
-        // Bağlantıyı başlat
-        connectSocket();
-    </script>
+  `).join('');
+}
+
+function joinRoomById(roomId) {
+  if (!socket?.connected) { showToast('Bağlantı yok', 'danger'); return; }
+  socket.emit('joinRoom', { roomId, name: playerName });
+}
+
+function escHtml(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ==================== TOAST ====================
+function showToast(msg, type='info') {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+// ==================== BUTTON EVENTS ====================
+document.getElementById('btnQuickPlay').addEventListener('click', () => {
+  if (!socket?.connected) { showToast('Sunucuya bağlanıyor...', 'danger'); return; }
+  socket.emit('quickPlay', { name: playerName });
+  showToast('⚡ Oyun aranıyor...', 'info');
+});
+
+document.getElementById('btnRooms').addEventListener('click', () => {
+  showScreen('rooms');
+  if (socket?.connected) socket.emit('getRooms');
+});
+
+document.getElementById('btnBackFromRooms').addEventListener('click', () => showScreen('menu'));
+
+document.getElementById('btnCreateRoom').addEventListener('click', () => {
+  document.getElementById('createModal').style.display = 'flex';
+});
+document.getElementById('btnCreateRoom2').addEventListener('click', () => {
+  document.getElementById('createModal').style.display = 'flex';
+});
+
+document.getElementById('btnCancelCreate').addEventListener('click', () => {
+  document.getElementById('createModal').style.display = 'none';
+});
+
+// Monster type toggle
+document.getElementById('btnMonsterAI').addEventListener('click', () => {
+  pendingMonsterType = 'ai';
+  document.getElementById('btnMonsterAI').classList.add('active');
+  document.getElementById('btnMonsterPlayer').classList.remove('active');
+});
+document.getElementById('btnMonsterPlayer').addEventListener('click', () => {
+  pendingMonsterType = 'player';
+  document.getElementById('btnMonsterPlayer').classList.add('active');
+  document.getElementById('btnMonsterAI').classList.remove('active');
+});
+
+document.getElementById('btnConfirmCreate').addEventListener('click', () => {
+  if (!socket?.connected) { showToast('Bağlantı yok', 'danger'); return; }
+  document.getElementById('createModal').style.display = 'none';
+  socket.emit('createRoom', { name: playerName, monsterType: pendingMonsterType });
+  showToast('🚪 Oda oluşturuluyor...', 'info');
+});
+
+// Backgound click to close modal
+document.getElementById('createModal').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) e.currentTarget.style.display = 'none';
+});
+
+// ==================== INIT ====================
+window.addEventListener('DOMContentLoaded', () => {
+  // Load Telegram script
+  const tgScript = document.createElement('script');
+  tgScript.src = 'https://telegram.org/js/telegram-web-app.js';
+  tgScript.onload = () => { initTelegram(); boot(); };
+  tgScript.onerror = () => { initTelegram(); boot(); };
+  document.head.appendChild(tgScript);
+});
+
+function boot() {
+  document.getElementById('playerNameDisplay').textContent = playerName;
+  
+  // Init socket after short delay (show loading)
+  setTimeout(() => {
+    initSocket();
+    setTimeout(() => {
+      document.getElementById('loading').style.display = 'none';
+      showScreen('menu');
+    }, 1500);
+  }, 800);
+}
+
+// Prevent context menu on long press
+window.addEventListener('contextmenu', e => e.preventDefault());
+
+// Keep screen on (mobile)
+if ('wakeLock' in navigator) {
+  navigator.wakeLock.request('screen').catch(() => {});
+}
+</script>
 </body>
 </html>
