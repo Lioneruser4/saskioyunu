@@ -1,982 +1,867 @@
-// ==================== BACKROOMS GAME ENGINE ====================
-const TILE = 80;
-const PLAYER_SPEED = 3.5;
-const PLAYER_SPRINT = 5.5;
-const JUMP_FORCE = -12;
-const GRAVITY = 0.6;
-const PLAYER_RADIUS = 18;
-const ANIM_FPS = 8;
+/* ═══════════════════════════════════════════════════════════════
+   BACKROOMS — Client Game Engine
+   ═══════════════════════════════════════════════════════════════ */
 
-class BackroomsGame {
-  constructor(canvas, socket, playerId, playerName, isMonster) {
-    this.canvas = canvas;
-    this.ctx = canvas.getContext('2d');
-    this.socket = socket;
-    this.playerId = playerId;
-    this.playerName = playerName;
-    this.isMonster = isMonster;
-    
-    this.players = {};
-    this.walls = [];
-    this.key = null;
-    this.exit = null;
-    this.ai = null;
-    this.monsterPlayerId = null;
-    this.monsterType = 'ai';
-    
-    this.camera = { x: 0, y: 0 };
-    this.keys = {};
-    this.touches = {};
-    
-    // Mobile joystick
-    this.joystick = { active: false, startX: 0, startY: 0, dx: 0, dy: 0, id: null };
-    this.jumpBtn = { active: false };
-    
-    // Local player state
-    this.local = {
-      x: 0, y: 0, vx: 0, vy: 0,
-      vy2: 0, // vertical for jump effect
-      grounded: true,
-      dir: 'down',
-      state: 'idle',
-      animFrame: 0,
-      animTimer: 0,
-      hasKey: false,
-      dead: false,
-      escaped: false
-    };
-    
-    // Particles
-    this.particles = [];
-    
-    // Fog of war / flashlight
-    this.flashlight = true;
-    this.flashRadius = 220;
-    
-    // Sounds (web audio)
-    this.audioCtx = null;
-    
-    // Render loop
-    this.lastTime = 0;
-    this.running = false;
-    
-    // FPS
-    this.fps = 0;
-    this.fpsTimer = 0;
-    this.fpsCount = 0;
-    
-    this.initInputs();
-    this.initSocketEvents();
-  }
-  
-  initAudio() {
-    try {
-      this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    } catch(e) {}
-  }
-  
-  playTone(freq, type, duration, vol=0.1) {
-    if (!this.audioCtx) return;
-    try {
-      const osc = this.audioCtx.createOscillator();
-      const gain = this.audioCtx.createGain();
-      osc.connect(gain); gain.connect(this.audioCtx.destination);
-      osc.type = type;
-      osc.frequency.value = freq;
-      gain.gain.setValueAtTime(vol, this.audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, this.audioCtx.currentTime + duration);
-      osc.start(); osc.stop(this.audioCtx.currentTime + duration);
-    } catch(e) {}
-  }
-  
-  footstepSound() {
-    this.playTone(80 + Math.random()*40, 'sawtooth', 0.08, 0.05);
-  }
-  
-  initInputs() {
-    // Keyboard
-    window.addEventListener('keydown', e => {
-      this.keys[e.code] = true;
-      if (e.code === 'Space') { e.preventDefault(); this.tryJump(); }
-      if (e.code === 'ArrowUp' || e.code === 'ArrowDown' || e.code === 'ArrowLeft' || e.code === 'ArrowRight') e.preventDefault();
-    });
-    window.addEventListener('keyup', e => { this.keys[e.code] = false; });
-    
-    // Touch joystick
-    this.canvas.addEventListener('touchstart', e => {
-      e.preventDefault();
-      for (const t of e.changedTouches) {
-        const rect = this.canvas.getBoundingClientRect();
-        const tx = t.clientX - rect.left;
-        const ty = t.clientY - rect.top;
-        const cw = this.canvas.width;
-        const ch = this.canvas.height;
-        
-        // Left half = joystick
-        if (tx < cw * 0.5 && !this.joystick.active) {
-          this.joystick = { active: true, startX: tx, startY: ty, dx: 0, dy: 0, id: t.identifier, cx: tx, cy: ty };
-        }
-        // Right half top = jump
-        if (tx > cw * 0.5 && ty < ch * 0.65) {
-          this.tryJump();
-        }
-      }
-    }, { passive: false });
-    
-    this.canvas.addEventListener('touchmove', e => {
-      e.preventDefault();
-      for (const t of e.changedTouches) {
-        if (t.identifier === this.joystick.id) {
-          const rect = this.canvas.getBoundingClientRect();
-          const tx = t.clientX - rect.left;
-          const ty = t.clientY - rect.top;
-          this.joystick.dx = tx - this.joystick.startX;
-          this.joystick.dy = ty - this.joystick.startY;
-        }
-      }
-    }, { passive: false });
-    
-    this.canvas.addEventListener('touchend', e => {
-      for (const t of e.changedTouches) {
-        if (t.identifier === this.joystick.id) {
-          this.joystick.active = false;
-          this.joystick.dx = 0; this.joystick.dy = 0;
-        }
-      }
-    });
-  }
-  
-  tryJump() {
-    if (this.local.grounded) {
-      this.local.vy2 = JUMP_FORCE;
-      this.local.grounded = false;
-      this.playTone(200, 'sine', 0.15, 0.08);
+'use strict';
+
+window.GAME = (function(){
+
+/* ─── Config ─────────────────────────────────────────────────── */
+const TILE      = 80;
+const PLR_R     = 18;
+const PLR_SPD   = 3.6;
+const PLR_SPRINT= 5.8;
+const MON_R     = 26;
+const FLASH_R   = 230;   // flashlight radius
+const CAM_LERP  = 0.12;
+const ANIM_FPS  = 7;
+const JUMP_VY   = -11;
+const GRAVITY   = 0.55;
+const MAX_JUMP  = 34;
+
+/* ─── State ──────────────────────────────────────────────────── */
+let canvas, ctx, socket;
+let running   = false;
+let roomData  = null;
+let players   = {};
+let walls     = [];
+let myId      = '';
+let myName    = '';
+let isMonster = false;
+
+// Local player
+const ME = {
+  x:0,y:0,vx:0,vy:0,
+  dir:'down',anim:'idle',
+  hasKey:false, dead:false, escaped:false,
+  jumpOff:0, jumpVY:0, grounded:true,
+  animFrame:0, animTimer:0,
+  stepTimer:0,
+};
+
+// Monster / AI
+const MON = { x:0,y:0,phase:'roam',visTimer:0 };
+
+// Key + Exit
+let keyObj  = null;
+let exitObj = null;
+let monsterType = 'ai';
+let monPlayerId = null;
+
+// Camera
+const CAM = { x:0,y:0 };
+
+// Input
+const KEYS   = {};
+const JOY    = { active:false,id:null,sx:0,sy:0,dx:0,dy:0 };
+
+// Particles
+let parts = [];
+// Messages
+let msgs  = [];
+// Screen effects
+let flashRed   = 0;
+let flashWhite = 0;
+let dangerAmt  = 0;
+let shakeX=0,shakeY=0,shakeT=0;
+
+// Timers
+let lastTime    = 0;
+let fps         = 0;
+let fpsCnt      = 0;
+let fpsTimer    = 0;
+let sendTimer   = 0;
+let animTimer   = 0;
+
+/* ─── Callbacks ──────────────────────────────────────────────── */
+let onDied     = null;
+let onEscaped  = null;
+let onGameOver = null;
+let onCaught   = null;
+
+/* ─── Init ───────────────────────────────────────────────────── */
+function init(cvs, sock, id, name, isMon){
+  canvas    = cvs;
+  ctx       = cvs.getContext('2d');
+  socket    = sock;
+  myId      = id;
+  myName    = name;
+  isMonster = isMon;
+  running   = false;
+
+  _initInput();
+  _initSocket();
+  resize();
+  window.addEventListener('resize', resize);
+}
+
+function resize(){
+  const isSide = window.innerWidth>=768 && window.innerWidth>window.innerHeight;
+  canvas.width  = window.innerWidth  - (isSide ? 200 : 0);
+  canvas.height = window.innerHeight;
+}
+
+function loadRoom(data){
+  roomData    = data;
+  walls       = data.walls;          // flat [x,y,x,y,...]
+  keyObj      = {...data.key};
+  exitObj     = {...data.exit};
+  monsterType = data.monsterType;
+  monPlayerId = data.monPlayerId;
+  MON.x=data.mon.x; MON.y=data.mon.y;
+
+  // Existing players
+  players={};
+  if(data.players){
+    for(const[id,p] of Object.entries(data.players)){
+      if(id!==myId) players[id]={...p};
     }
   }
-  
-  initSocketEvents() {
-    this.socket.on('gameStart', data => {
-      this.walls = data.walls;
-      this.key = data.key;
-      this.exit = data.exit;
-      this.ai = data.ai;
-      this.running = true;
-      this.showMessage('⚠️ KAÇMAYA ÇALIŞ!', '#ffcc00', 3000);
-      this.playTone(150, 'sawtooth', 1, 0.15);
-    });
-    
-    this.socket.on('gameState', data => {
-      // Update other players
-      for (const [id, p] of Object.entries(data.players)) {
-        if (id !== this.playerId) {
-          this.players[id] = p;
-        }
-      }
-      // Remove disconnected
-      for (const id of Object.keys(this.players)) {
-        if (!data.players[id]) delete this.players[id];
-      }
-      if (data.ai) this.ai = data.ai;
-      if (data.key) this.key = data.key;
-      this.monsterPlayerId = data.monsterPlayerId;
-    });
-    
-    this.socket.on('playerJoined', p => {
-      if (p.id !== this.playerId) {
-        this.players[p.id] = p;
-        this.showMessage(`${p.name} odaya girdi!`, '#4cff91', 2000);
-      }
-    });
-    
-    this.socket.on('playerLeft', ({ id }) => {
-      if (this.players[id]) {
-        const name = this.players[id].name;
-        delete this.players[id];
-        this.showMessage(`${name} ayrıldı`, '#ff6b6b', 2000);
-      }
-    });
-    
-    this.socket.on('playerCaught', ({ playerId }) => {
-      if (playerId === this.playerId) {
-        this.local.dead = true;
-        this.showMessage('YAKALANDINN!!! 💀', '#ff2244', 9999);
-        this.playTone(60, 'sawtooth', 2, 0.3);
-        // Screen flash
-        this.flashRed = 1.0;
-      } else {
-        this.showMessage(`${this.players[playerId]?.name || ''} yakalandı!`, '#ff6b6b', 2000);
-      }
-    });
-    
-    this.socket.on('youDied', () => {
-      this.local.dead = true;
-      this.running = false;
-      setTimeout(() => {
-        if (window.showDeathScreen) window.showDeathScreen();
-      }, 1000);
-    });
-    
-    this.socket.on('keyCollected', ({ playerId, playerName }) => {
-      if (playerId === this.playerId) {
-        this.local.hasKey = true;
-        this.showMessage('🔑 ANAHTAR ALINDI! Çıkışa koş!', '#ffcc00', 4000);
-        this.playTone(880, 'sine', 0.5, 0.2);
-      } else {
-        this.showMessage(`🔑 ${playerName} anahtarı aldı!`, '#ffcc00', 3000);
-      }
-    });
-    
-    this.socket.on('playerEscaped', ({ playerId, playerName }) => {
-      if (playerId === this.playerId) {
-        this.local.escaped = true;
-        this.showMessage('🏆 KURTULDUN!!!', '#4cff91', 9999);
-        this.playTone(440, 'sine', 0.3, 0.3);
-        this.playTone(880, 'sine', 0.6, 0.3);
-      } else {
-        this.showMessage(`🏆 ${playerName} kaçtı!`, '#4cff91', 3000);
-      }
-    });
-    
-    this.socket.on('gameOver', ({ reason }) => {
-      this.running = false;
-      setTimeout(() => {
-        if (window.showGameOver) window.showGameOver(reason);
-      }, 2000);
-    });
-  }
-  
-  setRoom(roomData, players, spawn) {
-    this.walls = roomData.walls;
-    this.key = roomData.key;
-    this.exit = roomData.exit;
-    this.ai = roomData.ai;
-    this.monsterType = roomData.monsterType;
-    this.monsterPlayerId = roomData.monsterPlayerId;
-    this.players = players || {};
-    delete this.players[this.playerId];
-    
-    this.local.x = spawn.x;
-    this.local.y = spawn.y;
-    this.camera.x = spawn.x - this.canvas.width/2;
-    this.camera.y = spawn.y - this.canvas.height/2;
-    
-    if (roomData.status === 'playing') {
-      this.running = true;
+
+  ME.x=data.spawn.x; ME.y=data.spawn.y;
+  ME.dead=false; ME.escaped=false; ME.hasKey=false;
+  ME.jumpOff=0; ME.grounded=true;
+  CAM.x=ME.x-canvas.width/2;
+  CAM.y=ME.y-canvas.height/2;
+
+  running=true;
+  requestAnimationFrame(_loop);
+  showMsg('⚡ OYUN BAŞLADI! KAÇMAYA ÇALIŞ!','#ffcc44',3000);
+}
+
+/* ─── Socket Events ──────────────────────────────────────────── */
+function _initSocket(){
+  socket.on('S_STATE',d=>{
+    // Update other players
+    for(const[id,p] of Object.entries(d.ps)){
+      if(id===myId) continue;
+      if(!players[id]) players[id]={...p,animFrame:0,animTimer:0};
+      else Object.assign(players[id],p);
     }
-  }
-  
-  update(dt) {
-    if (!this.running || this.local.dead || this.local.escaped) return;
-    
-    // Input
-    let moveX = 0, moveY = 0;
-    let sprinting = false;
-    
-    if (this.keys['ArrowLeft'] || this.keys['KeyA']) moveX -= 1;
-    if (this.keys['ArrowRight'] || this.keys['KeyD']) moveX += 1;
-    if (this.keys['ArrowUp'] || this.keys['KeyW']) moveY -= 1;
-    if (this.keys['ArrowDown'] || this.keys['KeyS']) moveY += 1;
-    if (this.keys['ShiftLeft'] || this.keys['ShiftRight']) sprinting = true;
-    
-    // Joystick
-    if (this.joystick.active) {
-      const jd = Math.hypot(this.joystick.dx, this.joystick.dy);
-      if (jd > 10) {
-        moveX = this.joystick.dx / Math.max(jd, 60);
-        moveY = this.joystick.dy / Math.max(jd, 60);
-        if (jd > 55) sprinting = true;
-        // Clamp
-        const len = Math.hypot(moveX, moveY);
-        if (len > 1) { moveX /= len; moveY /= len; }
-      }
-    }
-    
-    const spd = sprinting ? PLAYER_SPRINT : PLAYER_SPEED;
-    this.local.vx = moveX * spd;
-    this.local.vy = moveY * spd;
-    
-    // Move with wall collision
-    const nx = this.local.x + this.local.vx;
-    const ny = this.local.y + this.local.vy;
-    
-    if (!this.checkWall(nx, this.local.y)) this.local.x = nx;
-    if (!this.checkWall(this.local.x, ny)) this.local.y = ny;
-    
-    // Jump (visual effect only for top-down... but we add it as animation)
-    if (!this.local.grounded) {
-      this.local.vy2 += GRAVITY;
-      this.local.jumpOffset = (this.local.jumpOffset || 0) + this.local.vy2;
-      if ((this.local.jumpOffset || 0) >= 0) {
-        this.local.jumpOffset = 0;
-        this.local.vy2 = 0;
-        this.local.grounded = true;
-      }
-    }
-    
-    // Direction
-    if (Math.abs(moveX) > 0.1 || Math.abs(moveY) > 0.1) {
-      if (Math.abs(moveX) > Math.abs(moveY)) {
-        this.local.dir = moveX > 0 ? 'right' : 'left';
-      } else {
-        this.local.dir = moveY > 0 ? 'down' : 'up';
-      }
-      this.local.state = sprinting ? 'run' : 'walk';
-      
-      // Footsteps
-      this.local.stepTimer = (this.local.stepTimer || 0) + dt;
-      const stepInterval = sprinting ? 0.25 : 0.4;
-      if (this.local.stepTimer > stepInterval) {
-        this.local.stepTimer = 0;
-        this.footstepSound();
-      }
+    for(const id of Object.keys(players))
+      if(!d.ps[id]) delete players[id];
+
+    MON.x=d.mon.x; MON.y=d.mon.y; MON.phase=d.mon.phase;
+    if(d.key){keyObj.collected=d.key.c; keyObj.holder=d.key.h;}
+  });
+
+  socket.on('S_PJOIN',p=>{
+    if(p.id===myId)return;
+    players[p.id]={...p,animFrame:0,animTimer:0};
+    showMsg(`${p.name} odaya girdi`,'#77ddff',2000);
+  });
+
+  socket.on('S_LEFT',({id})=>{
+    if(players[id]){showMsg(`${players[id].n||players[id].name} ayrıldı`,'#ffaa55',2000);}
+    delete players[id];
+  });
+
+  socket.on('S_KEY',({id,name})=>{
+    if(id===myId){
+      ME.hasKey=true;
+      showMsg('🔑 ANAHTAR SENDE! ÇIKIŞA KOŞ!','#ffe044',4500);
+      spawnParticles(ME.x,ME.y,'#ffe044',16);
+      playSound('key');
     } else {
-      this.local.state = 'idle';
+      showMsg(`🔑 ${name} anahtarı aldı!`,'#ffe044',2500);
     }
-    
-    // Anim
-    this.local.animTimer += dt;
-    if (this.local.animTimer > 1/ANIM_FPS) {
-      this.local.animTimer = 0;
-      this.local.animFrame = (this.local.animFrame + 1) % 4;
+    if(keyObj) keyObj.collected=true;
+  });
+
+  socket.on('S_CAUGHT',({id,name})=>{
+    if(id===myId){
+      flashRed=1.2;
+      screenShake(12,0.5);
+      showMsg('💀 YAKALANDINN!!','#ff2244',6000);
+      playSound('caught');
+    } else {
+      showMsg(`💀 ${name} yakalandı!`,'#ff6644',2500);
     }
-    
-    // Camera follow
-    const camSpeed = 8;
-    this.camera.x += (this.local.x - this.canvas.width/2 - this.camera.x) * camSpeed * dt;
-    this.camera.y += (this.local.y - this.canvas.height/2 - this.camera.y) * camSpeed * dt;
-    
-    // Emit move
-    this.moveEmitTimer = (this.moveEmitTimer || 0) + dt;
-    if (this.moveEmitTimer > 0.05) {
-      this.moveEmitTimer = 0;
-      this.socket.emit('playerMove', {
-        x: this.local.x,
-        y: this.local.y,
-        vx: this.local.vx,
-        vy: this.local.vy,
-        dir: this.local.dir,
-        state: this.local.state
-      });
+    if(onCaught) onCaught(id);
+    spawnParticles(id===myId?ME.x:(players[id]?.x||0), id===myId?ME.y:(players[id]?.y||0),'#ff2244',20);
+  });
+
+  socket.on('S_DIED',()=>{
+    ME.dead=true;
+    running=false;
+    setTimeout(()=>{ if(onDied) onDied(); },1200);
+  });
+
+  socket.on('S_ESCAPED',({id,name})=>{
+    if(id===myId){
+      ME.escaped=true; ME.hasKey=false;
+      flashWhite=1.0;
+      showMsg('🏆 KURTULDUN!!!','#44ff99',8000);
+      playSound('escape');
+      setTimeout(()=>{ if(onEscaped) onEscaped(); },2000);
+    } else {
+      showMsg(`🏆 ${name} kaçtı!`,'#44ff99',3000);
     }
-    
-    // Monster player control
-    if (this.isMonster && this.monsterType === 'player') {
-      this.socket.emit('monsterMove', {
-        x: this.local.x,
-        y: this.local.y,
-        dir: this.local.dir,
-        state: this.local.state
-      });
+  });
+
+  socket.on('S_GAMEOVER',({reason})=>{
+    running=false;
+    setTimeout(()=>{ if(onGameOver) onGameOver(reason); },1500);
+  });
+
+  socket.on('S_YOU_MONSTER',()=>{
+    isMonster=true;
+    showMsg('👹 SEN CANAVARSIN! Oyuncuları yakala!','#ff4422',4000);
+    playSound('monster');
+  });
+
+  socket.on('S_ERROR',msg=>{
+    showMsg('❌ '+msg,'#ff4444',3000);
+  });
+}
+
+/* ─── Input ──────────────────────────────────────────────────── */
+function _initInput(){
+  document.addEventListener('keydown',e=>{
+    KEYS[e.code]=true;
+    if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) e.preventDefault();
+    if(e.code==='Space') _tryJump();
+  });
+  document.addEventListener('keyup',e=>{ KEYS[e.code]=false; });
+
+  canvas.addEventListener('touchstart',e=>{
+    e.preventDefault();
+    for(const t of e.changedTouches){
+      const rx=t.clientX/canvas.clientWidth;
+      const ry=t.clientY/canvas.clientHeight;
+      if(rx<0.55&&!JOY.active){
+        JOY.active=true;JOY.id=t.identifier;
+        JOY.sx=t.clientX;JOY.sy=t.clientY;JOY.dx=0;JOY.dy=0;
+      }
+      if(rx>=0.55&&ry<0.7) _tryJump();
     }
-    
-    // Particles
-    this.particles = this.particles.filter(p => p.life > 0);
-    for (const p of this.particles) {
-      p.x += p.vx; p.y += p.vy;
-      p.life -= dt;
-      p.vy += 0.1;
-    }
-    
-    // Flash effect decay
-    if (this.flashRed > 0) this.flashRed -= dt * 2;
-    
-    // FPS
-    this.fpsCount++;
-    this.fpsTimer += dt;
-    if (this.fpsTimer >= 1) {
-      this.fps = this.fpsCount;
-      this.fpsCount = 0;
-      this.fpsTimer = 0;
-    }
-    
-    // Check AI proximity warning
-    if (this.ai && !this.isMonster) {
-      const dd = Math.hypot(this.local.x - this.ai.x, this.local.y - this.ai.y);
-      this.aiDanger = Math.max(0, 1 - dd / 300);
-    }
-  }
-  
-  checkWall(x, y) {
-    for (const w of this.walls) {
-      if (x + PLAYER_RADIUS > w.x && x - PLAYER_RADIUS < w.x + w.w &&
-          y + PLAYER_RADIUS > w.y && y - PLAYER_RADIUS < w.y + w.h) {
-        return true;
+  },{passive:false});
+
+  canvas.addEventListener('touchmove',e=>{
+    e.preventDefault();
+    for(const t of e.changedTouches){
+      if(t.identifier===JOY.id){
+        JOY.dx=t.clientX-JOY.sx;
+        JOY.dy=t.clientY-JOY.sy;
       }
     }
-    return false;
-  }
-  
-  render() {
-    const ctx = this.ctx;
-    const cw = this.canvas.width;
-    const ch = this.canvas.height;
-    ctx.clearRect(0, 0, cw, ch);
-    
-    // Background
-    ctx.fillStyle = '#1a1008';
-    ctx.fillRect(0, 0, cw, ch);
-    
-    ctx.save();
-    ctx.translate(-this.camera.x, -this.camera.y);
-    
-    // Draw floor tiles
-    this.drawFloor(ctx);
-    
-    // Draw exit
-    if (this.exit) this.drawExit(ctx);
-    
-    // Draw key
-    if (this.key && !this.key.collected) this.drawKey(ctx);
-    
-    // Draw walls
-    this.drawWalls(ctx);
-    
-    // Draw other players
-    for (const [id, p] of Object.entries(this.players)) {
-      this.drawPlayer(ctx, p, id === this.monsterPlayerId);
-    }
-    
-    // Draw local player
-    this.drawLocalPlayer(ctx);
-    
-    // Draw AI
-    if (this.ai && this.monsterType === 'ai') {
-      this.drawMonster(ctx, this.ai);
-    }
-    
-    // Particles
-    for (const p of this.particles) {
-      ctx.save();
-      ctx.globalAlpha = p.life;
-      ctx.fillStyle = p.color;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
-      ctx.fill();
-      ctx.restore();
-    }
-    
-    ctx.restore();
-    
-    // Flashlight overlay
-    this.drawFlashlight(ctx, cw, ch);
-    
-    // Danger vignette
-    if (this.aiDanger > 0) {
-      ctx.save();
-      const grad = ctx.createRadialGradient(cw/2,ch/2,ch*0.3,cw/2,ch/2,ch*0.8);
-      grad.addColorStop(0, 'rgba(255,0,0,0)');
-      grad.addColorStop(1, `rgba(255,0,0,${this.aiDanger * 0.5})`);
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, cw, ch);
-      ctx.restore();
-    }
-    
-    // Red flash
-    if (this.flashRed > 0) {
-      ctx.fillStyle = `rgba(255,0,0,${this.flashRed * 0.6})`;
-      ctx.fillRect(0, 0, cw, ch);
-    }
-    
-    // HUD
-    this.drawHUD(ctx, cw, ch);
-    
-    // Mobile controls
-    if (window.isMobile) this.drawMobileControls(ctx, cw, ch);
-    
-    // Messages
-    this.drawMessages(ctx, cw, ch);
-  }
-  
-  drawFloor(ctx) {
-    const startX = Math.floor(this.camera.x / TILE) - 1;
-    const startY = Math.floor(this.camera.y / TILE) - 1;
-    const endX = startX + Math.ceil(this.canvas.width / TILE) + 2;
-    const endY = startY + Math.ceil(this.canvas.height / TILE) + 2;
-    
-    for (let ty = startY; ty < endY; ty++) {
-      for (let tx = startX; tx < endX; tx++) {
-        const wx = tx * TILE, wy = ty * TILE;
-        // Checker pattern floor
-        const even = (tx + ty) % 2 === 0;
-        ctx.fillStyle = even ? '#2a1f0a' : '#261c08';
-        ctx.fillRect(wx, wy, TILE, TILE);
-        
-        // Grid lines
-        ctx.strokeStyle = 'rgba(80,60,20,0.3)';
-        ctx.lineWidth = 0.5;
-        ctx.strokeRect(wx, wy, TILE, TILE);
+  },{passive:false});
+
+  canvas.addEventListener('touchend',e=>{
+    for(const t of e.changedTouches){
+      if(t.identifier===JOY.id){
+        JOY.active=false;JOY.dx=0;JOY.dy=0;
       }
     }
-  }
-  
-  drawWalls(ctx) {
-    const cx = this.camera.x, cy = this.camera.y;
-    const cw = this.canvas.width, ch = this.canvas.height;
-    
-    for (const w of this.walls) {
-      if (w.x + w.w < cx || w.x > cx + cw || w.y + w.h < cy || w.y > cy + ch) continue;
-      
-      // Wall base
-      ctx.fillStyle = '#8B7355';
-      ctx.fillRect(w.x, w.y, w.w, w.h);
-      
-      // Wall texture pattern
-      ctx.fillStyle = '#7A6248';
-      for (let i = 0; i < 3; i++) {
-        for (let j = 0; j < 3; j++) {
-          if ((i + j) % 2 === 0) {
-            ctx.fillRect(w.x + i*(w.w/3), w.y + j*(w.h/3), w.w/3, w.h/3);
-          }
-        }
-      }
-      
-      // Highlight top
-      ctx.fillStyle = 'rgba(255,240,180,0.15)';
-      ctx.fillRect(w.x, w.y, w.w, 4);
-      
-      // Shadow bottom
-      ctx.fillStyle = 'rgba(0,0,0,0.4)';
-      ctx.fillRect(w.x, w.y + w.h - 4, w.w, 4);
-      
-      // Border
-      ctx.strokeStyle = '#5C4A2A';
-      ctx.lineWidth = 1;
-      ctx.strokeRect(w.x, w.y, w.w, w.h);
-    }
-  }
-  
-  drawKey(ctx) {
-    const k = this.key;
-    const t = Date.now() / 1000;
-    const bob = Math.sin(t * 3) * 5;
-    const glow = (Math.sin(t * 4) + 1) / 2;
-    
-    ctx.save();
-    ctx.translate(k.x, k.y + bob);
-    
-    // Glow
-    const glowR = ctx.createRadialGradient(0, 0, 5, 0, 0, 40);
-    glowR.addColorStop(0, `rgba(255,220,0,${0.4 + glow * 0.3})`);
-    glowR.addColorStop(1, 'rgba(255,220,0,0)');
-    ctx.fillStyle = glowR;
-    ctx.beginPath();
-    ctx.arc(0, 0, 40, 0, Math.PI*2);
-    ctx.fill();
-    
-    // Key shape
-    ctx.fillStyle = '#FFD700';
-    ctx.beginPath();
-    ctx.arc(0, -5, 12, 0, Math.PI*2);
-    ctx.fill();
-    ctx.fillStyle = '#2a1f0a';
-    ctx.beginPath();
-    ctx.arc(0, -5, 6, 0, Math.PI*2);
-    ctx.fill();
-    ctx.fillStyle = '#FFD700';
-    ctx.fillRect(-4, 5, 8, 20);
-    ctx.fillRect(-4, 15, 5, 5);
-    ctx.fillRect(-4, 21, 7, 4);
-    
-    ctx.restore();
-  }
-  
-  drawExit(ctx) {
-    const e = this.exit;
-    const t = Date.now() / 1000;
-    const pulse = (Math.sin(t * 2) + 1) / 2;
-    
-    ctx.save();
-    ctx.translate(e.x, e.y);
-    
-    // Exit glow
-    const grad = ctx.createRadialGradient(0, 0, 10, 0, 0, 60);
-    grad.addColorStop(0, `rgba(0,255,150,${0.3 + pulse * 0.2})`);
-    grad.addColorStop(1, 'rgba(0,255,150,0)');
-    ctx.fillStyle = grad;
-    ctx.beginPath();
-    ctx.arc(0, 0, 60, 0, Math.PI*2);
-    ctx.fill();
-    
-    // Door
-    ctx.fillStyle = '#00cc66';
-    ctx.fillRect(-20, -30, 40, 55);
-    ctx.fillStyle = '#004422';
-    ctx.fillRect(-15, -25, 30, 45);
-    
-    // Exit text
-    ctx.fillStyle = '#00ff88';
-    ctx.font = 'bold 11px monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText('EXIT', 0, 40);
-    
-    ctx.restore();
-  }
-  
-  drawPlayer(ctx, p, isMonsterPlayer) {
-    const jo = p.jumpOffset || 0;
-    ctx.save();
-    ctx.translate(p.x, p.y + jo);
-    
-    if (isMonsterPlayer) {
-      this.drawMonsterBody(ctx);
-    } else {
-      this.drawPlayerBody(ctx, p);
-    }
-    
-    // Name tag
-    ctx.fillStyle = 'rgba(0,0,0,0.6)';
-    const nameW = p.name.length * 6 + 10;
-    ctx.fillRect(-nameW/2, -48, nameW, 16);
-    ctx.fillStyle = isMonsterPlayer ? '#ff4444' : '#ffffff';
-    ctx.font = '11px monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText(p.name, 0, -35);
-    
-    ctx.restore();
-  }
-  
-  drawPlayerBody(ctx, p) {
-    const frame = (p.animFrame || 0) % 4;
-    const dir = p.dir || 'down';
-    const state = p.state || 'idle';
-    
-    // Shadow
-    ctx.fillStyle = 'rgba(0,0,0,0.3)';
-    ctx.beginPath();
-    ctx.ellipse(0, 18, 14, 6, 0, 0, Math.PI*2);
-    ctx.fill();
-    
-    // Body
-    ctx.fillStyle = '#4a9eff';
-    ctx.beginPath();
-    ctx.roundRect(-12, -20, 24, 28, 4);
-    ctx.fill();
-    
-    // Head
-    ctx.fillStyle = '#ffcc99';
-    ctx.beginPath();
-    ctx.arc(0, -26, 12, 0, Math.PI*2);
-    ctx.fill();
-    
-    // Eyes based on dir
-    ctx.fillStyle = '#333';
-    if (dir === 'down') {
-      ctx.fillRect(-4, -28, 3, 3);
-      ctx.fillRect(2, -28, 3, 3);
-    } else if (dir === 'up') {
-      // no eyes visible
-    } else if (dir === 'right') {
-      ctx.fillRect(5, -27, 3, 3);
-    } else {
-      ctx.fillRect(-8, -27, 3, 3);
-    }
-    
-    // Walk animation legs
-    if (state === 'walk' || state === 'run') {
-      const legSwing = Math.sin(frame * Math.PI / 2) * 8;
-      ctx.fillStyle = '#2244aa';
-      // Left leg
-      ctx.fillRect(-8, 6, 6, 12 + (legSwing > 0 ? legSwing : 0));
-      // Right leg
-      ctx.fillRect(2, 6, 6, 12 + (legSwing < 0 ? -legSwing : 0));
-    } else {
-      ctx.fillStyle = '#2244aa';
-      ctx.fillRect(-8, 6, 6, 14);
-      ctx.fillRect(2, 6, 6, 14);
-    }
-    
-    // Key badge
-    if (p.hasKey) {
-      ctx.fillStyle = '#FFD700';
-      ctx.font = '12px monospace';
-      ctx.textAlign = 'center';
-      ctx.fillText('🔑', 14, -20);
-    }
-  }
-  
-  drawLocalPlayer(ctx) {
-    const p = this.local;
-    const jo = p.jumpOffset || 0;
-    ctx.save();
-    ctx.translate(p.x, p.y + jo);
-    
-    // Shadow
-    ctx.fillStyle = 'rgba(0,0,0,0.3)';
-    ctx.beginPath();
-    ctx.ellipse(0, 18, 14, 6, 0, 0, Math.PI*2);
-    ctx.fill();
-    
-    // Highlight ring
-    ctx.strokeStyle = 'rgba(255,255,255,0.4)';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(0, -26, 14, 0, Math.PI*2);
-    ctx.stroke();
-    
-    this.drawPlayerBody(ctx, { ...p, hasKey: this.local.hasKey });
-    
-    // Name tag
-    ctx.fillStyle = 'rgba(0,0,0,0.6)';
-    const nameW = this.playerName.length * 6 + 10;
-    ctx.fillRect(-nameW/2, -48, nameW, 16);
-    ctx.fillStyle = '#00ff88';
-    ctx.font = '11px monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText(this.playerName, 0, -35);
-    
-    ctx.restore();
-  }
-  
-  drawMonster(ctx, ai) {
-    ctx.save();
-    ctx.translate(ai.x, ai.y);
-    this.drawMonsterBody(ctx);
-    ctx.restore();
-  }
-  
-  drawMonsterBody(ctx) {
-    const t = Date.now() / 1000;
-    const wobble = Math.sin(t * 8) * 2;
-    
-    // Shadow
-    ctx.fillStyle = 'rgba(255,0,0,0.2)';
-    ctx.beginPath();
-    ctx.ellipse(0, 22, 20, 8, 0, 0, Math.PI*2);
-    ctx.fill();
-    
-    // Body - creature
-    ctx.fillStyle = '#1a0000';
-    ctx.beginPath();
-    ctx.ellipse(0, -5, 18, 22, 0, 0, Math.PI*2);
-    ctx.fill();
-    
-    // Glow
-    ctx.strokeStyle = '#ff2200';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    
-    // Eyes
-    ctx.fillStyle = '#ff0000';
-    ctx.beginPath();
-    ctx.arc(-7 + wobble, -12, 5, 0, Math.PI*2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(7 - wobble, -12, 5, 0, Math.PI*2);
-    ctx.fill();
-    
-    // Pupils
-    ctx.fillStyle = '#ff8800';
-    ctx.beginPath();
-    ctx.arc(-7 + wobble, -12, 2, 0, Math.PI*2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(7 - wobble, -12, 2, 0, Math.PI*2);
-    ctx.fill();
-    
-    // Mouth
-    ctx.strokeStyle = '#ff4400';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(0, -2, 8, 0.3, Math.PI - 0.3);
-    ctx.stroke();
-    
-    // Arms tentacles
-    for (let i = 0; i < 3; i++) {
-      const ang = (i / 3) * Math.PI + Math.sin(t * 5 + i) * 0.3 - Math.PI/2;
-      ctx.strokeStyle = '#cc1100';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(Math.cos(ang) * 18, -5 + Math.sin(ang) * 18);
-      ctx.lineTo(Math.cos(ang) * 32, -5 + Math.sin(ang) * 32);
-      ctx.stroke();
-    }
-    
-    // Label
-    ctx.fillStyle = '#ff4444';
-    ctx.font = 'bold 11px monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText('CANAVAR', 0, -44);
-  }
-  
-  drawFlashlight(ctx, cw, ch) {
-    // Dark overlay with cutout around player
-    const px = this.local.x - this.camera.x;
-    const py = this.local.y - this.camera.y;
-    
-    const overlay = ctx.createRadialGradient(px, py, 0, px, py, this.flashRadius);
-    overlay.addColorStop(0, 'rgba(0,0,0,0)');
-    overlay.addColorStop(0.5, 'rgba(0,0,0,0.1)');
-    overlay.addColorStop(0.8, 'rgba(0,0,0,0.7)');
-    overlay.addColorStop(1, 'rgba(0,0,0,0.95)');
-    
-    ctx.fillStyle = overlay;
-    ctx.fillRect(0, 0, cw, ch);
-    
-    // Ambient light color tint
-    ctx.fillStyle = 'rgba(255,200,100,0.02)';
-    ctx.fillRect(0, 0, cw, ch);
-  }
-  
-  drawHUD(ctx, cw, ch) {
-    ctx.save();
-    
-    // Top bar
-    ctx.fillStyle = 'rgba(0,0,0,0.6)';
-    ctx.fillRect(0, 0, cw, 36);
-    
-    // Key status
-    if (this.local.hasKey) {
-      ctx.fillStyle = '#FFD700';
-      ctx.font = 'bold 14px monospace';
-      ctx.textAlign = 'left';
-      ctx.fillText('🔑 ANAHTARIN SENDE! ÇIKIŞA KOŞ!', 10, 23);
-    } else {
-      ctx.fillStyle = '#ccaa55';
-      ctx.font = '13px monospace';
-      ctx.textAlign = 'left';
-      ctx.fillText('🔑 Anahtarı bul...', 10, 23);
-    }
-    
-    // FPS (small, right)
-    ctx.fillStyle = 'rgba(255,255,255,0.3)';
-    ctx.font = '10px monospace';
-    ctx.textAlign = 'right';
-    ctx.fillText(`${this.fps}fps`, cw - 5, 14);
-    
-    // Player count
-    const pCount = Object.keys(this.players).length + 1;
-    ctx.fillStyle = 'rgba(255,255,255,0.5)';
-    ctx.font = '11px monospace';
-    ctx.textAlign = 'right';
-    ctx.fillText(`👥 ${pCount}`, cw - 5, 30);
-    
-    ctx.restore();
-  }
-  
-  drawMobileControls(ctx, cw, ch) {
-    // Joystick zone indicator
-    const jx = this.joystick.active ? this.joystick.startX : cw * 0.18;
-    const jy = this.joystick.active ? this.joystick.startY : ch * 0.78;
-    
-    // Outer ring
-    ctx.save();
-    ctx.globalAlpha = 0.3;
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(jx, jy, 55, 0, Math.PI*2);
-    ctx.stroke();
-    ctx.globalAlpha = 0.1;
-    ctx.fillStyle = '#ffffff';
-    ctx.fill();
-    ctx.restore();
-    
-    // Inner stick
-    if (this.joystick.active) {
-      const len = Math.min(Math.hypot(this.joystick.dx, this.joystick.dy), 45);
-      const ang = Math.atan2(this.joystick.dy, this.joystick.dx);
-      const sx = jx + Math.cos(ang) * len;
-      const sy = jy + Math.sin(ang) * len;
-      
-      ctx.save();
-      ctx.globalAlpha = 0.6;
-      ctx.fillStyle = '#ffffff';
-      ctx.beginPath();
-      ctx.arc(sx, sy, 22, 0, Math.PI*2);
-      ctx.fill();
-      ctx.restore();
-    } else {
-      ctx.save();
-      ctx.globalAlpha = 0.35;
-      ctx.fillStyle = '#ffffff';
-      ctx.beginPath();
-      ctx.arc(jx, jy, 22, 0, Math.PI*2);
-      ctx.fill();
-      ctx.restore();
-    }
-    
-    // Jump button (right side)
-    const bx = cw * 0.85, by = ch * 0.78;
-    ctx.save();
-    ctx.globalAlpha = 0.35;
-    ctx.fillStyle = '#44aaff';
-    ctx.beginPath();
-    ctx.arc(bx, by, 38, 0, Math.PI*2);
-    ctx.fill();
-    ctx.strokeStyle = '#88ccff';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    ctx.globalAlpha = 0.8;
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 13px monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText('ZIP', bx, by + 5);
-    ctx.restore();
-  }
-  
-  drawMessages(ctx, cw, ch) {
-    if (!this.messages) return;
-    const now = Date.now();
-    this.messages = this.messages.filter(m => now < m.until);
-    
-    ctx.save();
-    ctx.font = 'bold 16px monospace';
-    ctx.textAlign = 'center';
-    
-    let y = ch * 0.18;
-    for (const m of this.messages) {
-      const alpha = Math.min(1, (m.until - now) / 500);
-      ctx.globalAlpha = alpha;
-      
-      // Shadow
-      ctx.fillStyle = 'rgba(0,0,0,0.8)';
-      const tw = ctx.measureText(m.text).width;
-      ctx.fillRect(cw/2 - tw/2 - 10, y - 18, tw + 20, 26);
-      
-      ctx.fillStyle = m.color || '#ffffff';
-      ctx.fillText(m.text, cw/2, y);
-      y += 32;
-    }
-    ctx.restore();
-  }
-  
-  showMessage(text, color, duration) {
-    if (!this.messages) this.messages = [];
-    this.messages.push({ text, color, until: Date.now() + duration });
-  }
-  
-  start() {
-    if (!this.audioCtx) this.initAudio();
-    this.running = true;
-    const loop = (ts) => {
-      const dt = Math.min((ts - this.lastTime) / 1000, 0.05);
-      this.lastTime = ts;
-      this.update(dt);
-      this.render();
-      requestAnimationFrame(loop);
-    };
-    requestAnimationFrame(ts => { this.lastTime = ts; requestAnimationFrame(loop); });
-  }
-  
-  resize(w, h) {
-    this.canvas.width = w;
-    this.canvas.height = h;
-  }
-  
-  addParticle(x, y, color) {
-    for (let i = 0; i < 8; i++) {
-      const ang = Math.random() * Math.PI * 2;
-      const spd = 1 + Math.random() * 3;
-      this.particles.push({
-        x, y,
-        vx: Math.cos(ang)*spd,
-        vy: Math.sin(ang)*spd - 2,
-        life: 0.5 + Math.random() * 0.5,
-        color,
-        r: 2 + Math.random() * 4
-      });
-    }
+  });
+}
+
+function _tryJump(){
+  if(ME.grounded&&!ME.dead&&!ME.escaped){
+    ME.grounded=false; ME.jumpVY=JUMP_VY;
+    playSound('jump');
   }
 }
 
-window.BackroomsGame = BackroomsGame;
+/* ─── Main Loop ──────────────────────────────────────────────── */
+function _loop(ts){
+  const dt=Math.min((ts-lastTime)/1000,0.05);
+  lastTime=ts;
+  fpsCnt++; fpsTimer+=dt;
+  if(fpsTimer>=1){fps=fpsCnt;fpsCnt=0;fpsTimer=0;}
+
+  if(running){
+    _update(dt);
+  }
+  _render();
+  requestAnimationFrame(_loop);
+}
+
+/* ─── Update ─────────────────────────────────────────────────── */
+function _update(dt){
+  if(ME.dead||ME.escaped) return;
+
+  // ── Gather input ──
+  let mx=0,my=0,sprint=false;
+  if(KEYS['ArrowLeft']||KEYS['KeyA'])  mx-=1;
+  if(KEYS['ArrowRight']||KEYS['KeyD']) mx+=1;
+  if(KEYS['ArrowUp']||KEYS['KeyW'])    my-=1;
+  if(KEYS['ArrowDown']||KEYS['KeyS'])  my+=1;
+  if(KEYS['ShiftLeft']||KEYS['ShiftRight']) sprint=true;
+
+  if(JOY.active){
+    const jd=Math.hypot(JOY.dx,JOY.dy);
+    if(jd>12){
+      const js=Math.min(jd,60);
+      mx=JOY.dx/js; my=JOY.dy/js;
+      if(js>48) sprint=true;
+    }
+  }
+
+  const len=Math.hypot(mx,my);
+  if(len>1){mx/=len;my/=len;}
+
+  const spd=sprint?PLR_SPRINT:PLR_SPD;
+  const vx=mx*spd, vy=my*spd;
+
+  // ── Wall collision (slide) ──
+  let nx=ME.x+vx, ny=ME.y+vy;
+  if(!_wallHit(nx,ME.y,PLR_R)) ME.x=nx;
+  if(!_wallHit(ME.x,ny,PLR_R)) ME.y=ny;
+
+  // ── Jump (visual bobbing) ──
+  if(!ME.grounded){
+    ME.jumpVY+=GRAVITY;
+    ME.jumpOff+=ME.jumpVY;
+    if(ME.jumpOff>=0){ME.jumpOff=0;ME.jumpVY=0;ME.grounded=true;}
+    ME.jumpOff=Math.max(ME.jumpOff,-MAX_JUMP);
+  }
+
+  // ── Direction & anim ──
+  if(len>0.1){
+    if(Math.abs(mx)>Math.abs(my)) ME.dir=mx>0?'r':'l';
+    else ME.dir=my>0?'d':'u';
+    ME.anim=sprint?'run':'walk';
+    ME.stepTimer+=dt;
+    const si=sprint?0.22:0.38;
+    if(ME.stepTimer>si){ME.stepTimer=0;playSound('step');}
+  } else {
+    ME.anim='idle';
+  }
+
+  ME.animTimer+=dt;
+  if(ME.animTimer>1/ANIM_FPS){ME.animTimer=0;ME.animFrame=(ME.animFrame+1)%4;}
+
+  // ── Send to server ──
+  sendTimer+=dt;
+  if(sendTimer>0.05){
+    sendTimer=0;
+    socket.emit('C_MOVE',{x:ME.x,y:ME.y,dir:ME.dir,anim:ME.anim});
+  }
+
+  // ── Camera ──
+  const tx=ME.x-canvas.width/2;
+  const ty=ME.y-canvas.height/2;
+  CAM.x+=(tx-CAM.x)*CAM_LERP;
+  CAM.y+=(ty-CAM.y)*CAM_LERP;
+
+  // ── Danger proximity ──
+  const dd=Math.hypot(ME.x-MON.x,ME.y-MON.y);
+  dangerAmt=Math.max(0,1-dd/400);
+  if(dangerAmt>0.7) MON.visTimer=Math.min(1,MON.visTimer+dt*3);
+  else MON.visTimer=Math.max(0,MON.visTimer-dt*1.5);
+
+  // ── Effects decay ──
+  flashRed=Math.max(0,flashRed-dt*2);
+  flashWhite=Math.max(0,flashWhite-dt*3);
+  if(shakeT>0){
+    shakeT-=dt;
+    shakeX=(Math.random()-.5)*shakeT*20;
+    shakeY=(Math.random()-.5)*shakeT*20;
+  } else { shakeX=0;shakeY=0; }
+
+  // ── Particles ──
+  parts=parts.filter(p=>p.life>0);
+  for(const p of parts){p.x+=p.vx;p.y+=p.vy;p.vy+=0.12;p.life-=dt;p.r=Math.max(0,p.r-dt*3);}
+
+  // ── Other players anim ──
+  for(const p of Object.values(players)){
+    p.animTimer=(p.animTimer||0)+dt;
+    if(p.animTimer>1/ANIM_FPS){p.animTimer=0;p.animFrame=((p.animFrame||0)+1)%4;}
+  }
+}
+
+/* ─── Wall helper ────────────────────────────────────────────── */
+function _wallHit(x,y,r){
+  for(let i=0;i<walls.length;i+=2){
+    const wx=walls[i],wy=walls[i+1];
+    const cx=Math.max(wx,Math.min(x,wx+TILE));
+    const cy=Math.max(wy,Math.min(y,wy+TILE));
+    if((x-cx)**2+(y-cy)**2<r*r) return true;
+  }
+  return false;
+}
+
+/* ─── Render ─────────────────────────────────────────────────── */
+function _render(){
+  const cw=canvas.width,ch=canvas.height;
+  ctx.clearRect(0,0,cw,ch);
+  ctx.fillStyle='#100c04';
+  ctx.fillRect(0,0,cw,ch);
+
+  ctx.save();
+  ctx.translate(Math.round(-CAM.x+shakeX), Math.round(-CAM.y+shakeY));
+
+  _drawFloor();
+  _drawExit();
+  _drawKey();
+  _drawWalls();
+
+  // Other players
+  for(const[id,p] of Object.entries(players)){
+    _drawPlayer(p, id===monPlayerId&&monsterType==='player');
+  }
+
+  // Self
+  _drawSelf();
+
+  // Monster
+  _drawMonster();
+
+  // Particles
+  for(const p of parts){
+    ctx.save();
+    ctx.globalAlpha=Math.max(0,p.life);
+    ctx.fillStyle=p.col;
+    ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();
+    ctx.restore();
+  }
+
+  ctx.restore();
+
+  // Flashlight
+  _drawFlashlight(cw,ch);
+
+  // Danger vignette
+  if(dangerAmt>0){
+    const g=ctx.createRadialGradient(cw/2,ch/2,ch*.25,cw/2,ch/2,ch*.8);
+    g.addColorStop(0,'rgba(255,0,0,0)');
+    g.addColorStop(1,`rgba(200,0,0,${dangerAmt*0.55})`);
+    ctx.fillStyle=g;ctx.fillRect(0,0,cw,ch);
+  }
+
+  // Flash effects
+  if(flashRed>0){ ctx.fillStyle=`rgba(255,0,0,${Math.min(0.7,flashRed*0.6)})`; ctx.fillRect(0,0,cw,ch); }
+  if(flashWhite>0){ ctx.fillStyle=`rgba(255,255,255,${flashWhite*0.8})`; ctx.fillRect(0,0,cw,ch); }
+
+  // HUD
+  _drawHUD(cw,ch);
+
+  // Mobile UI
+  if(window.IS_MOBILE) _drawJoystick(cw,ch);
+
+  // Messages
+  _drawMsgs(cw,ch);
+}
+
+/* ─── Floor ──────────────────────────────────────────────────── */
+function _drawFloor(){
+  const sx=Math.floor(CAM.x/TILE)-1;
+  const sy=Math.floor(CAM.y/TILE)-1;
+  const ex=sx+Math.ceil(canvas.width/TILE)+2;
+  const ey=sy+Math.ceil(canvas.height/TILE)+2;
+  for(let ty=sy;ty<ey;ty++){
+    for(let tx=sx;tx<ex;tx++){
+      ctx.fillStyle=(tx+ty)%2?'#1e1608':'#1a1306';
+      ctx.fillRect(tx*TILE,ty*TILE,TILE,TILE);
+    }
+  }
+  // subtle grid
+  ctx.strokeStyle='rgba(60,45,15,0.25)';
+  ctx.lineWidth=0.5;
+  for(let ty=sy;ty<ey;ty++)for(let tx=sx;tx<ex;tx++){
+    ctx.strokeRect(tx*TILE,ty*TILE,TILE,TILE);
+  }
+}
+
+/* ─── Walls ──────────────────────────────────────────────────── */
+function _drawWalls(){
+  const vx1=CAM.x-TILE,vy1=CAM.y-TILE,vx2=CAM.x+canvas.width+TILE,vy2=CAM.y+canvas.height+TILE;
+  for(let i=0;i<walls.length;i+=2){
+    const wx=walls[i],wy=walls[i+1];
+    if(wx>vx2||wx+TILE<vx1||wy>vy2||wy+TILE<vy1)continue;
+
+    // Base
+    ctx.fillStyle='#7a6442';
+    ctx.fillRect(wx,wy,TILE,TILE);
+    // Bricks
+    const bh=TILE/3;
+    for(let row=0;row<3;row++){
+      const off=(row%2)*TILE*.5;
+      ctx.fillStyle=row%2?'#6e5938':'#7a6442';
+      ctx.fillRect(wx,wy+row*bh,TILE,bh);
+      ctx.strokeStyle='#4a3c22';
+      ctx.lineWidth=1;
+      ctx.strokeRect(wx+off,wy+row*bh,TILE*.5,bh);
+      ctx.strokeRect(wx+off+TILE*.5,wy+row*bh,TILE*.5,bh);
+    }
+    // Top highlight
+    ctx.fillStyle='rgba(255,230,150,0.12)';
+    ctx.fillRect(wx,wy,TILE,3);
+    // Bottom shadow
+    ctx.fillStyle='rgba(0,0,0,0.45)';
+    ctx.fillRect(wx,wy+TILE-5,TILE,5);
+  }
+}
+
+/* ─── Exit ───────────────────────────────────────────────────── */
+function _drawExit(){
+  if(!exitObj)return;
+  const{x,y}=exitObj;
+  const t=Date.now()/1000;
+  const p=(Math.sin(t*2)+1)*.5;
+
+  ctx.save();
+  ctx.translate(x,y);
+  // Glow
+  const g=ctx.createRadialGradient(0,0,8,0,0,70);
+  g.addColorStop(0,`rgba(0,255,130,${0.25+p*.18})`);
+  g.addColorStop(1,'rgba(0,255,130,0)');
+  ctx.fillStyle=g;ctx.beginPath();ctx.arc(0,0,70,0,Math.PI*2);ctx.fill();
+  // Door frame
+  ctx.fillStyle='#004422';
+  ctx.fillRect(-22,-35,44,62);
+  ctx.fillStyle='#00cc55';
+  ctx.fillRect(-18,-30,36,54);
+  ctx.fillStyle='rgba(0,255,130,0.3)';
+  ctx.fillRect(-18,-30,36,54);
+  // Knob
+  ctx.fillStyle='#ffcc00';
+  ctx.beginPath();ctx.arc(10,0,4,0,Math.PI*2);ctx.fill();
+  // Label
+  ctx.fillStyle='#00ff88';
+  ctx.font='bold 11px monospace';
+  ctx.textAlign='center';
+  ctx.fillText('ÇIKIŞ',0,42);
+  ctx.restore();
+}
+
+/* ─── Key ────────────────────────────────────────────────────── */
+function _drawKey(){
+  if(!keyObj||keyObj.collected)return;
+  const{x,y}=keyObj;
+  const t=Date.now()/1000;
+  const bob=Math.sin(t*3)*5;
+  const gp=(Math.sin(t*4)+1)*.5;
+  ctx.save();
+  ctx.translate(x,y+bob);
+  const g=ctx.createRadialGradient(0,0,4,0,0,44);
+  g.addColorStop(0,`rgba(255,210,0,${.35+gp*.25})`);
+  g.addColorStop(1,'rgba(255,210,0,0)');
+  ctx.fillStyle=g;ctx.beginPath();ctx.arc(0,0,44,0,Math.PI*2);ctx.fill();
+  // Key body
+  ctx.fillStyle='#ffd700';
+  ctx.beginPath();ctx.arc(0,-8,13,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#1a1000';
+  ctx.beginPath();ctx.arc(0,-8,7,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#ffd700';
+  ctx.fillRect(-4,3,8,22);
+  ctx.fillRect(-4,14,6,5);
+  ctx.fillRect(-4,20,8,4);
+  ctx.restore();
+}
+
+/* ─── Player draw ────────────────────────────────────────────── */
+function _drawPlayer(p,isMon){
+  if(!p)return;
+  const jo=p.jumpOff||0;
+  ctx.save();
+  ctx.translate(Math.round(p.x),Math.round(p.y+jo));
+  if(isMon) _monsterBody(p.animFrame||0);
+  else _playerBody(p.dir||'d',p.anim||'idle',p.animFrame||0,p.k||p.hasKey);
+  // Name
+  const nm=p.n||p.name||'?';
+  ctx.font='11px monospace';
+  const tw=ctx.measureText(nm).width;
+  ctx.fillStyle='rgba(0,0,0,0.65)';
+  ctx.fillRect(-tw/2-5,-52,tw+10,17);
+  ctx.fillStyle=isMon?'#ff4422':'#e8e8e8';
+  ctx.textAlign='center';
+  ctx.fillText(nm,0,-39);
+  ctx.restore();
+}
+
+function _drawSelf(){
+  const jo=ME.jumpOff||0;
+  ctx.save();
+  ctx.translate(Math.round(ME.x),Math.round(ME.y+jo));
+  // Selection ring
+  ctx.strokeStyle='rgba(255,255,255,0.35)';
+  ctx.lineWidth=2;
+  ctx.beginPath();ctx.arc(0,-24,16,0,Math.PI*2);ctx.stroke();
+  _playerBody(ME.dir,ME.anim,ME.animFrame,ME.hasKey,true);
+  // Name
+  ctx.font='bold 11px monospace';
+  const tw=ctx.measureText(myName).width;
+  ctx.fillStyle='rgba(0,0,0,0.65)';
+  ctx.fillRect(-tw/2-5,-52,tw+10,17);
+  ctx.fillStyle='#44ff99';
+  ctx.textAlign='center';
+  ctx.fillText(myName,0,-39);
+  ctx.restore();
+}
+
+function _playerBody(dir,anim,frame,hasKey,isSelf){
+  // Shadow
+  ctx.fillStyle='rgba(0,0,0,0.28)';
+  ctx.beginPath();ctx.ellipse(0,20,13,5,0,0,Math.PI*2);ctx.fill();
+  // Body
+  ctx.fillStyle=isSelf?'#3a8fff':'#5599ee';
+  ctx.beginPath();ctx.roundRect(-11,-18,22,26,4);ctx.fill();
+  // Head
+  ctx.fillStyle=isSelf?'#ffcc99':'#ffbb88';
+  ctx.beginPath();ctx.arc(0,-24,11,0,Math.PI*2);ctx.fill();
+  // Eyes
+  ctx.fillStyle='#222';
+  const ed=dir==='r'?1:dir==='l'?-1:0;
+  if(dir!=='u'){
+    ctx.beginPath();ctx.arc(-3+ed*4,-25,2,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.arc(3+ed*4,-25,2,0,Math.PI*2);ctx.fill();
+  }
+  // Legs walk anim
+  const ls=anim==='walk'||anim==='run'?Math.sin(frame*Math.PI*.5)*9:0;
+  ctx.fillStyle='#224499';
+  ctx.fillRect(-8,6,6,13+Math.max(0,ls));
+  ctx.fillRect(2,6,6,13+Math.max(0,-ls));
+  // Key badge
+  if(hasKey){
+    ctx.font='13px monospace';ctx.textAlign='center';
+    ctx.fillText('🔑',16,-16);
+  }
+}
+
+/* ─── Monster ────────────────────────────────────────────────── */
+function _drawMonster(){
+  if(!MON||!roomData)return;
+  const visRange=360;
+  const dist=Math.hypot(ME.x-MON.x,ME.y-MON.y);
+  // Only show if nearby or chasing
+  if(dist>visRange&&MON.phase!=='chase'&&MON.visTimer<0.1)return;
+
+  ctx.save();
+  ctx.translate(Math.round(MON.x),Math.round(MON.y));
+  _monsterBody(0);
+  ctx.restore();
+}
+
+function _monsterBody(frame){
+  const t=Date.now()/1000;
+  const wb=Math.sin(t*9)*2;
+  // Shadow
+  ctx.fillStyle='rgba(180,0,0,0.2)';
+  ctx.beginPath();ctx.ellipse(0,24,20,7,0,0,Math.PI*2);ctx.fill();
+  // Body
+  ctx.fillStyle='#0d0000';
+  ctx.beginPath();ctx.ellipse(0,-4,19,24,0,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#cc1100';ctx.lineWidth=1.5;ctx.stroke();
+  // Eyes
+  ctx.fillStyle='#ff0000';
+  ctx.beginPath();ctx.arc(-7+wb,-11,5.5,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(7-wb,-11,5.5,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#ff8800';
+  ctx.beginPath();ctx.arc(-7+wb,-11,2.5,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(7-wb,-11,2.5,0,Math.PI*2);ctx.fill();
+  // Mouth
+  ctx.strokeStyle='#ff3300';ctx.lineWidth=2;
+  ctx.beginPath();ctx.arc(0,-1,9,0.2,Math.PI-.2);ctx.stroke();
+  // Tendrils
+  for(let i=0;i<4;i++){
+    const ang=(i/4)*Math.PI*2+Math.sin(t*4+i)*0.4;
+    const r1=20,r2=36;
+    ctx.strokeStyle=`rgba(180,0,0,0.7)`;ctx.lineWidth=2.5;
+    ctx.beginPath();
+    ctx.moveTo(Math.cos(ang)*r1,-4+Math.sin(ang)*r1);
+    ctx.lineTo(Math.cos(ang)*r2,-4+Math.sin(ang)*r2);
+    ctx.stroke();
+  }
+  // Label
+  ctx.fillStyle='#ff3322';
+  ctx.font='bold 11px monospace';
+  ctx.textAlign='center';
+  ctx.fillText('CANAVAR',-0,-48);
+}
+
+/* ─── Flashlight ─────────────────────────────────────────────── */
+function _drawFlashlight(cw,ch){
+  const px=ME.x-CAM.x+shakeX;
+  const py=ME.y-CAM.y+shakeY;
+  const grad=ctx.createRadialGradient(px,py,0,px,py,FLASH_R);
+  grad.addColorStop(0,'rgba(0,0,0,0)');
+  grad.addColorStop(0.55,'rgba(0,0,0,0.08)');
+  grad.addColorStop(0.82,'rgba(0,0,0,0.78)');
+  grad.addColorStop(1,'rgba(0,0,0,0.97)');
+  ctx.fillStyle=grad;
+  ctx.fillRect(0,0,cw,ch);
+  // Warm tint
+  ctx.fillStyle='rgba(255,200,80,0.025)';
+  ctx.fillRect(0,0,cw,ch);
+}
+
+/* ─── HUD ────────────────────────────────────────────────────── */
+function _drawHUD(cw,ch){
+  // Top bar
+  ctx.fillStyle='rgba(0,0,0,0.7)';
+  ctx.fillRect(0,0,cw,38);
+  ctx.strokeStyle='rgba(200,168,75,0.25)';
+  ctx.lineWidth=1;
+  ctx.strokeRect(0,0,cw,38);
+
+  ctx.font='13px monospace';
+  ctx.textAlign='left';
+  if(ME.hasKey){
+    ctx.fillStyle='#ffe044';
+    ctx.fillText('🔑  ANAHTARIN SENDE — ÇIKIŞA KOŞ!',10,24);
+  } else {
+    ctx.fillStyle='rgba(200,168,75,0.6)';
+    ctx.fillText('🔑  Anahtarı bul ve çıkışa kaç...',10,24);
+  }
+
+  // FPS
+  ctx.fillStyle='rgba(255,255,255,0.2)';
+  ctx.font='10px monospace';
+  ctx.textAlign='right';
+  ctx.fillText(fps+'fps',cw-8,14);
+
+  // Player count
+  const cnt=Object.keys(players).length+1;
+  ctx.fillStyle='rgba(200,168,75,0.5)';
+  ctx.font='11px monospace';
+  ctx.fillText(`👥 ${cnt}`,cw-8,30);
+
+  // Monster warning
+  if(dangerAmt>0.4&&!ME.dead&&!ME.escaped){
+    const pulse=(Math.sin(Date.now()/180)+1)*.5;
+    ctx.fillStyle=`rgba(255,50,0,${0.2+pulse*.25})`;
+    ctx.fillRect(0,0,cw,ch);
+    ctx.font='bold 15px monospace';
+    ctx.textAlign='center';
+    ctx.fillStyle=`rgba(255,100,50,${0.8+pulse*.2})`;
+    ctx.fillText('⚠ CANAVAR YAKIN ⚠',cw/2,ch-28);
+  }
+
+  // Dead / escaped overlay hint
+  if(ME.dead){
+    ctx.fillStyle='rgba(0,0,0,0.6)';ctx.fillRect(0,0,cw,ch);
+    ctx.font='bold 38px monospace';ctx.textAlign='center';
+    ctx.fillStyle='#ff2244';
+    ctx.fillText('💀 YAKALANDINN',cw/2,ch/2-20);
+    ctx.font='16px monospace';ctx.fillStyle='rgba(255,255,255,0.5)';
+    ctx.fillText('Oyun bitti...',cw/2,ch/2+20);
+  }
+  if(ME.escaped){
+    ctx.fillStyle='rgba(0,0,0,0.55)';ctx.fillRect(0,0,cw,ch);
+    ctx.font='bold 38px monospace';ctx.textAlign='center';
+    ctx.fillStyle='#44ff99';
+    ctx.fillText('🏆 KURTULDUN!',cw/2,ch/2-20);
+    ctx.font='16px monospace';ctx.fillStyle='rgba(255,255,255,0.5)';
+    ctx.fillText('Backrooms\'dan kaçtın!',cw/2,ch/2+20);
+  }
+}
+
+/* ─── Mobile Joystick ────────────────────────────────────────── */
+function _drawJoystick(cw,ch){
+  const bx=cw*.18, by=ch*.8;
+  // Outer
+  ctx.save();
+  ctx.globalAlpha=0.28;
+  ctx.strokeStyle='#fff';ctx.lineWidth=2;
+  ctx.beginPath();ctx.arc(bx,by,56,0,Math.PI*2);ctx.stroke();
+  ctx.fillStyle='rgba(255,255,255,0.06)';ctx.fill();
+  ctx.restore();
+  // Inner stick
+  let sx=bx,sy=by;
+  if(JOY.active){
+    const d=Math.min(Math.hypot(JOY.dx,JOY.dy),46);
+    const a=Math.atan2(JOY.dy,JOY.dx);
+    sx=bx+Math.cos(a)*d;sy=by+Math.sin(a)*d;
+  }
+  ctx.save();
+  ctx.globalAlpha=JOY.active?0.7:0.35;
+  ctx.fillStyle='rgba(255,255,255,0.9)';
+  ctx.beginPath();ctx.arc(sx,sy,24,0,Math.PI*2);ctx.fill();
+  ctx.restore();
+  // Jump btn
+  const jbx=cw*.83, jby=ch*.8;
+  ctx.save();
+  ctx.globalAlpha=0.38;
+  ctx.fillStyle='#3388ff';
+  ctx.beginPath();ctx.arc(jbx,jby,40,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#88bbff';ctx.lineWidth=2;ctx.stroke();
+  ctx.globalAlpha=0.9;
+  ctx.fillStyle='#fff';ctx.font='bold 14px monospace';ctx.textAlign='center';
+  ctx.fillText('ZIP',jbx,jby+5);
+  ctx.restore();
+}
+
+/* ─── Messages ───────────────────────────────────────────────── */
+function _drawMsgs(cw,ch){
+  const now=Date.now();
+  msgs=msgs.filter(m=>now<m.until);
+  let y=ch*.22;
+  ctx.font='bold 15px monospace';
+  ctx.textAlign='center';
+  for(const m of msgs){
+    const life=Math.min(1,(m.until-now)/400);
+    ctx.globalAlpha=life;
+    const tw=ctx.measureText(m.text).width;
+    ctx.fillStyle='rgba(0,0,0,0.75)';
+    ctx.fillRect(cw/2-tw/2-12,y-19,tw+24,27);
+    ctx.fillStyle=m.col||'#fff';
+    ctx.fillText(m.text,cw/2,y);
+    y+=34;
+  }
+  ctx.globalAlpha=1;
+}
+
+/* ─── Utils ──────────────────────────────────────────────────── */
+function showMsg(text,col,ms){ msgs.push({text,col,until:Date.now()+ms}); }
+function screenShake(amt,dur){ shakeT=dur; }
+function spawnParticles(x,y,col,n){
+  for(let i=0;i<n;i++){
+    const a=Math.random()*Math.PI*2;
+    const s=1+Math.random()*4;
+    parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-2,life:.6+Math.random()*.5,r:3+Math.random()*5,col});
+  }
+}
+
+// Simple procedural sound
+const AC=window.AudioContext||window.webkitAudioContext;
+let _ac=null;
+function _getAC(){ if(!_ac){try{_ac=new AC();}catch(e){}} return _ac; }
+function playSound(type){
+  const ac=_getAC(); if(!ac)return;
+  try{
+    const o=ac.createOscillator();
+    const g=ac.createGain();
+    o.connect(g);g.connect(ac.destination);
+    const now=ac.currentTime;
+    if(type==='step'){
+      o.type='sawtooth';o.frequency.value=60+Math.random()*30;
+      g.gain.setValueAtTime(0.04,now);g.gain.exponentialRampToValueAtTime(0.001,now+0.06);
+      o.start(now);o.stop(now+0.06);
+    } else if(type==='jump'){
+      o.type='sine';o.frequency.setValueAtTime(220,now);o.frequency.linearRampToValueAtTime(440,now+0.12);
+      g.gain.setValueAtTime(0.1,now);g.gain.exponentialRampToValueAtTime(0.001,now+0.15);
+      o.start(now);o.stop(now+0.15);
+    } else if(type==='key'){
+      o.type='sine';o.frequency.setValueAtTime(660,now);o.frequency.setValueAtTime(880,now+0.1);
+      g.gain.setValueAtTime(0.18,now);g.gain.exponentialRampToValueAtTime(0.001,now+0.4);
+      o.start(now);o.stop(now+0.4);
+    } else if(type==='caught'){
+      o.type='sawtooth';o.frequency.setValueAtTime(220,now);o.frequency.linearRampToValueAtTime(55,now+0.8);
+      g.gain.setValueAtTime(0.25,now);g.gain.exponentialRampToValueAtTime(0.001,now+0.9);
+      o.start(now);o.stop(now+0.9);
+    } else if(type==='escape'){
+      o.type='sine';o.frequency.setValueAtTime(440,now);o.frequency.linearRampToValueAtTime(880,now+0.3);
+      g.gain.setValueAtTime(0.2,now);g.gain.exponentialRampToValueAtTime(0.001,now+0.6);
+      o.start(now);o.stop(now+0.6);
+    } else if(type==='monster'){
+      o.type='sawtooth';o.frequency.setValueAtTime(110,now);o.frequency.setValueAtTime(80,now+0.4);
+      g.gain.setValueAtTime(0.22,now);g.gain.exponentialRampToValueAtTime(0.001,now+1);
+      o.start(now);o.stop(now+1);
+    }
+  }catch(e){}
+}
+
+/* ─── Public API ─────────────────────────────────────────────── */
+return {
+  init, loadRoom, resize, showMsg, playSound,
+  set onDied(fn){ onDied=fn; },
+  set onEscaped(fn){ onEscaped=fn; },
+  set onGameOver(fn){ onGameOver=fn; },
+  set onCaught(fn){ onCaught=fn; },
+  get running(){ return running; },
+  stop(){ running=false; }
+};
+
+})(); // GAME IIFE
