@@ -229,11 +229,21 @@ function _initInput(){
     for(const t of e.changedTouches){
       const rx=t.clientX/canvas.clientWidth;
       const ry=t.clientY/canvas.clientHeight;
-      if(rx<0.55&&!JOY.active){
-        JOY.active=true;JOY.id=t.identifier;
-        JOY.sx=t.clientX;JOY.sy=t.clientY;JOY.dx=0;JOY.dy=0;
+      
+      // Joystick zone (left side of screen)
+      if(rx<0.6&&!JOY.active){
+        JOY.active=true;
+        JOY.id=t.identifier;
+        JOY.sx=t.clientX;
+        JOY.sy=t.clientY;
+        JOY.dx=0;
+        JOY.dy=0;
+        JOY.baseX=t.clientX;
+        JOY.baseY=t.clientY;
       }
-      if(rx>=0.55&&ry<0.7) _tryJump();
+      
+      // Jump button zone (right side)
+      if(rx>=0.6||ry<0.3) _tryJump();
     }
   },{passive:false});
 
@@ -241,8 +251,19 @@ function _initInput(){
     e.preventDefault();
     for(const t of e.changedTouches){
       if(t.identifier===JOY.id){
-        JOY.dx=t.clientX-JOY.sx;
-        JOY.dy=t.clientY-JOY.sy;
+        const dx=t.clientX-JOY.baseX;
+        const dy=t.clientY-JOY.baseY;
+        const dist=Math.hypot(dx,dy);
+        const maxDist=80;
+        
+        if(dist<=maxDist){
+          JOY.dx=dx;
+          JOY.dy=dy;
+        } else {
+          const scale=maxDist/dist;
+          JOY.dx=dx*scale;
+          JOY.dy=dy*scale;
+        }
       }
     }
   },{passive:false});
@@ -304,10 +325,10 @@ function _update(dt){
   const spd=sprint?PLR_SPRINT:PLR_SPD;
   const vx=mx*spd, vy=my*spd;
 
-  // ── Wall collision (slide) ──
-  let nx=ME.x+vx, ny=ME.y+vy;
-  if(!_wallHit(nx,ME.y,PLR_R)) ME.x=nx;
-  if(!_wallHit(ME.x,ny,PLR_R)) ME.y=ny;
+  // ── Improved Wall collision with smooth sliding ──
+  const newPos=_slideCollision(ME.x, ME.y, vx, vy, PLR_R);
+  ME.x=newPos.x;
+  ME.y=newPos.y;
 
   // ── Jump (visual bobbing) ──
   if(!ME.grounded){
@@ -380,6 +401,44 @@ function _wallHit(x,y,r){
     if((x-cx)**2+(y-cy)**2<r*r) return true;
   }
   return false;
+}
+
+/* ─── Improved collision with sliding ───────────────────────────── */
+function _slideCollision(x,y,vx,vy,r){
+  let finalX=x, finalY=y;
+  
+  // Try horizontal movement first
+  if(!_wallHit(x+vx,y,r)){
+    finalX=x+vx;
+  } else {
+    // Try smaller steps for smooth sliding
+    const step=0.5;
+    const sign=vx>0?1:-1;
+    for(let i=1;i<=Math.abs(vx)/step;i++){
+      if(!_wallHit(x+step*i*sign,y,r)){
+        finalX=x+step*i*sign;
+      } else {
+        break;
+      }
+    }
+  }
+  
+  // Then try vertical movement
+  if(!_wallHit(finalX,y+vy,r)){
+    finalY=y+vy;
+  } else {
+    const step=0.5;
+    const sign=vy>0?1:-1;
+    for(let i=1;i<=Math.abs(vy)/step;i++){
+      if(!_wallHit(finalX,y+step*i*sign,r)){
+        finalY=y+step*i*sign;
+      } else {
+        break;
+      }
+    }
+  }
+  
+  return {x:finalX, y:finalY};
 }
 
 /* ─── Render ─────────────────────────────────────────────────── */
@@ -750,36 +809,64 @@ function _drawHUD(cw,ch){
 
 /* ─── Mobile Joystick ────────────────────────────────────────── */
 function _drawJoystick(cw,ch){
-  const bx=cw*.18, by=ch*.8;
-  // Outer
+  if(!window.IS_MOBILE) return;
+  
+  const bx=JOY.baseX || cw*.18;
+  const by=JOY.baseY || ch*.8;
+  
+  // Outer circle (base)
   ctx.save();
-  ctx.globalAlpha=0.28;
-  ctx.strokeStyle='#fff';ctx.lineWidth=2;
-  ctx.beginPath();ctx.arc(bx,by,56,0,Math.PI*2);ctx.stroke();
-  ctx.fillStyle='rgba(255,255,255,0.06)';ctx.fill();
+  ctx.globalAlpha=0.3;
+  ctx.strokeStyle='#c8a84b';
+  ctx.lineWidth=3;
+  ctx.beginPath();
+  ctx.arc(bx,by,60,0,Math.PI*2);
+  ctx.stroke();
+  ctx.fillStyle='rgba(200,168,75,0.1)';
+  ctx.fill();
   ctx.restore();
-  // Inner stick
-  let sx=bx,sy=by;
+  
+  // Inner stick (knob)
+  let sx=bx, sy=by;
   if(JOY.active){
-    const d=Math.min(Math.hypot(JOY.dx,JOY.dy),46);
-    const a=Math.atan2(JOY.dy,JOY.dx);
-    sx=bx+Math.cos(a)*d;sy=by+Math.sin(a)*d;
+    const maxDist=50;
+    const dist=Math.min(Math.hypot(JOY.dx,JOY.dy), maxDist);
+    const angle=Math.atan2(JOY.dy,JOY.dx);
+    sx=bx+Math.cos(angle)*dist;
+    sy=by+Math.sin(angle)*dist;
   }
+  
   ctx.save();
-  ctx.globalAlpha=JOY.active?0.7:0.35;
-  ctx.fillStyle='rgba(255,255,255,0.9)';
-  ctx.beginPath();ctx.arc(sx,sy,24,0,Math.PI*2);ctx.fill();
+  ctx.globalAlpha=JOY.active?0.8:0.4;
+  ctx.fillStyle='#c8a84b';
+  ctx.strokeStyle='#fff';
+  ctx.lineWidth=2;
+  ctx.beginPath();
+  ctx.arc(sx,sy,25,0,Math.PI*2);
+  ctx.fill();
+  ctx.stroke();
   ctx.restore();
-  // Jump btn
-  const jbx=cw*.83, jby=ch*.8;
+  
+  // Jump button indicator
+  const jx=cw*0.85, jy=ch*0.8;
   ctx.save();
-  ctx.globalAlpha=0.38;
-  ctx.fillStyle='#3388ff';
-  ctx.beginPath();ctx.arc(jbx,jby,40,0,Math.PI*2);ctx.fill();
-  ctx.strokeStyle='#88bbff';ctx.lineWidth=2;ctx.stroke();
-  ctx.globalAlpha=0.9;
-  ctx.fillStyle='#fff';ctx.font='bold 14px monospace';ctx.textAlign='center';
-  ctx.fillText('ZIP',jbx,jby+5);
+  ctx.globalAlpha=0.3;
+  ctx.strokeStyle='#44ff99';
+  ctx.lineWidth=3;
+  ctx.beginPath();
+  ctx.arc(jx,jy,40,0,Math.PI*2);
+  ctx.stroke();
+  ctx.fillStyle='rgba(68,255,153,0.1)';
+  ctx.fill();
+  ctx.restore();
+  
+  ctx.save();
+  ctx.globalAlpha=0.6;
+  ctx.fillStyle='#44ff99';
+  ctx.font='bold 24px monospace';
+  ctx.textAlign='center';
+  ctx.textBaseline='middle';
+  ctx.fillText('⇧',jx,jy);
   ctx.restore();
 }
 
