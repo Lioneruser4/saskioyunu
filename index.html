@@ -1,723 +1,577 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>BACKROOMS</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Creepster&family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-<style>
-/*─────────────── RESET & VARS ───────────────*/
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-:root{
-  --bg:#080603;
-  --bg2:#110e07;
-  --gold:#c8a84b;
-  --gold2:#ffe07a;
-  --red:#cc2200;
-  --red2:#ff4422;
-  --green:#1aaa55;
-  --green2:#44ff99;
-  --text:#e4cfa0;
-  --text2:#b89a60;
-  --panel:rgba(14,10,4,0.94);
-  --border:rgba(200,168,75,0.22);
-  --border2:rgba(200,168,75,0.45);
-  --glow:0 0 24px rgba(200,168,75,0.35);
-  --glow-r:0 0 24px rgba(200,34,0,0.5);
-  --glow-g:0 0 24px rgba(0,200,100,0.4);
-  --radius:12px;
-  --font-title:'Creepster',cursive;
-  --font-mono:'Share Tech Mono',monospace;
-  --font-vt:'VT323',monospace;
-}
-html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:var(--font-mono);touch-action:none;user-select:none;-webkit-user-select:none;}
-
-/*─────────────── SCREEN SYSTEM ───────────────*/
-.screen{position:fixed;inset:0;z-index:10;display:none;flex-direction:column;align-items:center;justify-content:center;}
-.screen.active{display:flex;}
-
-/*─────────────── NOISE TEXTURE ───────────────*/
-body::after{
-  content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E");
-  opacity:.045;mix-blend-mode:overlay;
-}
-
-/*─────────────── SCANLINES ───────────────*/
-body::before{
-  content:'';position:fixed;inset:0;pointer-events:none;z-index:9998;
-  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.08) 2px,rgba(0,0,0,0.08) 4px);
-}
-
-/*─────────────── ANIMATIONS ───────────────*/
-@keyframes flicker{0%,100%{opacity:1}91%{opacity:1}92%{opacity:.5}94%{opacity:1}97%{opacity:.7}98%{opacity:1}}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
-@keyframes fadeIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
-@keyframes slideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
-@keyframes glowPulse{0%,100%{box-shadow:var(--glow)}50%{box-shadow:0 0 40px rgba(200,168,75,0.6),0 0 80px rgba(200,168,75,0.2)}}
-@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
-@keyframes loadBar{from{width:0}to{width:100%}}
-@keyframes spin{to{transform:rotate(360deg)}}
-@keyframes monFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
-@keyframes bgShift{0%,100%{background-position:0 0}50%{background-position:100% 100%}}
-
-/*─────────────── LOADING SCREEN ───────────────*/
-#scLoading{
-  background:#000;
-  background-image:radial-gradient(ellipse at 50% 50%,#1a1000 0%,#000 70%);
-  gap:32px;
-}
-.ld-title{
-  font-family:var(--font-title);
-  font-size:clamp(52px,15vw,110px);
-  color:var(--gold);
-  letter-spacing:10px;
-  text-shadow:0 0 40px rgba(200,168,75,.8),0 0 100px rgba(200,168,75,.3);
-  animation:flicker 3s infinite;
-  line-height:1;
-}
-.ld-sub{font-size:12px;color:rgba(200,168,75,.45);letter-spacing:5px;text-transform:uppercase;}
-.ld-bar-wrap{width:240px;height:3px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden;}
-.ld-bar{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold2));box-shadow:0 0 12px var(--gold);animation:loadBar 2s ease-out forwards;}
-.ld-status{font-size:12px;color:rgba(200,168,75,.4);letter-spacing:3px;animation:blink 1.2s infinite;}
-.ld-monster{
-  font-size:72px;
-  animation:monFloat 2s ease-in-out infinite;
-  filter:drop-shadow(0 0 20px rgba(200,0,0,.6));
-}
-
-/*─────────────── CONNECTING OVERLAY ───────────────*/
-#scConnect{
-  background:rgba(0,0,0,.92);
-  z-index:500;
-  gap:24px;
-}
-.conn-spinner{
-  width:56px;height:56px;
-  border:3px solid rgba(200,168,75,.15);
-  border-top-color:var(--gold);
-  border-radius:50%;
-  animation:spin .9s linear infinite;
-}
-.conn-title{font-family:var(--font-title);font-size:28px;color:var(--gold);letter-spacing:4px;}
-.conn-sub{font-size:12px;color:var(--text2);animation:pulse 1.5s infinite;letter-spacing:2px;}
-.conn-dot{display:inline-block;animation:blink .8s infinite;}
-.conn-dot:nth-child(2){animation-delay:.25s;}
-.conn-dot:nth-child(3){animation-delay:.5s;}
-
-/*─────────────── BG PATTERN ───────────────*/
-.bg-pattern{
-  position:absolute;inset:0;z-index:0;
-  background-image:
-    repeating-linear-gradient(0deg,transparent,transparent 79px,rgba(200,168,75,.06) 79px,rgba(200,168,75,.06) 80px),
-    repeating-linear-gradient(90deg,transparent,transparent 79px,rgba(200,168,75,.06) 79px,rgba(200,168,75,.06) 80px);
-  pointer-events:none;
-}
-
-/*─────────────── MAIN MENU ───────────────*/
-#scMenu{
-  background:radial-gradient(ellipse at 50% 30%,#1c1408 0%,#000 65%);
-  overflow:hidden;
-  justify-content:space-between;
-  padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px) 0;
-}
-.menu-top{
-  display:flex;flex-direction:column;align-items:center;
-  padding-top:clamp(20px,5vh,50px);gap:12px;
-  z-index:1;width:100%;
-}
-.menu-title{
-  font-family:var(--font-title);
-  font-size:clamp(44px,12vw,90px);
-  color:var(--gold);
-  letter-spacing:8px;
-  text-shadow:0 0 30px rgba(200,168,75,.7),0 0 70px rgba(200,168,75,.2);
-  animation:flicker 5s infinite;
-  line-height:1;
-}
-.menu-tagline{font-size:11px;color:rgba(200,168,75,.4);letter-spacing:5px;text-transform:uppercase;}
-.menu-player-card{
-  background:var(--panel);
-  border:1px solid var(--border);
-  border-radius:var(--radius);
-  padding:10px 28px;
-  text-align:center;
-  margin-top:4px;
-  animation:fadeIn .5s ease;
-}
-.mpc-label{font-size:9px;color:rgba(200,168,75,.35);letter-spacing:3px;margin-bottom:2px;}
-.mpc-name{font-size:17px;color:var(--gold);}
-
-.menu-mid{z-index:1;display:flex;flex-direction:column;align-items:center;gap:14px;width:100%;max-width:360px;padding:0 20px;}
-
-.menu-bot{z-index:1;padding-bottom:clamp(16px,4vh,40px);font-size:10px;color:rgba(200,168,75,.18);letter-spacing:3px;text-align:center;}
-
-/*─────────────── BUTTONS ───────────────*/
-.btn{
-  width:100%;padding:0;border:none;cursor:pointer;border-radius:var(--radius);
-  font-family:var(--font-mono);font-weight:bold;letter-spacing:2px;text-transform:uppercase;
-  transition:transform .12s,box-shadow .12s,opacity .12s;
-  outline:none;position:relative;overflow:hidden;
-}
-.btn::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.1) 0%,transparent 55%);pointer-events:none;}
-.btn:active{transform:scale(.96)!important;}
-
-.btn-xl{font-size:clamp(17px,4.5vw,21px);height:62px;}
-.btn-lg{font-size:clamp(15px,4vw,18px);height:54px;}
-.btn-md{font-size:14px;height:44px;}
-.btn-sm{font-size:12px;height:36px;padding:0 14px;width:auto;}
-
-.btn-gold{background:linear-gradient(135deg,#b8922e,var(--gold),#d4a94e);color:#100800;box-shadow:var(--glow);}
-.btn-gold:hover{transform:translateY(-1px);box-shadow:0 0 36px rgba(200,168,75,.55);}
-.btn-red{background:linear-gradient(135deg,#880000,var(--red),#cc2200);color:#fff;box-shadow:var(--glow-r);}
-.btn-red:hover{transform:translateY(-1px);}
-.btn-ghost{background:rgba(200,168,75,.1);color:var(--gold);border:1px solid var(--border);}
-.btn-ghost:hover{background:rgba(200,168,75,.18);border-color:var(--border2);}
-.btn-danger{background:rgba(200,34,0,.15);color:var(--red2);border:1px solid rgba(200,34,0,.3);}
-.btn-green{background:linear-gradient(135deg,#0d7a3a,var(--green));color:#fff;box-shadow:var(--glow-g);}
-
-/* Pulse on main button */
-.btn-pulse{animation:glowPulse 2.2s infinite;}
-
-/*─────────────── ROOMS SCREEN ───────────────*/
-#scRooms{background:radial-gradient(ellipse at 50% 0%,#1a1408 0%,#050402 60%);overflow:hidden;justify-content:flex-start;}
-.rooms-wrap{display:flex;flex-direction:column;width:100%;height:100%;max-width:600px;align-self:center;}
-.rooms-header{
-  display:flex;align-items:center;gap:10px;
-  padding:clamp(10px,3vw,20px);
-  border-bottom:1px solid var(--border);
-  background:rgba(0,0,0,.5);
-  flex-shrink:0;
-}
-.rooms-header h2{font-family:var(--font-title);font-size:clamp(18px,5vw,26px);color:var(--gold);flex:1;letter-spacing:3px;}
-.rooms-body{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px;}
-.room-card{
-  background:var(--panel);
-  border:1px solid var(--border);
-  border-radius:var(--radius);
-  padding:14px 16px;
-  cursor:pointer;
-  display:flex;align-items:center;gap:12px;
-  transition:border-color .15s,background .15s,transform .1s;
-  animation:fadeIn .25s ease;
-}
-.room-card:active{transform:scale(.98);border-color:var(--gold);}
-.room-card:hover{border-color:var(--border2);background:rgba(200,168,75,.06);}
-.rc-info{flex:1;min-width:0;}
-.rc-name{font-size:14px;color:var(--gold);font-weight:bold;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.rc-meta{font-size:11px;color:var(--text2);margin-top:3px;}
-.rc-right{text-align:right;flex-shrink:0;}
-.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;letter-spacing:1px;font-weight:bold;}
-.badge-wait{background:rgba(26,170,85,.18);color:var(--green2);border:1px solid rgba(26,170,85,.4);}
-.badge-play{background:rgba(200,34,0,.18);color:var(--red2);border:1px solid rgba(200,34,0,.35);}
-.rc-slots{font-size:12px;color:var(--text2);margin-top:4px;}
-.rooms-empty{text-align:center;padding:60px 24px;color:rgba(200,168,75,.25);font-size:14px;line-height:2;}
-
-/*─────────────── CREATE MODAL ───────────────*/
-.modal-bg{
-  position:fixed;inset:0;z-index:800;background:rgba(0,0,0,.88);
-  display:none;align-items:flex-end;justify-content:center;
-  padding:0 0 env(safe-area-inset-bottom,0) 0;
-}
-.modal-bg.open{display:flex;}
-.modal{
-  background:#131008;
-  border:1px solid var(--border);
-  border-radius:var(--radius) var(--radius) 0 0;
-  padding:28px 24px 32px;
-  width:100%;max-width:480px;
-  animation:slideUp .2s ease;
-}
-.modal h3{font-family:var(--font-title);font-size:26px;color:var(--gold);margin-bottom:22px;text-align:center;letter-spacing:3px;}
-.modal-label{font-size:10px;color:rgba(200,168,75,.4);letter-spacing:2px;margin-bottom:8px;text-transform:uppercase;}
-.monster-row{display:flex;gap:10px;margin-bottom:22px;}
-.mon-btn{
-  flex:1;padding:16px 10px;text-align:center;cursor:pointer;
-  border-radius:var(--radius);border:1px solid var(--border);
-  background:rgba(200,168,75,.06);color:var(--text2);
-  font-family:var(--font-mono);font-size:12px;line-height:1.6;
-  transition:all .15s;
-}
-.mon-btn .mon-icon{font-size:26px;display:block;margin-bottom:4px;}
-.mon-btn.sel{background:rgba(200,168,75,.18);border-color:var(--gold);color:var(--gold);}
-.mon-btn:active{transform:scale(.97);}
-.modal-actions{display:flex;gap:10px;}
-.modal-close-area{position:absolute;top:0;left:0;right:0;height:40px;cursor:pointer;}
-
-/*─────────────── GAME SCREEN ───────────────*/
-#scGame{
-  background:#000;
-  display:none;
-  flex-direction:row;
-  align-items:stretch;
-  justify-content:flex-start;
-  z-index:5;
-}
-#scGame.active{display:flex;}
-#gameCanvas{display:block;flex:1;touch-action:none;}
-
-/*─────────────── SIDE PANEL ───────────────*/
-#sidePanel{
-  width:200px;flex-shrink:0;
-  background:rgba(6,4,1,.95);
-  border-left:1px solid var(--border);
-  display:none;flex-direction:column;
-  padding:14px 12px;gap:0;
-  overflow:hidden;
-}
-@media(min-width:768px) and (orientation:landscape){#sidePanel{display:flex;}}
-.sp-title{
-  font-family:var(--font-title);font-size:16px;color:var(--gold);
-  border-bottom:1px solid var(--border);padding-bottom:8px;margin-bottom:10px;
-  letter-spacing:2px;
-}
-.sp-section{margin-bottom:14px;}
-.sp-section-label{font-size:9px;color:rgba(200,168,75,.3);letter-spacing:2px;margin-bottom:6px;text-transform:uppercase;}
-.sp-player{
-  font-size:11px;padding:5px 8px;border-radius:6px;
-  border:1px solid rgba(200,168,75,.1);background:rgba(200,168,75,.04);
-  color:var(--text);margin-bottom:4px;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-}
-.sp-player.you{color:var(--green2);border-color:rgba(0,200,100,.25);}
-.sp-player.mon{color:var(--red2);border-color:rgba(200,0,0,.25);}
-.sp-map-hint{font-size:10px;color:rgba(200,168,75,.25);line-height:1.8;}
-
-/* Game overlay (death/escape) */
-#gameOverlay{
-  position:fixed;inset:0;z-index:400;
-  background:rgba(0,0,0,.82);
-  display:none;flex-direction:column;align-items:center;justify-content:center;gap:20px;
-}
-#gameOverlay.show{display:flex;}
-.go-title{font-family:var(--font-title);font-size:clamp(44px,12vw,80px);text-align:center;line-height:1;animation:fadeIn .4s ease;}
-.go-title.death{color:var(--red2);text-shadow:0 0 50px var(--red);}
-.go-title.escape{color:var(--green2);text-shadow:0 0 50px var(--green);}
-.go-sub{font-size:14px;color:rgba(255,255,255,.45);text-align:center;}
-.go-btns{display:flex;flex-direction:column;gap:10px;width:220px;margin-top:8px;}
-
-/*─────────────── TOAST ───────────────*/
-#toasts{
-  position:fixed;top:44px;left:50%;transform:translateX(-50%);
-  z-index:900;display:flex;flex-direction:column;gap:6px;
-  align-items:center;pointer-events:none;min-width:180px;max-width:88vw;
-}
-.toast{
-  background:rgba(0,0,0,.92);
-  border-radius:8px;padding:9px 20px;
-  font-size:13px;text-align:center;
-  animation:fadeIn .2s ease;
-  border:1px solid var(--border);
-}
-.toast.ok{border-color:var(--green);color:var(--green2);}
-.toast.err{border-color:var(--red);color:var(--red2);}
-.toast.info{border-color:var(--gold);color:var(--gold);}
-
-/*─────────────── CONN STATUS ───────────────*/
-#connDot{
-  position:fixed;bottom:12px;left:14px;z-index:1000;
-  font-size:10px;letter-spacing:1px;
-  transition:color .4s;
-}
-#connDot.ok{color:var(--green);}
-#connDot.bad{color:var(--red);animation:blink 1s infinite;}
-#connDot.mid{color:var(--gold);}
-
-/*─────────────── SCROLLBAR ───────────────*/
-::-webkit-scrollbar{width:3px;}
-::-webkit-scrollbar-track{background:rgba(0,0,0,.3);}
-::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌍 Ülke Topları Yarışıyor! · Düşen Engeller</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+        body {
+            background: linear-gradient(145deg, #0b1a2e 0%, #1b3b4f 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+            padding: 16px;
+            margin: 0;
+        }
+        .game-wrapper {
+            background: #102b3f;
+            border-radius: 48px 48px 28px 28px;
+            box-shadow: 0 30px 35px -10px rgba(0,0,0,0.7), inset 0 -2px 5px #3d6c8c;
+            padding: 22px 22px 30px 22px;
+            border: 2px solid #64b5f6;
+        }
+        .arena-container {
+            position: relative;
+            width: min(900px, 95vw);
+            background: #1f4a64;
+            border-radius: 36px 36px 24px 24px;
+            padding: 16px 16px 20px 16px;
+            box-shadow: inset 0 0 0 3px #9ad4ff, inset 0 0 15px #a1d9ff;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            background: radial-gradient(circle at 20% 30%, #56b4e9, #0f3b4f);
+            border-radius: 28px 28px 20px 20px;
+            box-shadow: 0 12px 25px black;
+            border: 3px solid #ffe484;
+            cursor: grab;
+            touch-action: none; /* mobilde kaydırmayı engelle */
+        }
+        canvas:active {
+            cursor: grabbing;
+        }
+        .top-panel {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            margin: 15px 10px 5px 10px;
+            color: #f5f9ff;
+            text-shadow: 3px 3px 0 #0a3142;
+        }
+        .emoji-selector {
+            background: #0a1e2b;
+            padding: 10px 20px;
+            border-radius: 50px;
+            border: 2px solid #ffb74d;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 15px;
+            align-items: center;
+            box-shadow: inset 0 2px 5px #2f647a;
+        }
+        .emoji-label {
+            font-weight: bold;
+            letter-spacing: 1px;
+            background: #f7d794;
+            padding: 5px 14px;
+            border-radius: 40px;
+            color: #1d3b4b;
+            text-shadow: none;
+            box-shadow: 0 3px 0 #926d39;
+        }
+        .emoji-option {
+            font-size: 2.2rem;
+            background: #305f77;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 5px 0 #123845, 0 8px 12px black;
+            transition: 0.1s ease;
+            line-height: 1;
+            padding: 0;
+        }
+        .emoji-option.selected {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #123845, 0 5px 12px black;
+            background: #ffb74d;
+            border: 2px solid #fff3b0;
+        }
+        .emoji-option:hover {
+            background: #4797b5;
+        }
+        .button-group {
+            display: flex;
+            gap: 12px;
+        }
+        .action-btn {
+            background: #ffcf8a;
+            border: none;
+            border-radius: 40px;
+            padding: 12px 25px;
+            font-weight: 800;
+            font-size: 1.2rem;
+            color: #102027;
+            box-shadow: 0 6px 0 #b2691a, 0 8px 15px black;
+            cursor: pointer;
+            transition: 0.1s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid #ffe8c0;
+        }
+        .action-btn:active {
+            transform: translateY(5px);
+            box-shadow: 0 2px 0 #b2691a, 0 8px 15px black;
+        }
+        .status-bar {
+            background: #0c2b39e0;
+            backdrop-filter: blur(3px);
+            padding: 12px 25px;
+            border-radius: 50px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border: 2px solid #ffd966;
+            box-shadow: inset 0 -2px 5px #5699b9;
+            color: #ffecb3;
+        }
+        footer {
+            text-align: center;
+            margin-top: 16px;
+            color: #b5d7ed;
+            font-weight: 500;
+        }
+        footer a {
+            color: #ffdead;
+            text-decoration: none;
+            border-bottom: 2px dotted;
+        }
+    </style>
 </head>
 <body>
+<div class="game-wrapper">
+    <div class="arena-container">
+        <canvas id="gameCanvas" width="1000" height="600"></canvas>
+    </div>
 
-<!-- ═══ LOADING SCREEN ═══ -->
-<div id="scLoading" class="screen active">
-  <div class="bg-pattern"></div>
-  <div class="ld-monster">👁️</div>
-  <div class="ld-title">BACKROOMS</div>
-  <div class="ld-sub">Seviye ∞ — Geri dönüş yok</div>
-  <div class="ld-bar-wrap"><div class="ld-bar"></div></div>
-  <div class="ld-status">Yükleniyor<span class="conn-dot">.</span><span class="conn-dot">.</span><span class="conn-dot">.</span></div>
+    <div class="top-panel">
+        <div class="emoji-selector">
+            <span class="emoji-label">🇹🇷 topun 👇</span>
+            <button class="emoji-option selected" data-emoji="🇹🇷">🇹🇷</button>
+            <button class="emoji-option" data-emoji="🇯🇵">🇯🇵</button>
+            <button class="emoji-option" data-emoji="🇩🇪">🇩🇪</button>
+            <button class="emoji-option" data-emoji="🇧🇷">🇧🇷</button>
+            <button class="emoji-option" data-emoji="🇺🇸">🇺🇸</button>
+            <button class="emoji-option" data-emoji="⚽">⚽</button>
+        </div>
+        <div class="button-group">
+            <button class="action-btn" id="addBallBtn">➕ top ekle</button>
+            <button class="action-btn" id="resetBtn">⟲ sıfırla</button>
+        </div>
+    </div>
+
+    <div class="status-bar" id="statusMessage">
+        🏁 Kazanan yok — tıklayarak top ekle!
+    </div>
+    <footer>
+        ⚡ dönen & dar engeller • toplar sekerek yarışsın • <a href="#" target="_blank">github.io</a> hazır
+    </footer>
 </div>
 
-<!-- ═══ CONNECTING OVERLAY ═══ -->
-<div id="scConnect" class="screen">
-  <div class="conn-spinner"></div>
-  <div class="conn-title">SUNUCUYA BAĞLANIYOR</div>
-  <div class="conn-sub">Bekle<span class="conn-dot">.</span><span class="conn-dot">.</span><span class="conn-dot">.</span></div>
-</div>
-
-<!-- ═══ MAIN MENU ═══ -->
-<div id="scMenu" class="screen">
-  <div class="bg-pattern"></div>
-  <div class="menu-top">
-    <div class="menu-title">BACKROOMS</div>
-    <div class="menu-tagline">Karanlığa hoş geldin</div>
-    <div class="menu-player-card">
-      <div class="mpc-label">OYUNCU</div>
-      <div class="mpc-name" id="mpcName">—</div>
-    </div>
-  </div>
-  <div class="menu-mid">
-    <button class="btn btn-gold btn-xl btn-pulse" id="btnQuick">⚡&nbsp;&nbsp;OYUNA BAŞLA</button>
-    <button class="btn btn-ghost btn-lg" id="btnRooms">🚪&nbsp;&nbsp;ODALAR</button>
-    <button class="btn btn-ghost btn-lg" id="btnCreate">➕&nbsp;&nbsp;ODA OLUŞTUR</button>
-  </div>
-  <div class="menu-bot">LEVEL ∞ &nbsp;|&nbsp; GERİ DÖNÜŞ YOK &nbsp;|&nbsp; BACKROOMS</div>
-</div>
-
-<!-- ═══ ROOMS SCREEN ═══ -->
-<div id="scRooms" class="screen">
-  <div class="bg-pattern"></div>
-  <div class="rooms-wrap">
-    <div class="rooms-header">
-      <button class="btn btn-ghost btn-sm" id="btnBackRooms">← GERİ</button>
-      <h2>🚪 ODALAR</h2>
-      <button class="btn btn-gold btn-sm" id="btnCreate2">+ ODA</button>
-    </div>
-    <div class="rooms-body" id="roomsList">
-      <div class="rooms-empty">Yükleniyor...</div>
-    </div>
-  </div>
-</div>
-
-<!-- ═══ CREATE MODAL ═══ -->
-<div class="modal-bg" id="createModal">
-  <div class="modal">
-    <h3>ODA OLUŞTUR</h3>
-    <div class="modal-label">Canavar Türü</div>
-    <div class="monster-row">
-      <div class="mon-btn sel" id="monAI" data-v="ai">
-        <span class="mon-icon">🤖</span>YAPAY ZEKA
-      </div>
-      <div class="mon-btn" id="monPLR" data-v="player">
-        <span class="mon-icon">👤</span>RANDOM OYUNCU
-      </div>
-    </div>
-    <div class="modal-actions">
-      <button class="btn btn-ghost btn-md" style="flex:1" id="btnModalCancel">İPTAL</button>
-      <button class="btn btn-gold btn-md" style="flex:2" id="btnModalOk">OLUŞTUR</button>
-    </div>
-  </div>
-</div>
-
-<!-- ═══ GAME SCREEN ═══ -->
-<div id="scGame" class="screen">
-  <canvas id="gameCanvas"></canvas>
-  <div id="sidePanel">
-    <div class="sp-title">DURUM</div>
-    <div class="sp-section">
-      <div class="sp-section-label">Oyuncular</div>
-      <div id="spPlayers"></div>
-    </div>
-    <div class="sp-section">
-      <div class="sp-section-label">Görev</div>
-      <div class="sp-map-hint" id="spMission">🔑 Anahtarı bul<br>🚪 Çıkışa kaç<br>👹 Canavardan kaç</div>
-    </div>
-  </div>
-</div>
-
-<!-- ═══ GAME OVERLAY ═══ -->
-<div id="gameOverlay">
-  <div class="go-title" id="goTitle"></div>
-  <div class="go-sub" id="goSub"></div>
-  <div class="go-btns">
-    <button class="btn btn-gold btn-lg" id="btnGoQuick">⚡ YENİDEN OYNA</button>
-    <button class="btn btn-ghost btn-md" id="btnGoMenu">ANA MENÜ</button>
-  </div>
-</div>
-
-<!-- ═══ TOASTS ═══ -->
-<div id="toasts"></div>
-
-<!-- ═══ CONN DOT ═══ -->
-<div id="connDot" class="bad">● BAĞLANIYOR</div>
-
-<!-- ═══ SCRIPTS ═══ -->
-<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"
-  crossorigin="anonymous"
-  integrity="sha384-2huX0OP5NNMT4WHzKb7Ea7mFVuEW/B1x4uf6mI/GNc2vlnHOy3RFzFizk3LDYPS">
-</script>
-<script src="game.js"></script>
 <script>
-'use strict';
-/* ════════════════════════════════════════════
-   APP CONTROLLER
-════════════════════════════════════════════ */
-const SERVER = 'https://saskioyunu-1-2d6i.onrender.com';
-const IS_MOBILE = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
-window.IS_MOBILE = IS_MOBILE;
+    (function() {
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
 
-let socket     = null;
-let myName     = 'Misafir';
-let myId       = null;
-let inRoom     = false;
-let pendingMon = 'ai';
+        // Boyutlar sabit (canvas 1000x600)
+        const CW = 1000;
+        const CH = 600;
+        canvas.width = CW;
+        canvas.height = CH;
 
-/* ──── Telegram ──── */
-function initTelegram(){
-  if(window.Telegram?.WebApp){
-    try{
-      const tg=window.Telegram.WebApp;
-      tg.ready(); tg.expand();
-      tg.setHeaderColor('#080603');
-      tg.setBackgroundColor('#080603');
-      const u=tg.initDataUnsafe?.user;
-      if(u){
-        myName=u.first_name+(u.last_name?' '+u.last_name:'');
-        return;
-      }
-    }catch(e){}
-  }
-  const saved=localStorage.getItem('br_name');
-  if(saved) myName=saved;
-  else {
-    myName='Oyuncu_'+Math.floor(Math.random()*9999);
-    localStorage.setItem('br_name',myName);
-  }
-}
+        // --- Oyun değişkenleri ---
+        let balls = [];                // { emoji, x, y, vx, vy, radius }
+        let winnerIndex = -1;           // kim birinci oldu? (-1=yok)
+        const baseRadius = 22;           // topların yarıçapı
 
-/* ──── Screen Manager ──── */
-const screens = {};
-['scLoading','scConnect','scMenu','scRooms','scGame'].forEach(id=>{
-  screens[id]=document.getElementById(id);
-});
+        // Sabit yerçekimi ve sürtünme (ağır olmasın ama sekmeli)
+        const GRAVITY = 0.12;
+        const FRICTION_AIR = 0.992;       // hafif yavaşlama
+        const FLOOR_FRICTION = 0.98;       // yerde ekstra tutunma
 
-function showScreen(id){
-  Object.values(screens).forEach(s=>s.classList.remove('active'));
-  if(screens[id]) screens[id].classList.add('active');
-}
+        // Yer seviyesi (topların düştüğü en alt nokta, canvasın hemen altına yakın)
+        const GROUND_Y = CH - 38;            // biraz yüksekte dursunlar sekme için
 
-/* ──── Toast ──── */
-function toast(msg,type='info',dur=2800){
-  const el=document.createElement('div');
-  el.className=`toast ${type}`;
-  el.textContent=msg;
-  document.getElementById('toasts').appendChild(el);
-  setTimeout(()=>{el.style.opacity='0';el.style.transform='translateY(-8px)';el.style.transition='.3s';setTimeout(()=>el.remove(),350);},dur);
-}
+        // --- Engeller (dinamik) ---
+        let obstacles = [];
 
-/* ──── Conn Status ──── */
-function connDot(state,text){
-  const el=document.getElementById('connDot');
-  el.className=state; el.textContent='● '+text;
-}
+        // Engel yapılandırması (dönen çubuklar, dar dikdörtgenler)
+        function buildObstacles() {
+            obstacles = [
+                // 1) Dönen uzun çubuk (merkez etrafında dönecek) - biraz eğik başlangıç
+                { type: 'spinner', x: 300, y: 280, w: 130, h: 14, angle: 0.3, spinSpeed: 0.012 },
+                // 2) Dar sabit çubuk (yatay)
+                { type: 'fixed', x: 600, y: 400, w: 110, h: 12, angle: 0.0 },
+                // 3) Dikey dar engel (dönen değil ama dar)
+                { type: 'fixed', x: 780, y: 180, w: 14, h: 120, angle: 0.0 },
+                // 4) İkinci bir dönen kısa çubuk (farklı hız)
+                { type: 'spinner', x: 450, y: 120, w: 100, h: 10, angle: 1.8, spinSpeed: -0.018 },
+                // 5) Çapraz yerleşik dar engel (sabit)
+                { type: 'fixed', x: 180, y: 450, w: 90, h: 10, angle: 0.7 },
+                // 6) Ek dönen engel (merkez)
+                { type: 'spinner', x: 700, y: 280, w: 120, h: 12, angle: 0.0, spinSpeed: 0.02 }
+            ];
+        }
+        buildObstacles(); // ilk kurulum
 
-/* ──── Socket Init ──── */
-function initSocket(){
-  connDot('mid','Bağlanıyor');
-  showScreen('scConnect');
+        // Seçili emoji
+        let selectedEmoji = '🇹🇷'; // varsayılan
 
-  socket=io(SERVER,{
-    transports:['websocket','polling'],
-    reconnection:true,
-    reconnectionDelay:1200,
-    reconnectionDelayMax:6000,
-    reconnectionAttempts:Infinity,
-    timeout:10000
-  });
+        // Emoji seçim butonları
+        document.querySelectorAll('.emoji-option').forEach(btn => {
+            btn.addEventListener('click', e => {
+                document.querySelectorAll('.emoji-option').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                selectedEmoji = btn.getAttribute('data-emoji');
+            });
+        });
 
-  socket.on('connect',()=>{
-    myId=socket.id;
-    connDot('ok','Bağlı');
-    if(!inRoom) showScreen('scMenu');
-    toast('✅ Sunucuya bağlandı','ok',2000);
-  });
+        // Mesaj kutusunu güncelle
+        const statusDiv = document.getElementById('statusMessage');
 
-  socket.on('disconnect',reason=>{
-    connDot('bad','Bağlantı kesildi');
-    toast('⚠️ Bağlantı kesildi — yeniden bağlanılıyor...','err',4000);
-    if(!inRoom) showScreen('scConnect');
-  });
+        // --- top ekle (tıklama ile imleç pozisyonuna) ---
+        function addBallAtMouse(clientX, clientY) {
+            if (winnerIndex !== -1) return; // yarış bittiyse ekleme
 
-  socket.on('connect_error',()=>{
-    connDot('bad','Bağlanamıyor');
-  });
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = CW / rect.width;    // canvas fiziksel boyut / css genişlik
+            const scaleY = CH / rect.height;
 
-  socket.on('S_ROOM_LIST',list=>renderRooms(list));
+            let canvasX = (clientX - rect.left) * scaleX;
+            let canvasY = (clientY - rect.top) * scaleY;
 
-  socket.on('S_JOINED',data=>{
-    myId=data.pid;
-    inRoom=true;
-    startGame(data);
-  });
+            // sınırları zorlama (top alandan dışarı taşmasın ama tam kenarda başlamasın)
+            canvasX = Math.min(Math.max(canvasX, baseRadius + 5), CW - baseRadius - 5);
+            canvasY = Math.min(Math.max(canvasY, baseRadius + 5), GROUND_Y - 5); // yerin altına geçmesin
 
-  socket.on('S_ERROR',msg=>{
-    toast('❌ '+msg,'err');
-  });
+            // rastgele hafif yatay hız + yukarı doğru hafif zıplama
+            const vx = (Math.random() - 0.5) * 1.6;
+            const vy = -1.2 - Math.random() * 1.5; // biraz yukarı
 
-  socket.on('S_GAMEOVER',({reason})=>{
-    showOverlay(reason==='escaped'?'escape':'death',
-      reason==='escaped'?'🏆 KURTULDUN!':'💀 OYUN BİTTİ',
-      reason==='escaped'?'Backrooms\'dan kaçmayı başardın!':'Herkes yakalandı veya öldü.'
-    );
-  });
-}
+            balls.push({
+                emoji: selectedEmoji,
+                x: canvasX,
+                y: canvasY,
+                vx: vx,
+                vy: vy,
+                radius: baseRadius
+            });
 
-/* ──── Quick Play ──── */
-document.getElementById('btnQuick').addEventListener('click',()=>{
-  if(!socket?.connected){ toast('Sunucu bağlantısı yok...','err'); return; }
-  socket.emit('C_QUICK_PLAY',{name:myName});
-  toast('⚡ Oyun başlatılıyor...','info',2000);
-});
+            // kazanan varsa iptal et (ama zaten winnerIndex -1 kontrolü var)
+        }
 
-/* ──── Rooms ──── */
-document.getElementById('btnRooms').addEventListener('click',()=>{
-  showScreen('scRooms');
-  if(socket?.connected) socket.emit('C_GET_ROOMS');
-});
-document.getElementById('btnBackRooms').addEventListener('click',()=>showScreen('scMenu'));
+        // Canvas tıklama / dokunma
+        canvas.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            addBallAtMouse(e.clientX, e.clientY);
+        });
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (e.touches.length > 0) {
+                addBallAtMouse(e.touches[0].clientX, e.touches[0].clientY);
+            }
+        }, { passive: false });
 
-function renderRooms(list){
-  const el=document.getElementById('roomsList');
-  if(!list||!list.length){
-    el.innerHTML='<div class="rooms-empty">🕯️ Şu an açık oda yok<br><br>İlk odayı sen aç!</div>';
-    return;
-  }
-  el.innerHTML=list.map(r=>`
-    <div class="room-card" onclick="joinRoomById('${r.id}')">
-      <div class="rc-info">
-        <div class="rc-name">🚪 ${esc(r.creatorName)}'in Odası</div>
-        <div class="rc-meta">${r.monsterType==='ai'?'🤖 Yapay Zeka':'👤 Oyuncu Canavarı'} · ${r.playerCount}/${r.maxPlayers} oyuncu</div>
-      </div>
-      <div class="rc-right">
-        <div class="badge ${r.playerCount<r.maxPlayers?'badge-wait':'badge-play'}">${r.playerCount<r.maxPlayers?'AÇIK':'DOLU'}</div>
-        <div class="rc-slots">${r.maxPlayers-r.playerCount} yer</div>
-      </div>
-    </div>
-  `).join('');
-}
+        // buton ile rastgele konuma top ekle (tıklama butonu)
+        document.getElementById('addBallBtn').addEventListener('click', () => {
+            if (winnerIndex !== -1) return;
+            // rastgele üst bölge
+            const randX = 150 + Math.random() * (CW - 300);
+            const randY = 80 + Math.random() * 200; // üst kısım
+            balls.push({
+                emoji: selectedEmoji,
+                x: randX,
+                y: Math.min(randY, GROUND_Y - baseRadius - 5),
+                vx: (Math.random() - 0.5) * 2,
+                vy: -1.8 - Math.random() * 2,
+                radius: baseRadius
+            });
+        });
 
-function joinRoomById(id){
-  if(!socket?.connected){ toast('Bağlantı yok','err'); return; }
-  socket.emit('C_JOIN_ROOM',{roomId:id,name:myName});
-  toast('Odaya bağlanılıyor...','info',2000);
-}
+        // Sıfırla butonu
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            balls = [];
+            winnerIndex = -1;
+            buildObstacles(); // engelleri ilk haline döndür (açılar sıfırlanır)
+            statusDiv.innerText = '🏁 Kazanan yok — tıklayarak top ekle!';
+        });
 
-/* ──── Create Room ──── */
-function openCreate(){
-  pendingMon='ai';
-  document.getElementById('monAI').classList.add('sel');
-  document.getElementById('monPLR').classList.remove('sel');
-  document.getElementById('createModal').classList.add('open');
-}
-document.getElementById('btnCreate').addEventListener('click',openCreate);
-document.getElementById('btnCreate2').addEventListener('click',openCreate);
-document.getElementById('btnModalCancel').addEventListener('click',()=>document.getElementById('createModal').classList.remove('open'));
-document.getElementById('createModal').addEventListener('click',e=>{
-  if(e.target===e.currentTarget) e.currentTarget.classList.remove('open');
-});
-document.getElementById('monAI').addEventListener('click',()=>{
-  pendingMon='ai';
-  document.getElementById('monAI').classList.add('sel');
-  document.getElementById('monPLR').classList.remove('sel');
-});
-document.getElementById('monPLR').addEventListener('click',()=>{
-  pendingMon='player';
-  document.getElementById('monPLR').classList.add('sel');
-  document.getElementById('monAI').classList.remove('sel');
-});
-document.getElementById('btnModalOk').addEventListener('click',()=>{
-  if(!socket?.connected){ toast('Bağlantı yok','err'); return; }
-  document.getElementById('createModal').classList.remove('open');
-  socket.emit('C_CREATE_ROOM',{name:myName,monsterType:pendingMon});
-  toast('🚪 Oda oluşturuluyor...','info',2000);
-});
+        // --- Çarpışma tespiti: Döndürülmüş dikdörtgen ile top (elips aslında daire) ---
+        function rotatePoint(cx, cy, x, y, angle) {
+            const cos = Math.cos(angle);
+            const sin = Math.sin(angle);
+            const dx = x - cx;
+            const dy = y - cy;
+            return {
+                x: cx + dx * cos - dy * sin,
+                y: cy + dx * sin + dy * cos
+            };
+        }
 
-/* ──── Game Start ──── */
-function startGame(data){
-  showScreen('scGame');
-  document.getElementById('gameOverlay').classList.remove('show');
-  updateSidePanel(data);
+        function handleBallObstacleCollision(ball, ob) {
+            // Dönen engel tipi için anlık merkez etrafında dönüş yapılmış.
+            // Önce engelin köşelerini dünya koordinatında hesapla (veya topu engel lokal uzayına çevir)
+            const cx = ob.x;
+            const cy = ob.y;
+            const w = ob.w;
+            const h = ob.h;
+            const angle = ob.angle || 0;
 
-  const canvas=document.getElementById('gameCanvas');
-  GAME.init(canvas, socket, data.pid, myName, data.isMonster);
-  GAME.loadRoom(data);
+            // 1) topun merkezini engelin yerel koordinatına çevir (negatif açıyla döndür)
+            const localBall = rotatePoint(cx, cy, ball.x, ball.y, -angle);
+            const localX = localBall.x;
+            const localY = localBall.y;
 
-  GAME.onDied=()=>showOverlay('death','💀 YAKALANDINN!','Canavar seni yakaladı...');
-  GAME.onEscaped=()=>showOverlay('escape','🏆 KURTULDUN!','Backrooms\'dan kaçmayı başardın!');
-  GAME.onGameOver=(r)=>showOverlay(r==='escaped'?'escape':'death',r==='escaped'?'🏆 KAÇILDI!':'💀 OYUN BİTTİ',r==='escaped'?'Biri kaçtı!':'Herkes yakalandı.');
-  GAME.onCaught=id=>updateSidePanel(null);
+            // yerel dikdörtgen sınırları (merkez cx,cy etrafında)
+            const left = cx - w/2;
+            const right = cx + w/2;
+            const top = cy - h/2;
+            const bottom = cy + h/2;
 
-  socket.off('S_PJOIN');
-  socket.on('S_PJOIN',p=>{ updateSidePanel(null); });
-  socket.off('S_LEFT');
-  socket.on('S_LEFT',()=>updateSidePanel(null));
+            // en yakın nokta (clamp)
+            const closestX = Math.max(left, Math.min(localX, right));
+            const closestY = Math.max(top, Math.min(localY, bottom));
 
-  if(data.isMonster) toast('👹 SEN CANAVARSIN! Oyuncuları yakala!','err',4000);
-}
+            // çarpışma vektörü (yerel)
+            let dx = localX - closestX;
+            let dy = localY - closestY;
+            let dist = Math.sqrt(dx*dx + dy*dy);
 
-function updateSidePanel(initialData){
-  // Will re-read from GAME internals later; for now use data if provided
-  const spEl=document.getElementById('spPlayers');
-  if(!spEl)return;
-  let html=`<div class="sp-player you">👤 ${myName} (SEN)</div>`;
-  if(initialData?.players){
-    for(const[id,p] of Object.entries(initialData.players)){
-      if(id===initialData.pid) continue;
-      const nm=p.n||p.name||'?';
-      const mon=p.isMonster||p.mon;
-      html+=`<div class="sp-player ${mon?'mon':''}">${mon?'👹':'👤'} ${nm}</div>`;
-    }
-  }
-  spEl.innerHTML=html;
-}
+            if (dist < ball.radius && dist > 0.001) {
+                // çakışma var: topu it
+                const overlap = ball.radius - dist;
+                const normX = dx / dist;
+                const normY = dy / dist;
 
-/* ──── Overlay ──── */
-function showOverlay(type,title,sub){
-  const ov=document.getElementById('gameOverlay');
-  const t=document.getElementById('goTitle');
-  const s=document.getElementById('goSub');
-  t.textContent=title;
-  t.className='go-title '+type;
-  s.textContent=sub;
-  ov.classList.add('show');
-}
+                // Topu yerelde geri it
+                const newLocalX = localX + normX * overlap;
+                const newLocalY = localY + normY * overlap;
 
-document.getElementById('btnGoMenu').addEventListener('click',()=>{
-  GAME.stop(); inRoom=false;
-  document.getElementById('gameOverlay').classList.remove('show');
-  showScreen('scMenu');
-});
-document.getElementById('btnGoQuick').addEventListener('click',()=>{
-  GAME.stop(); inRoom=false;
-  document.getElementById('gameOverlay').classList.remove('show');
-  if(!socket?.connected){ toast('Bağlantı yok','err'); return; }
-  socket.emit('C_QUICK_PLAY',{name:myName});
-  toast('⚡ Yeni oyun başlatılıyor...','info',2000);
-});
+                // Dünya koordinatına geri döndür ( + angle)
+                const worldBall = rotatePoint(cx, cy, newLocalX, newLocalY, angle);
+                ball.x = worldBall.x;
+                ball.y = worldBall.y;
 
-/* ──── Utils ──── */
-function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+                // Hız yansıması (sürtünmeli)
+                // Önce hız vektörünü yerel koordinata çevir
+                let vLocal = rotatePoint(0, 0, ball.vx, ball.vy, -angle);
+                // Normal doğrultusunda hızı ters çevir (sadece normal bileşeni)
+                let vn = vLocal.x * normX + vLocal.y * normY;
+                if (vn < 0) { // yaklaşıyorsa
+                    vt_x = vLocal.x - vn * normX;
+                    vt_y = vLocal.y - vn * normY;
+                    // yeni normal bileşen (eski halinin -0.45 katı kadar sekme + sürtünme)
+                    vn_new = -vn * 0.48;
+                    vLocal.x = vt_x + vn_new * normX;
+                    vLocal.y = vt_y + vn_new * normY;
+                    // tekrar dünya döndür
+                    let vWorld = rotatePoint(0, 0, vLocal.x, vLocal.y, angle);
+                    ball.vx = vWorld.x * 0.98;
+                    ball.vy = vWorld.y * 0.98;
+                }
+                return true;
+            }
+            return false;
+        }
 
-/* ──── Prevent context menu ──── */
-window.addEventListener('contextmenu',e=>e.preventDefault());
+        // --- Fizik güncelleme ---
+        function updatePhysics() {
+            if (winnerIndex !== -1) return; // kazanan varsa don
 
-/* ──── Wake lock ──── */
-if('wakeLock' in navigator) navigator.wakeLock.request('screen').catch(()=>{});
+            // yerçekimi ve hareket
+            for (let i = 0; i < balls.length; i++) {
+                const b = balls[i];
 
-/* ──── BOOT ──── */
-window.addEventListener('DOMContentLoaded',()=>{
-  // Load Telegram WebApp SDK
-  const tgs=document.createElement('script');
-  tgs.src='https://telegram.org/js/telegram-web-app.js';
-  const afterTg=()=>{
-    initTelegram();
-    document.getElementById('mpcName').textContent=myName;
-    // Show loading for 1.8s then connect
-    setTimeout(()=>{
-      initSocket();
-    },1800);
-  };
-  tgs.onload=afterTg;
-  tgs.onerror=afterTg;
-  document.head.appendChild(tgs);
-});
+                // yerçekimi
+                b.vy += GRAVITY;
+
+                // hız uygula
+                b.x += b.vx;
+                b.y += b.vy;
+
+                // hava sürtünmesi
+                b.vx *= FRICTION_AIR;
+                b.vy *= FRICTION_AIR;
+
+                // --- Yer (zemin) çarpışması ---
+                if (b.y + b.radius > GROUND_Y) {
+                    b.y = GROUND_Y - b.radius;
+                    if (b.vy > 0.2) {
+                        b.vy = -b.vy * 0.5;  // sekme
+                        b.vx *= FLOOR_FRICTION;
+                    } else {
+                        b.vy = 0;
+                        b.vx *= 0.99; // yerde yavaşça dur
+                    }
+                }
+
+                // sol/sağ duvar
+                if (b.x - b.radius < 5) {
+                    b.x = 5 + b.radius;
+                    b.vx = -b.vx * 0.4;
+                }
+                if (b.x + b.radius > CW - 5) {
+                    b.x = CW - 5 - b.radius;
+                    b.vx = -b.vx * 0.4;
+                }
+
+                // tavan (çok yükseğe çıkmasın)
+                if (b.y - b.radius < 5) {
+                    b.y = 5 + b.radius;
+                    b.vy = -b.vy * 0.3;
+                }
+
+                // küçük limit
+                b.vx = Math.min(Math.max(b.vx, -7), 7);
+                b.vy = Math.min(Math.max(b.vy, -7), 7);
+            }
+
+            // --- Engel çarpışmaları (çoklu geçiş) ---
+            for (let iter = 0; iter < 3; iter++) { // hafif iterasyon
+                for (let i = 0; i < balls.length; i++) {
+                    for (let ob of obstacles) {
+                        handleBallObstacleCollision(balls[i], ob);
+                    }
+                }
+            }
+
+            // Dönen engellerin açılarını güncelle (bağımsız)
+            obstacles.forEach(ob => {
+                if (ob.type === 'spinner') {
+                    ob.angle += ob.spinSpeed;
+                }
+            });
+
+            // --- Kazanan kontrolü (en düşük y = en yukarıda) toplar düşüyor mantığında en üstteki kazanır ---
+            if (balls.length > 0) {
+                let minY = Infinity;
+                let candidate = -1;
+                for (let i = 0; i < balls.length; i++) {
+                    // y değeri ne kadar küçükse o kadar yukarıda
+                    if (balls[i].y < minY) {
+                        minY = balls[i].y;
+                        candidate = i;
+                    }
+                }
+                // kazanan için eşik (yeterince yukarıdaysa)
+                if (candidate !== -1 && balls[candidate].y < 90) { // neredeyse tavan sınırı
+                    if (winnerIndex === -1) {
+                        winnerIndex = candidate;
+                        statusDiv.innerText = `🏆 Kazanan: ${balls[candidate].emoji}  en yukarıda! 🏆`;
+                    }
+                } else {
+                    // henüz kazanan yoksa statü güncellemesi (isteğe bağlı)
+                    if (winnerIndex === -1) {
+                        statusDiv.innerText = `⚡ ${balls.length} top yarışıyor... en üstteki kazanır`;
+                    }
+                }
+            } else {
+                statusDiv.innerText = `🏁 Top eklemek için tıkla!`;
+            }
+        }
+
+        // --- Çizimler ---
+        function draw() {
+            ctx.clearRect(0, 0, CW, CH);
+
+            // zemin çizgisi
+            ctx.beginPath();
+            ctx.strokeStyle = '#ffecbb';
+            ctx.lineWidth = 4;
+            ctx.setLineDash([12, 16]);
+            ctx.beginPath();
+            ctx.moveTo(10, GROUND_Y);
+            ctx.lineTo(CW-10, GROUND_Y);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Engelleri çiz
+            obstacles.forEach(ob => {
+                ctx.save();
+                ctx.translate(ob.x, ob.y);
+                ctx.rotate(ob.angle || 0);
+                ctx.fillStyle = ob.type === 'spinner' ? '#f57c00' : '#ab47bc';
+                ctx.shadowColor = 'black';
+                ctx.shadowBlur = 14;
+                ctx.shadowOffsetX = 3;
+                ctx.shadowOffsetY = 3;
+                ctx.fillRect(-ob.w/2, -ob.h/2, ob.w, ob.h);
+                ctx.restore();
+
+                // ekstra parlak kenar
+                ctx.save();
+                ctx.translate(ob.x, ob.y);
+                ctx.rotate(ob.angle || 0);
+                ctx.strokeStyle = '#ffd966';
+                ctx.lineWidth = 2.5;
+                ctx.shadowBlur = 8;
+                ctx.shadowColor = '#fff5b0';
+                ctx.strokeRect(-ob.w/2, -ob.h/2, ob.w, ob.h);
+                ctx.restore();
+            });
+
+            // Toplar
+            for (let i = 0; i < balls.length; i++) {
+                const b = balls[i];
+                // gölge
+                ctx.shadowColor = 'rgba(0,0,0,0.8)';
+                ctx.shadowBlur = 14;
+                ctx.shadowOffsetY = 4;
+
+                // top arkaplan (beyaz halka)
+                ctx.beginPath();
+                ctx.arc(b.x, b.y, b.radius+2, 0, 2*Math.PI);
+                ctx.fillStyle = '#ffffff30';
+                ctx.fill();
+
+                ctx.shadowBlur = 20;
+                ctx.font = `${b.radius+12}px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "Twemoji Mozilla", "Android Emoji", Emoji, sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = i === winnerIndex ? '#fff99b' : 'white';
+                ctx.shadowColor = i === winnerIndex ? 'gold' : '#001122';
+                ctx.fillText(b.emoji, b.x, b.y-2);
+
+                // kazanan ışıltısı
+                if (i === winnerIndex) {
+                    ctx.shadowBlur = 40;
+                    ctx.font = '40px sans-serif';
+                    ctx.fillStyle = 'gold';
+                    ctx.fillText('👑', b.x-18, b.y-55);
+                }
+            }
+            ctx.shadowBlur = 0;
+
+            requestAnimationFrame(draw);
+        }
+
+        // Animasyon döngüsü (fizik 60fps)
+        function gameLoop() {
+            updatePhysics();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // başlat
+        gameLoop();
+        draw(); // ilk draw da başlasın
+
+        // canvas yeniden boyutlanınca ölçek sabit (css ile oynama yok)
+    })();
 </script>
 </body>
 </html>
