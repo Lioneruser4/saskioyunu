@@ -513,30 +513,54 @@ function initSocket(){
   connDot('mid','Bağlanıyor');
   showScreen('scConnect');
 
+  // Önce sunucunun çalışıp çalışmadığını kontrol et
+  fetch(SERVER + '/health')
+    .then(response => {
+      if (!response.ok) throw new Error('Sunucu yanıt vermiyor');
+      return response.json();
+    })
+    .then(data => {
+      console.log('Sunucu sağlıklı:', data);
+      connectSocket();
+    })
+    .catch(error => {
+      console.error('Sunucu bağlantı hatası:', error);
+      connDot('bad','Sunucu yanıt vermiyor');
+      toast('❌ Sunucuya ulaşılamıyor','err',5000);
+      setTimeout(() => initSocket(), 5000); // 5 saniye sonra tekrar dene
+    });
+}
+
+function connectSocket(){
   socket=io(SERVER,{
     transports:['websocket','polling'],
     reconnection:true,
     reconnectionDelay:2000,
     reconnectionDelayMax:8000,
     reconnectionAttempts:Infinity,
-    timeout:20000
+    timeout:20000,
+    forceNew:true
   });
 
   socket.on('connect',()=>{
     myId=socket.id;
     connDot('ok','Bağlı');
     if(!inRoom) showScreen('scMenu');
-    toast('✅ Sunucuya bağlandı','ok',2000);
+    toast('✅ Sunucuya başarıyla bağlandı','ok',2000);
+    console.log('Socket bağlandı:', socket.id);
   });
 
   socket.on('disconnect',reason=>{
+    console.log('Socket disconnected:', reason);
     connDot('bad','Bağlantı kesildi');
     toast('⚠️ Bağlantı kesildi — yeniden bağlanılıyor...','err',4000);
     if(!inRoom) showScreen('scConnect');
   });
 
-  socket.on('connect_error',()=>{
+  socket.on('connect_error',error=>{
+    console.error('Socket bağlantı hatası:', error);
     connDot('bad','Bağlanamıyor');
+    toast('❌ Socket bağlantı hatası','err',3000);
   });
 
   socket.on('S_ROOM_LIST',list=>renderRooms(list));
