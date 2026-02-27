@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ENGEL DENİZİ · Hiç boşluk yok · 40 saniye</title>
+    <title>PRO DAR KANYON · Stratejik Engeller · 45 saniye</title>
     <style>
         * {
             margin: 0;
@@ -13,122 +13,124 @@
             user-select: none;
         }
         body {
-            background: #0a1f2b;
+            background: #0b1d29;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100dvh;
-            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
-            padding: 4px;
-            touch-action: pan-y;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            padding: 5px;
         }
-        .elite-frame {
-            width: min(330px, 94vw);
-            background: #0e3345;
-            border-radius: 64px 64px 38px 38px;
-            padding: 18px 8px 22px 8px;
-            box-shadow: 0 35px 45px -15px black, inset 0 -6px 18px #5ab8ff;
-            border: 3px solid #62b0ff;
+        .pro-frame {
+            width: min(340px, 95vw);
+            background: #0f3143;
+            border-radius: 56px 56px 32px 32px;
+            padding: 18px 8px 20px 8px;
+            box-shadow: 0 35px 40px -15px black, inset 0 -5px 15px #5ab3ff;
+            border: 3px solid #60aeff;
         }
-        .canvas-case {
+        .screen {
             position: relative;
             width: 100%;
-            aspect-ratio: 310 / 800;
-            background: #104e6b;
-            border-radius: 50px;
-            padding: 7px;
-            box-shadow: inset 0 0 0 5px #c0e6ff, inset 0 0 40px #1d7097;
+            aspect-ratio: 320 / 760;
+            background: #124f6e;
+            border-radius: 44px;
+            padding: 6px;
+            box-shadow: inset 0 0 0 5px #bae0ff, inset 0 0 35px #1b7099;
             overflow: hidden;
         }
         canvas {
             display: block;
             width: 100%;
             height: 100%;
-            background: linear-gradient(180deg, #1f5f83 0%, #0a3a51 100%);
-            border-radius: 42px;
-            border: 4px solid #ffd685;
-            touch-action: none;
-            cursor: pointer;
+            background: linear-gradient(180deg, #22638b 0%, #0c3d55 100%);
+            border-radius: 38px;
+            border: 4px solid #ffd37c;
+            cursor: default;
+            touch-action: pan-y pinch-zoom;
         }
-        .control-strip {
-            margin: 18px 3px 8px 3px;
+        .dashboard {
+            margin: 16px 4px 5px 4px;
             display: flex;
             flex-direction: column;
             gap: 12px;
         }
-        .emoji-dock {
-            background: #083446;
-            border-radius: 80px;
-            padding: 10px 12px;
+        .emoji-bar {
+            background: #093141;
+            border-radius: 70px;
+            padding: 10px 15px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            border: 2px solid #ffb444;
-            box-shadow: inset 0 3px 15px #2683aa;
+            border: 2px solid #fcb13b;
+            box-shadow: inset 0 3px 12px #2782aa;
         }
-        .emoji-dock label {
+        .emoji-bar .label {
             color: white;
-            font-weight: 800;
-            background: #1e6f96;
-            padding: 7px 18px;
+            font-weight: 700;
+            background: #1c698c;
+            padding: 8px 20px;
             border-radius: 40px;
-            font-size: 0.95rem;
-            text-shadow: 2px 2px 0 #093f58;
+            font-size: 1rem;
+            letter-spacing: 0.5px;
+            text-shadow: 2px 2px 0 #063c50;
         }
-        .emoji-pack {
+        .emoji-set {
             display: flex;
-            gap: 3px;
+            gap: 4px;
             flex-wrap: wrap;
             justify-content: flex-end;
         }
-        .emoji-tile {
-            font-size: 1.9rem;
-            background: #1e7196;
+        .emoji-btn {
+            font-size: 2rem;
+            background: #1b6c91;
             border: none;
             border-radius: 50%;
-            width: 46px;
-            height: 46px;
-            box-shadow: 0 5px 0 #082f40, 0 5px 8px black;
-            transition: 0.07s;
+            width: 48px;
+            height: 48px;
+            box-shadow: 0 5px 0 #073342, 0 6px 10px black;
+            transition: 0.06s;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
         }
-        .emoji-tile.selected {
+        .emoji-btn.selected {
             transform: translateY(4px);
-            box-shadow: 0 2px 0 #082f40, 0 5px 8px black;
+            box-shadow: 0 2px 0 #073342, 0 6px 10px black;
             background: #ffaa2b;
-            border: 3px solid #fff7d4;
+            border: 3px solid #fff6d1;
         }
-        .cmd-group {
+        .action-row {
             display: flex;
-            gap: 6px;
+            gap: 8px;
+            margin-top: 4px;
         }
-        .cmd-btn {
-            background: #fff4d5;
+        .pro-btn {
+            background: #fff0cb;
             border: none;
-            border-radius: 70px;
-            padding: 13px 0;
+            border-radius: 60px;
+            padding: 14px 0;
             font-weight: 800;
-            font-size: 1.15rem;
-            color: #012a38;
-            box-shadow: 0 7px 0 #87531b, 0 8px 20px black;
+            font-size: 1.25rem;
+            color: #022c3a;
+            box-shadow: 0 7px 0 #8a521a, 0 8px 18px black;
             flex: 1;
             display: flex;
-            align-items: center;
+                align-items: center;
             justify-content: center;
-            gap: 5px;
-            border: 2px solid #ffd682;
+            gap: 6px;
+            border: 2px solid #ffd77c;
             cursor: pointer;
+            transition: 0.05s;
         }
-        .cmd-btn:active {
+        .pro-btn:active {
             transform: translateY(6px);
-            box-shadow: 0 2px 0 #87531b, 0 8px 20px black;
+            box-shadow: 0 2px 0 #8a521a, 0 8px 18px black;
         }
-        .time-panel {
-            background: #032c3c;
-            padding: 14px 14px;
+        .timer-box {
+            background: #032b39;
+            padding: 14px 15px;
             border-radius: 60px;
             display: flex;
             align-items: center;
@@ -136,66 +138,63 @@
             border: 2px solid #fabe4e;
             color: #fcf3cf;
             font-weight: bold;
-            font-size: 1.2rem;
+            font-size: 1.25rem;
             text-shadow: 2px 2px 0 #1f4457;
             margin-top: 6px;
         }
-        .time-bar {
-            height: 14px;
-            background: #fee2a3;
-            border-radius: 20px;
+        .timer-fill {
+            height: 16px;
+            background: #ffe6a3;
+            border-radius: 30px;
             width: 100%;
-            box-shadow: inset 0 2px 6px #3b2e13;
+            box-shadow: inset 0 2px 6px #4d3d1b;
             transition: width 0.1s;
         }
         .footer-note {
             text-align: center;
-            color: #c2e2ff;
+            color: #bce0ff;
             margin-top: 12px;
-            font-weight: 600;
+            font-weight: 500;
             font-size: 0.9rem;
         }
     </style>
 </head>
 <body>
-<div class="elite-frame">
-    <div class="canvas-case">
-        <canvas id="gameCanvas" width="310" height="800"></canvas>
+<div class="pro-frame">
+    <div class="screen">
+        <canvas id="gameCanvas" width="320" height="760"></canvas>
     </div>
 
-    <div class="control-strip">
-        <div class="emoji-dock">
-            <label>TOPUN</label>
-            <div class="emoji-pack">
-                <button class="emoji-tile selected" data-emoji="🇹🇷">🇹🇷</button>
-                <button class="emoji-tile" data-emoji="🇯🇵">🇯🇵</button>
-                <button class="emoji-tile" data-emoji="🇩🇪">🇩🇪</button>
-                <button class="emoji-tile" data-emoji="🇧🇷">🇧🇷</button>
-                <button class="emoji-tile" data-emoji="🇺🇸">🇺🇸</button>
-                <button class="emoji-tile" data-emoji="⚽">⚽</button>
-                <button class="emoji-tile" data-emoji="🐲">🐲</button>
-                <button class="emoji-tile" data-emoji="🦁">🦁</button>
-                <button class="emoji-tile" data-emoji="👽">👽</button>
-                <button class="emoji-tile" data-emoji="💀">💀</button>
-                <button class="emoji-tile" data-emoji="🐢">🐢</button>
-                <button class="emoji-tile" data-emoji="🚀">🚀</button>
+    <div class="dashboard">
+        <div class="emoji-bar">
+            <span class="label">🇹🇷 TOP</span>
+            <div class="emoji-set">
+                <button class="emoji-btn selected" data-emoji="🇹🇷">🇹🇷</button>
+                <button class="emoji-btn" data-emoji="🇯🇵">🇯🇵</button>
+                <button class="emoji-btn" data-emoji="🇩🇪">🇩🇪</button>
+                <button class="emoji-btn" data-emoji="🇧🇷">🇧🇷</button>
+                <button class="emoji-btn" data-emoji="🇺🇸">🇺🇸</button>
+                <button class="emoji-btn" data-emoji="⚽">⚽</button>
+                <button class="emoji-btn" data-emoji="🐺">🐺</button>
+                <button class="emoji-btn" data-emoji="🦅">🦅</button>
+                <button class="emoji-btn" data-emoji="👾">👾</button>
             </div>
         </div>
 
-        <div class="cmd-group">
-            <button class="cmd-btn" id="startBtn">▶ BAŞLAT 40sn</button>
-            <button class="cmd-btn" id="addBallBtn">➕ TOP</button>
-            <button class="cmd-btn" id="resetBtn">⟲ YENİ</button>
+        <div class="action-row">
+            <button class="pro-btn" id="startBtn">🚦 BAŞLAT 45sn</button>
+            <button class="pro-btn" id="addBallBtn">➕ TOP EKLE</button>
+            <button class="pro-btn" id="resetBtn">⟲ YENİ OYUN</button>
         </div>
 
-        <div class="time-panel" id="statusMsg">
-            <span>⏳ 40s</span>
-            <span>💀 SON ÇUKUR</span>
+        <div class="timer-box" id="statusMsg">
+            <span>⏳ 45s</span>
+            <span>🎯 HEDEF ÇUKUR</span>
         </div>
-        <div class="time-bar" id="timerFill" style="width:100%"></div>
+        <div class="timer-fill" id="timerFill" style="width:100%"></div>
     </div>
     <div class="footer-note">
-        ⬇️ 150+ ENGEL · HİÇ BOŞLUK YOK · TOPLAR İÇİNDEN GEÇEMEZ · SON DELİĞE İLK DÜŞEN KAZANIR
+        ⬇️ 45sn · stratejik engeller (dönen, sabit, dar) · sadece butonla top eklenir · profesyonel fizik
     </div>
 </div>
 
@@ -203,100 +202,99 @@
     (function() {
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-        const CW = 310, CH = 800;      // ÇOK DAR ve ÇOK UZUN
+        const CW = 320, CH = 760;
         canvas.width = CW; canvas.height = CH;
 
-        // --- Oyun parametreleri ---
+        // --- Oyun değişkenleri ---
         let balls = [];
         let winnerIndex = -1;
         let gameActive = false;
         let startTime = null;
         let elapsedSeconds = 0;
-        const RACE_DURATION = 40;         // 40 saniye
-        const BASE_RADIUS = 11;            // küçük toplar
+        const RACE_DURATION = 45;
+        const BALL_RADIUS = 12;
 
-        const GRAVITY = 0.2;
-        const GROUND_Y = CH - 25;
+        const GRAVITY = 0.19;
+        const GROUND_Y = CH - 30;
 
         let cameraY = 0;
-        const CAM_SMOOTH = 0.045;
+        const CAM_SMOOTH = 0.05;
 
         let selectedEmoji = '🇹🇷';
 
-        // --- HEDEF (dar çukur) - ÇOK DERİN ---
+        // --- HEDEF (dar çukur) - 16500 derinlik ---
         const TARGET_PIT = {
-            x: CW/2 - 18,
-            y: 22000,            // İNANILMAZ DERİN (bol engelli)
-            w: 36,
+            x: CW/2 - 19,
+            y: 16500,
+            w: 38,
             h: 16,
         };
 
-        // ========== 150+ ENGEL - HİÇ BOŞLUK YOK ==========
+        // ========== PROFESYONEL ENGEL TASARIMI ==========
+        // Her engel bilinçli yerleştirildi, rastgele değil!
         let obstacles = [];
 
         function buildObstacles() {
-            obstacles = [];
-
-            // ENGEL FABRİKASI: her 20-30 pikselde bir engel
-            for (let y = 400; y < 22000; y += 45) {  // sık aralıklar
-                // her katta 2-5 engel
-                const count = 3 + Math.floor(Math.random() * 4); // 3-6 arası
-                for (let i = 0; i < count; i++) {
-                    const type = Math.random() > 0.4 ? 'spinner' : 'fixed';
-                    const x = 30 + (i * 45) % 240;  // dağılım
-                    const w = type === 'spinner' ? 40 + Math.random() * 40 : 8 + Math.random() * 30;
-                    const h = type === 'spinner' ? 6 + Math.random() * 6 : 30 + Math.random() * 60;
-                    const angle = Math.random() * Math.PI;
-                    const spinSpeed = type === 'spinner' ? (Math.random() - 0.5) * 0.04 : 0;
-                    
-                    obstacles.push({
-                        type: type,
-                        x: x,
-                        y: y + (i * 15),
-                        w: w,
-                        h: h,
-                        angle: angle,
-                        spinSpeed: spinSpeed
-                    });
-                }
-
-                // ekstra dikey engeller (boşluk kalmasın)
-                if (y % 90 < 30) {
-                    obstacles.push({
-                        type: 'fixed',
-                        x: 50 + Math.random() * 200,
-                        y: y + 20,
-                        w: 6,
-                        h: 70,
-                        angle: 0.1,
-                        spinSpeed: 0
-                    });
-                }
-            }
-
-            // hedef bölgesi yakınında ekstra sık engel
-            for (let y = 21500; y < 22000; y += 25) {
-                for (let i = 0; i < 8; i++) {
-                    obstacles.push({
-                        type: 'spinner',
-                        x: 30 + i * 35,
-                        y: y + i * 10,
-                        w: 35,
-                        h: 6,
-                        angle: i,
-                        spinSpeed: 0.03 * (i%2===0?1:-1)
-                    });
-                }
-            }
-
-            // Toplam engel sayısı: yaklaşık 180-200 arası
+            obstacles = [
+                // BÖLGE 1: Giriş (0-2000) - hafif engeller
+                { type: 'fixed', x: 100, y: 400, w: 70, h: 8, angle: 0.1 },
+                { type: 'spinner', x: 220, y: 750, w: 60, h: 8, angle: 0.5, spinSpeed: 0.02 },
+                { type: 'fixed', x: 150, y: 1100, w: 8, h: 90, angle: 0.2 },
+                { type: 'spinner', x: 270, y: 1500, w: 55, h: 7, angle: 1.0, spinSpeed: -0.025 },
+                { type: 'fixed', x: 60, y: 1800, w: 80, h: 7, angle: -0.2 },
+                
+                // BÖLGE 2: Orta bölge (2000-5000) - dönen ve sabit karışık
+                { type: 'spinner', x: 190, y: 2300, w: 75, h: 8, angle: 0.3, spinSpeed: 0.018 },
+                { type: 'fixed', x: 80, y: 2800, w: 45, h: 7, angle: 0.5 },
+                { type: 'fixed', x: 250, y: 3200, w: 7, h: 110, angle: 0.0 },
+                { type: 'spinner', x: 140, y: 3700, w: 90, h: 8, angle: 0.8, spinSpeed: 0.022 },
+                { type: 'fixed', x: 220, y: 4200, w: 60, h: 7, angle: -0.3 },
+                { type: 'spinner', x: 70, y: 4700, w: 65, h: 8, angle: 1.4, spinSpeed: -0.02 },
+                
+                // BÖLGE 3: Yoğun bölge (5000-8000) - çapraz ve dikey
+                { type: 'fixed', x: 120, y: 5300, w: 8, h: 130, angle: 0.3 },
+                { type: 'fixed', x: 210, y: 5800, w: 8, h: 140, angle: -0.2 },
+                { type: 'spinner', x: 160, y: 6400, w: 85, h: 9, angle: 0.0, spinSpeed: 0.03 },
+                { type: 'fixed', x: 50, y: 6900, w: 70, h: 8, angle: 0.6 },
+                { type: 'spinner', x: 280, y: 7400, w: 55, h: 8, angle: 2.0, spinSpeed: -0.028 },
+                { type: 'fixed', x: 190, y: 7800, w: 7, h: 100, angle: 0.4 },
+                
+                // BÖLGE 4: Kıvrımlı bölge (8000-11000)
+                { type: 'spinner', x: 100, y: 8300, w: 70, h: 7, angle: 0.7, spinSpeed: 0.017 },
+                { type: 'fixed', x: 240, y: 8800, w: 60, h: 7, angle: -0.5 },
+                { type: 'spinner', x: 70, y: 9300, w: 80, h: 8, angle: 1.2, spinSpeed: 0.025 },
+                { type: 'fixed', x: 170, y: 9800, w: 8, h: 120, angle: 0.15 },
+                { type: 'fixed', x: 290, y: 10200, w: 50, h: 7, angle: 0.3 },
+                { type: 'spinner', x: 130, y: 10700, w: 95, h: 8, angle: 0.9, spinSpeed: -0.02 },
+                
+                // BÖLGE 5: Labirent (11000-13500)
+                { type: 'fixed', x: 80, y: 11200, w: 8, h: 150, angle: 0.0 },
+                { type: 'fixed', x: 200, y: 11700, w: 8, h: 140, angle: 0.2 },
+                { type: 'spinner', x: 260, y: 12200, w: 70, h: 8, angle: 0.4, spinSpeed: 0.022 },
+                { type: 'fixed', x: 140, y: 12700, w: 70, h: 7, angle: -0.4 },
+                { type: 'spinner', x: 40, y: 13200, w: 65, h: 8, angle: 1.8, spinSpeed: 0.018 },
+                
+                // BÖLGE 6: Son bölge (13500-16200) - çok dar, zorlu
+                { type: 'fixed', x: 110, y: 13700, w: 8, h: 130, angle: 0.1 },
+                { type: 'spinner', x: 220, y: 14200, w: 80, h: 8, angle: 0.6, spinSpeed: -0.025 },
+                { type: 'fixed', x: 180, y: 14700, w: 55, h: 7, angle: 0.5 },
+                { type: 'spinner', x: 90, y: 15200, w: 100, h: 8, angle: 1.3, spinSpeed: 0.02 },
+                { type: 'fixed', x: 260, y: 15700, w: 8, h: 110, angle: -0.1 },
+                { type: 'spinner', x: 150, y: 16200, w: 70, h: 8, angle: 0.2, spinSpeed: 0.015 },
+                
+                // Hedefe yakın son 3 engel
+                { type: 'fixed', x: 120, y: 16400, w: 40, h: 7, angle: 0.0 },
+                { type: 'fixed', x: 200, y: 16450, w: 40, h: 7, angle: 0.0 },
+                { type: 'spinner', x: 160, y: 16580, w: 70, h: 8, angle: 0.5, spinSpeed: 0.03 }
+            ];
+            // toplam 40 özenle yerleştirilmiş engel
         }
         buildObstacles();
 
         // --- Emoji seçim ---
-        document.querySelectorAll('.emoji-tile').forEach(btn => {
+        document.querySelectorAll('.emoji-btn').forEach(btn => {
             btn.addEventListener('click', e => {
-                document.querySelectorAll('.emoji-tile').forEach(b => b.classList.remove('selected'));
+                document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('selected'));
                 btn.classList.add('selected');
                 selectedEmoji = btn.getAttribute('data-emoji');
             });
@@ -305,45 +303,24 @@
         const statusDiv = document.getElementById('statusMsg');
         const timerFill = document.getElementById('timerFill');
 
-        // --- Top ekleme (dokunma ile) - tam koridor ortası ---
-        function addBallAtTap(clientX, clientY) {
+        // --- SADECE BUTONLA TOP EKLEME (canvas dokunma devre dışı) ---
+        document.getElementById('addBallBtn').addEventListener('click', () => {
             if (winnerIndex !== -1) return;
-
-            const rect = canvas.getBoundingClientRect();
-            const scaleX = CW / rect.width;
-            const scaleY = CH / rect.height;
-
-            let screenX = (clientX - rect.left) * scaleX;
-            let screenY = (clientY - rect.top) * scaleY;
-
-            // SADECE ORTA KORİDOR - kaçış yok
-            let worldX = CW/2 + (Math.random() - 0.5) * 25;  // çok dar koridor
-            worldX = Math.min(Math.max(worldX, BASE_RADIUS + 12), CW - BASE_RADIUS - 12);
             
-            let worldY = screenY + cameraY;
-            worldY = Math.max(60 + cameraY, worldY - 15);
-
-            const vx = (Math.random() - 0.5) * 1.0;   // minimum yatay
-            const vy = 0.9 + Math.random() * 1.8;
-
+            // Topu üst bölgeye ekle (çeşitlilik için)
+            let worldX = CW/2 + (Math.random() - 0.5) * 50;
+            worldX = Math.min(Math.max(worldX, BALL_RADIUS + 15), CW - BALL_RADIUS - 15);
+            const worldY = cameraY + 150 + Math.random() * 250;
+            
             balls.push({
                 emoji: selectedEmoji,
                 x: worldX,
                 y: worldY,
-                vx: vx,
-                vy: vy,
-                radius: BASE_RADIUS
+                vx: (Math.random() - 0.5) * 1.4,
+                vy: 1.2 + Math.random() * 2.0,
+                radius: BALL_RADIUS
             });
-        }
-
-        canvas.addEventListener('mousedown', (e) => {
-            e.preventDefault();
-            addBallAtTap(e.clientX, e.clientY);
         });
-        canvas.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            if (e.touches.length > 0) addBallAtTap(e.touches[0].clientX, e.touches[0].clientY);
-        }, { passive: false });
 
         // BAŞLAT butonu
         document.getElementById('startBtn').addEventListener('click', () => {
@@ -357,22 +334,6 @@
             }
         });
 
-        // Top ekle butonu
-        document.getElementById('addBallBtn').addEventListener('click', () => {
-            if (winnerIndex !== -1) return;
-            let worldX = CW/2 + (Math.random() - 0.5) * 30;
-            worldX = Math.min(Math.max(worldX, BASE_RADIUS + 12), CW - BASE_RADIUS - 12);
-            const worldY = cameraY + 180 + Math.random() * 250;
-            balls.push({
-                emoji: selectedEmoji,
-                x: worldX,
-                y: worldY,
-                vx: (Math.random() - 0.5) * 1.2,
-                vy: 1.2 + Math.random() * 2.2,
-                radius: BASE_RADIUS
-            });
-        });
-
         // Sıfırla
         document.getElementById('resetBtn').addEventListener('click', () => {
             balls = [];
@@ -382,11 +343,11 @@
             elapsedSeconds = 0;
             cameraY = 0;
             buildObstacles();
-            statusDiv.innerHTML = `<span>⏳ 40s</span><span>💀 SON ÇUKUR</span>`;
+            statusDiv.innerHTML = `<span>⏳ 45s</span><span>🎯 HEDEF ÇUKUR</span>`;
             timerFill.style.width = '100%';
         });
 
-        // --- Çarpışma fonksiyonları (GÜÇLENDİRİLMİŞ) ---
+        // --- GELİŞMİŞ ÇARPIŞMA SİSTEMİ ---
         function rotatePoint(cx, cy, x, y, angle) {
             const cos = Math.cos(angle);
             const sin = Math.sin(angle);
@@ -395,52 +356,49 @@
             return { x: cx + dx * cos - dy * sin, y: cy + dx * sin + dy * cos };
         }
 
-        function handleBallObstacle(ball, ob) {
+        function ballObstacleCollision(ball, ob) {
             const cx = ob.x, cy = ob.y, w = ob.w, h = ob.h, angle = ob.angle || 0;
             
-            // topu engelin lokal koordinatına çevir
-            const localBall = rotatePoint(cx, cy, ball.x, ball.y, -angle);
+            // topu engelin lokal uzayına çevir
+            const local = rotatePoint(cx, cy, ball.x, ball.y, -angle);
             
-            // engelin sınırları (lokal)
             const left = cx - w/2;
             const right = cx + w/2;
             const top = cy - h/2;
             const bottom = cy + h/2;
             
-            // en yakın noktayı bul
-            const closestX = Math.max(left, Math.min(localBall.x, right));
-            const closestY = Math.max(top, Math.min(localBall.y, bottom));
+            const closestX = Math.max(left, Math.min(local.x, right));
+            const closestY = Math.max(top, Math.min(local.y, bottom));
             
-            let dx = localBall.x - closestX;
-            let dy = localBall.y - closestY;
+            let dx = local.x - closestX;
+            let dy = local.y - closestY;
             let dist = Math.sqrt(dx*dx + dy*dy);
             
             if (dist < ball.radius && dist > 0.001) {
-                // çarpışma var - itekle
                 const overlap = ball.radius - dist;
-                const normX = dx / dist;
-                const normY = dy / dist;
+                const nx = dx / dist;
+                const ny = dy / dist;
                 
-                // konumu düzelt (lokal)
-                const newLocalX = localBall.x + normX * overlap;
-                const newLocalY = localBall.y + normY * overlap;
+                // konum düzeltme (lokal)
+                const newLocalX = local.x + nx * overlap;
+                const newLocalY = local.y + ny * overlap;
                 
                 // dünyaya geri çevir
-                const worldBall = rotatePoint(cx, cy, newLocalX, newLocalY, angle);
-                ball.x = worldBall.x;
-                ball.y = worldBall.y;
+                const world = rotatePoint(cx, cy, newLocalX, newLocalY, angle);
+                ball.x = world.x;
+                ball.y = world.y;
 
-                // hız tepkisi (enerji korunumlu)
+                // hız tepkisi
                 let vLocal = rotatePoint(0, 0, ball.vx, ball.vy, -angle);
-                let vn = vLocal.x * normX + vLocal.y * normY;
+                let vn = vLocal.x * nx + vLocal.y * ny;
                 
-                if (vn < 0) {  // yaklaşıyorsa
-                    let vt_x = vLocal.x - vn * normX;
-                    let vt_y = vLocal.y - vn * normY;
-                    let vn_new = -vn * 0.55;  // biraz enerji kaybı
+                if (vn < 0) {
+                    let vt_x = vLocal.x - vn * nx;
+                    let vt_y = vLocal.y - vn * ny;
+                    let vn_new = -vn * 0.52;
                     
-                    vLocal.x = vt_x + vn_new * normX;
-                    vLocal.y = vt_y + vn_new * normY;
+                    vLocal.x = vt_x + vn_new * nx;
+                    vLocal.y = vt_y + vn_new * ny;
                     
                     let vWorld = rotatePoint(0, 0, vLocal.x, vLocal.y, angle);
                     ball.vx = vWorld.x * 0.98;
@@ -451,7 +409,7 @@
             return false;
         }
 
-        function handleBallCollisions() {
+        function ballBallCollision() {
             for (let i = 0; i < balls.length; i++) {
                 for (let j = i + 1; j < balls.length; j++) {
                     let b1 = balls[i], b2 = balls[j];
@@ -465,13 +423,11 @@
                         let nx = dx / dist;
                         let ny = dy / dist;
                         
-                        // konum düzeltme
                         b1.x -= nx * overlap;
                         b1.y -= ny * overlap;
                         b2.x += nx * overlap;
                         b2.y += ny * overlap;
 
-                        // hız değişimi (tam esnek)
                         let v1n = b1.vx * nx + b1.vy * ny;
                         let v2n = b2.vx * nx + b2.vy * ny;
                         let v1t_x = b1.vx - v1n * nx;
@@ -491,7 +447,7 @@
             }
         }
 
-        // --- Fizik güncelleme (GÜÇLENDİRİLMİŞ) ---
+        // --- Fizik güncelleme ---
         function update() {
             if (!gameActive || winnerIndex !== -1) return;
 
@@ -506,55 +462,40 @@
                 } else {
                     const percent = ((RACE_DURATION - elapsedSeconds) / RACE_DURATION) * 100;
                     timerFill.style.width = percent + '%';
-                    statusDiv.innerHTML = `<span>⏳ ${(RACE_DURATION - elapsedSeconds).toFixed(1)}s</span><span>💀 ${balls.length} top</span>`;
+                    statusDiv.innerHTML = `<span>⏳ ${(RACE_DURATION - elapsedSeconds).toFixed(1)}s</span><span>🎯 ${balls.length} top</span>`;
                 }
             }
 
-            // Yerçekimi ve hareket
+            // yerçekimi ve hareket
             for (let b of balls) {
                 b.vy += GRAVITY;
                 b.x += b.vx;
                 b.y += b.vy;
 
-                // minimal sürtünme (toplar dursun istemiyoruz ama çok hızlı da olmasın)
-                b.vx *= 0.998;
-                b.vy *= 0.998;
+                b.vx *= 0.997;
+                b.vy *= 0.997;
 
-                // DAR KORİDOR - duvarlar çok yakın
-                if (b.x - b.radius < 12) { 
-                    b.x = 12 + b.radius; 
-                    b.vx *= -0.35; 
-                }
-                if (b.x + b.radius > CW - 12) { 
-                    b.x = CW - 12 - b.radius; 
-                    b.vx *= -0.35; 
-                }
-
-                // alt sınır (çok aşağı düşmesin)
-                if (b.y + b.radius > GROUND_Y + 21500) { 
-                    b.y = GROUND_Y + 21500 - b.radius; 
-                    b.vy *= -0.3;
-                }
+                // duvarlar (kenarlar)
+                if (b.x - b.radius < 10) { b.x = 10 + b.radius; b.vx *= -0.4; }
+                if (b.x + b.radius > CW - 10) { b.x = CW - 10 - b.radius; b.vx *= -0.4; }
+                if (b.y + b.radius > GROUND_Y + 16000) { b.y = GROUND_Y + 16000 - b.radius; b.vy *= -0.3; }
             }
 
-            // top-top çarpışması
-            handleBallCollisions();
+            ballBallCollision();
 
-            // engel çarpışmaları (5 iterasyon - sızdırmazlık için)
-            for (let iter = 0; iter < 5; iter++) {
+            // çarpışma iterasyonu (4 kez)
+            for (let iter = 0; iter < 4; iter++) {
                 for (let b of balls) {
                     for (let ob of obstacles) {
-                        handleBallObstacle(b, ob);
+                        ballObstacleCollision(b, ob);
                     }
                 }
             }
 
-            // dönen engellerin açılarını güncelle
-            obstacles.forEach(ob => { 
-                if (ob.type === 'spinner') ob.angle += ob.spinSpeed; 
-            });
+            // dönen engeller
+            obstacles.forEach(ob => { if (ob.type === 'spinner') ob.angle += ob.spinSpeed; });
 
-            // hedef çukur kontrolü
+            // hedef kontrolü
             for (let i = 0; i < balls.length; i++) {
                 const b = balls[i];
                 if (b.x > TARGET_PIT.x && b.x < TARGET_PIT.x + TARGET_PIT.w &&
@@ -569,43 +510,41 @@
                 }
             }
 
-            // kamera - en dipteki topa göre
+            // kamera (en dipteki top)
             if (balls.length > 0) {
                 let lowestY = Math.max(...balls.map(b => b.y));
-                let targetCamera = Math.max(0, lowestY - CH * 0.4);
+                let targetCamera = Math.max(0, lowestY - CH * 0.45);
                 cameraY += (targetCamera - cameraY) * CAM_SMOOTH;
             }
         }
 
-        // --- Çizim (optimize) ---
+        // --- Çizim ---
         function draw() {
             ctx.clearRect(0, 0, CW, CH);
 
-            // arkaplan - yoğun engel hissi
-            ctx.fillStyle = '#1a5f86';
+            // arkaplan
+            ctx.fillStyle = '#1c5c81';
             ctx.fillRect(0, 0, CW, CH);
-            
-            // hareket eden gölgeler
-            for (let i = 0; i < 30; i++) {
-                ctx.fillStyle = '#b2e2ff15';
-                ctx.fillRect(0, i*60 - cameraY*0.3, CW, 20);
+            for (let i = 0; i < 25; i++) {
+                ctx.fillStyle = '#a0d6ff20';
+                ctx.fillRect(0, i*70 - cameraY*0.3, CW, 15);
             }
 
             // hedef çukur
             ctx.save();
             const pitY = TARGET_PIT.y - cameraY;
             if (pitY + TARGET_PIT.h > 0 && pitY < CH) {
-                ctx.fillStyle = '#d63e1a';
-                ctx.shadowColor = '#ffaa4e';
+                ctx.fillStyle = '#d64824';
+                ctx.shadowColor = '#ffb45e';
                 ctx.shadowBlur = 45;
                 ctx.fillRect(TARGET_PIT.x, pitY, TARGET_PIT.w, TARGET_PIT.h);
-                ctx.font = 'bold 26px sans-serif';
-                ctx.fillStyle = '#ffffcf';
-                ctx.fillText('🕳️', TARGET_PIT.x+4, pitY-18);
+                ctx.font = 'bold 28px sans-serif';
+                ctx.fillStyle = '#ffffe0';
+                ctx.fillText('🕳️', TARGET_PIT.x+2, pitY-20);
             }
             ctx.restore();
 
-            // TÜM ENGLER (150+)
+            // engeller
             obstacles.forEach(ob => {
                 const scY = ob.y - cameraY;
                 if (scY + ob.h/2 < 0 || scY - ob.h/2 > CH) return;
@@ -613,63 +552,51 @@
                 ctx.save();
                 ctx.translate(ob.x, scY);
                 ctx.rotate(ob.angle || 0);
-                
-                // gövde
-                ctx.fillStyle = ob.type === 'spinner' ? '#e0691a' : '#b84cd8';
-                ctx.shadowColor = '#101010';
-                ctx.shadowBlur = 25;
+                ctx.fillStyle = ob.type === 'spinner' ? '#d9782b' : '#b84cd8';
+                ctx.shadowColor = '#101c24';
+                ctx.shadowBlur = 24;
                 ctx.shadowOffsetY = 5;
                 ctx.fillRect(-ob.w/2, -ob.h/2, ob.w, ob.h);
-                
-                // parlak kenar
-                ctx.strokeStyle = '#feda7a';
-                ctx.lineWidth = 2.8;
-                ctx.shadowBlur = 18;
-                ctx.shadowColor = '#ffeca0';
+                ctx.strokeStyle = '#ffe89c';
+                ctx.lineWidth = 2.5;
+                ctx.shadowBlur = 20;
                 ctx.strokeRect(-ob.w/2, -ob.h/2, ob.w, ob.h);
-                
                 ctx.restore();
             });
 
-            // TOPLAR
+            // toplar
             for (let i = 0; i < balls.length; i++) {
                 const b = balls[i];
                 const scrX = b.x;
                 const scrY = b.y - cameraY;
-                
                 if (scrY + b.radius < 0 || scrY - b.radius > CH) continue;
 
-                // gölge
-                ctx.shadowColor = '#00111e';
+                ctx.shadowColor = '#001d2b';
                 ctx.shadowBlur = 24;
                 ctx.shadowOffsetY = 6;
-                
-                // arka parlaklık
                 ctx.beginPath();
                 ctx.arc(scrX, scrY, b.radius+2, 0, 2*Math.PI);
-                ctx.fillStyle = '#ffffec';
+                ctx.fillStyle = '#ffffe5';
                 ctx.fill();
 
-                // emoji
                 ctx.font = `${b.radius+9}px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "Twemoji Mozilla", "Android Emoji", Emoji, sans-serif`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.shadowColor = i === winnerIndex ? 'gold' : '#002f40';
+                ctx.shadowColor = i === winnerIndex ? 'gold' : '#003144';
                 ctx.fillStyle = i === winnerIndex ? '#ffffc2' : 'white';
                 ctx.fillText(b.emoji, scrX, scrY-2);
 
-                // kazanan tacı
                 if (i === winnerIndex) {
                     ctx.font = '28px sans-serif';
                     ctx.fillStyle = '#ffdb70';
-                    ctx.fillText('👑', scrX-14, scrY-52);
+                    ctx.fillText('👑', scrX-14, scrY-54);
                 }
             }
 
             // üst fade
             const grad = ctx.createLinearGradient(0, 0, 0, 80);
-            grad.addColorStop(0, '#02212b');
-            grad.addColorStop(1, '#02212b00');
+            grad.addColorStop(0, '#01212b');
+            grad.addColorStop(1, '#01212b00');
             ctx.fillStyle = grad;
             ctx.fillRect(0, 0, CW, 80);
 
