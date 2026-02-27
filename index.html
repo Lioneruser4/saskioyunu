@@ -1,633 +1,723 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DEVLERİN KILIÇ SAVAŞI · 3 Can · Çift Kılıç Korur</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            user-select: none;
-        }
-        body {
-            background: linear-gradient(145deg, #1e3a4a, #0f2835);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100dvh;
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            padding: 12px;
-        }
-        .arena {
-            background: #2b4b5e;
-            border-radius: 60px;
-            padding: 24px;
-            box-shadow: 0 40px 50px -15px black, inset 0 -5px 15px #77c4ff;
-            border: 5px solid #ffb347;
-        }
-        .canvas-wrap {
-            width: min(900px, 92vw);
-            aspect-ratio: 4 / 3;
-            background: #124f6e;
-            border-radius: 40px;
-            padding: 12px;
-            box-shadow: inset 0 0 0 6px #b5e2ff, inset 0 0 40px #3184b0;
-        }
-        canvas {
-            display: block;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle at 30% 40%, #3f8db3, #13536b);
-            border-radius: 30px;
-            border: 5px solid #ffcd7e;
-            cursor: crosshair;
-        }
-        .dashboard {
-            margin-top: 25px;
-            display: flex;
-            flex-direction: column;
-            gap: 18px;
-        }
-        .emoji-palette {
-            background: #153d51;
-            border-radius: 70px;
-            padding: 15px 20px;
-            display: flex;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
-            border: 3px solid #fcb13b;
-            box-shadow: inset 0 3px 15px #3e9ec9;
-        }
-        .emoji-palette span {
-            color: white;
-            font-weight: 800;
-            background: #1f6d91;
-            padding: 10px 25px;
-            border-radius: 50px;
-            font-size: 1.3rem;
-            text-shadow: 2px 2px 0 #094154;
-        }
-        .emoji-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            flex: 1;
-            justify-content: flex-end;
-        }
-        .emoji-btn {
-            font-size: 2.5rem;
-            background: #1f7093;
-            border: none;
-            border-radius: 50%;
-            width: 70px;
-            height: 70px;
-            box-shadow: 0 7px 0 #073342, 0 8px 15px black;
-            transition: 0.06s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-        }
-        .emoji-btn.selected {
-            transform: translateY(5px);
-            box-shadow: 0 3px 0 #073342, 0 8px 15px black;
-            background: #ffaa2b;
-            border: 4px solid #fff6d1;
-        }
-        .action-bar {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-        .pro-btn {
-            background: #ffdead;
-            border: none;
-            border-radius: 60px;
-            padding: 18px 40px;
-            font-weight: 800;
-            font-size: 1.5rem;
-            color: #02212b;
-            box-shadow: 0 9px 0 #8b5d28, 0 12px 25px black;
-            flex: 1;
-            min-width: 180px;
-            border: 3px solid #ffd58c;
-            cursor: pointer;
-            transition: 0.05s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-        .pro-btn:active {
-            transform: translateY(8px);
-            box-shadow: 0 3px 0 #8b5d28, 0 12px 25px black;
-        }
-        .stats-panel {
-            background: #1a4a60;
-            padding: 18px 30px;
-            border-radius: 70px;
-            border: 4px solid #ffb951;
-            color: #fff3cf;
-            font-weight: bold;
-            font-size: 1.7rem;
-            text-shadow: 3px 3px 0 #09303f;
-            display: flex;
-            gap: 50px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-        .stat-item {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        .sword-icon-big {
-            font-size: 3rem;
-            filter: drop-shadow(0 0 15px #ffb347);
-            animation: glow 1s ease-in-out infinite alternate;
-        }
-        @keyframes glow {
-            from { filter: drop-shadow(0 0 10px #ffaa33); }
-            to { filter: drop-shadow(0 0 25px #ffd966); }
-        }
-        .footer {
-            text-align: center;
-            margin-top: 18px;
-            color: #cce9ff;
-            font-weight: 600;
-            font-size: 1.2rem;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>BACKROOMS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Creepster&family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+/*─────────────── RESET & VARS ───────────────*/
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --bg:#080603;
+  --bg2:#110e07;
+  --gold:#c8a84b;
+  --gold2:#ffe07a;
+  --red:#cc2200;
+  --red2:#ff4422;
+  --green:#1aaa55;
+  --green2:#44ff99;
+  --text:#e4cfa0;
+  --text2:#b89a60;
+  --panel:rgba(14,10,4,0.94);
+  --border:rgba(200,168,75,0.22);
+  --border2:rgba(200,168,75,0.45);
+  --glow:0 0 24px rgba(200,168,75,0.35);
+  --glow-r:0 0 24px rgba(200,34,0,0.5);
+  --glow-g:0 0 24px rgba(0,200,100,0.4);
+  --radius:12px;
+  --font-title:'Creepster',cursive;
+  --font-mono:'Share Tech Mono',monospace;
+  --font-vt:'VT323',monospace;
+}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:var(--font-mono);touch-action:none;user-select:none;-webkit-user-select:none;}
+
+/*─────────────── SCREEN SYSTEM ───────────────*/
+.screen{position:fixed;inset:0;z-index:10;display:none;flex-direction:column;align-items:center;justify-content:center;}
+.screen.active{display:flex;}
+
+/*─────────────── NOISE TEXTURE ───────────────*/
+body::after{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E");
+  opacity:.045;mix-blend-mode:overlay;
+}
+
+/*─────────────── SCANLINES ───────────────*/
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:9998;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.08) 2px,rgba(0,0,0,0.08) 4px);
+}
+
+/*─────────────── ANIMATIONS ───────────────*/
+@keyframes flicker{0%,100%{opacity:1}91%{opacity:1}92%{opacity:.5}94%{opacity:1}97%{opacity:.7}98%{opacity:1}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+@keyframes glowPulse{0%,100%{box-shadow:var(--glow)}50%{box-shadow:0 0 40px rgba(200,168,75,0.6),0 0 80px rgba(200,168,75,0.2)}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+@keyframes loadBar{from{width:0}to{width:100%}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes monFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes bgShift{0%,100%{background-position:0 0}50%{background-position:100% 100%}}
+
+/*─────────────── LOADING SCREEN ───────────────*/
+#scLoading{
+  background:#000;
+  background-image:radial-gradient(ellipse at 50% 50%,#1a1000 0%,#000 70%);
+  gap:32px;
+}
+.ld-title{
+  font-family:var(--font-title);
+  font-size:clamp(52px,15vw,110px);
+  color:var(--gold);
+  letter-spacing:10px;
+  text-shadow:0 0 40px rgba(200,168,75,.8),0 0 100px rgba(200,168,75,.3);
+  animation:flicker 3s infinite;
+  line-height:1;
+}
+.ld-sub{font-size:12px;color:rgba(200,168,75,.45);letter-spacing:5px;text-transform:uppercase;}
+.ld-bar-wrap{width:240px;height:3px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden;}
+.ld-bar{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold2));box-shadow:0 0 12px var(--gold);animation:loadBar 2s ease-out forwards;}
+.ld-status{font-size:12px;color:rgba(200,168,75,.4);letter-spacing:3px;animation:blink 1.2s infinite;}
+.ld-monster{
+  font-size:72px;
+  animation:monFloat 2s ease-in-out infinite;
+  filter:drop-shadow(0 0 20px rgba(200,0,0,.6));
+}
+
+/*─────────────── CONNECTING OVERLAY ───────────────*/
+#scConnect{
+  background:rgba(0,0,0,.92);
+  z-index:500;
+  gap:24px;
+}
+.conn-spinner{
+  width:56px;height:56px;
+  border:3px solid rgba(200,168,75,.15);
+  border-top-color:var(--gold);
+  border-radius:50%;
+  animation:spin .9s linear infinite;
+}
+.conn-title{font-family:var(--font-title);font-size:28px;color:var(--gold);letter-spacing:4px;}
+.conn-sub{font-size:12px;color:var(--text2);animation:pulse 1.5s infinite;letter-spacing:2px;}
+.conn-dot{display:inline-block;animation:blink .8s infinite;}
+.conn-dot:nth-child(2){animation-delay:.25s;}
+.conn-dot:nth-child(3){animation-delay:.5s;}
+
+/*─────────────── BG PATTERN ───────────────*/
+.bg-pattern{
+  position:absolute;inset:0;z-index:0;
+  background-image:
+    repeating-linear-gradient(0deg,transparent,transparent 79px,rgba(200,168,75,.06) 79px,rgba(200,168,75,.06) 80px),
+    repeating-linear-gradient(90deg,transparent,transparent 79px,rgba(200,168,75,.06) 79px,rgba(200,168,75,.06) 80px);
+  pointer-events:none;
+}
+
+/*─────────────── MAIN MENU ───────────────*/
+#scMenu{
+  background:radial-gradient(ellipse at 50% 30%,#1c1408 0%,#000 65%);
+  overflow:hidden;
+  justify-content:space-between;
+  padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px) 0;
+}
+.menu-top{
+  display:flex;flex-direction:column;align-items:center;
+  padding-top:clamp(20px,5vh,50px);gap:12px;
+  z-index:1;width:100%;
+}
+.menu-title{
+  font-family:var(--font-title);
+  font-size:clamp(44px,12vw,90px);
+  color:var(--gold);
+  letter-spacing:8px;
+  text-shadow:0 0 30px rgba(200,168,75,.7),0 0 70px rgba(200,168,75,.2);
+  animation:flicker 5s infinite;
+  line-height:1;
+}
+.menu-tagline{font-size:11px;color:rgba(200,168,75,.4);letter-spacing:5px;text-transform:uppercase;}
+.menu-player-card{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:10px 28px;
+  text-align:center;
+  margin-top:4px;
+  animation:fadeIn .5s ease;
+}
+.mpc-label{font-size:9px;color:rgba(200,168,75,.35);letter-spacing:3px;margin-bottom:2px;}
+.mpc-name{font-size:17px;color:var(--gold);}
+
+.menu-mid{z-index:1;display:flex;flex-direction:column;align-items:center;gap:14px;width:100%;max-width:360px;padding:0 20px;}
+
+.menu-bot{z-index:1;padding-bottom:clamp(16px,4vh,40px);font-size:10px;color:rgba(200,168,75,.18);letter-spacing:3px;text-align:center;}
+
+/*─────────────── BUTTONS ───────────────*/
+.btn{
+  width:100%;padding:0;border:none;cursor:pointer;border-radius:var(--radius);
+  font-family:var(--font-mono);font-weight:bold;letter-spacing:2px;text-transform:uppercase;
+  transition:transform .12s,box-shadow .12s,opacity .12s;
+  outline:none;position:relative;overflow:hidden;
+}
+.btn::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.1) 0%,transparent 55%);pointer-events:none;}
+.btn:active{transform:scale(.96)!important;}
+
+.btn-xl{font-size:clamp(17px,4.5vw,21px);height:62px;}
+.btn-lg{font-size:clamp(15px,4vw,18px);height:54px;}
+.btn-md{font-size:14px;height:44px;}
+.btn-sm{font-size:12px;height:36px;padding:0 14px;width:auto;}
+
+.btn-gold{background:linear-gradient(135deg,#b8922e,var(--gold),#d4a94e);color:#100800;box-shadow:var(--glow);}
+.btn-gold:hover{transform:translateY(-1px);box-shadow:0 0 36px rgba(200,168,75,.55);}
+.btn-red{background:linear-gradient(135deg,#880000,var(--red),#cc2200);color:#fff;box-shadow:var(--glow-r);}
+.btn-red:hover{transform:translateY(-1px);}
+.btn-ghost{background:rgba(200,168,75,.1);color:var(--gold);border:1px solid var(--border);}
+.btn-ghost:hover{background:rgba(200,168,75,.18);border-color:var(--border2);}
+.btn-danger{background:rgba(200,34,0,.15);color:var(--red2);border:1px solid rgba(200,34,0,.3);}
+.btn-green{background:linear-gradient(135deg,#0d7a3a,var(--green));color:#fff;box-shadow:var(--glow-g);}
+
+/* Pulse on main button */
+.btn-pulse{animation:glowPulse 2.2s infinite;}
+
+/*─────────────── ROOMS SCREEN ───────────────*/
+#scRooms{background:radial-gradient(ellipse at 50% 0%,#1a1408 0%,#050402 60%);overflow:hidden;justify-content:flex-start;}
+.rooms-wrap{display:flex;flex-direction:column;width:100%;height:100%;max-width:600px;align-self:center;}
+.rooms-header{
+  display:flex;align-items:center;gap:10px;
+  padding:clamp(10px,3vw,20px);
+  border-bottom:1px solid var(--border);
+  background:rgba(0,0,0,.5);
+  flex-shrink:0;
+}
+.rooms-header h2{font-family:var(--font-title);font-size:clamp(18px,5vw,26px);color:var(--gold);flex:1;letter-spacing:3px;}
+.rooms-body{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px;}
+.room-card{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:14px 16px;
+  cursor:pointer;
+  display:flex;align-items:center;gap:12px;
+  transition:border-color .15s,background .15s,transform .1s;
+  animation:fadeIn .25s ease;
+}
+.room-card:active{transform:scale(.98);border-color:var(--gold);}
+.room-card:hover{border-color:var(--border2);background:rgba(200,168,75,.06);}
+.rc-info{flex:1;min-width:0;}
+.rc-name{font-size:14px;color:var(--gold);font-weight:bold;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.rc-meta{font-size:11px;color:var(--text2);margin-top:3px;}
+.rc-right{text-align:right;flex-shrink:0;}
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;letter-spacing:1px;font-weight:bold;}
+.badge-wait{background:rgba(26,170,85,.18);color:var(--green2);border:1px solid rgba(26,170,85,.4);}
+.badge-play{background:rgba(200,34,0,.18);color:var(--red2);border:1px solid rgba(200,34,0,.35);}
+.rc-slots{font-size:12px;color:var(--text2);margin-top:4px;}
+.rooms-empty{text-align:center;padding:60px 24px;color:rgba(200,168,75,.25);font-size:14px;line-height:2;}
+
+/*─────────────── CREATE MODAL ───────────────*/
+.modal-bg{
+  position:fixed;inset:0;z-index:800;background:rgba(0,0,0,.88);
+  display:none;align-items:flex-end;justify-content:center;
+  padding:0 0 env(safe-area-inset-bottom,0) 0;
+}
+.modal-bg.open{display:flex;}
+.modal{
+  background:#131008;
+  border:1px solid var(--border);
+  border-radius:var(--radius) var(--radius) 0 0;
+  padding:28px 24px 32px;
+  width:100%;max-width:480px;
+  animation:slideUp .2s ease;
+}
+.modal h3{font-family:var(--font-title);font-size:26px;color:var(--gold);margin-bottom:22px;text-align:center;letter-spacing:3px;}
+.modal-label{font-size:10px;color:rgba(200,168,75,.4);letter-spacing:2px;margin-bottom:8px;text-transform:uppercase;}
+.monster-row{display:flex;gap:10px;margin-bottom:22px;}
+.mon-btn{
+  flex:1;padding:16px 10px;text-align:center;cursor:pointer;
+  border-radius:var(--radius);border:1px solid var(--border);
+  background:rgba(200,168,75,.06);color:var(--text2);
+  font-family:var(--font-mono);font-size:12px;line-height:1.6;
+  transition:all .15s;
+}
+.mon-btn .mon-icon{font-size:26px;display:block;margin-bottom:4px;}
+.mon-btn.sel{background:rgba(200,168,75,.18);border-color:var(--gold);color:var(--gold);}
+.mon-btn:active{transform:scale(.97);}
+.modal-actions{display:flex;gap:10px;}
+.modal-close-area{position:absolute;top:0;left:0;right:0;height:40px;cursor:pointer;}
+
+/*─────────────── GAME SCREEN ───────────────*/
+#scGame{
+  background:#000;
+  display:none;
+  flex-direction:row;
+  align-items:stretch;
+  justify-content:flex-start;
+  z-index:5;
+}
+#scGame.active{display:flex;}
+#gameCanvas{display:block;flex:1;touch-action:none;}
+
+/*─────────────── SIDE PANEL ───────────────*/
+#sidePanel{
+  width:200px;flex-shrink:0;
+  background:rgba(6,4,1,.95);
+  border-left:1px solid var(--border);
+  display:none;flex-direction:column;
+  padding:14px 12px;gap:0;
+  overflow:hidden;
+}
+@media(min-width:768px) and (orientation:landscape){#sidePanel{display:flex;}}
+.sp-title{
+  font-family:var(--font-title);font-size:16px;color:var(--gold);
+  border-bottom:1px solid var(--border);padding-bottom:8px;margin-bottom:10px;
+  letter-spacing:2px;
+}
+.sp-section{margin-bottom:14px;}
+.sp-section-label{font-size:9px;color:rgba(200,168,75,.3);letter-spacing:2px;margin-bottom:6px;text-transform:uppercase;}
+.sp-player{
+  font-size:11px;padding:5px 8px;border-radius:6px;
+  border:1px solid rgba(200,168,75,.1);background:rgba(200,168,75,.04);
+  color:var(--text);margin-bottom:4px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.sp-player.you{color:var(--green2);border-color:rgba(0,200,100,.25);}
+.sp-player.mon{color:var(--red2);border-color:rgba(200,0,0,.25);}
+.sp-map-hint{font-size:10px;color:rgba(200,168,75,.25);line-height:1.8;}
+
+/* Game overlay (death/escape) */
+#gameOverlay{
+  position:fixed;inset:0;z-index:400;
+  background:rgba(0,0,0,.82);
+  display:none;flex-direction:column;align-items:center;justify-content:center;gap:20px;
+}
+#gameOverlay.show{display:flex;}
+.go-title{font-family:var(--font-title);font-size:clamp(44px,12vw,80px);text-align:center;line-height:1;animation:fadeIn .4s ease;}
+.go-title.death{color:var(--red2);text-shadow:0 0 50px var(--red);}
+.go-title.escape{color:var(--green2);text-shadow:0 0 50px var(--green);}
+.go-sub{font-size:14px;color:rgba(255,255,255,.45);text-align:center;}
+.go-btns{display:flex;flex-direction:column;gap:10px;width:220px;margin-top:8px;}
+
+/*─────────────── TOAST ───────────────*/
+#toasts{
+  position:fixed;top:44px;left:50%;transform:translateX(-50%);
+  z-index:900;display:flex;flex-direction:column;gap:6px;
+  align-items:center;pointer-events:none;min-width:180px;max-width:88vw;
+}
+.toast{
+  background:rgba(0,0,0,.92);
+  border-radius:8px;padding:9px 20px;
+  font-size:13px;text-align:center;
+  animation:fadeIn .2s ease;
+  border:1px solid var(--border);
+}
+.toast.ok{border-color:var(--green);color:var(--green2);}
+.toast.err{border-color:var(--red);color:var(--red2);}
+.toast.info{border-color:var(--gold);color:var(--gold);}
+
+/*─────────────── CONN STATUS ───────────────*/
+#connDot{
+  position:fixed;bottom:12px;left:14px;z-index:1000;
+  font-size:10px;letter-spacing:1px;
+  transition:color .4s;
+}
+#connDot.ok{color:var(--green);}
+#connDot.bad{color:var(--red);animation:blink 1s infinite;}
+#connDot.mid{color:var(--gold);}
+
+/*─────────────── SCROLLBAR ───────────────*/
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-track{background:rgba(0,0,0,.3);}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+</style>
 </head>
 <body>
-<div class="arena">
-    <div class="canvas-wrap">
-        <canvas id="gameCanvas" width="900" height="675"></canvas>
-    </div>
 
-    <div class="dashboard">
-        <div class="emoji-palette">
-            <span>⚔️ TOPUN</span>
-            <div class="emoji-grid">
-                <button class="emoji-btn selected" data-emoji="🇹🇷">🇹🇷</button>
-                <button class="emoji-btn" data-emoji="🇯🇵">🇯🇵</button>
-                <button class="emoji-btn" data-emoji="🇩🇪">🇩🇪</button>
-                <button class="emoji-btn" data-emoji="🇧🇷">🇧🇷</button>
-                <button class="emoji-btn" data-emoji="🇺🇸">🇺🇸</button>
-                <button class="emoji-btn" data-emoji="🇬🇧">🇬🇧</button>
-                <button class="emoji-btn" data-emoji="🇫🇷">🇫🇷</button>
-                <button class="emoji-btn" data-emoji="🇮🇹">🇮🇹</button>
-                <button class="emoji-btn" data-emoji="🇪🇸">🇪🇸</button>
-                <button class="emoji-btn" data-emoji="🇷🇺">🇷🇺</button>
-                <button class="emoji-btn" data-emoji="🇨🇳">🇨🇳</button>
-                <button class="emoji-btn" data-emoji="🇮🇳">🇮🇳</button>
-                <button class="emoji-btn" data-emoji="🇦🇷">🇦🇷</button>
-                <button class="emoji-btn" data-emoji="🇲🇽">🇲🇽</button>
-                <button class="emoji-btn" data-emoji="🇰🇷">🇰🇷</button>
-            </div>
-        </div>
-
-        <div class="action-bar">
-            <button class="pro-btn" id="addBallBtn">➕ DEV EKLE</button>
-            <button class="pro-btn" id="resetBtn">⟲ YENİ SAVAŞ</button>
-        </div>
-
-        <div class="stats-panel">
-            <div class="stat-item">⚔️ <span id="swordTimer">0.0s</span></div>
-            <div class="stat-item">👑 <span id="ballCount">0</span></div>
-            <div class="stat-item">🛡️ <span id="swordCount">0</span></div>
-        </div>
-    </div>
-    <div class="footer">
-        ⚔️ KILIÇ 4 SANİYEDE BİR YER DEĞİŞTİRİR · ÇİFT KILIÇ KORUR · ÇARPIŞINDA HIZ PATLAMASI
-    </div>
+<!-- ═══ LOADING SCREEN ═══ -->
+<div id="scLoading" class="screen active">
+  <div class="bg-pattern"></div>
+  <div class="ld-monster">👁️</div>
+  <div class="ld-title">BACKROOMS</div>
+  <div class="ld-sub">Seviye ∞ — Geri dönüş yok</div>
+  <div class="ld-bar-wrap"><div class="ld-bar"></div></div>
+  <div class="ld-status">Yükleniyor<span class="conn-dot">.</span><span class="conn-dot">.</span><span class="conn-dot">.</span></div>
 </div>
 
+<!-- ═══ CONNECTING OVERLAY ═══ -->
+<div id="scConnect" class="screen">
+  <div class="conn-spinner"></div>
+  <div class="conn-title">SUNUCUYA BAĞLANIYOR</div>
+  <div class="conn-sub">Bekle<span class="conn-dot">.</span><span class="conn-dot">.</span><span class="conn-dot">.</span></div>
+</div>
+
+<!-- ═══ MAIN MENU ═══ -->
+<div id="scMenu" class="screen">
+  <div class="bg-pattern"></div>
+  <div class="menu-top">
+    <div class="menu-title">BACKROOMS</div>
+    <div class="menu-tagline">Karanlığa hoş geldin</div>
+    <div class="menu-player-card">
+      <div class="mpc-label">OYUNCU</div>
+      <div class="mpc-name" id="mpcName">—</div>
+    </div>
+  </div>
+  <div class="menu-mid">
+    <button class="btn btn-gold btn-xl btn-pulse" id="btnQuick">⚡&nbsp;&nbsp;OYUNA BAŞLA</button>
+    <button class="btn btn-ghost btn-lg" id="btnRooms">🚪&nbsp;&nbsp;ODALAR</button>
+    <button class="btn btn-ghost btn-lg" id="btnCreate">➕&nbsp;&nbsp;ODA OLUŞTUR</button>
+  </div>
+  <div class="menu-bot">LEVEL ∞ &nbsp;|&nbsp; GERİ DÖNÜŞ YOK &nbsp;|&nbsp; BACKROOMS</div>
+</div>
+
+<!-- ═══ ROOMS SCREEN ═══ -->
+<div id="scRooms" class="screen">
+  <div class="bg-pattern"></div>
+  <div class="rooms-wrap">
+    <div class="rooms-header">
+      <button class="btn btn-ghost btn-sm" id="btnBackRooms">← GERİ</button>
+      <h2>🚪 ODALAR</h2>
+      <button class="btn btn-gold btn-sm" id="btnCreate2">+ ODA</button>
+    </div>
+    <div class="rooms-body" id="roomsList">
+      <div class="rooms-empty">Yükleniyor...</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ CREATE MODAL ═══ -->
+<div class="modal-bg" id="createModal">
+  <div class="modal">
+    <h3>ODA OLUŞTUR</h3>
+    <div class="modal-label">Canavar Türü</div>
+    <div class="monster-row">
+      <div class="mon-btn sel" id="monAI" data-v="ai">
+        <span class="mon-icon">🤖</span>YAPAY ZEKA
+      </div>
+      <div class="mon-btn" id="monPLR" data-v="player">
+        <span class="mon-icon">👤</span>RANDOM OYUNCU
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost btn-md" style="flex:1" id="btnModalCancel">İPTAL</button>
+      <button class="btn btn-gold btn-md" style="flex:2" id="btnModalOk">OLUŞTUR</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ GAME SCREEN ═══ -->
+<div id="scGame" class="screen">
+  <canvas id="gameCanvas"></canvas>
+  <div id="sidePanel">
+    <div class="sp-title">DURUM</div>
+    <div class="sp-section">
+      <div class="sp-section-label">Oyuncular</div>
+      <div id="spPlayers"></div>
+    </div>
+    <div class="sp-section">
+      <div class="sp-section-label">Görev</div>
+      <div class="sp-map-hint" id="spMission">🔑 Anahtarı bul<br>🚪 Çıkışa kaç<br>👹 Canavardan kaç</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ GAME OVERLAY ═══ -->
+<div id="gameOverlay">
+  <div class="go-title" id="goTitle"></div>
+  <div class="go-sub" id="goSub"></div>
+  <div class="go-btns">
+    <button class="btn btn-gold btn-lg" id="btnGoQuick">⚡ YENİDEN OYNA</button>
+    <button class="btn btn-ghost btn-md" id="btnGoMenu">ANA MENÜ</button>
+  </div>
+</div>
+
+<!-- ═══ TOASTS ═══ -->
+<div id="toasts"></div>
+
+<!-- ═══ CONN DOT ═══ -->
+<div id="connDot" class="bad">● BAĞLANIYOR</div>
+
+<!-- ═══ SCRIPTS ═══ -->
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"
+  crossorigin="anonymous"
+  integrity="sha384-2huX0OP5NNMT4WHzKb7Ea7mFVuEW/B1x4uf6mI/GNc2vlnHOy3RFzFizk3LDYPS">
+</script>
+<script src="game.js"></script>
 <script>
-    (function() {
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        const CW = 900, CH = 675; // 4:3 oran
-        canvas.width = CW; canvas.height = CH;
+'use strict';
+/* ════════════════════════════════════════════
+   APP CONTROLLER
+════════════════════════════════════════════ */
+const SERVER = 'https://saskioyunu-1-2d6i.onrender.com';
+const IS_MOBILE = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+window.IS_MOBILE = IS_MOBILE;
 
-        // --- Oyun değişkenleri ---
-        let balls = [];
-        let gameActive = true;
-        let selectedEmoji = '🇹🇷';
-        
-        // Kılıç (BÜYÜK)
-        let sword = {
-            x: CW/2,
-            y: CH/2,
-            radius: 40,  // BÜYÜK kılıç
-            lastMoveTime: 0,
-            moveInterval: 4000, // 4 saniye
-        };
+let socket     = null;
+let myName     = 'Misafir';
+let myId       = null;
+let inRoom     = false;
+let pendingMon = 'ai';
 
-        // Rastgele kılıç hareketi
-        function moveSwordRandomly() {
-            if (!gameActive) return;
-            const margin = 70;
-            sword.x = margin + Math.random() * (CW - 2 * margin);
-            sword.y = margin + Math.random() * (CH - 2 * margin);
-            sword.lastMoveTime = performance.now();
-            
-            // Kılıç hareket edince kimsenin kılıcı kalmasın (yeni kılıç için)
-            balls.forEach(b => b.hasSword = false);
-        }
+/* ──── Telegram ──── */
+function initTelegram(){
+  if(window.Telegram?.WebApp){
+    try{
+      const tg=window.Telegram.WebApp;
+      tg.ready(); tg.expand();
+      tg.setHeaderColor('#080603');
+      tg.setBackgroundColor('#080603');
+      const u=tg.initDataUnsafe?.user;
+      if(u){
+        myName=u.first_name+(u.last_name?' '+u.last_name:'');
+        return;
+      }
+    }catch(e){}
+  }
+  const saved=localStorage.getItem('br_name');
+  if(saved) myName=saved;
+  else {
+    myName='Oyuncu_'+Math.floor(Math.random()*9999);
+    localStorage.setItem('br_name',myName);
+  }
+}
 
-        // İlk kılıç
-        moveSwordRandomly();
+/* ──── Screen Manager ──── */
+const screens = {};
+['scLoading','scConnect','scMenu','scRooms','scGame'].forEach(id=>{
+  screens[id]=document.getElementById(id);
+});
 
-        // --- BÜYÜK TOP sınıfı (radius 28) ---
-        class Ball {
-            constructor(x, y, emoji) {
-                this.x = x;
-                this.y = y;
-                this.vx = (Math.random() - 0.5) * 12; // ÇOK HIZLI
-                this.vy = (Math.random() - 0.5) * 12; // ÇOK HIZLI
-                this.radius = 28;  // BÜYÜK TOP
-                this.emoji = emoji;
-                this.hasSword = false;
-                this.health = 3;
-                this.speedMultiplier = 1.0;
-                this.speedBoostTime = 0;
-                this.trail = []; // İz efekti için
-            }
+function showScreen(id){
+  Object.values(screens).forEach(s=>s.classList.remove('active'));
+  if(screens[id]) screens[id].classList.add('active');
+}
 
-            update(deltaTime) {
-                // Hız çarpanı zamanla azalsın
-                if (this.speedBoostTime > 0) {
-                    this.speedBoostTime -= deltaTime;
-                    if (this.speedBoostTime <= 0) {
-                        this.speedBoostTime = 0;
-                        this.speedMultiplier = 1.0;
-                    }
-                }
+/* ──── Toast ──── */
+function toast(msg,type='info',dur=2800){
+  const el=document.createElement('div');
+  el.className=`toast ${type}`;
+  el.textContent=msg;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(()=>{el.style.opacity='0';el.style.transform='translateY(-8px)';el.style.transition='.3s';setTimeout(()=>el.remove(),350);},dur);
+}
 
-                // İz efekti için eski konumları kaydet
-                this.trail.push({ x: this.x, y: this.y });
-                if (this.trail.length > 5) this.trail.shift();
+/* ──── Conn Status ──── */
+function connDot(state,text){
+  const el=document.getElementById('connDot');
+  el.className=state; el.textContent='● '+text;
+}
 
-                const currentSpeed = this.speedMultiplier;
-                this.x += this.vx * currentSpeed;
-                this.y += this.vy * currentSpeed;
+/* ──── Socket Init ──── */
+function initSocket(){
+  connDot('mid','Bağlanıyor');
+  showScreen('scConnect');
 
-                // Duvarlara çarp (seksin - hız artsın)
-                if (this.x - this.radius < 0) {
-                    this.x = this.radius;
-                    this.vx = -this.vx * 1.1; // HIZ ARTSIN
-                    this.speedMultiplier = Math.min(2.5, this.speedMultiplier * 1.15);
-                }
-                if (this.x + this.radius > CW) {
-                    this.x = CW - this.radius;
-                    this.vx = -this.vx * 1.1;
-                    this.speedMultiplier = Math.min(2.5, this.speedMultiplier * 1.15);
-                }
-                if (this.y - this.radius < 0) {
-                    this.y = this.radius;
-                    this.vy = -this.vy * 1.1;
-                    this.speedMultiplier = Math.min(2.5, this.speedMultiplier * 1.15);
-                }
-                if (this.y + this.radius > CH) {
-                    this.y = CH - this.radius;
-                    this.vy = -this.vy * 1.1;
-                    this.speedMultiplier = Math.min(2.5, this.speedMultiplier * 1.15);
-                }
+  socket=io(SERVER,{
+    transports:['websocket','polling'],
+    reconnection:true,
+    reconnectionDelay:1200,
+    reconnectionDelayMax:6000,
+    reconnectionAttempts:Infinity,
+    timeout:10000
+  });
 
-                // Hız sınırı (çok hızlı olabilirler)
-                const maxSpeed = 20;
-                this.vx = Math.min(maxSpeed, Math.max(-maxSpeed, this.vx));
-                this.vy = Math.min(maxSpeed, Math.max(-maxSpeed, this.vy));
-            }
-        }
+  socket.on('connect',()=>{
+    myId=socket.id;
+    connDot('ok','Bağlı');
+    if(!inRoom) showScreen('scMenu');
+    toast('✅ Sunucuya bağlandı','ok',2000);
+  });
 
-        // --- Top ekleme (seçili emoji ile) ---
-        function addBall() {
-            const x = 100 + Math.random() * (CW - 200);
-            const y = 100 + Math.random() * (CH - 200);
-            balls.push(new Ball(x, y, selectedEmoji));
-            updateUI();
-        }
+  socket.on('disconnect',reason=>{
+    connDot('bad','Bağlantı kesildi');
+    toast('⚠️ Bağlantı kesildi — yeniden bağlanılıyor...','err',4000);
+    if(!inRoom) showScreen('scConnect');
+  });
 
-        // --- Emoji seçim ---
-        document.querySelectorAll('.emoji-btn').forEach(btn => {
-            btn.addEventListener('click', e => {
-                document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('selected'));
-                btn.classList.add('selected');
-                selectedEmoji = btn.getAttribute('data-emoji');
-            });
-        });
+  socket.on('connect_error',()=>{
+    connDot('bad','Bağlanamıyor');
+  });
 
-        // --- Top-top çarpışması (GELİŞMİŞ) ---
-        function handleBallCollisions() {
-            for (let i = 0; i < balls.length; i++) {
-                for (let j = i + 1; j < balls.length; j++) {
-                    const b1 = balls[i];
-                    const b2 = balls[j];
-                    
-                    const dx = b2.x - b1.x;
-                    const dy = b2.y - b1.y;
-                    const dist = Math.sqrt(dx*dx + dy*dy);
-                    const minDist = b1.radius + b2.radius;
-                    
-                    if (dist < minDist) {
-                        // Çarpışma anı - hız patlaması (İKİSİ DE HIZLANSIN)
-                        const boostAmount = 1.6;
-                        b1.speedMultiplier = Math.min(2.8, b1.speedMultiplier * boostAmount);
-                        b2.speedMultiplier = Math.min(2.8, b2.speedMultiplier * boostAmount);
-                        b1.speedBoostTime = 2500; // 2.5 saniye
-                        b2.speedBoostTime = 2500;
-                        
-                        // KILIÇ KONTROLÜ - İKİSİNDE DE VARSA CAN GİTMESİN
-                        if (b1.hasSword && b2.hasSword) {
-                            // İKİSİNDE DE KILIÇ VAR - CAN GİTMEZ
-                            // Sadece hız patlaması olsun
-                        } else if (b1.hasSword && !b2.hasSword) {
-                            b2.health--;
-                            if (b2.health > 0) {
-                                b2.speedMultiplier = Math.min(3.0, b2.speedMultiplier * 2.2); // Kaçış hızı
-                                b2.speedBoostTime = 2000;
-                            }
-                        } else if (b2.hasSword && !b1.hasSword) {
-                            b1.health--;
-                            if (b1.health > 0) {
-                                b1.speedMultiplier = Math.min(3.0, b1.speedMultiplier * 2.2);
-                                b1.speedBoostTime = 2000;
-                            }
-                        }
-                        
-                        // Fizik (esnek çarpışma)
-                        const angle = Math.atan2(dy, dx);
-                        const sin = Math.sin(angle);
-                        const cos = Math.cos(angle);
-                        
-                        const v1 = {
-                            x: b1.vx * cos + b1.vy * sin,
-                            y: b1.vy * cos - b1.vx * sin
-                        };
-                        const v2 = {
-                            x: b2.vx * cos + b2.vy * sin,
-                            y: b2.vy * cos - b2.vx * sin
-                        };
-                        
-                        const v1f = v2.x;
-                        const v2f = v1.x;
-                        
-                        b1.vx = v1f * cos - v1.y * sin;
-                        b1.vy = v1f * sin + v1.y * cos;
-                        b2.vx = v2f * cos - v2.y * sin;
-                        b2.vy = v2f * sin + v2.y * cos;
-                        
-                        // Ayır
-                        const overlap = (minDist - dist) / 2;
-                        const moveX = (dx / dist) * overlap;
-                        const moveY = (dy / dist) * overlap;
-                        b1.x -= moveX;
-                        b1.y -= moveY;
-                        b2.x += moveX;
-                        b2.y += moveY;
-                    }
-                }
-            }
-        }
+  socket.on('S_ROOM_LIST',list=>renderRooms(list));
 
-        // --- Kılıç etkileşimi (BÜYÜK kılıç) ---
-        function handleSwordPickup() {
-            for (let ball of balls) {
-                const dx = ball.x - sword.x;
-                const dy = ball.y - sword.y;
-                const dist = Math.sqrt(dx*dx + dy*dy);
-                
-                if (dist < ball.radius + sword.radius) {
-                    if (!ball.hasSword) {
-                        // Kılıcı al
-                        ball.hasSword = true;
-                        ball.speedMultiplier = Math.min(2.8, ball.speedMultiplier * 1.8);
-                        ball.speedBoostTime = 2500;
-                        
-                        // Kılıç hemen yeni konuma ışınlanmasın, 0.1 saniye sonra
-                        setTimeout(() => {
-                            if (gameActive) {
-                                moveSwordRandomly();
-                            }
-                        }, 100);
-                    }
-                }
-            }
-        }
+  socket.on('S_JOINED',data=>{
+    myId=data.pid;
+    inRoom=true;
+    startGame(data);
+  });
 
-        // --- Ölü topları temizle ---
-        function removeDeadBalls() {
-            balls = balls.filter(ball => ball.health > 0);
-            updateUI();
-        }
+  socket.on('S_ERROR',msg=>{
+    toast('❌ '+msg,'err');
+  });
 
-        // --- UI güncelleme ---
-        function updateUI() {
-            document.getElementById('ballCount').textContent = balls.length;
-            const swordBalls = balls.filter(b => b.hasSword).length;
-            document.getElementById('swordCount').textContent = swordBalls;
-        }
+  socket.on('S_GAMEOVER',({reason})=>{
+    showOverlay(reason==='escaped'?'escape':'death',
+      reason==='escaped'?'🏆 KURTULDUN!':'💀 OYUN BİTTİ',
+      reason==='escaped'?'Backrooms\'dan kaçmayı başardın!':'Herkes yakalandı veya öldü.'
+    );
+  });
+}
 
-        // --- Animasyon döngüsü ---
-        let lastUpdate = performance.now();
-        
-        function animate() {
-            const now = performance.now();
-            const deltaTime = Math.min(100, now - lastUpdate); // max 100ms
-            lastUpdate = now;
+/* ──── Quick Play ──── */
+document.getElementById('btnQuick').addEventListener('click',()=>{
+  if(!socket?.connected){ toast('Sunucu bağlantısı yok...','err'); return; }
+  socket.emit('C_QUICK_PLAY',{name:myName});
+  toast('⚡ Oyun başlatılıyor...','info',2000);
+});
 
-            if (gameActive) {
-                // Kılıç zamanlayıcı
-                if (now - sword.lastMoveTime > sword.moveInterval) {
-                    moveSwordRandomly();
-                }
+/* ──── Rooms ──── */
+document.getElementById('btnRooms').addEventListener('click',()=>{
+  showScreen('scRooms');
+  if(socket?.connected) socket.emit('C_GET_ROOMS');
+});
+document.getElementById('btnBackRooms').addEventListener('click',()=>showScreen('scMenu'));
 
-                // Topları güncelle (deltaTime ile)
-                balls.forEach(ball => ball.update(deltaTime));
-                
-                // Çarpışmalar
-                handleBallCollisions();
-                handleSwordPickup();
-                removeDeadBalls();
+function renderRooms(list){
+  const el=document.getElementById('roomsList');
+  if(!list||!list.length){
+    el.innerHTML='<div class="rooms-empty">🕯️ Şu an açık oda yok<br><br>İlk odayı sen aç!</div>';
+    return;
+  }
+  el.innerHTML=list.map(r=>`
+    <div class="room-card" onclick="joinRoomById('${r.id}')">
+      <div class="rc-info">
+        <div class="rc-name">🚪 ${esc(r.creatorName)}'in Odası</div>
+        <div class="rc-meta">${r.monsterType==='ai'?'🤖 Yapay Zeka':'👤 Oyuncu Canavarı'} · ${r.playerCount}/${r.maxPlayers} oyuncu</div>
+      </div>
+      <div class="rc-right">
+        <div class="badge ${r.playerCount<r.maxPlayers?'badge-wait':'badge-play'}">${r.playerCount<r.maxPlayers?'AÇIK':'DOLU'}</div>
+        <div class="rc-slots">${r.maxPlayers-r.playerCount} yer</div>
+      </div>
+    </div>
+  `).join('');
+}
 
-                // Kılıç zamanlayıcı UI
-                const timeToMove = Math.max(0, (sword.moveInterval - (now - sword.lastMoveTime)) / 1000);
-                document.getElementById('swordTimer').textContent = timeToMove.toFixed(1) + 's';
-            }
+function joinRoomById(id){
+  if(!socket?.connected){ toast('Bağlantı yok','err'); return; }
+  socket.emit('C_JOIN_ROOM',{roomId:id,name:myName});
+  toast('Odaya bağlanılıyor...','info',2000);
+}
 
-            draw();
-            requestAnimationFrame(animate);
-        }
+/* ──── Create Room ──── */
+function openCreate(){
+  pendingMon='ai';
+  document.getElementById('monAI').classList.add('sel');
+  document.getElementById('monPLR').classList.remove('sel');
+  document.getElementById('createModal').classList.add('open');
+}
+document.getElementById('btnCreate').addEventListener('click',openCreate);
+document.getElementById('btnCreate2').addEventListener('click',openCreate);
+document.getElementById('btnModalCancel').addEventListener('click',()=>document.getElementById('createModal').classList.remove('open'));
+document.getElementById('createModal').addEventListener('click',e=>{
+  if(e.target===e.currentTarget) e.currentTarget.classList.remove('open');
+});
+document.getElementById('monAI').addEventListener('click',()=>{
+  pendingMon='ai';
+  document.getElementById('monAI').classList.add('sel');
+  document.getElementById('monPLR').classList.remove('sel');
+});
+document.getElementById('monPLR').addEventListener('click',()=>{
+  pendingMon='player';
+  document.getElementById('monPLR').classList.add('sel');
+  document.getElementById('monAI').classList.remove('sel');
+});
+document.getElementById('btnModalOk').addEventListener('click',()=>{
+  if(!socket?.connected){ toast('Bağlantı yok','err'); return; }
+  document.getElementById('createModal').classList.remove('open');
+  socket.emit('C_CREATE_ROOM',{name:myName,monsterType:pendingMon});
+  toast('🚪 Oda oluşturuluyor...','info',2000);
+});
 
-        // --- Çizim (ANİMASYONLU) ---
-        function draw() {
-            ctx.clearRect(0, 0, CW, CH);
+/* ──── Game Start ──── */
+function startGame(data){
+  showScreen('scGame');
+  document.getElementById('gameOverlay').classList.remove('show');
+  updateSidePanel(data);
 
-            // Arkaplan ızgarası (animasyonlu)
-            ctx.strokeStyle = '#7fc4e2';
-            ctx.lineWidth = 2;
-            const time = Date.now() / 1000;
-            
-            for (let i = 0; i < CW; i += 50) {
-                ctx.beginPath();
-                ctx.moveTo(i + Math.sin(time + i/50) * 5, 0);
-                ctx.lineTo(i + Math.cos(time + i/50) * 5, CH);
-                ctx.strokeStyle = '#ffffff15';
-                ctx.stroke();
-            }
-            
-            for (let i = 0; i < CH; i += 50) {
-                ctx.beginPath();
-                ctx.moveTo(0, i + Math.cos(time + i/50) * 5);
-                ctx.lineTo(CW, i + Math.sin(time + i/50) * 5);
-                ctx.stroke();
-            }
+  const canvas=document.getElementById('gameCanvas');
+  GAME.init(canvas, socket, data.pid, myName, data.isMonster);
+  GAME.loadRoom(data);
 
-            // Kılıç (BÜYÜK ve IŞILTILI)
-            ctx.save();
-            ctx.shadowColor = '#ffaa33';
-            ctx.shadowBlur = 50;
-            ctx.font = '85px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "Twemoji Mozilla", "Android Emoji", Emoji, sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            
-            // Işıltı efekti
-            for (let i = 0; i < 3; i++) {
-                ctx.shadowBlur = 40 + i * 20;
-                ctx.fillStyle = `rgba(255, 220, 100, ${0.3 - i*0.1})`;
-                ctx.fillText('⚔️', sword.x + Math.sin(time*5 + i)*3, sword.y + Math.cos(time*5 + i)*3);
-            }
-            
-            ctx.shadowBlur = 60;
-            ctx.fillStyle = '#ffe45c';
-            ctx.fillText('⚔️', sword.x, sword.y);
-            ctx.restore();
+  GAME.onDied=()=>showOverlay('death','💀 YAKALANDINN!','Canavar seni yakaladı...');
+  GAME.onEscaped=()=>showOverlay('escape','🏆 KURTULDUN!','Backrooms\'dan kaçmayı başardın!');
+  GAME.onGameOver=(r)=>showOverlay(r==='escaped'?'escape':'death',r==='escaped'?'🏆 KAÇILDI!':'💀 OYUN BİTTİ',r==='escaped'?'Biri kaçtı!':'Herkes yakalandı.');
+  GAME.onCaught=id=>updateSidePanel(null);
 
-            // Toplar (BÜYÜK ve ANİMASYONLU)
-            for (let ball of balls) {
-                ctx.save();
-                
-                // İz efekti
-                for (let i = 0; i < ball.trail.length; i++) {
-                    const t = ball.trail[i];
-                    const alpha = i / ball.trail.length * 0.3;
-                    ctx.beginPath();
-                    ctx.arc(t.x, t.y, ball.radius * 0.7, 0, 2 * Math.PI);
-                    ctx.fillStyle = `rgba(255, 255, 200, ${alpha})`;
-                    ctx.shadowBlur = 20;
-                    ctx.shadowColor = ball.hasSword ? '#ffaa33' : '#88ccff';
-                    ctx.fill();
-                }
-                
-                // Ana gölge
-                ctx.shadowColor = '#00000080';
-                ctx.shadowBlur = 25;
-                ctx.shadowOffsetY = 5;
-                
-                // Top gövdesi (ışıltılı)
-                ctx.beginPath();
-                ctx.arc(ball.x, ball.y, ball.radius + 3, 0, 2 * Math.PI);
-                
-                // Kılıçlı toplar altın rengi
-                if (ball.hasSword) {
-                    const gradient = ctx.createRadialGradient(ball.x-10, ball.y-10, 5, ball.x, ball.y, ball.radius+10);
-                    gradient.addColorStop(0, '#ffdb7c');
-                    gradient.addColorStop(1, '#f0a500');
-                    ctx.fillStyle = gradient;
-                } else {
-                    const gradient = ctx.createRadialGradient(ball.x-10, ball.y-10, 5, ball.x, ball.y, ball.radius+10);
-                    gradient.addColorStop(0, '#ffffff');
-                    gradient.addColorStop(1, '#aaddff');
-                    ctx.fillStyle = gradient;
-                }
-                ctx.fill();
-                
-                // Sağlık çemberleri (BÜYÜK)
-                for (let i = 0; i < ball.health; i++) {
-                    ctx.beginPath();
-                    ctx.arc(ball.x - 20 + i * 20, ball.y - 35, 9, 0, 2 * Math.PI);
-                    ctx.fillStyle = '#ff4d4d';
-                    ctx.shadowBlur = 15;
-                    ctx.shadowColor = '#ff0000';
-                    ctx.fill();
-                    
-                    // Can içi parıltı
-                    ctx.beginPath();
-                    ctx.arc(ball.x - 20 + i * 20, ball.y - 35, 5, 0, 2 * Math.PI);
-                    ctx.fillStyle = '#ffffe0';
-                    ctx.shadowBlur = 10;
-                    ctx.fill();
-                }
-                
-                // Top emojisi (BÜYÜK)
-                ctx.font = `45px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "Twemoji Mozilla", "Android Emoji", Emoji, sans-serif`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.shadowBlur = 30;
-                ctx.shadowColor = ball.hasSword ? '#ffaa00' : '#004466';
-                ctx.fillStyle = 'white';
-                ctx.fillText(ball.emoji, ball.x, ball.y - 5);
-                
-                // Kılıç işareti (kılıçlı toplara)
-                if (ball.hasSword) {
-                    ctx.font = '40px sans-serif';
-                    ctx.fillStyle = '#ffd966';
-                    ctx.shadowBlur = 40;
-                    ctx.shadowColor = '#ffb347';
-                    ctx.fillText('⚔️', ball.x + 25, ball.y - 30);
-                }
-                
-                // Hız göstergesi (çizgi)
-                if (ball.speedMultiplier > 1.2) {
-                    ctx.beginPath();
-                    ctx.strokeStyle = '#ffaa00';
-                    ctx.lineWidth = 5;
-                    ctx.shadowBlur = 20;
-                    ctx.arc(ball.x, ball.y, ball.radius + 12, 0, 2 * Math.PI);
-                    ctx.stroke();
-                }
-                
-                ctx.restore();
-            }
+  socket.off('S_PJOIN');
+  socket.on('S_PJOIN',p=>{ updateSidePanel(null); });
+  socket.off('S_LEFT');
+  socket.on('S_LEFT',()=>updateSidePanel(null));
 
-            // Merkez yazısı
-            ctx.fillStyle = '#ffffff60';
-            ctx.font = '30px monospace';
-            ctx.textAlign = 'center';
-            ctx.fillText('⚔️ KILIÇ ARENASI ⚔️', CW/2, 50);
-        }
+  if(data.isMonster) toast('👹 SEN CANAVARSIN! Oyuncuları yakala!','err',4000);
+}
 
-        // --- Event listeners ---
-        document.getElementById('addBallBtn').addEventListener('click', () => {
-            addBall();
-        });
+function updateSidePanel(initialData){
+  // Will re-read from GAME internals later; for now use data if provided
+  const spEl=document.getElementById('spPlayers');
+  if(!spEl)return;
+  let html=`<div class="sp-player you">👤 ${myName} (SEN)</div>`;
+  if(initialData?.players){
+    for(const[id,p] of Object.entries(initialData.players)){
+      if(id===initialData.pid) continue;
+      const nm=p.n||p.name||'?';
+      const mon=p.isMonster||p.mon;
+      html+=`<div class="sp-player ${mon?'mon':''}">${mon?'👹':'👤'} ${nm}</div>`;
+    }
+  }
+  spEl.innerHTML=html;
+}
 
-        document.getElementById('resetBtn').addEventListener('click', () => {
-            balls = [];
-            gameActive = true;
-            moveSwordRandomly();
-            updateUI();
-            // 3 top ekle
-            for (let i = 0; i < 3; i++) {
-                addBall();
-            }
-        });
+/* ──── Overlay ──── */
+function showOverlay(type,title,sub){
+  const ov=document.getElementById('gameOverlay');
+  const t=document.getElementById('goTitle');
+  const s=document.getElementById('goSub');
+  t.textContent=title;
+  t.className='go-title '+type;
+  s.textContent=sub;
+  ov.classList.add('show');
+}
 
-        // Başlangıç topları
-        for (let i = 0; i < 4; i++) {
-            addBall();
-        }
+document.getElementById('btnGoMenu').addEventListener('click',()=>{
+  GAME.stop(); inRoom=false;
+  document.getElementById('gameOverlay').classList.remove('show');
+  showScreen('scMenu');
+});
+document.getElementById('btnGoQuick').addEventListener('click',()=>{
+  GAME.stop(); inRoom=false;
+  document.getElementById('gameOverlay').classList.remove('show');
+  if(!socket?.connected){ toast('Bağlantı yok','err'); return; }
+  socket.emit('C_QUICK_PLAY',{name:myName});
+  toast('⚡ Yeni oyun başlatılıyor...','info',2000);
+});
 
-        // Animasyonu başlat
-        lastUpdate = performance.now();
-        animate();
-    })();
+/* ──── Utils ──── */
+function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* ──── Prevent context menu ──── */
+window.addEventListener('contextmenu',e=>e.preventDefault());
+
+/* ──── Wake lock ──── */
+if('wakeLock' in navigator) navigator.wakeLock.request('screen').catch(()=>{});
+
+/* ──── BOOT ──── */
+window.addEventListener('DOMContentLoaded',()=>{
+  // Load Telegram WebApp SDK
+  const tgs=document.createElement('script');
+  tgs.src='https://telegram.org/js/telegram-web-app.js';
+  const afterTg=()=>{
+    initTelegram();
+    document.getElementById('mpcName').textContent=myName;
+    // Show loading for 1.8s then connect
+    setTimeout(()=>{
+      initSocket();
+    },1800);
+  };
+  tgs.onload=afterTg;
+  tgs.onerror=afterTg;
+  document.head.appendChild(tgs);
+});
 </script>
 </body>
 </html>
