@@ -4,12 +4,26 @@ const { Server } = require('socket.io');
 const path    = require('path');
 
 const app    = express();
+
+// Security headers
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  res.header('Access-Control-Allow-Credentials', 'false');
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(200);
+  } else {
+    next();
+  }
+});
+
 const server = http.createServer(app);
 const io     = new Server(server, {
   cors        : { 
-    origin: ['https://saskioyunu-2rxd.onrender.com', 'http://localhost:3000', 'http://127.0.0.1:3000'], 
-    methods:['GET','POST'],
-    credentials: true
+    origin: "*", 
+    methods:['GET','POST','PUT','DELETE','OPTIONS'],
+    credentials: false
   },
   pingTimeout : 60000,
   pingInterval: 20000,
