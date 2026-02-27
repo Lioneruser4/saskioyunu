@@ -21,7 +21,7 @@
   --green:#1aaa55;
   --green2:#44ff99;
   --text:#e4cfa0;
-  --text2:#b89a60;
+  --text2:#b89a60;a
   --panel:rgba(14,10,4,0.94);
   --border:rgba(200,168,75,0.22);
   --border2:rgba(200,168,75,0.45);
@@ -513,33 +513,13 @@ function initSocket(){
   connDot('mid','Bağlanıyor');
   showScreen('scConnect');
 
-  // Önce sunucunun çalışıp çalışmadığını kontrol et
-  fetch(SERVER + '/health')
-    .then(response => {
-      if (!response.ok) throw new Error('Sunucu yanıt vermiyor');
-      return response.json();
-    })
-    .then(data => {
-      console.log('Sunucu sağlıklı:', data);
-      connectSocket();
-    })
-    .catch(error => {
-      console.error('Sunucu bağlantı hatası:', error);
-      connDot('bad','Sunucu yanıt vermiyor');
-      toast('❌ Sunucuya ulaşılamıyor','err',5000);
-      setTimeout(() => initSocket(), 5000); // 5 saniye sonra tekrar dene
-    });
-}
-
-function connectSocket(){
   socket=io(SERVER,{
     transports:['websocket','polling'],
     reconnection:true,
-    reconnectionDelay:2000,
-    reconnectionDelayMax:8000,
-    reconnectionAttempts:Infinity,
-    timeout:20000,
-    forceNew:true
+    reconnectionDelay:1000,
+    reconnectionDelayMax:5000,
+    reconnectionAttempts:10,
+    timeout:15000
   });
 
   socket.on('connect',()=>{
@@ -560,7 +540,12 @@ function connectSocket(){
   socket.on('connect_error',error=>{
     console.error('Socket bağlantı hatası:', error);
     connDot('bad','Bağlanamıyor');
-    toast('❌ Socket bağlantı hatası','err',3000);
+    toast('❌ Sunucuya ulaşılamıyor - 5 saniye sonra tekrar deneniyor...','err',5000);
+    setTimeout(() => {
+      if(!socket?.connected) {
+        socket.connect();
+      }
+    }, 5000);
   });
 
   socket.on('S_ROOM_LIST',list=>renderRooms(list));
