@@ -2,199 +2,120 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>PRO DAR KANYON · Stratejik Engeller · 45 saniye</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>KILIÇ ARENASI · 3 Can · Hızlanan Toplar</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
             user-select: none;
         }
         body {
-            background: #0b1d29;
+            background: #1a2a35;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100dvh;
             font-family: 'Segoe UI', system-ui, sans-serif;
-            padding: 5px;
+            padding: 10px;
         }
-        .pro-frame {
-            width: min(340px, 95vw);
-            background: #0f3143;
-            border-radius: 56px 56px 32px 32px;
-            padding: 18px 8px 20px 8px;
-            box-shadow: 0 35px 40px -15px black, inset 0 -5px 15px #5ab3ff;
-            border: 3px solid #60aeff;
+        .game-box {
+            background: #2c404f;
+            border-radius: 40px;
+            padding: 20px;
+            box-shadow: 0 25px 35px -10px black;
+            border: 4px solid #6a9ec7;
         }
-        .screen {
-            position: relative;
-            width: 100%;
-            aspect-ratio: 320 / 760;
-            background: #124f6e;
-            border-radius: 44px;
-            padding: 6px;
-            box-shadow: inset 0 0 0 5px #bae0ff, inset 0 0 35px #1b7099;
-            overflow: hidden;
+        .canvas-container {
+            width: min(760px, 90vw);
+            aspect-ratio: 4 / 3;
+            background: #1b4f64;
+            border-radius: 30px;
+            padding: 8px;
+            box-shadow: inset 0 0 0 4px #9ad0ff, inset 0 0 30px #26688a;
         }
         canvas {
             display: block;
             width: 100%;
             height: 100%;
-            background: linear-gradient(180deg, #22638b 0%, #0c3d55 100%);
-            border-radius: 38px;
-            border: 4px solid #ffd37c;
-            cursor: default;
-            touch-action: pan-y pinch-zoom;
+            background: radial-gradient(circle at 30% 40%, #347a9e, #144b66);
+            border-radius: 24px;
+            border: 4px solid #ffcf7a;
+            cursor: crosshair;
         }
-        .dashboard {
-            margin: 16px 4px 5px 4px;
+        .control-panel {
+            margin-top: 20px;
             display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-        .emoji-bar {
-            background: #093141;
-            border-radius: 70px;
-            padding: 10px 15px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border: 2px solid #fcb13b;
-            box-shadow: inset 0 3px 12px #2782aa;
-        }
-        .emoji-bar .label {
-            color: white;
-            font-weight: 700;
-            background: #1c698c;
-            padding: 8px 20px;
-            border-radius: 40px;
-            font-size: 1rem;
-            letter-spacing: 0.5px;
-            text-shadow: 2px 2px 0 #063c50;
-        }
-        .emoji-set {
-            display: flex;
-            gap: 4px;
             flex-wrap: wrap;
-            justify-content: flex-end;
-        }
-        .emoji-btn {
-            font-size: 2rem;
-            background: #1b6c91;
-            border: none;
-            border-radius: 50%;
-            width: 48px;
-            height: 48px;
-            box-shadow: 0 5px 0 #073342, 0 6px 10px black;
-            transition: 0.06s;
-            display: flex;
+            gap: 15px;
             align-items: center;
             justify-content: center;
-            cursor: pointer;
         }
-        .emoji-btn.selected {
-            transform: translateY(4px);
-            box-shadow: 0 2px 0 #073342, 0 6px 10px black;
-            background: #ffaa2b;
-            border: 3px solid #fff6d1;
-        }
-        .action-row {
-            display: flex;
-            gap: 8px;
-            margin-top: 4px;
-        }
-        .pro-btn {
-            background: #fff0cb;
+        .btn {
+            background: #ffdead;
             border: none;
-            border-radius: 60px;
-            padding: 14px 0;
+            border-radius: 40px;
+            padding: 12px 30px;
             font-weight: 800;
-            font-size: 1.25rem;
-            color: #022c3a;
-            box-shadow: 0 7px 0 #8a521a, 0 8px 18px black;
-            flex: 1;
-            display: flex;
-                align-items: center;
-            justify-content: center;
-            gap: 6px;
-            border: 2px solid #ffd77c;
+            font-size: 1.2rem;
+            color: #02212b;
+            box-shadow: 0 6px 0 #8b5d28, 0 8px 15px black;
             cursor: pointer;
             transition: 0.05s;
+            border: 2px solid #ffd58c;
         }
-        .pro-btn:active {
-            transform: translateY(6px);
-            box-shadow: 0 2px 0 #8a521a, 0 8px 18px black;
+        .btn:active {
+            transform: translateY(5px);
+            box-shadow: 0 2px 0 #8b5d28, 0 8px 15px black;
         }
-        .timer-box {
-            background: #032b39;
-            padding: 14px 15px;
-            border-radius: 60px;
+        .stats {
+            background: #1f475a;
+            padding: 10px 25px;
+            border-radius: 50px;
+            border: 3px solid #ffb13b;
+            color: #fff3cf;
+            font-weight: bold;
+            font-size: 1.4rem;
+            text-shadow: 2px 2px 0 #09303f;
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .stat-item {
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            border: 2px solid #fabe4e;
-            color: #fcf3cf;
-            font-weight: bold;
-            font-size: 1.25rem;
-            text-shadow: 2px 2px 0 #1f4457;
-            margin-top: 6px;
+            gap: 8px;
         }
-        .timer-fill {
-            height: 16px;
-            background: #ffe6a3;
-            border-radius: 30px;
-            width: 100%;
-            box-shadow: inset 0 2px 6px #4d3d1b;
-            transition: width 0.1s;
+        .sword-icon {
+            font-size: 2rem;
+            filter: drop-shadow(0 0 8px gold);
         }
-        .footer-note {
+        .footer {
             text-align: center;
-            color: #bce0ff;
-            margin-top: 12px;
-            font-weight: 500;
-            font-size: 0.9rem;
+            margin-top: 15px;
+            color: #b5daf0;
+            font-weight: 600;
         }
     </style>
 </head>
 <body>
-<div class="pro-frame">
-    <div class="screen">
-        <canvas id="gameCanvas" width="320" height="760"></canvas>
+<div class="game-box">
+    <div class="canvas-container">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
     </div>
 
-    <div class="dashboard">
-        <div class="emoji-bar">
-            <span class="label">🇹🇷 TOP</span>
-            <div class="emoji-set">
-                <button class="emoji-btn selected" data-emoji="🇹🇷">🇹🇷</button>
-                <button class="emoji-btn" data-emoji="🇯🇵">🇯🇵</button>
-                <button class="emoji-btn" data-emoji="🇩🇪">🇩🇪</button>
-                <button class="emoji-btn" data-emoji="🇧🇷">🇧🇷</button>
-                <button class="emoji-btn" data-emoji="🇺🇸">🇺🇸</button>
-                <button class="emoji-btn" data-emoji="⚽">⚽</button>
-                <button class="emoji-btn" data-emoji="🐺">🐺</button>
-                <button class="emoji-btn" data-emoji="🦅">🦅</button>
-                <button class="emoji-btn" data-emoji="👾">👾</button>
-            </div>
+    <div class="control-panel">
+        <button class="btn" id="addBallBtn">➕ TOP EKLE</button>
+        <button class="btn" id="resetBtn">⟲ YENİ OYUN</button>
+        <div class="stats">
+            <div class="stat-item">⚔️ <span id="swordTimer">0.0s</span></div>
+            <div class="stat-item">🎯 <span id="ballCount">0</span></div>
         </div>
-
-        <div class="action-row">
-            <button class="pro-btn" id="startBtn">🚦 BAŞLAT 45sn</button>
-            <button class="pro-btn" id="addBallBtn">➕ TOP EKLE</button>
-            <button class="pro-btn" id="resetBtn">⟲ YENİ OYUN</button>
-        </div>
-
-        <div class="timer-box" id="statusMsg">
-            <span>⏳ 45s</span>
-            <span>🎯 HEDEF ÇUKUR</span>
-        </div>
-        <div class="timer-fill" id="timerFill" style="width:100%"></div>
     </div>
-    <div class="footer-note">
-        ⬇️ 45sn · stratejik engeller (dönen, sabit, dar) · sadece butonla top eklenir · profesyonel fizik
+    <div class="footer">
+        ⚔️ KILIÇ her 5 saniyede bir yer değiştirir · Kılıcı alan saldırır · Çarpışınca hız patlaması
     </div>
 </div>
 
@@ -202,413 +123,363 @@
     (function() {
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-        const CW = 320, CH = 760;
+        const CW = 800, CH = 600;
         canvas.width = CW; canvas.height = CH;
 
         // --- Oyun değişkenleri ---
         let balls = [];
-        let winnerIndex = -1;
-        let gameActive = false;
-        let startTime = null;
-        let elapsedSeconds = 0;
-        const RACE_DURATION = 45;
-        const BALL_RADIUS = 12;
-
-        const GRAVITY = 0.19;
-        const GROUND_Y = CH - 30;
-
-        let cameraY = 0;
-        const CAM_SMOOTH = 0.05;
-
-        let selectedEmoji = '🇹🇷';
-
-        // --- HEDEF (dar çukur) - 16500 derinlik ---
-        const TARGET_PIT = {
-            x: CW/2 - 19,
-            y: 16500,
-            w: 38,
-            h: 16,
+        let gameActive = true;
+        let lastTime = performance.now();
+        
+        // Kılıç değişkenleri
+        let sword = {
+            x: CW/2,
+            y: CH/2,
+            vx: 0,
+            vy: 0,
+            radius: 25,
+            lastMoveTime: 0,
+            moveInterval: 5000, // 5 saniye
+            active: true
         };
 
-        // ========== PROFESYONEL ENGEL TASARIMI ==========
-        // Her engel bilinçli yerleştirildi, rastgele değil!
-        let obstacles = [];
-
-        function buildObstacles() {
-            obstacles = [
-                // BÖLGE 1: Giriş (0-2000) - hafif engeller
-                { type: 'fixed', x: 100, y: 400, w: 70, h: 8, angle: 0.1 },
-                { type: 'spinner', x: 220, y: 750, w: 60, h: 8, angle: 0.5, spinSpeed: 0.02 },
-                { type: 'fixed', x: 150, y: 1100, w: 8, h: 90, angle: 0.2 },
-                { type: 'spinner', x: 270, y: 1500, w: 55, h: 7, angle: 1.0, spinSpeed: -0.025 },
-                { type: 'fixed', x: 60, y: 1800, w: 80, h: 7, angle: -0.2 },
-                
-                // BÖLGE 2: Orta bölge (2000-5000) - dönen ve sabit karışık
-                { type: 'spinner', x: 190, y: 2300, w: 75, h: 8, angle: 0.3, spinSpeed: 0.018 },
-                { type: 'fixed', x: 80, y: 2800, w: 45, h: 7, angle: 0.5 },
-                { type: 'fixed', x: 250, y: 3200, w: 7, h: 110, angle: 0.0 },
-                { type: 'spinner', x: 140, y: 3700, w: 90, h: 8, angle: 0.8, spinSpeed: 0.022 },
-                { type: 'fixed', x: 220, y: 4200, w: 60, h: 7, angle: -0.3 },
-                { type: 'spinner', x: 70, y: 4700, w: 65, h: 8, angle: 1.4, spinSpeed: -0.02 },
-                
-                // BÖLGE 3: Yoğun bölge (5000-8000) - çapraz ve dikey
-                { type: 'fixed', x: 120, y: 5300, w: 8, h: 130, angle: 0.3 },
-                { type: 'fixed', x: 210, y: 5800, w: 8, h: 140, angle: -0.2 },
-                { type: 'spinner', x: 160, y: 6400, w: 85, h: 9, angle: 0.0, spinSpeed: 0.03 },
-                { type: 'fixed', x: 50, y: 6900, w: 70, h: 8, angle: 0.6 },
-                { type: 'spinner', x: 280, y: 7400, w: 55, h: 8, angle: 2.0, spinSpeed: -0.028 },
-                { type: 'fixed', x: 190, y: 7800, w: 7, h: 100, angle: 0.4 },
-                
-                // BÖLGE 4: Kıvrımlı bölge (8000-11000)
-                { type: 'spinner', x: 100, y: 8300, w: 70, h: 7, angle: 0.7, spinSpeed: 0.017 },
-                { type: 'fixed', x: 240, y: 8800, w: 60, h: 7, angle: -0.5 },
-                { type: 'spinner', x: 70, y: 9300, w: 80, h: 8, angle: 1.2, spinSpeed: 0.025 },
-                { type: 'fixed', x: 170, y: 9800, w: 8, h: 120, angle: 0.15 },
-                { type: 'fixed', x: 290, y: 10200, w: 50, h: 7, angle: 0.3 },
-                { type: 'spinner', x: 130, y: 10700, w: 95, h: 8, angle: 0.9, spinSpeed: -0.02 },
-                
-                // BÖLGE 5: Labirent (11000-13500)
-                { type: 'fixed', x: 80, y: 11200, w: 8, h: 150, angle: 0.0 },
-                { type: 'fixed', x: 200, y: 11700, w: 8, h: 140, angle: 0.2 },
-                { type: 'spinner', x: 260, y: 12200, w: 70, h: 8, angle: 0.4, spinSpeed: 0.022 },
-                { type: 'fixed', x: 140, y: 12700, w: 70, h: 7, angle: -0.4 },
-                { type: 'spinner', x: 40, y: 13200, w: 65, h: 8, angle: 1.8, spinSpeed: 0.018 },
-                
-                // BÖLGE 6: Son bölge (13500-16200) - çok dar, zorlu
-                { type: 'fixed', x: 110, y: 13700, w: 8, h: 130, angle: 0.1 },
-                { type: 'spinner', x: 220, y: 14200, w: 80, h: 8, angle: 0.6, spinSpeed: -0.025 },
-                { type: 'fixed', x: 180, y: 14700, w: 55, h: 7, angle: 0.5 },
-                { type: 'spinner', x: 90, y: 15200, w: 100, h: 8, angle: 1.3, spinSpeed: 0.02 },
-                { type: 'fixed', x: 260, y: 15700, w: 8, h: 110, angle: -0.1 },
-                { type: 'spinner', x: 150, y: 16200, w: 70, h: 8, angle: 0.2, spinSpeed: 0.015 },
-                
-                // Hedefe yakın son 3 engel
-                { type: 'fixed', x: 120, y: 16400, w: 40, h: 7, angle: 0.0 },
-                { type: 'fixed', x: 200, y: 16450, w: 40, h: 7, angle: 0.0 },
-                { type: 'spinner', x: 160, y: 16580, w: 70, h: 8, angle: 0.5, spinSpeed: 0.03 }
-            ];
-            // toplam 40 özenle yerleştirilmiş engel
+        // Rastgele kılıç hareketi
+        function moveSwordRandomly() {
+            if (!gameActive) return;
+            const margin = 50;
+            sword.x = margin + Math.random() * (CW - 2 * margin);
+            sword.y = margin + Math.random() * (CH - 2 * margin);
+            sword.lastMoveTime = performance.now();
         }
-        buildObstacles();
 
-        // --- Emoji seçim ---
-        document.querySelectorAll('.emoji-btn').forEach(btn => {
-            btn.addEventListener('click', e => {
-                document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('selected'));
-                btn.classList.add('selected');
-                selectedEmoji = btn.getAttribute('data-emoji');
-            });
-        });
+        // İlk kılıç hareketi
+        moveSwordRandomly();
 
-        const statusDiv = document.getElementById('statusMsg');
-        const timerFill = document.getElementById('timerFill');
-
-        // --- SADECE BUTONLA TOP EKLEME (canvas dokunma devre dışı) ---
-        document.getElementById('addBallBtn').addEventListener('click', () => {
-            if (winnerIndex !== -1) return;
-            
-            // Topu üst bölgeye ekle (çeşitlilik için)
-            let worldX = CW/2 + (Math.random() - 0.5) * 50;
-            worldX = Math.min(Math.max(worldX, BALL_RADIUS + 15), CW - BALL_RADIUS - 15);
-            const worldY = cameraY + 150 + Math.random() * 250;
-            
-            balls.push({
-                emoji: selectedEmoji,
-                x: worldX,
-                y: worldY,
-                vx: (Math.random() - 0.5) * 1.4,
-                vy: 1.2 + Math.random() * 2.0,
-                radius: BALL_RADIUS
-            });
-        });
-
-        // BAŞLAT butonu
-        document.getElementById('startBtn').addEventListener('click', () => {
-            if (!gameActive && winnerIndex === -1) {
-                if (balls.length === 0) {
-                    statusDiv.innerHTML = `<span>⚠️ TOP EKLE</span><span></span>`;
-                    return;
-                }
-                gameActive = true;
-                if (startTime === null) startTime = performance.now();
+        // --- Top sınıfı ---
+        class Ball {
+            constructor(x, y, emoji = '⚪') {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 4;
+                this.vy = (Math.random() - 0.5) * 4;
+                this.radius = 16;
+                this.emoji = emoji;
+                this.hasSword = false;
+                this.health = 3;
+                this.speedMultiplier = 1.0;
+                this.speedBoostTime = 0;
+                this.color = '#fff5e0';
             }
-        });
 
-        // Sıfırla
-        document.getElementById('resetBtn').addEventListener('click', () => {
-            balls = [];
-            winnerIndex = -1;
-            gameActive = false;
-            startTime = null;
-            elapsedSeconds = 0;
-            cameraY = 0;
-            buildObstacles();
-            statusDiv.innerHTML = `<span>⏳ 45s</span><span>🎯 HEDEF ÇUKUR</span>`;
-            timerFill.style.width = '100%';
-        });
-
-        // --- GELİŞMİŞ ÇARPIŞMA SİSTEMİ ---
-        function rotatePoint(cx, cy, x, y, angle) {
-            const cos = Math.cos(angle);
-            const sin = Math.sin(angle);
-            const dx = x - cx;
-            const dy = y - cy;
-            return { x: cx + dx * cos - dy * sin, y: cy + dx * sin + dy * cos };
-        }
-
-        function ballObstacleCollision(ball, ob) {
-            const cx = ob.x, cy = ob.y, w = ob.w, h = ob.h, angle = ob.angle || 0;
-            
-            // topu engelin lokal uzayına çevir
-            const local = rotatePoint(cx, cy, ball.x, ball.y, -angle);
-            
-            const left = cx - w/2;
-            const right = cx + w/2;
-            const top = cy - h/2;
-            const bottom = cy + h/2;
-            
-            const closestX = Math.max(left, Math.min(local.x, right));
-            const closestY = Math.max(top, Math.min(local.y, bottom));
-            
-            let dx = local.x - closestX;
-            let dy = local.y - closestY;
-            let dist = Math.sqrt(dx*dx + dy*dy);
-            
-            if (dist < ball.radius && dist > 0.001) {
-                const overlap = ball.radius - dist;
-                const nx = dx / dist;
-                const ny = dy / dist;
-                
-                // konum düzeltme (lokal)
-                const newLocalX = local.x + nx * overlap;
-                const newLocalY = local.y + ny * overlap;
-                
-                // dünyaya geri çevir
-                const world = rotatePoint(cx, cy, newLocalX, newLocalY, angle);
-                ball.x = world.x;
-                ball.y = world.y;
-
-                // hız tepkisi
-                let vLocal = rotatePoint(0, 0, ball.vx, ball.vy, -angle);
-                let vn = vLocal.x * nx + vLocal.y * ny;
-                
-                if (vn < 0) {
-                    let vt_x = vLocal.x - vn * nx;
-                    let vt_y = vLocal.y - vn * ny;
-                    let vn_new = -vn * 0.52;
-                    
-                    vLocal.x = vt_x + vn_new * nx;
-                    vLocal.y = vt_y + vn_new * ny;
-                    
-                    let vWorld = rotatePoint(0, 0, vLocal.x, vLocal.y, angle);
-                    ball.vx = vWorld.x * 0.98;
-                    ball.vy = vWorld.y * 0.98;
+            update(deltaTime) {
+                // Hız çarpanı zamanla azalsın
+                if (this.speedBoostTime > 0) {
+                    this.speedBoostTime -= deltaTime;
+                    if (this.speedBoostTime <= 0) {
+                        this.speedBoostTime = 0;
+                        this.speedMultiplier = 1.0;
+                    }
                 }
-                return true;
+
+                const currentSpeed = this.speedMultiplier;
+                this.x += this.vx * currentSpeed;
+                this.y += this.vy * currentSpeed;
+
+                // Duvarlara çarp (seksin)
+                if (this.x - this.radius < 0) {
+                    this.x = this.radius;
+                    this.vx = -this.vx * 0.95;
+                    this.speedMultiplier = Math.min(2.0, this.speedMultiplier * 1.1);
+                }
+                if (this.x + this.radius > CW) {
+                    this.x = CW - this.radius;
+                    this.vx = -this.vx * 0.95;
+                    this.speedMultiplier = Math.min(2.0, this.speedMultiplier * 1.1);
+                }
+                if (this.y - this.radius < 0) {
+                    this.y = this.radius;
+                    this.vy = -this.vy * 0.95;
+                    this.speedMultiplier = Math.min(2.0, this.speedMultiplier * 1.1);
+                }
+                if (this.y + this.radius > CH) {
+                    this.y = CH - this.radius;
+                    this.vy = -this.vy * 0.95;
+                    this.speedMultiplier = Math.min(2.0, this.speedMultiplier * 1.1);
+                }
+
+                // Hız sınırı
+                const maxSpeed = 8;
+                this.vx = Math.min(maxSpeed, Math.max(-maxSpeed, this.vx));
+                this.vy = Math.min(maxSpeed, Math.max(-maxSpeed, this.vy));
             }
-            return false;
         }
 
-        function ballBallCollision() {
+        // --- Top ekleme ---
+        function addBall() {
+            const emojis = ['⚪', '🔴', '🔵', '🟡', '🟢', '🟣', '🟠', '⚫', '⚪', '🔘'];
+            const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
+            const x = 50 + Math.random() * (CW - 100);
+            const y = 50 + Math.random() * (CH - 100);
+            balls.push(new Ball(x, y, randomEmoji));
+            updateBallCount();
+        }
+
+        // --- Top-top çarpışması (hız patlamalı) ---
+        function handleBallCollisions() {
             for (let i = 0; i < balls.length; i++) {
                 for (let j = i + 1; j < balls.length; j++) {
-                    let b1 = balls[i], b2 = balls[j];
-                    let dx = b2.x - b1.x;
-                    let dy = b2.y - b1.y;
-                    let dist = Math.sqrt(dx*dx + dy*dy);
-                    let minDist = b1.radius + b2.radius;
+                    const b1 = balls[i];
+                    const b2 = balls[j];
                     
-                    if (dist < minDist && dist > 0.001) {
-                        let overlap = (minDist - dist) / 2;
-                        let nx = dx / dist;
-                        let ny = dy / dist;
+                    const dx = b2.x - b1.x;
+                    const dy = b2.y - b1.y;
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+                    const minDist = b1.radius + b2.radius;
+                    
+                    if (dist < minDist) {
+                        // Çarpışma anı - hız patlaması
+                        const boostAmount = 1.4;
+                        b1.speedMultiplier = Math.min(2.5, b1.speedMultiplier * boostAmount);
+                        b2.speedMultiplier = Math.min(2.5, b2.speedMultiplier * boostAmount);
+                        b1.speedBoostTime = 2000; // 2 saniye
+                        b2.speedBoostTime = 2000;
                         
-                        b1.x -= nx * overlap;
-                        b1.y -= ny * overlap;
-                        b2.x += nx * overlap;
-                        b2.y += ny * overlap;
-
-                        let v1n = b1.vx * nx + b1.vy * ny;
-                        let v2n = b2.vx * nx + b2.vy * ny;
-                        let v1t_x = b1.vx - v1n * nx;
-                        let v1t_y = b1.vy - v1n * ny;
-                        let v2t_x = b2.vx - v2n * nx;
-                        let v2t_y = b2.vy - v2n * ny;
-
-                        let v1n_after = (v1n + v2n) / 2;
-                        let v2n_after = v1n_after;
-
-                        b1.vx = v1t_x + v1n_after * nx;
-                        b1.vy = v1t_y + v1n_after * ny;
-                        b2.vx = v2t_x + v2n_after * nx;
-                        b2.vy = v2t_y + v2n_after * ny;
+                        // Kılıç kontrolü
+                        if (b1.hasSword && !b2.hasSword) {
+                            b2.health--;
+                            if (b2.health > 0) {
+                                b2.speedMultiplier = Math.min(2.5, b2.speedMultiplier * 1.8);
+                                b2.speedBoostTime = 1500;
+                            }
+                        } else if (b2.hasSword && !b1.hasSword) {
+                            b1.health--;
+                            if (b1.health > 0) {
+                                b1.speedMultiplier = Math.min(2.5, b1.speedMultiplier * 1.8);
+                                b1.speedBoostTime = 1500;
+                            }
+                        }
+                        
+                        // Fizik tepkisi
+                        const angle = Math.atan2(dy, dx);
+                        const sin = Math.sin(angle);
+                        const cos = Math.cos(angle);
+                        
+                        const v1 = {
+                            x: b1.vx * cos + b1.vy * sin,
+                            y: b1.vy * cos - b1.vx * sin
+                        };
+                        const v2 = {
+                            x: b2.vx * cos + b2.vy * sin,
+                            y: b2.vy * cos - b2.vx * sin
+                        };
+                        
+                        const v1f = v2.x;
+                        const v2f = v1.x;
+                        
+                        b1.vx = v1f * cos - v1.y * sin;
+                        b1.vy = v1f * sin + v1.y * cos;
+                        b2.vx = v2f * cos - v2.y * sin;
+                        b2.vy = v2f * sin + v2.y * cos;
+                        
+                        // Ayır
+                        const overlap = (minDist - dist) / 2;
+                        const moveX = (dx / dist) * overlap;
+                        const moveY = (dy / dist) * overlap;
+                        b1.x -= moveX;
+                        b1.y -= moveY;
+                        b2.x += moveX;
+                        b2.y += moveY;
                     }
                 }
             }
         }
 
-        // --- Fizik güncelleme ---
-        function update() {
-            if (!gameActive || winnerIndex !== -1) return;
-
-            if (startTime !== null) {
-                const now = performance.now();
-                elapsedSeconds = (now - startTime) / 1000;
-                if (elapsedSeconds >= RACE_DURATION) {
-                    gameActive = false;
-                    statusDiv.innerHTML = `<span>⏱️ SÜRE DOLDU</span><span></span>`;
-                    timerFill.style.width = '0%';
-                    return;
-                } else {
-                    const percent = ((RACE_DURATION - elapsedSeconds) / RACE_DURATION) * 100;
-                    timerFill.style.width = percent + '%';
-                    statusDiv.innerHTML = `<span>⏳ ${(RACE_DURATION - elapsedSeconds).toFixed(1)}s</span><span>🎯 ${balls.length} top</span>`;
-                }
-            }
-
-            // yerçekimi ve hareket
-            for (let b of balls) {
-                b.vy += GRAVITY;
-                b.x += b.vx;
-                b.y += b.vy;
-
-                b.vx *= 0.997;
-                b.vy *= 0.997;
-
-                // duvarlar (kenarlar)
-                if (b.x - b.radius < 10) { b.x = 10 + b.radius; b.vx *= -0.4; }
-                if (b.x + b.radius > CW - 10) { b.x = CW - 10 - b.radius; b.vx *= -0.4; }
-                if (b.y + b.radius > GROUND_Y + 16000) { b.y = GROUND_Y + 16000 - b.radius; b.vy *= -0.3; }
-            }
-
-            ballBallCollision();
-
-            // çarpışma iterasyonu (4 kez)
-            for (let iter = 0; iter < 4; iter++) {
-                for (let b of balls) {
-                    for (let ob of obstacles) {
-                        ballObstacleCollision(b, ob);
+        // --- Kılıç etkileşimi ---
+        function handleSwordPickup() {
+            for (let ball of balls) {
+                const dx = ball.x - sword.x;
+                const dy = ball.y - sword.y;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                
+                if (dist < ball.radius + sword.radius) {
+                    if (!ball.hasSword) {
+                        // Kılıcı al
+                        ball.hasSword = true;
+                        ball.speedMultiplier = Math.min(2.5, ball.speedMultiplier * 1.5);
+                        ball.speedBoostTime = 2000;
+                        
+                        // Diğerlerinden kılıcı al
+                        balls.forEach(b => {
+                            if (b !== ball) b.hasSword = false;
+                        });
+                        
+                        // Kılıç hemen yeni konuma ışınlanmasın, 5 saniye bekle
+                        setTimeout(() => {
+                            if (gameActive) {
+                                moveSwordRandomly();
+                                // Kılıç hareket edince eskisi ölür
+                                balls.forEach(b => b.hasSword = false);
+                            }
+                        }, 100);
                     }
                 }
             }
+        }
 
-            // dönen engeller
-            obstacles.forEach(ob => { if (ob.type === 'spinner') ob.angle += ob.spinSpeed; });
+        // --- Ölü topları temizle ---
+        function removeDeadBalls() {
+            balls = balls.filter(ball => ball.health > 0);
+            updateBallCount();
+        }
 
-            // hedef kontrolü
-            for (let i = 0; i < balls.length; i++) {
-                const b = balls[i];
-                if (b.x > TARGET_PIT.x && b.x < TARGET_PIT.x + TARGET_PIT.w &&
-                    b.y > TARGET_PIT.y && b.y < TARGET_PIT.y + TARGET_PIT.h) {
-                    if (winnerIndex === -1 && gameActive) {
-                        winnerIndex = i;
-                        gameActive = false;
-                        statusDiv.innerHTML = `<span>🏆 KAZANAN</span><span>${b.emoji}</span>`;
-                        timerFill.style.width = '0%';
-                        break;
-                    }
+        // --- UI güncelleme ---
+        function updateBallCount() {
+            document.getElementById('ballCount').textContent = balls.length;
+        }
+
+        // --- Animasyon döngüsü ---
+        let lastUpdate = performance.now();
+        
+        function animate() {
+            const now = performance.now();
+            const deltaTime = now - lastUpdate;
+            lastUpdate = now;
+
+            if (gameActive) {
+                // Kılıç zamanlayıcı
+                if (now - sword.lastMoveTime > sword.moveInterval) {
+                    moveSwordRandomly();
+                    // Kılıç hareket edince tüm kılıçlar kaybolur
+                    balls.forEach(b => b.hasSword = false);
                 }
+
+                // Topları güncelle
+                balls.forEach(ball => ball.update(deltaTime));
+                
+                // Çarpışmalar
+                handleBallCollisions();
+                handleSwordPickup();
+                removeDeadBalls();
+
+                // Kılıç zamanlayıcı UI
+                const timeToMove = Math.max(0, (sword.moveInterval - (now - sword.lastMoveTime)) / 1000);
+                document.getElementById('swordTimer').textContent = timeToMove.toFixed(1) + 's';
             }
 
-            // kamera (en dipteki top)
-            if (balls.length > 0) {
-                let lowestY = Math.max(...balls.map(b => b.y));
-                let targetCamera = Math.max(0, lowestY - CH * 0.45);
-                cameraY += (targetCamera - cameraY) * CAM_SMOOTH;
-            }
+            draw();
+            requestAnimationFrame(animate);
         }
 
         // --- Çizim ---
         function draw() {
             ctx.clearRect(0, 0, CW, CH);
 
-            // arkaplan
-            ctx.fillStyle = '#1c5c81';
-            ctx.fillRect(0, 0, CW, CH);
-            for (let i = 0; i < 25; i++) {
-                ctx.fillStyle = '#a0d6ff20';
-                ctx.fillRect(0, i*70 - cameraY*0.3, CW, 15);
+            // Izgara deseni
+            ctx.strokeStyle = '#6ba5c030';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < CW; i += 40) {
+                ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i, CH);
+                ctx.strokeStyle = '#ffffff20';
+                ctx.stroke();
+            }
+            for (let i = 0; i < CH; i += 40) {
+                ctx.beginPath();
+                ctx.moveTo(0, i);
+                ctx.lineTo(CW, i);
+                ctx.stroke();
             }
 
-            // hedef çukur
+            // Kılıç
             ctx.save();
-            const pitY = TARGET_PIT.y - cameraY;
-            if (pitY + TARGET_PIT.h > 0 && pitY < CH) {
-                ctx.fillStyle = '#d64824';
-                ctx.shadowColor = '#ffb45e';
-                ctx.shadowBlur = 45;
-                ctx.fillRect(TARGET_PIT.x, pitY, TARGET_PIT.w, TARGET_PIT.h);
-                ctx.font = 'bold 28px sans-serif';
-                ctx.fillStyle = '#ffffe0';
-                ctx.fillText('🕳️', TARGET_PIT.x+2, pitY-20);
-            }
+            ctx.shadowColor = '#ffaa33';
+            ctx.shadowBlur = 30;
+            ctx.font = '50px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "Twemoji Mozilla", "Android Emoji", Emoji, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#ffe45c';
+            ctx.fillText('⚔️', sword.x, sword.y);
+            
+            // Kılıç çevresinde parıltı
+            ctx.shadowBlur = 50;
+            ctx.globalAlpha = 0.5;
+            ctx.fillText('⚔️', sword.x, sword.y);
             ctx.restore();
 
-            // engeller
-            obstacles.forEach(ob => {
-                const scY = ob.y - cameraY;
-                if (scY + ob.h/2 < 0 || scY - ob.h/2 > CH) return;
-                
+            // Toplar
+            for (let ball of balls) {
                 ctx.save();
-                ctx.translate(ob.x, scY);
-                ctx.rotate(ob.angle || 0);
-                ctx.fillStyle = ob.type === 'spinner' ? '#d9782b' : '#b84cd8';
-                ctx.shadowColor = '#101c24';
-                ctx.shadowBlur = 24;
-                ctx.shadowOffsetY = 5;
-                ctx.fillRect(-ob.w/2, -ob.h/2, ob.w, ob.h);
-                ctx.strokeStyle = '#ffe89c';
-                ctx.lineWidth = 2.5;
-                ctx.shadowBlur = 20;
-                ctx.strokeRect(-ob.w/2, -ob.h/2, ob.w, ob.h);
-                ctx.restore();
-            });
-
-            // toplar
-            for (let i = 0; i < balls.length; i++) {
-                const b = balls[i];
-                const scrX = b.x;
-                const scrY = b.y - cameraY;
-                if (scrY + b.radius < 0 || scrY - b.radius > CH) continue;
-
-                ctx.shadowColor = '#001d2b';
-                ctx.shadowBlur = 24;
-                ctx.shadowOffsetY = 6;
+                
+                // Gölge
+                ctx.shadowColor = '#00000080';
+                ctx.shadowBlur = 15;
+                ctx.shadowOffsetY = 3;
+                
+                // Top gövdesi
                 ctx.beginPath();
-                ctx.arc(scrX, scrY, b.radius+2, 0, 2*Math.PI);
-                ctx.fillStyle = '#ffffe5';
+                ctx.arc(ball.x, ball.y, ball.radius + 2, 0, 2 * Math.PI);
+                ctx.fillStyle = ball.hasSword ? '#ffe68f' : '#ffffff';
                 ctx.fill();
-
-                ctx.font = `${b.radius+9}px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "Twemoji Mozilla", "Android Emoji", Emoji, sans-serif`;
+                
+                // Sağlık çemberleri
+                for (let i = 0; i < ball.health; i++) {
+                    ctx.beginPath();
+                    ctx.arc(ball.x - 12 + i * 12, ball.y - 22, 5, 0, 2 * Math.PI);
+                    ctx.fillStyle = '#ff4d4d';
+                    ctx.shadowBlur = 10;
+                    ctx.fill();
+                }
+                
+                // Top emojisi
+                ctx.font = `${ball.radius + 8}px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "Twemoji Mozilla", "Android Emoji", Emoji, sans-serif`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.shadowColor = i === winnerIndex ? 'gold' : '#003144';
-                ctx.fillStyle = i === winnerIndex ? '#ffffc2' : 'white';
-                ctx.fillText(b.emoji, scrX, scrY-2);
-
-                if (i === winnerIndex) {
-                    ctx.font = '28px sans-serif';
-                    ctx.fillStyle = '#ffdb70';
-                    ctx.fillText('👑', scrX-14, scrY-54);
+                ctx.shadowBlur = 20;
+                ctx.fillStyle = ball.hasSword ? '#ffd966' : 'white';
+                ctx.fillText(ball.emoji, ball.x, ball.y - 2);
+                
+                // Hız göstergesi (çizgi)
+                if (ball.speedMultiplier > 1.1) {
+                    ctx.beginPath();
+                    ctx.strokeStyle = '#ffaa00';
+                    ctx.lineWidth = 3;
+                    ctx.shadowBlur = 15;
+                    ctx.arc(ball.x, ball.y, ball.radius + 8, 0, 2 * Math.PI);
+                    ctx.stroke();
                 }
+                
+                ctx.restore();
             }
 
-            // üst fade
-            const grad = ctx.createLinearGradient(0, 0, 0, 80);
-            grad.addColorStop(0, '#01212b');
-            grad.addColorStop(1, '#01212b00');
-            ctx.fillStyle = grad;
-            ctx.fillRect(0, 0, CW, 80);
-
-            requestAnimationFrame(draw);
+            // Merkez işareti
+            ctx.fillStyle = '#ffffff40';
+            ctx.font = '20px monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText('⚔️ ARENA ⚔️', CW/2, 30);
         }
 
-        function gameLoop() {
-            update();
-            requestAnimationFrame(gameLoop);
+        // --- Event listeners ---
+        document.getElementById('addBallBtn').addEventListener('click', () => {
+            addBall();
+        });
+
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            balls = [];
+            gameActive = true;
+            moveSwordRandomly();
+            updateBallCount();
+            document.getElementById('swordTimer').textContent = '5.0s';
+        });
+
+        // Başlangıç topları
+        for (let i = 0; i < 3; i++) {
+            addBall();
         }
-        gameLoop();
-        draw();
+
+        // Animasyonu başlat
+        lastUpdate = performance.now();
+        animate();
     })();
 </script>
 </body>
