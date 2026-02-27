@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>KILIÇ ARENASI · 3 Can · Hızlanan Toplar</title>
+    <title>DEVLERİN KILIÇ SAVAŞI · 3 Can · Çift Kılıç Korur</title>
     <style>
         * {
             margin: 0;
@@ -12,110 +12,198 @@
             user-select: none;
         }
         body {
-            background: #1a2a35;
+            background: linear-gradient(145deg, #1e3a4a, #0f2835);
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100dvh;
             font-family: 'Segoe UI', system-ui, sans-serif;
-            padding: 10px;
+            padding: 12px;
         }
-        .game-box {
-            background: #2c404f;
-            border-radius: 40px;
-            padding: 20px;
-            box-shadow: 0 25px 35px -10px black;
-            border: 4px solid #6a9ec7;
+        .arena {
+            background: #2b4b5e;
+            border-radius: 60px;
+            padding: 24px;
+            box-shadow: 0 40px 50px -15px black, inset 0 -5px 15px #77c4ff;
+            border: 5px solid #ffb347;
         }
-        .canvas-container {
-            width: min(760px, 90vw);
+        .canvas-wrap {
+            width: min(900px, 92vw);
             aspect-ratio: 4 / 3;
-            background: #1b4f64;
-            border-radius: 30px;
-            padding: 8px;
-            box-shadow: inset 0 0 0 4px #9ad0ff, inset 0 0 30px #26688a;
+            background: #124f6e;
+            border-radius: 40px;
+            padding: 12px;
+            box-shadow: inset 0 0 0 6px #b5e2ff, inset 0 0 40px #3184b0;
         }
         canvas {
             display: block;
             width: 100%;
             height: 100%;
-            background: radial-gradient(circle at 30% 40%, #347a9e, #144b66);
-            border-radius: 24px;
-            border: 4px solid #ffcf7a;
+            background: radial-gradient(circle at 30% 40%, #3f8db3, #13536b);
+            border-radius: 30px;
+            border: 5px solid #ffcd7e;
             cursor: crosshair;
         }
-        .control-panel {
-            margin-top: 20px;
+        .dashboard {
+            margin-top: 25px;
             display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+        .emoji-palette {
+            background: #153d51;
+            border-radius: 70px;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
             flex-wrap: wrap;
             gap: 15px;
-            align-items: center;
-            justify-content: center;
+            border: 3px solid #fcb13b;
+            box-shadow: inset 0 3px 15px #3e9ec9;
         }
-        .btn {
-            background: #ffdead;
-            border: none;
-            border-radius: 40px;
-            padding: 12px 30px;
+        .emoji-palette span {
+            color: white;
             font-weight: 800;
-            font-size: 1.2rem;
-            color: #02212b;
-            box-shadow: 0 6px 0 #8b5d28, 0 8px 15px black;
-            cursor: pointer;
-            transition: 0.05s;
-            border: 2px solid #ffd58c;
-        }
-        .btn:active {
-            transform: translateY(5px);
-            box-shadow: 0 2px 0 #8b5d28, 0 8px 15px black;
-        }
-        .stats {
-            background: #1f475a;
+            background: #1f6d91;
             padding: 10px 25px;
             border-radius: 50px;
-            border: 3px solid #ffb13b;
+            font-size: 1.3rem;
+            text-shadow: 2px 2px 0 #094154;
+        }
+        .emoji-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            flex: 1;
+            justify-content: flex-end;
+        }
+        .emoji-btn {
+            font-size: 2.5rem;
+            background: #1f7093;
+            border: none;
+            border-radius: 50%;
+            width: 70px;
+            height: 70px;
+            box-shadow: 0 7px 0 #073342, 0 8px 15px black;
+            transition: 0.06s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        .emoji-btn.selected {
+            transform: translateY(5px);
+            box-shadow: 0 3px 0 #073342, 0 8px 15px black;
+            background: #ffaa2b;
+            border: 4px solid #fff6d1;
+        }
+        .action-bar {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .pro-btn {
+            background: #ffdead;
+            border: none;
+            border-radius: 60px;
+            padding: 18px 40px;
+            font-weight: 800;
+            font-size: 1.5rem;
+            color: #02212b;
+            box-shadow: 0 9px 0 #8b5d28, 0 12px 25px black;
+            flex: 1;
+            min-width: 180px;
+            border: 3px solid #ffd58c;
+            cursor: pointer;
+            transition: 0.05s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .pro-btn:active {
+            transform: translateY(8px);
+            box-shadow: 0 3px 0 #8b5d28, 0 12px 25px black;
+        }
+        .stats-panel {
+            background: #1a4a60;
+            padding: 18px 30px;
+            border-radius: 70px;
+            border: 4px solid #ffb951;
             color: #fff3cf;
             font-weight: bold;
-            font-size: 1.4rem;
-            text-shadow: 2px 2px 0 #09303f;
+            font-size: 1.7rem;
+            text-shadow: 3px 3px 0 #09303f;
             display: flex;
-            gap: 30px;
+            gap: 50px;
             flex-wrap: wrap;
             justify-content: center;
         }
         .stat-item {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 15px;
         }
-        .sword-icon {
-            font-size: 2rem;
-            filter: drop-shadow(0 0 8px gold);
+        .sword-icon-big {
+            font-size: 3rem;
+            filter: drop-shadow(0 0 15px #ffb347);
+            animation: glow 1s ease-in-out infinite alternate;
+        }
+        @keyframes glow {
+            from { filter: drop-shadow(0 0 10px #ffaa33); }
+            to { filter: drop-shadow(0 0 25px #ffd966); }
         }
         .footer {
             text-align: center;
-            margin-top: 15px;
-            color: #b5daf0;
+            margin-top: 18px;
+            color: #cce9ff;
             font-weight: 600;
+            font-size: 1.2rem;
         }
     </style>
 </head>
 <body>
-<div class="game-box">
-    <div class="canvas-container">
-        <canvas id="gameCanvas" width="800" height="600"></canvas>
+<div class="arena">
+    <div class="canvas-wrap">
+        <canvas id="gameCanvas" width="900" height="675"></canvas>
     </div>
 
-    <div class="control-panel">
-        <button class="btn" id="addBallBtn">➕ TOP EKLE</button>
-        <button class="btn" id="resetBtn">⟲ YENİ OYUN</button>
-        <div class="stats">
+    <div class="dashboard">
+        <div class="emoji-palette">
+            <span>⚔️ TOPUN</span>
+            <div class="emoji-grid">
+                <button class="emoji-btn selected" data-emoji="🇹🇷">🇹🇷</button>
+                <button class="emoji-btn" data-emoji="🇯🇵">🇯🇵</button>
+                <button class="emoji-btn" data-emoji="🇩🇪">🇩🇪</button>
+                <button class="emoji-btn" data-emoji="🇧🇷">🇧🇷</button>
+                <button class="emoji-btn" data-emoji="🇺🇸">🇺🇸</button>
+                <button class="emoji-btn" data-emoji="🇬🇧">🇬🇧</button>
+                <button class="emoji-btn" data-emoji="🇫🇷">🇫🇷</button>
+                <button class="emoji-btn" data-emoji="🇮🇹">🇮🇹</button>
+                <button class="emoji-btn" data-emoji="🇪🇸">🇪🇸</button>
+                <button class="emoji-btn" data-emoji="🇷🇺">🇷🇺</button>
+                <button class="emoji-btn" data-emoji="🇨🇳">🇨🇳</button>
+                <button class="emoji-btn" data-emoji="🇮🇳">🇮🇳</button>
+                <button class="emoji-btn" data-emoji="🇦🇷">🇦🇷</button>
+                <button class="emoji-btn" data-emoji="🇲🇽">🇲🇽</button>
+                <button class="emoji-btn" data-emoji="🇰🇷">🇰🇷</button>
+            </div>
+        </div>
+
+        <div class="action-bar">
+            <button class="pro-btn" id="addBallBtn">➕ DEV EKLE</button>
+            <button class="pro-btn" id="resetBtn">⟲ YENİ SAVAŞ</button>
+        </div>
+
+        <div class="stats-panel">
             <div class="stat-item">⚔️ <span id="swordTimer">0.0s</span></div>
-            <div class="stat-item">🎯 <span id="ballCount">0</span></div>
+            <div class="stat-item">👑 <span id="ballCount">0</span></div>
+            <div class="stat-item">🛡️ <span id="swordCount">0</span></div>
         </div>
     </div>
     <div class="footer">
-        ⚔️ KILIÇ her 5 saniyede bir yer değiştirir · Kılıcı alan saldırır · Çarpışınca hız patlaması
+        ⚔️ KILIÇ 4 SANİYEDE BİR YER DEĞİŞTİRİR · ÇİFT KILIÇ KORUR · ÇARPIŞINDA HIZ PATLAMASI
     </div>
 </div>
 
@@ -123,52 +211,52 @@
     (function() {
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-        const CW = 800, CH = 600;
+        const CW = 900, CH = 675; // 4:3 oran
         canvas.width = CW; canvas.height = CH;
 
         // --- Oyun değişkenleri ---
         let balls = [];
         let gameActive = true;
-        let lastTime = performance.now();
+        let selectedEmoji = '🇹🇷';
         
-        // Kılıç değişkenleri
+        // Kılıç (BÜYÜK)
         let sword = {
             x: CW/2,
             y: CH/2,
-            vx: 0,
-            vy: 0,
-            radius: 25,
+            radius: 40,  // BÜYÜK kılıç
             lastMoveTime: 0,
-            moveInterval: 5000, // 5 saniye
-            active: true
+            moveInterval: 4000, // 4 saniye
         };
 
         // Rastgele kılıç hareketi
         function moveSwordRandomly() {
             if (!gameActive) return;
-            const margin = 50;
+            const margin = 70;
             sword.x = margin + Math.random() * (CW - 2 * margin);
             sword.y = margin + Math.random() * (CH - 2 * margin);
             sword.lastMoveTime = performance.now();
+            
+            // Kılıç hareket edince kimsenin kılıcı kalmasın (yeni kılıç için)
+            balls.forEach(b => b.hasSword = false);
         }
 
-        // İlk kılıç hareketi
+        // İlk kılıç
         moveSwordRandomly();
 
-        // --- Top sınıfı ---
+        // --- BÜYÜK TOP sınıfı (radius 28) ---
         class Ball {
-            constructor(x, y, emoji = '⚪') {
+            constructor(x, y, emoji) {
                 this.x = x;
                 this.y = y;
-                this.vx = (Math.random() - 0.5) * 4;
-                this.vy = (Math.random() - 0.5) * 4;
-                this.radius = 16;
+                this.vx = (Math.random() - 0.5) * 12; // ÇOK HIZLI
+                this.vy = (Math.random() - 0.5) * 12; // ÇOK HIZLI
+                this.radius = 28;  // BÜYÜK TOP
                 this.emoji = emoji;
                 this.hasSword = false;
                 this.health = 3;
                 this.speedMultiplier = 1.0;
                 this.speedBoostTime = 0;
-                this.color = '#fff5e0';
+                this.trail = []; // İz efekti için
             }
 
             update(deltaTime) {
@@ -181,50 +269,61 @@
                     }
                 }
 
+                // İz efekti için eski konumları kaydet
+                this.trail.push({ x: this.x, y: this.y });
+                if (this.trail.length > 5) this.trail.shift();
+
                 const currentSpeed = this.speedMultiplier;
                 this.x += this.vx * currentSpeed;
                 this.y += this.vy * currentSpeed;
 
-                // Duvarlara çarp (seksin)
+                // Duvarlara çarp (seksin - hız artsın)
                 if (this.x - this.radius < 0) {
                     this.x = this.radius;
-                    this.vx = -this.vx * 0.95;
-                    this.speedMultiplier = Math.min(2.0, this.speedMultiplier * 1.1);
+                    this.vx = -this.vx * 1.1; // HIZ ARTSIN
+                    this.speedMultiplier = Math.min(2.5, this.speedMultiplier * 1.15);
                 }
                 if (this.x + this.radius > CW) {
                     this.x = CW - this.radius;
-                    this.vx = -this.vx * 0.95;
-                    this.speedMultiplier = Math.min(2.0, this.speedMultiplier * 1.1);
+                    this.vx = -this.vx * 1.1;
+                    this.speedMultiplier = Math.min(2.5, this.speedMultiplier * 1.15);
                 }
                 if (this.y - this.radius < 0) {
                     this.y = this.radius;
-                    this.vy = -this.vy * 0.95;
-                    this.speedMultiplier = Math.min(2.0, this.speedMultiplier * 1.1);
+                    this.vy = -this.vy * 1.1;
+                    this.speedMultiplier = Math.min(2.5, this.speedMultiplier * 1.15);
                 }
                 if (this.y + this.radius > CH) {
                     this.y = CH - this.radius;
-                    this.vy = -this.vy * 0.95;
-                    this.speedMultiplier = Math.min(2.0, this.speedMultiplier * 1.1);
+                    this.vy = -this.vy * 1.1;
+                    this.speedMultiplier = Math.min(2.5, this.speedMultiplier * 1.15);
                 }
 
-                // Hız sınırı
-                const maxSpeed = 8;
+                // Hız sınırı (çok hızlı olabilirler)
+                const maxSpeed = 20;
                 this.vx = Math.min(maxSpeed, Math.max(-maxSpeed, this.vx));
                 this.vy = Math.min(maxSpeed, Math.max(-maxSpeed, this.vy));
             }
         }
 
-        // --- Top ekleme ---
+        // --- Top ekleme (seçili emoji ile) ---
         function addBall() {
-            const emojis = ['⚪', '🔴', '🔵', '🟡', '🟢', '🟣', '🟠', '⚫', '⚪', '🔘'];
-            const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
-            const x = 50 + Math.random() * (CW - 100);
-            const y = 50 + Math.random() * (CH - 100);
-            balls.push(new Ball(x, y, randomEmoji));
-            updateBallCount();
+            const x = 100 + Math.random() * (CW - 200);
+            const y = 100 + Math.random() * (CH - 200);
+            balls.push(new Ball(x, y, selectedEmoji));
+            updateUI();
         }
 
-        // --- Top-top çarpışması (hız patlamalı) ---
+        // --- Emoji seçim ---
+        document.querySelectorAll('.emoji-btn').forEach(btn => {
+            btn.addEventListener('click', e => {
+                document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                selectedEmoji = btn.getAttribute('data-emoji');
+            });
+        });
+
+        // --- Top-top çarpışması (GELİŞMİŞ) ---
         function handleBallCollisions() {
             for (let i = 0; i < balls.length; i++) {
                 for (let j = i + 1; j < balls.length; j++) {
@@ -237,29 +336,32 @@
                     const minDist = b1.radius + b2.radius;
                     
                     if (dist < minDist) {
-                        // Çarpışma anı - hız patlaması
-                        const boostAmount = 1.4;
-                        b1.speedMultiplier = Math.min(2.5, b1.speedMultiplier * boostAmount);
-                        b2.speedMultiplier = Math.min(2.5, b2.speedMultiplier * boostAmount);
-                        b1.speedBoostTime = 2000; // 2 saniye
-                        b2.speedBoostTime = 2000;
+                        // Çarpışma anı - hız patlaması (İKİSİ DE HIZLANSIN)
+                        const boostAmount = 1.6;
+                        b1.speedMultiplier = Math.min(2.8, b1.speedMultiplier * boostAmount);
+                        b2.speedMultiplier = Math.min(2.8, b2.speedMultiplier * boostAmount);
+                        b1.speedBoostTime = 2500; // 2.5 saniye
+                        b2.speedBoostTime = 2500;
                         
-                        // Kılıç kontrolü
-                        if (b1.hasSword && !b2.hasSword) {
+                        // KILIÇ KONTROLÜ - İKİSİNDE DE VARSA CAN GİTMESİN
+                        if (b1.hasSword && b2.hasSword) {
+                            // İKİSİNDE DE KILIÇ VAR - CAN GİTMEZ
+                            // Sadece hız patlaması olsun
+                        } else if (b1.hasSword && !b2.hasSword) {
                             b2.health--;
                             if (b2.health > 0) {
-                                b2.speedMultiplier = Math.min(2.5, b2.speedMultiplier * 1.8);
-                                b2.speedBoostTime = 1500;
+                                b2.speedMultiplier = Math.min(3.0, b2.speedMultiplier * 2.2); // Kaçış hızı
+                                b2.speedBoostTime = 2000;
                             }
                         } else if (b2.hasSword && !b1.hasSword) {
                             b1.health--;
                             if (b1.health > 0) {
-                                b1.speedMultiplier = Math.min(2.5, b1.speedMultiplier * 1.8);
-                                b1.speedBoostTime = 1500;
+                                b1.speedMultiplier = Math.min(3.0, b1.speedMultiplier * 2.2);
+                                b1.speedBoostTime = 2000;
                             }
                         }
                         
-                        // Fizik tepkisi
+                        // Fizik (esnek çarpışma)
                         const angle = Math.atan2(dy, dx);
                         const sin = Math.sin(angle);
                         const cos = Math.cos(angle);
@@ -294,7 +396,7 @@
             }
         }
 
-        // --- Kılıç etkileşimi ---
+        // --- Kılıç etkileşimi (BÜYÜK kılıç) ---
         function handleSwordPickup() {
             for (let ball of balls) {
                 const dx = ball.x - sword.x;
@@ -305,20 +407,13 @@
                     if (!ball.hasSword) {
                         // Kılıcı al
                         ball.hasSword = true;
-                        ball.speedMultiplier = Math.min(2.5, ball.speedMultiplier * 1.5);
-                        ball.speedBoostTime = 2000;
+                        ball.speedMultiplier = Math.min(2.8, ball.speedMultiplier * 1.8);
+                        ball.speedBoostTime = 2500;
                         
-                        // Diğerlerinden kılıcı al
-                        balls.forEach(b => {
-                            if (b !== ball) b.hasSword = false;
-                        });
-                        
-                        // Kılıç hemen yeni konuma ışınlanmasın, 5 saniye bekle
+                        // Kılıç hemen yeni konuma ışınlanmasın, 0.1 saniye sonra
                         setTimeout(() => {
                             if (gameActive) {
                                 moveSwordRandomly();
-                                // Kılıç hareket edince eskisi ölür
-                                balls.forEach(b => b.hasSword = false);
                             }
                         }, 100);
                     }
@@ -329,12 +424,14 @@
         // --- Ölü topları temizle ---
         function removeDeadBalls() {
             balls = balls.filter(ball => ball.health > 0);
-            updateBallCount();
+            updateUI();
         }
 
         // --- UI güncelleme ---
-        function updateBallCount() {
+        function updateUI() {
             document.getElementById('ballCount').textContent = balls.length;
+            const swordBalls = balls.filter(b => b.hasSword).length;
+            document.getElementById('swordCount').textContent = swordBalls;
         }
 
         // --- Animasyon döngüsü ---
@@ -342,18 +439,16 @@
         
         function animate() {
             const now = performance.now();
-            const deltaTime = now - lastUpdate;
+            const deltaTime = Math.min(100, now - lastUpdate); // max 100ms
             lastUpdate = now;
 
             if (gameActive) {
                 // Kılıç zamanlayıcı
                 if (now - sword.lastMoveTime > sword.moveInterval) {
                     moveSwordRandomly();
-                    // Kılıç hareket edince tüm kılıçlar kaybolur
-                    balls.forEach(b => b.hasSword = false);
                 }
 
-                // Topları güncelle
+                // Topları güncelle (deltaTime ile)
                 balls.forEach(ball => ball.update(deltaTime));
                 
                 // Çarpışmalar
@@ -370,93 +465,142 @@
             requestAnimationFrame(animate);
         }
 
-        // --- Çizim ---
+        // --- Çizim (ANİMASYONLU) ---
         function draw() {
             ctx.clearRect(0, 0, CW, CH);
 
-            // Izgara deseni
-            ctx.strokeStyle = '#6ba5c030';
-            ctx.lineWidth = 1;
-            for (let i = 0; i < CW; i += 40) {
+            // Arkaplan ızgarası (animasyonlu)
+            ctx.strokeStyle = '#7fc4e2';
+            ctx.lineWidth = 2;
+            const time = Date.now() / 1000;
+            
+            for (let i = 0; i < CW; i += 50) {
                 ctx.beginPath();
-                ctx.moveTo(i, 0);
-                ctx.lineTo(i, CH);
-                ctx.strokeStyle = '#ffffff20';
+                ctx.moveTo(i + Math.sin(time + i/50) * 5, 0);
+                ctx.lineTo(i + Math.cos(time + i/50) * 5, CH);
+                ctx.strokeStyle = '#ffffff15';
                 ctx.stroke();
             }
-            for (let i = 0; i < CH; i += 40) {
+            
+            for (let i = 0; i < CH; i += 50) {
                 ctx.beginPath();
-                ctx.moveTo(0, i);
-                ctx.lineTo(CW, i);
+                ctx.moveTo(0, i + Math.cos(time + i/50) * 5);
+                ctx.lineTo(CW, i + Math.sin(time + i/50) * 5);
                 ctx.stroke();
             }
 
-            // Kılıç
+            // Kılıç (BÜYÜK ve IŞILTILI)
             ctx.save();
             ctx.shadowColor = '#ffaa33';
-            ctx.shadowBlur = 30;
-            ctx.font = '50px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "Twemoji Mozilla", "Android Emoji", Emoji, sans-serif';
+            ctx.shadowBlur = 50;
+            ctx.font = '85px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "Twemoji Mozilla", "Android Emoji", Emoji, sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillStyle = '#ffe45c';
-            ctx.fillText('⚔️', sword.x, sword.y);
             
-            // Kılıç çevresinde parıltı
-            ctx.shadowBlur = 50;
-            ctx.globalAlpha = 0.5;
+            // Işıltı efekti
+            for (let i = 0; i < 3; i++) {
+                ctx.shadowBlur = 40 + i * 20;
+                ctx.fillStyle = `rgba(255, 220, 100, ${0.3 - i*0.1})`;
+                ctx.fillText('⚔️', sword.x + Math.sin(time*5 + i)*3, sword.y + Math.cos(time*5 + i)*3);
+            }
+            
+            ctx.shadowBlur = 60;
+            ctx.fillStyle = '#ffe45c';
             ctx.fillText('⚔️', sword.x, sword.y);
             ctx.restore();
 
-            // Toplar
+            // Toplar (BÜYÜK ve ANİMASYONLU)
             for (let ball of balls) {
                 ctx.save();
                 
-                // Gölge
-                ctx.shadowColor = '#00000080';
-                ctx.shadowBlur = 15;
-                ctx.shadowOffsetY = 3;
+                // İz efekti
+                for (let i = 0; i < ball.trail.length; i++) {
+                    const t = ball.trail[i];
+                    const alpha = i / ball.trail.length * 0.3;
+                    ctx.beginPath();
+                    ctx.arc(t.x, t.y, ball.radius * 0.7, 0, 2 * Math.PI);
+                    ctx.fillStyle = `rgba(255, 255, 200, ${alpha})`;
+                    ctx.shadowBlur = 20;
+                    ctx.shadowColor = ball.hasSword ? '#ffaa33' : '#88ccff';
+                    ctx.fill();
+                }
                 
-                // Top gövdesi
+                // Ana gölge
+                ctx.shadowColor = '#00000080';
+                ctx.shadowBlur = 25;
+                ctx.shadowOffsetY = 5;
+                
+                // Top gövdesi (ışıltılı)
                 ctx.beginPath();
-                ctx.arc(ball.x, ball.y, ball.radius + 2, 0, 2 * Math.PI);
-                ctx.fillStyle = ball.hasSword ? '#ffe68f' : '#ffffff';
+                ctx.arc(ball.x, ball.y, ball.radius + 3, 0, 2 * Math.PI);
+                
+                // Kılıçlı toplar altın rengi
+                if (ball.hasSword) {
+                    const gradient = ctx.createRadialGradient(ball.x-10, ball.y-10, 5, ball.x, ball.y, ball.radius+10);
+                    gradient.addColorStop(0, '#ffdb7c');
+                    gradient.addColorStop(1, '#f0a500');
+                    ctx.fillStyle = gradient;
+                } else {
+                    const gradient = ctx.createRadialGradient(ball.x-10, ball.y-10, 5, ball.x, ball.y, ball.radius+10);
+                    gradient.addColorStop(0, '#ffffff');
+                    gradient.addColorStop(1, '#aaddff');
+                    ctx.fillStyle = gradient;
+                }
                 ctx.fill();
                 
-                // Sağlık çemberleri
+                // Sağlık çemberleri (BÜYÜK)
                 for (let i = 0; i < ball.health; i++) {
                     ctx.beginPath();
-                    ctx.arc(ball.x - 12 + i * 12, ball.y - 22, 5, 0, 2 * Math.PI);
+                    ctx.arc(ball.x - 20 + i * 20, ball.y - 35, 9, 0, 2 * Math.PI);
                     ctx.fillStyle = '#ff4d4d';
+                    ctx.shadowBlur = 15;
+                    ctx.shadowColor = '#ff0000';
+                    ctx.fill();
+                    
+                    // Can içi parıltı
+                    ctx.beginPath();
+                    ctx.arc(ball.x - 20 + i * 20, ball.y - 35, 5, 0, 2 * Math.PI);
+                    ctx.fillStyle = '#ffffe0';
                     ctx.shadowBlur = 10;
                     ctx.fill();
                 }
                 
-                // Top emojisi
-                ctx.font = `${ball.radius + 8}px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "Twemoji Mozilla", "Android Emoji", Emoji, sans-serif`;
+                // Top emojisi (BÜYÜK)
+                ctx.font = `45px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "Twemoji Mozilla", "Android Emoji", Emoji, sans-serif`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.shadowBlur = 20;
-                ctx.fillStyle = ball.hasSword ? '#ffd966' : 'white';
-                ctx.fillText(ball.emoji, ball.x, ball.y - 2);
+                ctx.shadowBlur = 30;
+                ctx.shadowColor = ball.hasSword ? '#ffaa00' : '#004466';
+                ctx.fillStyle = 'white';
+                ctx.fillText(ball.emoji, ball.x, ball.y - 5);
+                
+                // Kılıç işareti (kılıçlı toplara)
+                if (ball.hasSword) {
+                    ctx.font = '40px sans-serif';
+                    ctx.fillStyle = '#ffd966';
+                    ctx.shadowBlur = 40;
+                    ctx.shadowColor = '#ffb347';
+                    ctx.fillText('⚔️', ball.x + 25, ball.y - 30);
+                }
                 
                 // Hız göstergesi (çizgi)
-                if (ball.speedMultiplier > 1.1) {
+                if (ball.speedMultiplier > 1.2) {
                     ctx.beginPath();
                     ctx.strokeStyle = '#ffaa00';
-                    ctx.lineWidth = 3;
-                    ctx.shadowBlur = 15;
-                    ctx.arc(ball.x, ball.y, ball.radius + 8, 0, 2 * Math.PI);
+                    ctx.lineWidth = 5;
+                    ctx.shadowBlur = 20;
+                    ctx.arc(ball.x, ball.y, ball.radius + 12, 0, 2 * Math.PI);
                     ctx.stroke();
                 }
                 
                 ctx.restore();
             }
 
-            // Merkez işareti
-            ctx.fillStyle = '#ffffff40';
-            ctx.font = '20px monospace';
+            // Merkez yazısı
+            ctx.fillStyle = '#ffffff60';
+            ctx.font = '30px monospace';
             ctx.textAlign = 'center';
-            ctx.fillText('⚔️ ARENA ⚔️', CW/2, 30);
+            ctx.fillText('⚔️ KILIÇ ARENASI ⚔️', CW/2, 50);
         }
 
         // --- Event listeners ---
@@ -468,12 +612,15 @@
             balls = [];
             gameActive = true;
             moveSwordRandomly();
-            updateBallCount();
-            document.getElementById('swordTimer').textContent = '5.0s';
+            updateUI();
+            // 3 top ekle
+            for (let i = 0; i < 3; i++) {
+                addBall();
+            }
         });
 
         // Başlangıç topları
-        for (let i = 0; i < 3; i++) {
+        for (let i = 0; i < 4; i++) {
             addBall();
         }
 
