@@ -2,316 +2,346 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🌍 Ülke Topları Yarışıyor! · Düşen Engeller</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Düşüş ⬇️ Dar Delik · 20sn Yarışı</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
             user-select: none;
         }
         body {
-            background: linear-gradient(145deg, #0b1a2e 0%, #1b3b4f 100%);
-            min-height: 100vh;
+            background: #0f212f;
             display: flex;
-            justify-content: center;
             align-items: center;
+            justify-content: center;
+            min-height: 100dvh;
             font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
-            padding: 16px;
-            margin: 0;
+            padding: 5px;
+            touch-action: pan-y;
         }
-        .game-wrapper {
-            background: #102b3f;
-            border-radius: 48px 48px 28px 28px;
-            box-shadow: 0 30px 35px -10px rgba(0,0,0,0.7), inset 0 -2px 5px #3d6c8c;
-            padding: 22px 22px 30px 22px;
-            border: 2px solid #64b5f6;
+        .phone-frame {
+            width: min(400px, 96vw);
+            background: #0d3b4f;
+            border-radius: 56px 56px 32px 32px;
+            padding: 18px 10px 22px 10px;
+            box-shadow: 0 30px 35px -8px black, inset 0 -3px 10px #5bbdf0;
+            border: 3px solid #72c3ff;
         }
-        .arena-container {
+        .viewport {
             position: relative;
-            width: min(900px, 95vw);
-            background: #1f4a64;
-            border-radius: 36px 36px 24px 24px;
-            padding: 16px 16px 20px 16px;
-            box-shadow: inset 0 0 0 3px #9ad4ff, inset 0 0 15px #a1d9ff;
+            width: 100%;
+            aspect-ratio: 360 / 720;
+            background: #154f6e;
+            border-radius: 44px;
+            padding: 8px;
+            box-shadow: inset 0 0 0 4px #b1e2ff, inset 0 0 30px #1c688b;
+            overflow: hidden;
         }
         canvas {
             display: block;
             width: 100%;
-            height: auto;
-            background: radial-gradient(circle at 20% 30%, #56b4e9, #0f3b4f);
-            border-radius: 28px 28px 20px 20px;
-            box-shadow: 0 12px 25px black;
-            border: 3px solid #ffe484;
-            cursor: grab;
-            touch-action: none; /* mobilde kaydırmayı engelle */
+            height: 100%;
+            background: linear-gradient(180deg, #4799c7 0%, #1d5875 100%);
+            border-radius: 36px;
+            border: 3px solid #ffe594;
+            touch-action: none;
+            cursor: pointer;
         }
-        canvas:active {
-            cursor: grabbing;
-        }
-        .top-panel {
+        .dashboard {
+            margin: 16px 6px 6px 6px;
             display: flex;
-            flex-wrap: wrap;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .emoji-panel {
+            background: #0b3649;
+            border-radius: 60px;
+            padding: 10px 15px;
+            display: flex;
             align-items: center;
             justify-content: space-between;
-            margin: 15px 10px 5px 10px;
-            color: #f5f9ff;
-            text-shadow: 3px 3px 0 #0a3142;
+            border: 2px solid #fbbd4a;
+            box-shadow: inset 0 3px 8px #3283a5;
         }
-        .emoji-selector {
-            background: #0a1e2b;
-            padding: 10px 20px;
-            border-radius: 50px;
-            border: 2px solid #ffb74d;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px 15px;
-            align-items: center;
-            box-shadow: inset 0 2px 5px #2f647a;
-        }
-        .emoji-label {
-            font-weight: bold;
-            letter-spacing: 1px;
-            background: #f7d794;
-            padding: 5px 14px;
+        .emoji-panel label {
+            color: white;
+            font-weight: 800;
+            background: #1e637e;
+            padding: 8px 20px;
             border-radius: 40px;
-            color: #1d3b4b;
-            text-shadow: none;
-            box-shadow: 0 3px 0 #926d39;
+            font-size: 1rem;
+            letter-spacing: 0.5px;
+            text-shadow: 2px 2px 0 #083746;
         }
-        .emoji-option {
+        .emoji-set {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+        .emoji-btn {
             font-size: 2.2rem;
-            background: #305f77;
+            background: #226480;
             border: none;
             border-radius: 50%;
-            width: 60px;
-            height: 60px;
-            display: inline-flex;
+            width: 54px;
+            height: 54px;
+            box-shadow: 0 5px 0 #07323f, 0 7px 12px black;
+            transition: 0.07s;
+            display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            box-shadow: 0 5px 0 #123845, 0 8px 12px black;
-            transition: 0.1s ease;
-            line-height: 1;
-            padding: 0;
         }
-        .emoji-option.selected {
+        .emoji-btn.selected {
             transform: translateY(4px);
-            box-shadow: 0 2px 0 #123845, 0 5px 12px black;
-            background: #ffb74d;
-            border: 2px solid #fff3b0;
+            box-shadow: 0 2px 0 #07323f, 0 7px 12px black;
+            background: #fcb042;
+            border: 3px solid #fff3d1;
         }
-        .emoji-option:hover {
-            background: #4797b5;
-        }
-        .button-group {
+        .button-row {
             display: flex;
             gap: 12px;
         }
-        .action-btn {
-            background: #ffcf8a;
+        .primary-btn {
+            background: #ffe6b3;
             border: none;
-            border-radius: 40px;
-            padding: 12px 25px;
+            border-radius: 50px;
+            padding: 14px 0;
             font-weight: 800;
-            font-size: 1.2rem;
-            color: #102027;
-            box-shadow: 0 6px 0 #b2691a, 0 8px 15px black;
-            cursor: pointer;
-            transition: 0.1s ease;
+            font-size: 1.3rem;
+            color: #022b39;
+            box-shadow: 0 7px 0 #9e601b, 0 8px 20px black;
+            flex: 1;
             display: flex;
             align-items: center;
-            gap: 8px;
-            border: 1px solid #ffe8c0;
+            justify-content: center;
+            gap: 6px;
+            border: 2px solid #ffcf7a;
+            cursor: pointer;
         }
-        .action-btn:active {
-            transform: translateY(5px);
-            box-shadow: 0 2px 0 #b2691a, 0 8px 15px black;
+        .primary-btn:active {
+            transform: translateY(6px);
+            box-shadow: 0 2px 0 #9e601b, 0 8px 20px black;
         }
-        .status-bar {
-            background: #0c2b39e0;
-            backdrop-filter: blur(3px);
-            padding: 12px 25px;
-            border-radius: 50px;
-            font-size: 1.5rem;
+        .timer-status {
+            background: #062733;
+            padding: 14px 15px;
+            border-radius: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 2px solid #f3c26b;
+            color: #fcf3cf;
             font-weight: bold;
-            border: 2px solid #ffd966;
-            box-shadow: inset 0 -2px 5px #5699b9;
-            color: #ffecb3;
+            font-size: 1.3rem;
+            text-shadow: 2px 2px 0 #1f3f4d;
+            margin-top: 5px;
         }
-        footer {
+        .timer-bar-fill {
+            height: 14px;
+            background: #fedb9f;
+            border-radius: 20px;
+            width: 100%;
+            box-shadow: inset 0 2px 6px #463d1f;
+        }
+        .footer-note {
             text-align: center;
-            margin-top: 16px;
-            color: #b5d7ed;
-            font-weight: 500;
-        }
-        footer a {
-            color: #ffdead;
-            text-decoration: none;
-            border-bottom: 2px dotted;
+            color: #b0e0ff;
+            margin-top: 12px;
+            font-weight: 600;
         }
     </style>
 </head>
 <body>
-<div class="game-wrapper">
-    <div class="arena-container">
-        <canvas id="gameCanvas" width="1000" height="600"></canvas>
+<div class="phone-frame">
+    <div class="viewport">
+        <canvas id="gameCanvas" width="360" height="720"></canvas>
     </div>
 
-    <div class="top-panel">
-        <div class="emoji-selector">
-            <span class="emoji-label">🇹🇷 topun 👇</span>
-            <button class="emoji-option selected" data-emoji="🇹🇷">🇹🇷</button>
-            <button class="emoji-option" data-emoji="🇯🇵">🇯🇵</button>
-            <button class="emoji-option" data-emoji="🇩🇪">🇩🇪</button>
-            <button class="emoji-option" data-emoji="🇧🇷">🇧🇷</button>
-            <button class="emoji-option" data-emoji="🇺🇸">🇺🇸</button>
-            <button class="emoji-option" data-emoji="⚽">⚽</button>
+    <div class="dashboard">
+        <div class="emoji-panel">
+            <label>🇹🇷 TOP</label>
+            <div class="emoji-set">
+                <button class="emoji-btn selected" data-emoji="🇹🇷">🇹🇷</button>
+                <button class="emoji-btn" data-emoji="🇯🇵">🇯🇵</button>
+                <button class="emoji-btn" data-emoji="🇩🇪">🇩🇪</button>
+                <button class="emoji-btn" data-emoji="🇧🇷">🇧🇷</button>
+                <button class="emoji-btn" data-emoji="🇺🇸">🇺🇸</button>
+                <button class="emoji-btn" data-emoji="⚽">⚽</button>
+            </div>
         </div>
-        <div class="button-group">
-            <button class="action-btn" id="addBallBtn">➕ top ekle</button>
-            <button class="action-btn" id="resetBtn">⟲ sıfırla</button>
-        </div>
-    </div>
 
-    <div class="status-bar" id="statusMessage">
-        🏁 Kazanan yok — tıklayarak top ekle!
+        <div class="button-row">
+            <button class="primary-btn" id="addBallBtn">➕ EKLE</button>
+            <button class="primary-btn" id="resetBtn">⟲ YENİ</button>
+        </div>
+
+        <div class="timer-status" id="statusMsg">
+            <span>⏳ 20s</span>
+            <span>🏁 dar delik</span>
+        </div>
+        <div class="timer-bar-fill" id="timerFill" style="width:100%"></div>
     </div>
-    <footer>
-        ⚡ dönen & dar engeller • toplar sekerek yarışsın • <a href="#" target="_blank">github.io</a> hazır
-    </footer>
+    <div class="footer-note">
+        ⬇️ toplar düştükçe alan iner · son dar deliğe ilk ulaşan kazanır
+    </div>
 </div>
 
 <script>
     (function() {
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-
-        // Boyutlar sabit (canvas 1000x600)
-        const CW = 1000;
-        const CH = 600;
-        canvas.width = CW;
-        canvas.height = CH;
+        const CW = 360, CH = 720;
+        canvas.width = CW; canvas.height = CH;
 
         // --- Oyun değişkenleri ---
-        let balls = [];                // { emoji, x, y, vx, vy, radius }
-        let winnerIndex = -1;           // kim birinci oldu? (-1=yok)
-        const baseRadius = 22;           // topların yarıçapı
+        let balls = [];
+        let winnerIndex = -1;
+        let gameActive = true;
+        let startTime = null;          // performans başlangıcı
+        let elapsedSeconds = 0;
+        const RACE_DURATION = 20;       // 20 saniye yarış
+        const BASE_RADIUS = 14;          // mobilde daha küçük top
 
-        // Sabit yerçekimi ve sürtünme (ağır olmasın ama sekmeli)
-        const GRAVITY = 0.12;
-        const FRICTION_AIR = 0.992;       // hafif yavaşlama
-        const FLOOR_FRICTION = 0.98;       // yerde ekstra tutunma
+        // Yer çekimi (aşağı doğru kuvvet)
+        const GRAVITY = 0.2;
+        const GROUND_Y = CH - 30;        // gerçek zemin (en alt)
 
-        // Yer seviyesi (topların düştüğü en alt nokta, canvasın hemen altına yakın)
-        const GROUND_Y = CH - 38;            // biraz yüksekte dursunlar sekme için
+        // *** KAMERA değişkeni: toplar düştükçe aşağı kayar ***
+        let cameraY = 0;                 // kamera en üstte başlar (0 kayma)
+        const CAM_SPEED = 1.6;            // kayma hızı (top hızına bağlı olarak)
 
-        // --- Engeller (dinamik) ---
+        // seçili emoji
+        let selectedEmoji = '🇹🇷';
+
+        // --- Engeller (sabit dünyada) ---
         let obstacles = [];
 
-        // Engel yapılandırması (dönen çubuklar, dar dikdörtgenler)
+        // Dar delik (hedef) en altta bir yarık
+        const TARGET_SLOT = {
+            x: CW/2 - 25,
+            y: 5500,            // çok derinde (dünya koordinatı)
+            w: 50,
+            h: 20,
+            color: '#f55c3b'
+        };
+
+        // Engelleri oluştur (dünya koordinatlarında, y değerleri büyük)
         function buildObstacles() {
             obstacles = [
-                // 1) Dönen uzun çubuk (merkez etrafında dönecek) - biraz eğik başlangıç
-                { type: 'spinner', x: 300, y: 280, w: 130, h: 14, angle: 0.3, spinSpeed: 0.012 },
-                // 2) Dar sabit çubuk (yatay)
-                { type: 'fixed', x: 600, y: 400, w: 110, h: 12, angle: 0.0 },
-                // 3) Dikey dar engel (dönen değil ama dar)
-                { type: 'fixed', x: 780, y: 180, w: 14, h: 120, angle: 0.0 },
-                // 4) İkinci bir dönen kısa çubuk (farklı hız)
-                { type: 'spinner', x: 450, y: 120, w: 100, h: 10, angle: 1.8, spinSpeed: -0.018 },
-                // 5) Çapraz yerleşik dar engel (sabit)
-                { type: 'fixed', x: 180, y: 450, w: 90, h: 10, angle: 0.7 },
-                // 6) Ek dönen engel (merkez)
-                { type: 'spinner', x: 700, y: 280, w: 120, h: 12, angle: 0.0, spinSpeed: 0.02 }
+                // Dönen çubuklar (spinner)
+                { type: 'spinner', x: 120, y: 800, w: 100, h: 10, angle: 0.2, spinSpeed: 0.02 },
+                { type: 'spinner', x: 260, y: 1350, w: 90, h: 10, angle: 1.0, spinSpeed: -0.025 },
+                { type: 'spinner', x: 70, y: 2200, w: 130, h: 12, angle: 0.5, spinSpeed: 0.018 },
+                // Sabit dar engeller (fixed)
+                { type: 'fixed', x: 200, y: 1900, w: 100, h: 8, angle: 0.3 },
+                { type: 'fixed', x: 300, y: 2800, w: 12, h: 130, angle: 0.0 },  // dikey dar
+                { type: 'fixed', x: 50, y: 3300, w: 110, h: 10, angle: -0.4 },
+                { type: 'fixed', x: 180, y: 4000, w: 80, h: 10, angle: 0.6 },
+                { type: 'spinner', x: 280, y: 4700, w: 110, h: 12, angle: 1.8, spinSpeed: 0.015 },
+                { type: 'fixed', x: 140, y: 5200, w: 60, h: 10, angle: 0.1 },  // deliğe yakın
             ];
         }
-        buildObstacles(); // ilk kurulum
+        buildObstacles();
 
-        // Seçili emoji
-        let selectedEmoji = '🇹🇷'; // varsayılan
-
-        // Emoji seçim butonları
-        document.querySelectorAll('.emoji-option').forEach(btn => {
+        // --- Emoji seçim ---
+        document.querySelectorAll('.emoji-btn').forEach(btn => {
             btn.addEventListener('click', e => {
-                document.querySelectorAll('.emoji-option').forEach(b => b.classList.remove('selected'));
+                document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('selected'));
                 btn.classList.add('selected');
                 selectedEmoji = btn.getAttribute('data-emoji');
             });
         });
 
-        // Mesaj kutusunu güncelle
-        const statusDiv = document.getElementById('statusMessage');
+        const statusDiv = document.getElementById('statusMsg');
+        const timerFill = document.getElementById('timerFill');
 
-        // --- top ekle (tıklama ile imleç pozisyonuna) ---
-        function addBallAtMouse(clientX, clientY) {
-            if (winnerIndex !== -1) return; // yarış bittiyse ekleme
+        // --- Top ekleme fonksiyonu (dokunma ile) ---
+        function addBallAtTap(clientX, clientY) {
+            if (!gameActive || winnerIndex !== -1) return;
 
             const rect = canvas.getBoundingClientRect();
-            const scaleX = CW / rect.width;    // canvas fiziksel boyut / css genişlik
+            const scaleX = CW / rect.width;
             const scaleY = CH / rect.height;
 
-            let canvasX = (clientX - rect.left) * scaleX;
-            let canvasY = (clientY - rect.top) * scaleY;
+            // canvas üzerindeki pixel (ekran koordinatı)
+            let screenX = (clientX - rect.left) * scaleX;
+            let screenY = (clientY - rect.top) * scaleY;
 
-            // sınırları zorlama (top alandan dışarı taşmasın ama tam kenarda başlamasın)
-            canvasX = Math.min(Math.max(canvasX, baseRadius + 5), CW - baseRadius - 5);
-            canvasY = Math.min(Math.max(canvasY, baseRadius + 5), GROUND_Y - 5); // yerin altına geçmesin
+            // Bu ekran konumunu dünya koordinatına çevir: dünyaY = screenY + cameraY
+            let worldX = Math.min(Math.max(screenX, BASE_RADIUS + 5), CW - BASE_RADIUS - 5);
+            let worldY = screenY + cameraY;
 
-            // rastgele hafif yatay hız + yukarı doğru hafif zıplama
-            const vx = (Math.random() - 0.5) * 1.6;
-            const vy = -1.2 - Math.random() * 1.5; // biraz yukarı
+            // Başlangıçta biraz yukarıda olsun (kameranın biraz üstü)
+            worldY = Math.max(50 + cameraY, worldY - 20); 
+
+            // Hız (hafif aşağı eğilimli, ama yatay da olsun)
+            const vx = (Math.random() - 0.5) * 1.8;
+            const vy = 0.8 + Math.random() * 1.2; // aşağı yönlü
 
             balls.push({
                 emoji: selectedEmoji,
-                x: canvasX,
-                y: canvasY,
+                x: worldX,
+                y: worldY,
                 vx: vx,
                 vy: vy,
-                radius: baseRadius
+                radius: BASE_RADIUS
             });
 
-            // kazanan varsa iptal et (ama zaten winnerIndex -1 kontrolü var)
+            // Yarış başlamamışsa zamanı başlat
+            if (balls.length === 1 && startTime === null && gameActive) {
+                startTime = performance.now();
+            }
         }
 
-        // Canvas tıklama / dokunma
+        // Touch / mouse olayları
         canvas.addEventListener('mousedown', (e) => {
             e.preventDefault();
-            addBallAtMouse(e.clientX, e.clientY);
+            addBallAtTap(e.clientX, e.clientY);
         });
         canvas.addEventListener('touchstart', (e) => {
             e.preventDefault();
             if (e.touches.length > 0) {
-                addBallAtMouse(e.touches[0].clientX, e.touches[0].clientY);
+                addBallAtTap(e.touches[0].clientX, e.touches[0].clientY);
             }
         }, { passive: false });
 
-        // buton ile rastgele konuma top ekle (tıklama butonu)
+        // buton ile rastgele üst bölgeye ekle
         document.getElementById('addBallBtn').addEventListener('click', () => {
-            if (winnerIndex !== -1) return;
-            // rastgele üst bölge
-            const randX = 150 + Math.random() * (CW - 300);
-            const randY = 80 + Math.random() * 200; // üst kısım
+            if (!gameActive || winnerIndex !== -1) return;
+            const wx = 60 + Math.random() * (CW - 120);
+            const wy = cameraY + 100 + Math.random() * 150; // ekranın üst kısmı
             balls.push({
                 emoji: selectedEmoji,
-                x: randX,
-                y: Math.min(randY, GROUND_Y - baseRadius - 5),
-                vx: (Math.random() - 0.5) * 2,
-                vy: -1.8 - Math.random() * 2,
-                radius: baseRadius
+                x: wx,
+                y: wy,
+                vx: (Math.random() - 0.5) * 1.5,
+                vy: 1.0 + Math.random() * 2,
+                radius: BASE_RADIUS
             });
+            if (balls.length === 1 && startTime === null && gameActive) {
+                startTime = performance.now();
+            }
         });
 
-        // Sıfırla butonu
+        // Sıfırla
         document.getElementById('resetBtn').addEventListener('click', () => {
             balls = [];
             winnerIndex = -1;
-            buildObstacles(); // engelleri ilk haline döndür (açılar sıfırlanır)
-            statusDiv.innerText = '🏁 Kazanan yok — tıklayarak top ekle!';
+            gameActive = true;
+            startTime = null;
+            elapsedSeconds = 0;
+            cameraY = 0;
+            buildObstacles();  // engeller ilk açılarına dönsün
+            statusDiv.innerHTML = `<span>⏳ 20s</span><span>🏁 dar delik</span>`;
+            timerFill.style.width = '100%';
         });
 
-        // --- Çarpışma tespiti: Döndürülmüş dikdörtgen ile top (elips aslında daire) ---
+        // --- Çarpışma: döndürülmüş dikdörtgen ile top ---
         function rotatePoint(cx, cy, x, y, angle) {
             const cos = Math.cos(angle);
             const sin = Math.sin(angle);
@@ -323,254 +353,249 @@
             };
         }
 
-        function handleBallObstacleCollision(ball, ob) {
-            // Dönen engel tipi için anlık merkez etrafında dönüş yapılmış.
-            // Önce engelin köşelerini dünya koordinatında hesapla (veya topu engel lokal uzayına çevir)
+        function handleBallObstacle(ball, ob) {
             const cx = ob.x;
             const cy = ob.y;
             const w = ob.w;
             const h = ob.h;
             const angle = ob.angle || 0;
 
-            // 1) topun merkezini engelin yerel koordinatına çevir (negatif açıyla döndür)
+            // topu yerel koordinata çevir
             const localBall = rotatePoint(cx, cy, ball.x, ball.y, -angle);
-            const localX = localBall.x;
-            const localY = localBall.y;
-
-            // yerel dikdörtgen sınırları (merkez cx,cy etrafında)
             const left = cx - w/2;
             const right = cx + w/2;
             const top = cy - h/2;
             const bottom = cy + h/2;
 
-            // en yakın nokta (clamp)
-            const closestX = Math.max(left, Math.min(localX, right));
-            const closestY = Math.max(top, Math.min(localY, bottom));
+            const closestX = Math.max(left, Math.min(localBall.x, right));
+            const closestY = Math.max(top, Math.min(localBall.y, bottom));
 
-            // çarpışma vektörü (yerel)
-            let dx = localX - closestX;
-            let dy = localY - closestY;
+            let dx = localBall.x - closestX;
+            let dy = localBall.y - closestY;
             let dist = Math.sqrt(dx*dx + dy*dy);
 
             if (dist < ball.radius && dist > 0.001) {
-                // çakışma var: topu it
                 const overlap = ball.radius - dist;
                 const normX = dx / dist;
                 const normY = dy / dist;
 
-                // Topu yerelde geri it
-                const newLocalX = localX + normX * overlap;
-                const newLocalY = localY + normY * overlap;
+                // konumu düzelt (yerelde)
+                const newLocalX = localBall.x + normX * overlap;
+                const newLocalY = localBall.y + normY * overlap;
 
-                // Dünya koordinatına geri döndür ( + angle)
+                // dünyaya geri çevir
                 const worldBall = rotatePoint(cx, cy, newLocalX, newLocalY, angle);
                 ball.x = worldBall.x;
                 ball.y = worldBall.y;
 
-                // Hız yansıması (sürtünmeli)
-                // Önce hız vektörünü yerel koordinata çevir
+                // hız tepkisi
                 let vLocal = rotatePoint(0, 0, ball.vx, ball.vy, -angle);
-                // Normal doğrultusunda hızı ters çevir (sadece normal bileşeni)
                 let vn = vLocal.x * normX + vLocal.y * normY;
-                if (vn < 0) { // yaklaşıyorsa
-                    vt_x = vLocal.x - vn * normX;
-                    vt_y = vLocal.y - vn * normY;
-                    // yeni normal bileşen (eski halinin -0.45 katı kadar sekme + sürtünme)
-                    vn_new = -vn * 0.48;
+                if (vn < 0) {
+                    let vt_x = vLocal.x - vn * normX;
+                    let vt_y = vLocal.y - vn * normY;
+                    let vn_new = -vn * 0.45;
                     vLocal.x = vt_x + vn_new * normX;
                     vLocal.y = vt_y + vn_new * normY;
-                    // tekrar dünya döndür
                     let vWorld = rotatePoint(0, 0, vLocal.x, vLocal.y, angle);
-                    ball.vx = vWorld.x * 0.98;
-                    ball.vy = vWorld.y * 0.98;
+                    ball.vx = vWorld.x * 0.97;
+                    ball.vy = vWorld.y * 0.97;
                 }
                 return true;
             }
             return false;
         }
 
-        // --- Fizik güncelleme ---
-        function updatePhysics() {
-            if (winnerIndex !== -1) return; // kazanan varsa don
+        // --- Fizik & kamera güncellemesi ---
+        function update() {
+            if (!gameActive || winnerIndex !== -1) {
+                // kazanan varsa sadece kamera kayması durur.
+                return;
+            }
 
-            // yerçekimi ve hareket
-            for (let i = 0; i < balls.length; i++) {
-                const b = balls[i];
+            // Zaman kontrolü
+            if (startTime !== null) {
+                const now = performance.now();
+                elapsedSeconds = (now - startTime) / 1000;
+                if (elapsedSeconds >= RACE_DURATION) {
+                    gameActive = false;  // süre bitti, artık top eklenmez, ama kamera durur.
+                    statusDiv.innerHTML = `<span>⏱️ süre doldu</span><span>⚰️</span>`;
+                    timerFill.style.width = '0%';
+                    return;
+                } else {
+                    const percent = ((RACE_DURATION - elapsedSeconds) / RACE_DURATION) * 100;
+                    timerFill.style.width = percent + '%';
+                    statusDiv.innerHTML = `<span>⏳ ${(RACE_DURATION - elapsedSeconds).toFixed(1)}s</span><span>🏁 dar delik</span>`;
+                }
+            }
 
-                // yerçekimi
+            // 1. Toplara yerçekimi uygula (aşağı doğru)
+            for (let b of balls) {
                 b.vy += GRAVITY;
-
-                // hız uygula
                 b.x += b.vx;
                 b.y += b.vy;
 
-                // hava sürtünmesi
-                b.vx *= FRICTION_AIR;
-                b.vy *= FRICTION_AIR;
+                // hafif sürtünme
+                b.vx *= 0.995;
+                b.vy *= 0.995;
 
-                // --- Yer (zemin) çarpışması ---
-                if (b.y + b.radius > GROUND_Y) {
-                    b.y = GROUND_Y - b.radius;
-                    if (b.vy > 0.2) {
-                        b.vy = -b.vy * 0.5;  // sekme
-                        b.vx *= FLOOR_FRICTION;
-                    } else {
-                        b.vy = 0;
-                        b.vx *= 0.99; // yerde yavaşça dur
-                    }
-                }
+                // Duvarlar (sol/sağ) dünya koordinatında
+                if (b.x - b.radius < 10) { b.x = 10 + b.radius; b.vx *= -0.3; }
+                if (b.x + b.radius > CW - 10) { b.x = CW - 10 - b.radius; b.vx *= -0.3; }
 
-                // sol/sağ duvar
-                if (b.x - b.radius < 5) {
-                    b.x = 5 + b.radius;
-                    b.vx = -b.vx * 0.4;
+                // Alt zemin (çok aşağı düşmesin, ama yine de kayma olsun)
+                if (b.y + b.radius > GROUND_Y + 2000) { // dünyada çok aşağı inmeyi sınırla (2000 piksel fazladan)
+                    b.y = GROUND_Y + 2000 - b.radius;
+                    b.vy *= -0.2;
                 }
-                if (b.x + b.radius > CW - 5) {
-                    b.x = CW - 5 - b.radius;
-                    b.vx = -b.vx * 0.4;
-                }
-
-                // tavan (çok yükseğe çıkmasın)
-                if (b.y - b.radius < 5) {
-                    b.y = 5 + b.radius;
-                    b.vy = -b.vy * 0.3;
-                }
-
-                // küçük limit
-                b.vx = Math.min(Math.max(b.vx, -7), 7);
-                b.vy = Math.min(Math.max(b.vy, -7), 7);
             }
 
-            // --- Engel çarpışmaları (çoklu geçiş) ---
-            for (let iter = 0; iter < 3; iter++) { // hafif iterasyon
-                for (let i = 0; i < balls.length; i++) {
+            // 2. Engel çarpışmaları (çoklu iterasyon)
+            for (let iter = 0; iter < 3; iter++) {
+                for (let b of balls) {
                     for (let ob of obstacles) {
-                        handleBallObstacleCollision(balls[i], ob);
+                        handleBallObstacle(b, ob);
                     }
                 }
             }
 
-            // Dönen engellerin açılarını güncelle (bağımsız)
-            obstacles.forEach(ob => {
-                if (ob.type === 'spinner') {
-                    ob.angle += ob.spinSpeed;
-                }
-            });
+            // 3. Dönen engellerin açılarını güncelle
+            obstacles.forEach(ob => { if (ob.type === 'spinner') ob.angle += ob.spinSpeed; });
 
-            // --- Kazanan kontrolü (en düşük y = en yukarıda) toplar düşüyor mantığında en üstteki kazanır ---
-            if (balls.length > 0) {
-                let minY = Infinity;
-                let candidate = -1;
-                for (let i = 0; i < balls.length; i++) {
-                    // y değeri ne kadar küçükse o kadar yukarıda
-                    if (balls[i].y < minY) {
-                        minY = balls[i].y;
-                        candidate = i;
+            // 4. Hedef dar delik kontrolü (sona ulaşma)
+            for (let i = 0; i < balls.length; i++) {
+                const b = balls[i];
+                // deliğin içinde mi? (basit bir kutu kontrolü)
+                if (b.x > TARGET_SLOT.x && b.x < TARGET_SLOT.x + TARGET_SLOT.w &&
+                    b.y > TARGET_SLOT.y && b.y < TARGET_SLOT.y + TARGET_SLOT.h) {
+                    if (winnerIndex === -1 && gameActive) {
+                        winnerIndex = i;
+                        gameActive = false; // yarış bitti
+                        statusDiv.innerHTML = `<span>🏆 KAZANAN</span><span>${b.emoji}</span>`;
+                        timerFill.style.width = '0%';
+                        break;
                     }
                 }
-                // kazanan için eşik (yeterince yukarıdaysa)
-                if (candidate !== -1 && balls[candidate].y < 90) { // neredeyse tavan sınırı
-                    if (winnerIndex === -1) {
-                        winnerIndex = candidate;
-                        statusDiv.innerText = `🏆 Kazanan: ${balls[candidate].emoji}  en yukarıda! 🏆`;
-                    }
-                } else {
-                    // henüz kazanan yoksa statü güncellemesi (isteğe bağlı)
-                    if (winnerIndex === -1) {
-                        statusDiv.innerText = `⚡ ${balls.length} top yarışıyor... en üstteki kazanır`;
-                    }
-                }
+            }
+
+            // 5. KAMERA: en düşük (en aşağıdaki) topa göre kay, ama yumuşak
+            if (balls.length > 0 && gameActive) {
+                let lowestY = Math.max(...balls.map(b => b.y)); // en aşağıdaki topun dünya y'si
+                // hedef kamera: en alttaki top ekranın 2/3'ünde olacak şekilde
+                let targetCamera = Math.max(0, lowestY - CH * 0.6);
+                // yumuşak geçiş
+                cameraY += (targetCamera - cameraY) * 0.05;
             } else {
-                statusDiv.innerText = `🏁 Top eklemek için tıkla!`;
+                // hiç top yoksa kamera oynamasın
             }
+
+            // Kamera sınırı (çok aşağı kaymasın, delik görünsün)
+            cameraY = Math.min(cameraY, TARGET_SLOT.y + TARGET_SLOT.h - CH + 100);
         }
 
-        // --- Çizimler ---
+        // --- Çizim (ekran koordinatlarına dönüşüm) ---
         function draw() {
             ctx.clearRect(0, 0, CW, CH);
 
-            // zemin çizgisi
-            ctx.beginPath();
-            ctx.strokeStyle = '#ffecbb';
-            ctx.lineWidth = 4;
-            ctx.setLineDash([12, 16]);
-            ctx.beginPath();
-            ctx.moveTo(10, GROUND_Y);
-            ctx.lineTo(CW-10, GROUND_Y);
-            ctx.stroke();
-            ctx.setLineDash([]);
+            // arkaplan desen (derinlik hissi)
+            ctx.fillStyle = '#307a9e';
+            ctx.fillRect(0, 0, CW, CH);
+            for (let i = 0; i < 10; i++) {
+                ctx.fillStyle = '#52a5cc30';
+                ctx.fillRect(0, i*80 - cameraY*0.3, CW, 20);
+            }
 
-            // Engelleri çiz
+            // hedef delik (dünya koordinatı -> ekran)
+            ctx.save();
+            const slotScreenY = TARGET_SLOT.y - cameraY;
+            if (slotScreenY + TARGET_SLOT.h > 0 && slotScreenY < CH) {
+                ctx.fillStyle = '#e0452b';
+                ctx.shadowColor = '#ffc107';
+                ctx.shadowBlur = 30;
+                ctx.beginPath();
+                ctx.rect(TARGET_SLOT.x, slotScreenY, TARGET_SLOT.w, TARGET_SLOT.h);
+                ctx.fill();
+                ctx.fillStyle = '#fcd4b5';
+                ctx.font = 'bold 20px sans-serif';
+                ctx.shadowBlur = 20;
+                ctx.fillText('🏁', TARGET_SLOT.x+10, slotScreenY-8);
+            }
+            ctx.restore();
+
+            // Engelleri çiz (dünya -> ekran dönüşümü)
             obstacles.forEach(ob => {
+                const screenY = ob.y - cameraY;
+                if (screenY + ob.h/2 < 0 || screenY - ob.h/2 > CH) return; // görünür değilse atla
+
                 ctx.save();
-                ctx.translate(ob.x, ob.y);
+                ctx.translate(ob.x, screenY);
                 ctx.rotate(ob.angle || 0);
-                ctx.fillStyle = ob.type === 'spinner' ? '#f57c00' : '#ab47bc';
-                ctx.shadowColor = 'black';
-                ctx.shadowBlur = 14;
-                ctx.shadowOffsetX = 3;
+                ctx.fillStyle = ob.type === 'spinner' ? '#f08c2e' : '#b550c9';
+                ctx.shadowColor = '#111';
+                ctx.shadowBlur = 18;
                 ctx.shadowOffsetY = 3;
                 ctx.fillRect(-ob.w/2, -ob.h/2, ob.w, ob.h);
                 ctx.restore();
 
-                // ekstra parlak kenar
+                // parlak kenar
                 ctx.save();
-                ctx.translate(ob.x, ob.y);
+                ctx.translate(ob.x, screenY);
                 ctx.rotate(ob.angle || 0);
-                ctx.strokeStyle = '#ffd966';
-                ctx.lineWidth = 2.5;
-                ctx.shadowBlur = 8;
-                ctx.shadowColor = '#fff5b0';
+                ctx.strokeStyle = '#fce38a';
+                ctx.lineWidth = 2;
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = '#ffeeaa';
                 ctx.strokeRect(-ob.w/2, -ob.h/2, ob.w, ob.h);
                 ctx.restore();
             });
 
-            // Toplar
+            // Topları çiz (ekran koordinatında)
             for (let i = 0; i < balls.length; i++) {
                 const b = balls[i];
-                // gölge
-                ctx.shadowColor = 'rgba(0,0,0,0.8)';
-                ctx.shadowBlur = 14;
-                ctx.shadowOffsetY = 4;
+                const screenX = b.x;
+                const screenY = b.y - cameraY;
 
-                // top arkaplan (beyaz halka)
+                if (screenY + b.radius < 0 || screenY - b.radius > CH) continue; // görünmezse atla
+
+                ctx.shadowColor = '#00111e';
+                ctx.shadowBlur = 18;
+                ctx.shadowOffsetY = 4;
+                // arka halka
                 ctx.beginPath();
-                ctx.arc(b.x, b.y, b.radius+2, 0, 2*Math.PI);
-                ctx.fillStyle = '#ffffff30';
+                ctx.arc(screenX, screenY, b.radius+2, 0, 2*Math.PI);
+                ctx.fillStyle = '#fff3c9';
                 ctx.fill();
 
-                ctx.shadowBlur = 20;
-                ctx.font = `${b.radius+12}px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "Twemoji Mozilla", "Android Emoji", Emoji, sans-serif`;
+                ctx.font = `${b.radius+10}px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "Twemoji Mozilla", "Android Emoji", Emoji, sans-serif`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.fillStyle = i === winnerIndex ? '#fff99b' : 'white';
-                ctx.shadowColor = i === winnerIndex ? 'gold' : '#001122';
-                ctx.fillText(b.emoji, b.x, b.y-2);
+                ctx.shadowColor = i === winnerIndex ? 'gold' : '#002433';
+                ctx.fillStyle = i === winnerIndex ? '#fffead' : 'white';
+                ctx.fillText(b.emoji, screenX, screenY-2);
 
-                // kazanan ışıltısı
                 if (i === winnerIndex) {
-                    ctx.shadowBlur = 40;
-                    ctx.font = '40px sans-serif';
-                    ctx.fillStyle = 'gold';
-                    ctx.fillText('👑', b.x-18, b.y-55);
+                    ctx.font = '28px sans-serif';
+                    ctx.fillStyle = '#ffd966';
+                    ctx.fillText('👑', screenX-16, screenY-48);
                 }
             }
-            ctx.shadowBlur = 0;
+
+            // üst fade efekti
+            const grad = ctx.createLinearGradient(0, 0, 0, 50);
+            grad.addColorStop(0, '#05242f');
+            grad.addColorStop(1, '#05242f00');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, CW, 50);
 
             requestAnimationFrame(draw);
         }
 
-        // Animasyon döngüsü (fizik 60fps)
         function gameLoop() {
-            updatePhysics();
+            update();
             requestAnimationFrame(gameLoop);
         }
-
-        // başlat
         gameLoop();
-        draw(); // ilk draw da başlasın
-
-        // canvas yeniden boyutlanınca ölçek sabit (css ile oynama yok)
+        draw();
     })();
 </script>
 </body>
