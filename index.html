@@ -1,732 +1,797 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>BACKROOMS</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Creepster&family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-<style>
-/*─────────────── RESET & VARS ───────────────*/
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-:root{
-  --bg:#080603;
-  --bg2:#110e07;
-  --gold:#c8a84b;
-  --gold2:#ffe07a;
-  --red:#cc2200;
-  --red2:#ff4422;
-  --green:#1aaa55;
-  --green2:#44ff99;
-  --text:#e4cfa0;
-  --text2:#b89a60;a
-  --panel:rgba(14,10,4,0.94);
-  --border:rgba(200,168,75,0.22);
-  --border2:rgba(200,168,75,0.45);
-  --glow:0 0 24px rgba(200,168,75,0.35);
-  --glow-r:0 0 24px rgba(200,34,0,0.5);
-  --glow-g:0 0 24px rgba(0,200,100,0.4);
-  --radius:12px;
-  --font-title:'Creepster',cursive;
-  --font-mono:'Share Tech Mono',monospace;
-  --font-vt:'VT323',monospace;
-}
-html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:var(--font-mono);touch-action:none;user-select:none;-webkit-user-select:none;}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>MERGE TOWER | Kule Birleştirme</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
 
-/*─────────────── SCREEN SYSTEM ───────────────*/
-.screen{position:fixed;inset:0;z-index:10;display:none;flex-direction:column;align-items:center;justify-content:center;}
-.screen.active{display:flex;}
+        body {
+            background: linear-gradient(145deg, #0B1026 0%, #1A1F35 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            touch-action: manipulation;
+        }
 
-/*─────────────── NOISE TEXTURE ───────────────*/
-body::after{
-  content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E");
-  opacity:.045;mix-blend-mode:overlay;
-}
+        #game-container {
+            width: 100%;
+            max-width: 400px;
+            height: 100vh;
+            max-height: 800px;
+            background: rgba(18, 25, 45, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 40px;
+            box-shadow: 0 30px 50px rgba(0, 0, 0, 0.6), inset 0 0 0 2px rgba(255, 255, 255, 0.05);
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
 
-/*─────────────── SCANLINES ───────────────*/
-body::before{
-  content:'';position:fixed;inset:0;pointer-events:none;z-index:9998;
-  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.08) 2px,rgba(0,0,0,0.08) 4px);
-}
+        /* Lobi Ekranı */
+        .lobby-screen {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            padding: 30px 20px;
+            background: radial-gradient(circle at 50% 0%, #2A3466, #121A2E);
+        }
 
-/*─────────────── ANIMATIONS ───────────────*/
-@keyframes flicker{0%,100%{opacity:1}91%{opacity:1}92%{opacity:.5}94%{opacity:1}97%{opacity:.7}98%{opacity:1}}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
-@keyframes fadeIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
-@keyframes slideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
-@keyframes glowPulse{0%,100%{box-shadow:var(--glow)}50%{box-shadow:0 0 40px rgba(200,168,75,0.6),0 0 80px rgba(200,168,75,0.2)}}
-@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
-@keyframes loadBar{from{width:0}to{width:100%}}
-@keyframes spin{to{transform:rotate(360deg)}}
-@keyframes monFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
-@keyframes bgShift{0%,100%{background-position:0 0}50%{background-position:100% 100%}}
+        .lobby-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
 
-/*─────────────── LOADING SCREEN ───────────────*/
-#scLoading{
-  background:#000;
-  background-image:radial-gradient(ellipse at 50% 50%,#1a1000 0%,#000 70%);
-  gap:32px;
-}
-.ld-title{
-  font-family:var(--font-title);
-  font-size:clamp(52px,15vw,110px);
-  color:var(--gold);
-  letter-spacing:10px;
-  text-shadow:0 0 40px rgba(200,168,75,.8),0 0 100px rgba(200,168,75,.3);
-  animation:flicker 3s infinite;
-  line-height:1;
-}
-.ld-sub{font-size:12px;color:rgba(200,168,75,.45);letter-spacing:5px;text-transform:uppercase;}
-.ld-bar-wrap{width:240px;height:3px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden;}
-.ld-bar{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold2));box-shadow:0 0 12px var(--gold);animation:loadBar 2s ease-out forwards;}
-.ld-status{font-size:12px;color:rgba(200,168,75,.4);letter-spacing:3px;animation:blink 1.2s infinite;}
-.ld-monster{
-  font-size:72px;
-  animation:monFloat 2s ease-in-out infinite;
-  filter:drop-shadow(0 0 20px rgba(200,0,0,.6));
-}
+        .game-title {
+            font-size: 42px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #FFD700, #FFA500, #FF69B4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 10px 20px rgba(255, 215, 0, 0.3);
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
 
-/*─────────────── CONNECTING OVERLAY ───────────────*/
-#scConnect{
-  background:rgba(0,0,0,.92);
-  z-index:500;
-  gap:24px;
-}
-.conn-spinner{
-  width:56px;height:56px;
-  border:3px solid rgba(200,168,75,.15);
-  border-top-color:var(--gold);
-  border-radius:50%;
-  animation:spin .9s linear infinite;
-}
-.conn-title{font-family:var(--font-title);font-size:28px;color:var(--gold);letter-spacing:4px;}
-.conn-sub{font-size:12px;color:var(--text2);animation:pulse 1.5s infinite;letter-spacing:2px;}
-.conn-dot{display:inline-block;animation:blink .8s infinite;}
-.conn-dot:nth-child(2){animation-delay:.25s;}
-.conn-dot:nth-child(3){animation-delay:.5s;}
+        .title-badge {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 20px;
+            border-radius: 30px;
+            color: #8A9BFF;
+            font-weight: 600;
+            font-size: 14px;
+            display: inline-block;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
 
-/*─────────────── BG PATTERN ───────────────*/
-.bg-pattern{
-  position:absolute;inset:0;z-index:0;
-  background-image:
-    repeating-linear-gradient(0deg,transparent,transparent 79px,rgba(200,168,75,.06) 79px,rgba(200,168,75,.06) 80px),
-    repeating-linear-gradient(90deg,transparent,transparent 79px,rgba(200,168,75,.06) 79px,rgba(200,168,75,.06) 80px);
-  pointer-events:none;
-}
+        .level-cards {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin: 20px 0;
+            overflow-y: auto;
+            padding: 5px;
+        }
 
-/*─────────────── MAIN MENU ───────────────*/
-#scMenu{
-  background:radial-gradient(ellipse at 50% 30%,#1c1408 0%,#000 65%);
-  overflow:hidden;
-  justify-content:space-between;
-  padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px) 0;
-}
-.menu-top{
-  display:flex;flex-direction:column;align-items:center;
-  padding-top:clamp(20px,5vh,50px);gap:12px;
-  z-index:1;width:100%;
-}
-.menu-title{
-  font-family:var(--font-title);
-  font-size:clamp(44px,12vw,90px);
-  color:var(--gold);
-  letter-spacing:8px;
-  text-shadow:0 0 30px rgba(200,168,75,.7),0 0 70px rgba(200,168,75,.2);
-  animation:flicker 5s infinite;
-  line-height:1;
-}
-.menu-tagline{font-size:11px;color:rgba(200,168,75,.4);letter-spacing:5px;text-transform:uppercase;}
-.menu-player-card{
-  background:var(--panel);
-  border:1px solid var(--border);
-  border-radius:var(--radius);
-  padding:10px 28px;
-  text-align:center;
-  margin-top:4px;
-  animation:fadeIn .5s ease;
-}
-.mpc-label{font-size:9px;color:rgba(200,168,75,.35);letter-spacing:3px;margin-bottom:2px;}
-.mpc-name{font-size:17px;color:var(--gold);}
+        .level-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 25px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
 
-.menu-mid{z-index:1;display:flex;flex-direction:column;align-items:center;gap:14px;width:100%;max-width:360px;padding:0 20px;}
+        .level-card:active {
+            transform: scale(0.98);
+            background: rgba(255, 255, 255, 0.08);
+            border-color: #FFD700;
+        }
 
-.menu-bot{z-index:1;padding-bottom:clamp(16px,4vh,40px);font-size:10px;color:rgba(200,168,75,.18);letter-spacing:3px;text-align:center;}
+        .level-number {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(145deg, #FFD700, #FFA500);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: 900;
+            color: #1A1F35;
+            box-shadow: 0 10px 20px rgba(255, 215, 0, 0.3);
+        }
 
-/*─────────────── BUTTONS ───────────────*/
-.btn{
-  width:100%;padding:0;border:none;cursor:pointer;border-radius:var(--radius);
-  font-family:var(--font-mono);font-weight:bold;letter-spacing:2px;text-transform:uppercase;
-  transition:transform .12s,box-shadow .12s,opacity .12s;
-  outline:none;position:relative;overflow:hidden;
-}
-.btn::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.1) 0%,transparent 55%);pointer-events:none;}
-.btn:active{transform:scale(.96)!important;}
+        .level-info {
+            flex: 1;
+        }
 
-.btn-xl{font-size:clamp(17px,4.5vw,21px);height:62px;}
-.btn-lg{font-size:clamp(15px,4vw,18px);height:54px;}
-.btn-md{font-size:14px;height:44px;}
-.btn-sm{font-size:12px;height:36px;padding:0 14px;width:auto;}
+        .level-name {
+            font-size: 20px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 5px;
+        }
 
-.btn-gold{background:linear-gradient(135deg,#b8922e,var(--gold),#d4a94e);color:#100800;box-shadow:var(--glow);}
-.btn-gold:hover{transform:translateY(-1px);box-shadow:0 0 36px rgba(200,168,75,.55);}
-.btn-red{background:linear-gradient(135deg,#880000,var(--red),#cc2200);color:#fff;box-shadow:var(--glow-r);}
-.btn-red:hover{transform:translateY(-1px);}
-.btn-ghost{background:rgba(200,168,75,.1);color:var(--gold);border:1px solid var(--border);}
-.btn-ghost:hover{background:rgba(200,168,75,.18);border-color:var(--border2);}
-.btn-danger{background:rgba(200,34,0,.15);color:var(--red2);border:1px solid rgba(200,34,0,.3);}
-.btn-green{background:linear-gradient(135deg,#0d7a3a,var(--green));color:#fff;box-shadow:var(--glow-g);}
+        .level-desc {
+            font-size: 13px;
+            color: #8A9BFF;
+        }
 
-/* Pulse on main button */
-.btn-pulse{animation:glowPulse 2.2s infinite;}
+        .level-stars {
+            display: flex;
+            gap: 5px;
+            margin-top: 5px;
+        }
 
-/*─────────────── ROOMS SCREEN ───────────────*/
-#scRooms{background:radial-gradient(ellipse at 50% 0%,#1a1408 0%,#050402 60%);overflow:hidden;justify-content:flex-start;}
-.rooms-wrap{display:flex;flex-direction:column;width:100%;height:100%;max-width:600px;align-self:center;}
-.rooms-header{
-  display:flex;align-items:center;gap:10px;
-  padding:clamp(10px,3vw,20px);
-  border-bottom:1px solid var(--border);
-  background:rgba(0,0,0,.5);
-  flex-shrink:0;
-}
-.rooms-header h2{font-family:var(--font-title);font-size:clamp(18px,5vw,26px);color:var(--gold);flex:1;letter-spacing:3px;}
-.rooms-body{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px;}
-.room-card{
-  background:var(--panel);
-  border:1px solid var(--border);
-  border-radius:var(--radius);
-  padding:14px 16px;
-  cursor:pointer;
-  display:flex;align-items:center;gap:12px;
-  transition:border-color .15s,background .15s,transform .1s;
-  animation:fadeIn .25s ease;
-}
-.room-card:active{transform:scale(.98);border-color:var(--gold);}
-.room-card:hover{border-color:var(--border2);background:rgba(200,168,75,.06);}
-.rc-info{flex:1;min-width:0;}
-.rc-name{font-size:14px;color:var(--gold);font-weight:bold;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.rc-meta{font-size:11px;color:var(--text2);margin-top:3px;}
-.rc-right{text-align:right;flex-shrink:0;}
-.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;letter-spacing:1px;font-weight:bold;}
-.badge-wait{background:rgba(26,170,85,.18);color:var(--green2);border:1px solid rgba(26,170,85,.4);}
-.badge-play{background:rgba(200,34,0,.18);color:var(--red2);border:1px solid rgba(200,34,0,.35);}
-.rc-slots{font-size:12px;color:var(--text2);margin-top:4px;}
-.rooms-empty{text-align:center;padding:60px 24px;color:rgba(200,168,75,.25);font-size:14px;line-height:2;}
+        .star {
+            color: #FFD700;
+            font-size: 16px;
+        }
 
-/*─────────────── CREATE MODAL ───────────────*/
-.modal-bg{
-  position:fixed;inset:0;z-index:800;background:rgba(0,0,0,.88);
-  display:none;align-items:flex-end;justify-content:center;
-  padding:0 0 env(safe-area-inset-bottom,0) 0;
-}
-.modal-bg.open{display:flex;}
-.modal{
-  background:#131008;
-  border:1px solid var(--border);
-  border-radius:var(--radius) var(--radius) 0 0;
-  padding:28px 24px 32px;
-  width:100%;max-width:480px;
-  animation:slideUp .2s ease;
-}
-.modal h3{font-family:var(--font-title);font-size:26px;color:var(--gold);margin-bottom:22px;text-align:center;letter-spacing:3px;}
-.modal-label{font-size:10px;color:rgba(200,168,75,.4);letter-spacing:2px;margin-bottom:8px;text-transform:uppercase;}
-.monster-row{display:flex;gap:10px;margin-bottom:22px;}
-.mon-btn{
-  flex:1;padding:16px 10px;text-align:center;cursor:pointer;
-  border-radius:var(--radius);border:1px solid var(--border);
-  background:rgba(200,168,75,.06);color:var(--text2);
-  font-family:var(--font-mono);font-size:12px;line-height:1.6;
-  transition:all .15s;
-}
-.mon-btn .mon-icon{font-size:26px;display:block;margin-bottom:4px;}
-.mon-btn.sel{background:rgba(200,168,75,.18);border-color:var(--gold);color:var(--gold);}
-.mon-btn:active{transform:scale(.97);}
-.modal-actions{display:flex;gap:10px;}
-.modal-close-area{position:absolute;top:0;left:0;right:0;height:40px;cursor:pointer;}
+        .lobby-footer {
+            margin-top: auto;
+            display: flex;
+            gap: 10px;
+        }
 
-/*─────────────── GAME SCREEN ───────────────*/
-#scGame{
-  background:#000;
-  display:none;
-  flex-direction:row;
-  align-items:stretch;
-  justify-content:flex-start;
-  z-index:5;
-}
-#scGame.active{display:flex;}
-#gameCanvas{display:block;flex:1;touch-action:none;}
+        .settings-btn, .leaderboard-btn {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 15px;
+            color: white;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+        }
 
-/*─────────────── SIDE PANEL ───────────────*/
-#sidePanel{
-  width:200px;flex-shrink:0;
-  background:rgba(6,4,1,.95);
-  border-left:1px solid var(--border);
-  display:none;flex-direction:column;
-  padding:14px 12px;gap:0;
-  overflow:hidden;
-}
-@media(min-width:768px) and (orientation:landscape){#sidePanel{display:flex;}}
-.sp-title{
-  font-family:var(--font-title);font-size:16px;color:var(--gold);
-  border-bottom:1px solid var(--border);padding-bottom:8px;margin-bottom:10px;
-  letter-spacing:2px;
-}
-.sp-section{margin-bottom:14px;}
-.sp-section-label{font-size:9px;color:rgba(200,168,75,.3);letter-spacing:2px;margin-bottom:6px;text-transform:uppercase;}
-.sp-player{
-  font-size:11px;padding:5px 8px;border-radius:6px;
-  border:1px solid rgba(200,168,75,.1);background:rgba(200,168,75,.04);
-  color:var(--text);margin-bottom:4px;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-}
-.sp-player.you{color:var(--green2);border-color:rgba(0,200,100,.25);}
-.sp-player.mon{color:var(--red2);border-color:rgba(200,0,0,.25);}
-.sp-map-hint{font-size:10px;color:rgba(200,168,75,.25);line-height:1.8;}
+        /* Oyun Ekranı */
+        .game-screen {
+            height: 100%;
+            display: none;
+            flex-direction: column;
+            background: linear-gradient(180deg, #1E2749 0%, #121A2E 100%);
+            position: relative;
+        }
 
-/* Game overlay (death/escape) */
-#gameOverlay{
-  position:fixed;inset:0;z-index:400;
-  background:rgba(0,0,0,.82);
-  display:none;flex-direction:column;align-items:center;justify-content:center;gap:20px;
-}
-#gameOverlay.show{display:flex;}
-.go-title{font-family:var(--font-title);font-size:clamp(44px,12vw,80px);text-align:center;line-height:1;animation:fadeIn .4s ease;}
-.go-title.death{color:var(--red2);text-shadow:0 0 50px var(--red);}
-.go-title.escape{color:var(--green2);text-shadow:0 0 50px var(--green);}
-.go-sub{font-size:14px;color:rgba(255,255,255,.45);text-align:center;}
-.go-btns{display:flex;flex-direction:column;gap:10px;width:220px;margin-top:8px;}
+        .game-header {
+            padding: 20px 20px 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
 
-/*─────────────── TOAST ───────────────*/
-#toasts{
-  position:fixed;top:44px;left:50%;transform:translateX(-50%);
-  z-index:900;display:flex;flex-direction:column;gap:6px;
-  align-items:center;pointer-events:none;min-width:180px;max-width:88vw;
-}
-.toast{
-  background:rgba(0,0,0,.92);
-  border-radius:8px;padding:9px 20px;
-  font-size:13px;text-align:center;
-  animation:fadeIn .2s ease;
-  border:1px solid var(--border);
-}
-.toast.ok{border-color:var(--green);color:var(--green2);}
-.toast.err{border-color:var(--red);color:var(--red2);}
-.toast.info{border-color:var(--gold);color:var(--gold);}
+        .back-btn {
+            width: 45px;
+            height: 45px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
 
-/*─────────────── CONN STATUS ───────────────*/
-#connDot{
-  position:fixed;bottom:12px;left:14px;z-index:1000;
-  font-size:10px;letter-spacing:1px;
-  transition:color .4s;
-}
-#connDot.ok{color:var(--green);}
-#connDot.bad{color:var(--red);animation:blink 1s infinite;}
-#connDot.mid{color:var(--gold);}
+        .level-progress {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 8px 20px;
+            border-radius: 30px;
+            color: white;
+            font-weight: 600;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
 
-/*─────────────── SCROLLBAR ───────────────*/
-::-webkit-scrollbar{width:3px;}
-::-webkit-scrollbar-track{background:rgba(0,0,0,.3);}
-::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
-</style>
+        .score-box {
+            background: linear-gradient(145deg, #FFD700, #FFA500);
+            padding: 8px 15px;
+            border-radius: 15px;
+            color: #1A1F35;
+            font-weight: 900;
+            font-size: 18px;
+        }
+
+        .game-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            position: relative;
+        }
+
+        .tower-container {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 40px;
+            padding: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            box-shadow: inset 0 -10px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .tower-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            width: 280px;
+            height: 280px;
+        }
+
+        .tower-cell {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 900;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 0 rgba(0, 0, 0, 0.3);
+            aspect-ratio: 1;
+        }
+
+        .tower-cell[data-value="1"] { background: linear-gradient(145deg, #4CAF50, #2E7D32); }
+        .tower-cell[data-value="2"] { background: linear-gradient(145deg, #2196F3, #1565C0); }
+        .tower-cell[data-value="3"] { background: linear-gradient(145deg, #9C27B0, #6A1B9A); }
+        .tower-cell[data-value="4"] { background: linear-gradient(145deg, #FF9800, #E65100); }
+        .tower-cell[data-value="5"] { background: linear-gradient(145deg, #F44336, #B71C1C); }
+        .tower-cell[data-value="6"] { background: linear-gradient(145deg, #FFD700, #FF6B6B); }
+
+        .next-piece {
+            margin-top: 20px;
+            padding: 15px 25px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .next-label {
+            color: #8A9BFF;
+            font-weight: 600;
+        }
+
+        .next-value {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(145deg, #FFD700, #FFA500);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 900;
+            color: #1A1F35;
+        }
+
+        .game-footer {
+            padding: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .merge-btn, .reset-btn {
+            flex: 1;
+            padding: 18px;
+            border-radius: 25px;
+            border: none;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .merge-btn {
+            background: linear-gradient(145deg, #FFD700, #FFA500);
+            color: #1A1F35;
+            box-shadow: 0 10px 20px rgba(255, 215, 0, 0.3);
+        }
+
+        .reset-btn {
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .merge-btn:active, .reset-btn:active, .back-btn:active, .level-card:active {
+            transform: scale(0.95);
+        }
+
+        /* Settings Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: #1E2749;
+            border-radius: 40px;
+            padding: 30px;
+            width: 90%;
+            max-width: 340px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .modal-title {
+            color: white;
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .toggle-switch {
+            width: 50px;
+            height: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 30px;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .toggle-switch.active {
+            background: linear-gradient(145deg, #FFD700, #FFA500);
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 26px;
+            height: 26px;
+            background: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: 0.2s;
+        }
+
+        .toggle-switch.active::after {
+            left: 22px;
+        }
+
+        .close-modal {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(145deg, #FFD700, #FFA500);
+            border: none;
+            border-radius: 25px;
+            color: #1A1F35;
+            font-weight: 700;
+            font-size: 16px;
+            margin-top: 20px;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
+    <div id="game-container">
+        <!-- Lobi Ekranı -->
+        <div id="lobby-screen" class="lobby-screen">
+            <div class="lobby-header">
+                <div class="game-title">MERGE TOWER</div>
+                <div class="title-badge">⚡ BİRLEŞTİR VE YÜKSEL</div>
+            </div>
+            
+            <div class="level-cards" id="level-cards">
+                <!-- Level kartları JS ile doldurulacak -->
+            </div>
 
-<!-- ═══ LOADING SCREEN ═══ -->
-<div id="scLoading" class="screen active">
-  <div class="bg-pattern"></div>
-  <div class="ld-monster">👁️</div>
-  <div class="ld-title">BACKROOMS</div>
-  <div class="ld-sub">Seviye ∞ — Geri dönüş yok</div>
-  <div class="ld-bar-wrap"><div class="ld-bar"></div></div>
-  <div class="ld-status">Yükleniyor<span class="conn-dot">.</span><span class="conn-dot">.</span><span class="conn-dot">.</span></div>
-</div>
+            <div class="lobby-footer">
+                <div class="settings-btn" id="settings-btn">⚙️ AYARLAR</div>
+                <div class="leaderboard-btn" id="leaderboard-btn">🏆 SIRALAMA</div>
+            </div>
+        </div>
 
-<!-- ═══ CONNECTING OVERLAY ═══ -->
-<div id="scConnect" class="screen">
-  <div class="conn-spinner"></div>
-  <div class="conn-title">SUNUCUYA BAĞLANIYOR</div>
-  <div class="conn-sub">Bekle<span class="conn-dot">.</span><span class="conn-dot">.</span><span class="conn-dot">.</span></div>
-</div>
+        <!-- Oyun Ekranı -->
+        <div id="game-screen" class="game-screen">
+            <div class="game-header">
+                <div class="back-btn" id="back-btn">←</div>
+                <div class="level-progress" id="level-display">LEVEL 1</div>
+                <div class="score-box" id="score">0</div>
+            </div>
 
-<!-- ═══ MAIN MENU ═══ -->
-<div id="scMenu" class="screen">
-  <div class="bg-pattern"></div>
-  <div class="menu-top">
-    <div class="menu-title">BACKROOMS</div>
-    <div class="menu-tagline">Karanlığa hoş geldin</div>
-    <div class="menu-player-card">
-      <div class="mpc-label">OYUNCU</div>
-      <div class="mpc-name" id="mpcName">—</div>
+            <div class="game-area">
+                <div class="tower-container">
+                    <div class="tower-grid" id="tower-grid">
+                        <!-- Grid JS ile doldurulacak -->
+                    </div>
+                </div>
+
+                <div class="next-piece">
+                    <span class="next-label">SIRADAKİ:</span>
+                    <div class="next-value" id="next-value">1</div>
+                </div>
+            </div>
+
+            <div class="game-footer">
+                <button class="merge-btn" id="merge-btn">⚡ BİRLEŞTİR</button>
+                <button class="reset-btn" id="reset-btn">🔄 SIFIRLA</button>
+            </div>
+        </div>
     </div>
-  </div>
-  <div class="menu-mid">
-    <button class="btn btn-gold btn-xl btn-pulse" id="btnQuick">⚡&nbsp;&nbsp;OYUNA BAŞLA</button>
-    <button class="btn btn-ghost btn-lg" id="btnRooms">🚪&nbsp;&nbsp;ODALAR</button>
-    <button class="btn btn-ghost btn-lg" id="btnCreate">➕&nbsp;&nbsp;ODA OLUŞTUR</button>
-  </div>
-  <div class="menu-bot">LEVEL ∞ &nbsp;|&nbsp; GERİ DÖNÜŞ YOK &nbsp;|&nbsp; BACKROOMS</div>
-</div>
 
-<!-- ═══ ROOMS SCREEN ═══ -->
-<div id="scRooms" class="screen">
-  <div class="bg-pattern"></div>
-  <div class="rooms-wrap">
-    <div class="rooms-header">
-      <button class="btn btn-ghost btn-sm" id="btnBackRooms">← GERİ</button>
-      <h2>🚪 ODALAR</h2>
-      <button class="btn btn-gold btn-sm" id="btnCreate2">+ ODA</button>
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-title">⚙️ AYARLAR</div>
+            <div class="setting-item">
+                <span>🔊 Ses Efektleri</span>
+                <div class="toggle-switch active" id="sound-toggle"></div>
+            </div>
+            <div class="setting-item">
+                <span>🎵 Müzik</span>
+                <div class="toggle-switch active" id="music-toggle"></div>
+            </div>
+            <div class="setting-item">
+                <span>📳 Titreşim</span>
+                <div class="toggle-switch" id="vibration-toggle"></div>
+            </div>
+            <button class="close-modal" id="close-settings">KAPAT</button>
+        </div>
     </div>
-    <div class="rooms-body" id="roomsList">
-      <div class="rooms-empty">Yükleniyor...</div>
+
+    <!-- Leaderboard Modal -->
+    <div id="leaderboard-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-title">🏆 SIRALAMA</div>
+            <div style="color: white; text-align: center; padding: 20px;" id="leaderboard-content">
+                <!-- Leaderboard JS ile doldurulacak -->
+            </div>
+            <button class="close-modal" id="close-leaderboard">KAPAT</button>
+        </div>
     </div>
-  </div>
-</div>
 
-<!-- ═══ CREATE MODAL ═══ -->
-<div class="modal-bg" id="createModal">
-  <div class="modal">
-    <h3>ODA OLUŞTUR</h3>
-    <div class="modal-label">Canavar Türü</div>
-    <div class="monster-row">
-      <div class="mon-btn sel" id="monAI" data-v="ai">
-        <span class="mon-icon">🤖</span>YAPAY ZEKA
-      </div>
-      <div class="mon-btn" id="monPLR" data-v="player">
-        <span class="mon-icon">👤</span>RANDOM OYUNCU
-      </div>
-    </div>
-    <div class="modal-actions">
-      <button class="btn btn-ghost btn-md" style="flex:1" id="btnModalCancel">İPTAL</button>
-      <button class="btn btn-gold btn-md" style="flex:2" id="btnModalOk">OLUŞTUR</button>
-    </div>
-  </div>
-</div>
+    <script>
+        // Oyun durumu
+        let currentLevel = 1;
+        let tower = [
+            [0, 0, 0, 0],
+            [0, 0, 0, 0],
+            [0, 0, 0, 0],
+            [0, 0, 0, 0]
+        ];
+        let nextBlock = 1;
+        let score = 0;
+        let selectedRow = -1;
+        let selectedCol = -1;
 
-<!-- ═══ GAME SCREEN ═══ -->
-<div id="scGame" class="screen">
-  <canvas id="gameCanvas"></canvas>
-  <div id="sidePanel">
-    <div class="sp-title">DURUM</div>
-    <div class="sp-section">
-      <div class="sp-section-label">Oyuncular</div>
-      <div id="spPlayers"></div>
-    </div>
-    <div class="sp-section">
-      <div class="sp-section-label">Görev</div>
-      <div class="sp-map-hint" id="spMission">🔑 Anahtarı bul<br>🚪 Çıkışa kaç<br>👹 Canavardan kaç</div>
-    </div>
-  </div>
-</div>
+        // Level verileri
+        const levels = [
+            { id: 1, name: "BAŞLANGIÇ", desc: "Temel birleştirme", target: 500, stars: 3 },
+            { id: 2, name: "YÜKSELEN", desc: "Daha hızlı ol!", target: 1000, stars: 3 },
+            { id: 3, name: "UZMAN", desc: "Strateji zamanı", target: 2000, stars: 3 },
+            { id: 4, name: "EFSANE", desc: "Zorlu mücadele", target: 5000, stars: 3 },
+            { id: 5, name: "MİTOLOJİK", desc: "En yüksek seviye", target: 10000, stars: 3 }
+        ];
 
-<!-- ═══ GAME OVERLAY ═══ -->
-<div id="gameOverlay">
-  <div class="go-title" id="goTitle"></div>
-  <div class="go-sub" id="goSub"></div>
-  <div class="go-btns">
-    <button class="btn btn-gold btn-lg" id="btnGoQuick">⚡ YENİDEN OYNA</button>
-    <button class="btn btn-ghost btn-md" id="btnGoMenu">ANA MENÜ</button>
-  </div>
-</div>
+        // Lobi ekranını doldur
+        function renderLobby() {
+            const container = document.getElementById('level-cards');
+            container.innerHTML = '';
+            
+            levels.forEach(level => {
+                const card = document.createElement('div');
+                card.className = 'level-card';
+                card.onclick = () => startLevel(level.id);
+                
+                let stars = '';
+                for (let i = 0; i < level.stars; i++) {
+                    stars += '<span class="star">★</span>';
+                }
+                
+                card.innerHTML = `
+                    <div class="level-number">${level.id}</div>
+                    <div class="level-info">
+                        <div class="level-name">${level.name}</div>
+                        <div class="level-desc">${level.desc}</div>
+                        <div class="level-stars">${stars}</div>
+                    </div>
+                    <div style="color: #FFD700; font-weight: 700;">${level.target}</div>
+                `;
+                
+                container.appendChild(card);
+            });
+        }
 
-<!-- ═══ TOASTS ═══ -->
-<div id="toasts"></div>
+        // Oyun grid'ini render et
+        function renderGame() {
+            const grid = document.getElementById('tower-grid');
+            grid.innerHTML = '';
+            
+            for (let i = 0; i < 4; i++) {
+                for (let j = 0; j < 4; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'tower-cell';
+                    if (tower[i][j] > 0) {
+                        cell.setAttribute('data-value', tower[i][j]);
+                        cell.textContent = tower[i][j];
+                    }
+                    cell.onclick = () => selectCell(i, j);
+                    grid.appendChild(cell);
+                }
+            }
+            
+            document.getElementById('next-value').textContent = nextBlock;
+            document.getElementById('score').textContent = score;
+            document.getElementById('level-display').textContent = `LEVEL ${currentLevel}`;
+        }
 
-<!-- ═══ CONN DOT ═══ -->
-<div id="connDot" class="bad">● BAĞLANIYOR</div>
+        // Hücre seç
+        function selectCell(row, col) {
+            if (tower[row][col] === 0) {
+                // Seçili hücreyi temizle
+                if (selectedRow !== -1 && selectedCol !== -1) {
+                    document.querySelectorAll('.tower-cell')[selectedRow * 4 + selectedCol].style.border = 'none';
+                }
+                
+                selectedRow = row;
+                selectedCol = col;
+                
+                // Seçili hücreyi vurgula
+                document.querySelectorAll('.tower-cell')[row * 4 + col].style.border = '3px solid #FFD700';
+            }
+        }
 
-<!-- ═══ SCRIPTS ═══ -->
-<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"
-  crossorigin="anonymous"
-  integrity="sha384-2huX0OP5NNMT4WHzKb7Ea7mFVuEW/B1x4uf6mI/GNc2vlnHOy3RFzFizk3LDYPS">
-</script>
-<script src="game.js"></script>
-<script>
-'use strict';
-/* ════════════════════════════════════════════
-   APP CONTROLLER
-════════════════════════════════════════════ */
-const SERVER = 'https://saskioyunu-2rxd.onrender.com';
-const IS_MOBILE = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
-window.IS_MOBILE = IS_MOBILE;
+        // Blok yerleştir
+        function placeBlock() {
+            if (selectedRow === -1 || selectedCol === -1) {
+                alert('Önce bir hücre seç!');
+                return false;
+            }
+            
+            if (tower[selectedRow][selectedCol] !== 0) {
+                alert('Bu hücre dolu!');
+                return false;
+            }
+            
+            tower[selectedRow][selectedCol] = nextBlock;
+            
+            // Yeni blok üret
+            nextBlock = Math.floor(Math.random() * 3) + 1;
+            
+            // Seçimi temizle
+            document.querySelectorAll('.tower-cell')[selectedRow * 4 + selectedCol].style.border = 'none';
+            selectedRow = -1;
+            selectedCol = -1;
+            
+            renderGame();
+            return true;
+        }
 
-let socket     = null;
-let myName     = 'Misafir';
-let myId       = null;
-let inRoom     = false;
-let pendingMon = 'ai';
+        // Birleştirme işlemi
+        function mergeBlocks() {
+            let merged = false;
+            
+            // Yatay birleştirme
+            for (let i = 0; i < 4; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (tower[i][j] > 0 && tower[i][j] === tower[i][j + 1]) {
+                        // Üçlü kontrol
+                        if (j < 2 && tower[i][j] === tower[i][j + 2]) {
+                            // Üçlü birleştirme
+                            let value = tower[i][j];
+                            tower[i][j] = 0;
+                            tower[i][j + 1] = 0;
+                            tower[i][j + 2] = 0;
+                            
+                            // Yeni blok oluştur (en uygun yere)
+                            for (let k = 0; k < 4; k++) {
+                                if (tower[i][k] === 0) {
+                                    tower[i][k] = value + 1;
+                                    score += (value + 1) * 100;
+                                    break;
+                                }
+                            }
+                            merged = true;
+                            j += 2;
+                        }
+                        // İkili birleştirme
+                        else {
+                            let value = tower[i][j];
+                            tower[i][j] = 0;
+                            tower[i][j + 1] = 0;
+                            
+                            // Yeni blok oluştur
+                            for (let k = 0; k < 4; k++) {
+                                if (tower[i][k] === 0) {
+                                    tower[i][k] = value + 1;
+                                    score += (value + 1) * 50;
+                                    break;
+                                }
+                            }
+                            merged = true;
+                            j++;
+                        }
+                    }
+                }
+            }
+            
+            // Dikey birleştirme
+            for (let j = 0; j < 4; j++) {
+                for (let i = 0; i < 3; i++) {
+                    if (tower[i][j] > 0 && tower[i][j] === tower[i + 1][j]) {
+                        // Üçlü kontrol
+                        if (i < 2 && tower[i][j] === tower[i + 2][j]) {
+                            let value = tower[i][j];
+                            tower[i][j] = 0;
+                            tower[i + 1][j] = 0;
+                            tower[i + 2][j] = 0;
+                            
+                            for (let k = 0; k < 4; k++) {
+                                if (tower[k][j] === 0) {
+                                    tower[k][j] = value + 1;
+                                    score += (value + 1) * 100;
+                                    break;
+                                }
+                            }
+                            merged = true;
+                            i += 2;
+                        }
+                        // İkili birleştirme
+                        else {
+                            let value = tower[i][j];
+                            tower[i][j] = 0;
+                            tower[i + 1][j] = 0;
+                            
+                            for (let k = 0; k < 4; k++) {
+                                if (tower[k][j] === 0) {
+                                    tower[k][j] = value + 1;
+                                    score += (value + 1) * 50;
+                                    break;
+                                }
+                            }
+                            merged = true;
+                            i++;
+                        }
+                    }
+                }
+            }
+            
+            if (merged) {
+                // Birleştirme olduysa ses efekti (opsiyonel)
+                renderGame();
+                
+                // Level kontrolü
+                const level = levels[currentLevel - 1];
+                if (score >= level.target) {
+                    alert(`🎉 Tebrikler! Level ${currentLevel} tamamlandı!`);
+                    if (currentLevel < levels.length) {
+                        currentLevel++;
+                        resetGame();
+                    }
+                }
+            } else {
+                alert('Birleştirilecek blok yok!');
+            }
+        }
 
-/* ──── Telegram ──── */
-function initTelegram(){
-  if(window.Telegram?.WebApp){
-    try{
-      const tg=window.Telegram.WebApp;
-      tg.ready(); tg.expand();
-      tg.setHeaderColor('#080603');
-      tg.setBackgroundColor('#080603');
-      const u=tg.initDataUnsafe?.user;
-      if(u){
-        myName=u.first_name+(u.last_name?' '+u.last_name:'');
-        return;
-      }
-    }catch(e){}
-  }
-  const saved=localStorage.getItem('br_name');
-  if(saved) myName=saved;
-  else {
-    myName='Oyuncu_'+Math.floor(Math.random()*9999);
-    localStorage.setItem('br_name',myName);
-  }
-}
+        // Oyunu sıfırla
+        function resetGame() {
+            tower = [
+                [0, 0, 0, 0],
+                [0, 0, 0, 0],
+                [0, 0, 0, 0],
+                [0, 0, 0, 0]
+            ];
+            nextBlock = 1;
+            score = 0;
+            selectedRow = -1;
+            selectedCol = -1;
+            renderGame();
+        }
 
-/* ──── Screen Manager ──── */
-const screens = {};
-['scLoading','scConnect','scMenu','scRooms','scGame'].forEach(id=>{
-  screens[id]=document.getElementById(id);
-});
+        // Level başlat
+        function startLevel(levelId) {
+            currentLevel = levelId;
+            resetGame();
+            document.getElementById('lobby-screen').style.display = 'none';
+            document.getElementById('game-screen').style.display = 'flex';
+        }
 
-function showScreen(id){
-  Object.values(screens).forEach(s=>s.classList.remove('active'));
-  if(screens[id]) screens[id].classList.add('active');
-}
+        // Lobiye dön
+        function backToLobby() {
+            document.getElementById('game-screen').style.display = 'none';
+            document.getElementById('lobby-screen').style.display = 'flex';
+            renderLobby();
+        }
 
-/* ──── Toast ──── */
-function toast(msg,type='info',dur=2800){
-  const el=document.createElement('div');
-  el.className=`toast ${type}`;
-  el.textContent=msg;
-  document.getElementById('toasts').appendChild(el);
-  setTimeout(()=>{el.style.opacity='0';el.style.transform='translateY(-8px)';el.style.transition='.3s';setTimeout(()=>el.remove(),350);},dur);
-}
+        // Event listeners
+        document.getElementById('merge-btn').addEventListener('click', () => {
+            placeBlock();
+        });
 
-/* ──── Conn Status ──── */
-function connDot(state,text){
-  const el=document.getElementById('connDot');
-  el.className=state; el.textContent='● '+text;
-}
+        document.getElementById('reset-btn').addEventListener('click', resetGame);
 
-/* ──── Socket Init ──── */
-function initSocket(){
-  connDot('mid','Bağlanıyor');
-  showScreen('scConnect');
+        document.getElementById('back-btn').addEventListener('click', backToLobby);
 
-  socket=io(SERVER,{
-    transports:['websocket','polling'],
-    reconnection:true,
-    reconnectionDelay:1000,
-    reconnectionDelayMax:5000,
-    reconnectionAttempts:10,
-    timeout:15000
-  });
+        // Settings
+        document.getElementById('settings-btn').addEventListener('click', () => {
+            document.getElementById('settings-modal').style.display = 'flex';
+        });
 
-  socket.on('connect',()=>{
-    myId=socket.id;
-    connDot('ok','Bağlı');
-    if(!inRoom) showScreen('scMenu');
-    toast('✅ Sunucuya başarıyla bağlandı','ok',2000);
-    console.log('Socket bağlandı:', socket.id);
-  });
+        document.getElementById('close-settings').addEventListener('click', () => {
+            document.getElementById('settings-modal').style.display = 'none';
+        });
 
-  socket.on('disconnect',reason=>{
-    console.log('Socket disconnected:', reason);
-    connDot('bad','Bağlantı kesildi');
-    toast('⚠️ Bağlantı kesildi — yeniden bağlanılıyor...','err',4000);
-    if(!inRoom) showScreen('scConnect');
-  });
+        // Toggle switches
+        document.querySelectorAll('.toggle-switch').forEach(toggle => {
+            toggle.addEventListener('click', function() {
+                this.classList.toggle('active');
+            });
+        });
 
-  socket.on('connect_error',error=>{
-    console.error('Socket bağlantı hatası:', error);
-    connDot('bad','Bağlanamıyor');
-    toast('❌ Sunucuya ulaşılamıyor - 5 saniye sonra tekrar deneniyor...','err',5000);
-    setTimeout(() => {
-      if(!socket?.connected) {
-        socket.connect();
-      }
-    }, 5000);
-  });
+        // Leaderboard
+        document.getElementById('leaderboard-btn').addEventListener('click', () => {
+            document.getElementById('leaderboard-content').innerHTML = `
+                <div style="margin-bottom: 15px;">🥇 1. OYUNCU - 50.000</div>
+                <div style="margin-bottom: 15px;">🥈 2. OYUNCU - 45.000</div>
+                <div style="margin-bottom: 15px;">🥉 3. OYUNCU - 40.000</div>
+                <div>📊 SEN - ${score}</div>
+            `;
+            document.getElementById('leaderboard-modal').style.display = 'flex';
+        });
 
-  socket.on('S_ROOM_LIST',list=>renderRooms(list));
+        document.getElementById('close-leaderboard').addEventListener('click', () => {
+            document.getElementById('leaderboard-modal').style.display = 'none';
+        });
 
-  socket.on('S_JOINED',data=>{
-    myId=data.pid;
-    inRoom=true;
-    startGame(data);
-  });
+        // Modal dışına tıklayınca kapat
+        window.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal')) {
+                e.target.style.display = 'none';
+            }
+        });
 
-  socket.on('S_ERROR',msg=>{
-    toast('❌ '+msg,'err');
-  });
-
-  socket.on('S_GAMEOVER',({reason})=>{
-    showOverlay(reason==='escaped'?'escape':'death',
-      reason==='escaped'?'🏆 KURTULDUN!':'💀 OYUN BİTTİ',
-      reason==='escaped'?'Backrooms\'dan kaçmayı başardın!':'Herkes yakalandı veya öldü.'
-    );
-  });
-}
-
-/* ──── Quick Play ──── */
-document.getElementById('btnQuick').addEventListener('click',()=>{
-  if(!socket?.connected){ toast('Sunucu bağlantısı yok...','err'); return; }
-  socket.emit('C_QUICK_PLAY',{name:myName});
-  toast('⚡ Oyun başlatılıyor...','info',2000);
-});
-
-/* ──── Rooms ──── */
-document.getElementById('btnRooms').addEventListener('click',()=>{
-  showScreen('scRooms');
-  if(socket?.connected) socket.emit('C_GET_ROOMS');
-});
-document.getElementById('btnBackRooms').addEventListener('click',()=>showScreen('scMenu'));
-
-function renderRooms(list){
-  const el=document.getElementById('roomsList');
-  if(!list||!list.length){
-    el.innerHTML='<div class="rooms-empty">🕯️ Şu an açık oda yok<br><br>İlk odayı sen aç!</div>';
-    return;
-  }
-  el.innerHTML=list.map(r=>`
-    <div class="room-card" onclick="joinRoomById('${r.id}')">
-      <div class="rc-info">
-        <div class="rc-name">🚪 ${esc(r.creatorName)}'in Odası</div>
-        <div class="rc-meta">${r.monsterType==='ai'?'🤖 Yapay Zeka':'👤 Oyuncu Canavarı'} · ${r.playerCount}/${r.maxPlayers} oyuncu</div>
-      </div>
-      <div class="rc-right">
-        <div class="badge ${r.playerCount<r.maxPlayers?'badge-wait':'badge-play'}">${r.playerCount<r.maxPlayers?'AÇIK':'DOLU'}</div>
-        <div class="rc-slots">${r.maxPlayers-r.playerCount} yer</div>
-      </div>
-    </div>
-  `).join('');
-}
-
-function joinRoomById(id){
-  if(!socket?.connected){ toast('Bağlantı yok','err'); return; }
-  socket.emit('C_JOIN_ROOM',{roomId:id,name:myName});
-  toast('Odaya bağlanılıyor...','info',2000);
-}
-
-/* ──── Create Room ──── */
-function openCreate(){
-  pendingMon='ai';
-  document.getElementById('monAI').classList.add('sel');
-  document.getElementById('monPLR').classList.remove('sel');
-  document.getElementById('createModal').classList.add('open');
-}
-document.getElementById('btnCreate').addEventListener('click',openCreate);
-document.getElementById('btnCreate2').addEventListener('click',openCreate);
-document.getElementById('btnModalCancel').addEventListener('click',()=>document.getElementById('createModal').classList.remove('open'));
-document.getElementById('createModal').addEventListener('click',e=>{
-  if(e.target===e.currentTarget) e.currentTarget.classList.remove('open');
-});
-document.getElementById('monAI').addEventListener('click',()=>{
-  pendingMon='ai';
-  document.getElementById('monAI').classList.add('sel');
-  document.getElementById('monPLR').classList.remove('sel');
-});
-document.getElementById('monPLR').addEventListener('click',()=>{
-  pendingMon='player';
-  document.getElementById('monPLR').classList.add('sel');
-  document.getElementById('monAI').classList.remove('sel');
-});
-document.getElementById('btnModalOk').addEventListener('click',()=>{
-  if(!socket?.connected){ toast('Bağlantı yok','err'); return; }
-  document.getElementById('createModal').classList.remove('open');
-  socket.emit('C_CREATE_ROOM',{name:myName,monsterType:pendingMon});
-  toast('🚪 Oda oluşturuluyor...','info',2000);
-});
-
-/* ──── Game Start ──── */
-function startGame(data){
-  showScreen('scGame');
-  document.getElementById('gameOverlay').classList.remove('show');
-  updateSidePanel(data);
-
-  const canvas=document.getElementById('gameCanvas');
-  GAME.init(canvas, socket, data.pid, myName, data.isMonster);
-  GAME.loadRoom(data);
-
-  GAME.onDied=()=>showOverlay('death','💀 YAKALANDINN!','Canavar seni yakaladı...');
-  GAME.onEscaped=()=>showOverlay('escape','🏆 KURTULDUN!','Backrooms\'dan kaçmayı başardın!');
-  GAME.onGameOver=(r)=>showOverlay(r==='escaped'?'escape':'death',r==='escaped'?'🏆 KAÇILDI!':'💀 OYUN BİTTİ',r==='escaped'?'Biri kaçtı!':'Herkes yakalandı.');
-  GAME.onCaught=id=>updateSidePanel(null);
-
-  socket.off('S_PJOIN');
-  socket.on('S_PJOIN',p=>{ updateSidePanel(null); });
-  socket.off('S_LEFT');
-  socket.on('S_LEFT',()=>updateSidePanel(null));
-
-  if(data.isMonster) toast('👹 SEN CANAVARSIN! Oyuncuları yakala!','err',4000);
-}
-
-function updateSidePanel(initialData){
-  // Will re-read from GAME internals later; for now use data if provided
-  const spEl=document.getElementById('spPlayers');
-  if(!spEl)return;
-  let html=`<div class="sp-player you">👤 ${myName} (SEN)</div>`;
-  if(initialData?.players){
-    for(const[id,p] of Object.entries(initialData.players)){
-      if(id===initialData.pid) continue;
-      const nm=p.n||p.name||'?';
-      const mon=p.isMonster||p.mon;
-      html+=`<div class="sp-player ${mon?'mon':''}">${mon?'👹':'👤'} ${nm}</div>`;
-    }
-  }
-  spEl.innerHTML=html;
-}
-
-/* ──── Overlay ──── */
-function showOverlay(type,title,sub){
-  const ov=document.getElementById('gameOverlay');
-  const t=document.getElementById('goTitle');
-  const s=document.getElementById('goSub');
-  t.textContent=title;
-  t.className='go-title '+type;
-  s.textContent=sub;
-  ov.classList.add('show');
-}
-
-document.getElementById('btnGoMenu').addEventListener('click',()=>{
-  GAME.stop(); inRoom=false;
-  document.getElementById('gameOverlay').classList.remove('show');
-  showScreen('scMenu');
-});
-document.getElementById('btnGoQuick').addEventListener('click',()=>{
-  GAME.stop(); inRoom=false;
-  document.getElementById('gameOverlay').classList.remove('show');
-  if(!socket?.connected){ toast('Bağlantı yok','err'); return; }
-  socket.emit('C_QUICK_PLAY',{name:myName});
-  toast('⚡ Yeni oyun başlatılıyor...','info',2000);
-});
-
-/* ──── Utils ──── */
-function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
-/* ──── Prevent context menu ──── */
-window.addEventListener('contextmenu',e=>e.preventDefault());
-
-/* ──── Wake lock ──── */
-if('wakeLock' in navigator) navigator.wakeLock.request('screen').catch(()=>{});
-
-/* ──── BOOT ──── */
-window.addEventListener('DOMContentLoaded',()=>{
-  // Load Telegram WebApp SDK
-  const tgs=document.createElement('script');
-  tgs.src='https://telegram.org/js/telegram-web-app.js';
-  const afterTg=()=>{
-    initTelegram();
-    document.getElementById('mpcName').textContent=myName;
-    // Show loading for 1.8s then connect
-    setTimeout(()=>{
-      initSocket();
-    },1800);
-  };
-  tgs.onload=afterTg;
-  tgs.onerror=afterTg;
-  document.head.appendChild(tgs);
-});
-</script>
+        // Oyunu başlat
+        renderLobby();
+    </script>
 </body>
 </html>
