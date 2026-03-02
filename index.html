@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>MERGE TOWER | Kule Birleştirme</title>
+    <title>BLOCK BLAST PRO | Sınırsız Level</title>
     <style>
         * {
             margin: 0;
@@ -11,11 +11,11 @@
             box-sizing: border-box;
             user-select: none;
             -webkit-tap-highlight-color: transparent;
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
         }
 
         body {
-            background: linear-gradient(145deg, #0B1026 0%, #1A1F35 100%);
+            background: #0A0C1A;
             min-height: 100vh;
             display: flex;
             justify-content: center;
@@ -23,318 +23,377 @@
             touch-action: manipulation;
         }
 
+        /* ANA KONTEYNER */
         #game-container {
             width: 100%;
             max-width: 400px;
             height: 100vh;
-            max-height: 800px;
-            background: rgba(18, 25, 45, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 40px;
-            box-shadow: 0 30px 50px rgba(0, 0, 0, 0.6), inset 0 0 0 2px rgba(255, 255, 255, 0.05);
-            overflow: hidden;
+            max-height: 850px;
+            background: #13172B;
             position: relative;
+            overflow: hidden;
             display: flex;
             flex-direction: column;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 40px rgba(0,0,0,0.8);
+            border-radius: 30px;
         }
 
-        /* Lobi Ekranı */
+        /* STATUS BAR */
+        .status-bar {
+            background: #1E233B;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #2D3450;
+        }
+
+        .level-info {
+            background: #2D3450;
+            padding: 8px 18px;
+            border-radius: 30px;
+            color: #FFF;
+            font-weight: 700;
+            font-size: 16px;
+            letter-spacing: 1px;
+            box-shadow: inset 0 -2px 0 #13172B;
+        }
+
+        .stats {
+            display: flex;
+            gap: 15px;
+        }
+
+        .stat-item {
+            background: #2D3450;
+            padding: 8px 15px;
+            border-radius: 30px;
+            color: #FFD966;
+            font-weight: 700;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* LOBBY EKRANI */
         .lobby-screen {
-            height: 100%;
+            flex: 1;
+            background: #13172B;
             display: flex;
             flex-direction: column;
-            padding: 30px 20px;
-            background: radial-gradient(circle at 50% 0%, #2A3466, #121A2E);
+            padding: 20px;
+            overflow-y: auto;
         }
 
         .lobby-header {
             text-align: center;
-            margin-bottom: 40px;
+            margin-bottom: 25px;
         }
 
         .game-title {
             font-size: 42px;
             font-weight: 900;
-            background: linear-gradient(135deg, #FFD700, #FFA500, #FF69B4);
+            background: linear-gradient(135deg, #FFD966, #FFB347, #FF6B6B);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            text-shadow: 0 10px 20px rgba(255, 215, 0, 0.3);
-            letter-spacing: 2px;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
+            text-shadow: 0 5px 15px rgba(255,215,0,0.3);
         }
 
-        .title-badge {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 8px 20px;
-            border-radius: 30px;
-            color: #8A9BFF;
-            font-weight: 600;
-            font-size: 14px;
-            display: inline-block;
-            backdrop-filter: blur(5px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .level-cards {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            margin: 20px 0;
-            overflow-y: auto;
-            padding: 5px;
-        }
-
-        .level-card {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+        .player-card {
+            background: #1E233B;
             border-radius: 25px;
-            padding: 20px;
+            padding: 15px;
             display: flex;
             align-items: center;
             gap: 15px;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+            margin-bottom: 20px;
+            border: 1px solid #2D3450;
         }
 
-        .level-card:active {
-            transform: scale(0.98);
-            background: rgba(255, 255, 255, 0.08);
-            border-color: #FFD700;
-        }
-
-        .level-number {
+        .player-avatar {
             width: 60px;
             height: 60px;
-            background: linear-gradient(145deg, #FFD700, #FFA500);
+            background: linear-gradient(145deg, #FFD966, #FFB347);
             border-radius: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 28px;
+            font-size: 30px;
             font-weight: 900;
-            color: #1A1F35;
-            box-shadow: 0 10px 20px rgba(255, 215, 0, 0.3);
+            color: #13172B;
         }
 
-        .level-info {
+        .player-info {
             flex: 1;
         }
 
-        .level-name {
-            font-size: 20px;
+        .player-name {
+            color: #FFF;
+            font-size: 18px;
             font-weight: 700;
-            color: white;
             margin-bottom: 5px;
         }
 
-        .level-desc {
-            font-size: 13px;
-            color: #8A9BFF;
+        .player-level {
+            color: #FFD966;
+            font-size: 14px;
+            font-weight: 600;
         }
 
-        .level-stars {
+        .level-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin: 10px 0 20px;
+        }
+
+        .level-card {
+            background: #1E233B;
+            border-radius: 20px;
+            padding: 15px;
+            text-align: center;
+            border: 2px solid #2D3450;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .level-card:active {
+            transform: scale(0.95);
+            border-color: #FFD966;
+        }
+
+        .level-card.locked {
+            opacity: 0.5;
+        }
+
+        .level-number {
+            width: 50px;
+            height: 50px;
+            background: #2D3450;
+            border-radius: 15px;
             display: flex;
-            gap: 5px;
-            margin-top: 5px;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            font-size: 24px;
+            font-weight: 900;
+            color: #FFF;
         }
 
-        .star {
-            color: #FFD700;
-            font-size: 16px;
+        .level-card.unlocked .level-number {
+            background: linear-gradient(145deg, #FFD966, #FFB347);
+            color: #13172B;
+        }
+
+        .level-best {
+            color: #FFD966;
+            font-size: 14px;
+            font-weight: 600;
         }
 
         .lobby-footer {
             margin-top: auto;
-            display: flex;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
             gap: 10px;
         }
 
-        .settings-btn, .leaderboard-btn {
-            flex: 1;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+        .lobby-btn {
+            background: #1E233B;
+            border: 2px solid #2D3450;
             border-radius: 20px;
             padding: 15px;
-            color: white;
+            color: #FFF;
             font-weight: 600;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
             cursor: pointer;
-            backdrop-filter: blur(5px);
         }
 
-        /* Oyun Ekranı */
+        /* OYUN EKRANI */
         .game-screen {
-            height: 100%;
+            flex: 1;
+            background: #13172B;
             display: none;
             flex-direction: column;
-            background: linear-gradient(180deg, #1E2749 0%, #121A2E 100%);
-            position: relative;
+            padding: 15px;
         }
 
         .game-header {
-            padding: 20px 20px 10px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            margin-bottom: 20px;
         }
 
         .back-btn {
             width: 45px;
             height: 45px;
-            background: rgba(255, 255, 255, 0.05);
+            background: #1E233B;
             border-radius: 15px;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
+            color: #FFF;
             font-size: 24px;
             cursor: pointer;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 2px solid #2D3450;
         }
 
-        .level-progress {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 8px 20px;
+        .level-badge {
+            background: linear-gradient(145deg, #FFD966, #FFB347);
+            padding: 8px 25px;
             border-radius: 30px;
-            color: white;
-            font-weight: 600;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .score-box {
-            background: linear-gradient(145deg, #FFD700, #FFA500);
-            padding: 8px 15px;
-            border-radius: 15px;
-            color: #1A1F35;
-            font-weight: 900;
+            color: #13172B;
+            font-weight: 800;
             font-size: 18px;
         }
 
-        .game-area {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 10px;
-            position: relative;
-        }
-
-        .tower-container {
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 40px;
-            padding: 15px;
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            box-shadow: inset 0 -10px 20px rgba(0, 0, 0, 0.5);
-        }
-
-        .tower-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
-            width: 280px;
-            height: 280px;
-        }
-
-        .tower-cell {
-            background: rgba(255, 255, 255, 0.05);
+        .goal-info {
+            background: #1E233B;
             border-radius: 15px;
+            padding: 12px;
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            font-weight: 900;
-            color: white;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 0 rgba(0, 0, 0, 0.3);
-            aspect-ratio: 1;
+            margin-bottom: 20px;
+            border: 2px solid #2D3450;
         }
 
-        .tower-cell[data-value="1"] { background: linear-gradient(145deg, #4CAF50, #2E7D32); }
-        .tower-cell[data-value="2"] { background: linear-gradient(145deg, #2196F3, #1565C0); }
-        .tower-cell[data-value="3"] { background: linear-gradient(145deg, #9C27B0, #6A1B9A); }
-        .tower-cell[data-value="4"] { background: linear-gradient(145deg, #FF9800, #E65100); }
-        .tower-cell[data-value="5"] { background: linear-gradient(145deg, #F44336, #B71C1C); }
-        .tower-cell[data-value="6"] { background: linear-gradient(145deg, #FFD700, #FF6B6B); }
-
-        .next-piece {
-            margin-top: 20px;
-            padding: 15px 25px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 30px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .next-label {
-            color: #8A9BFF;
+        .goal-text {
+            color: #FFF;
             font-weight: 600;
         }
 
-        .next-value {
-            width: 50px;
-            height: 50px;
-            background: linear-gradient(145deg, #FFD700, #FFA500);
-            border-radius: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            font-weight: 900;
-            color: #1A1F35;
+        .goal-value {
+            color: #FFD966;
+            font-weight: 800;
+            font-size: 20px;
         }
 
-        .game-footer {
-            padding: 20px;
-            display: flex;
-            gap: 10px;
-        }
-
-        .merge-btn, .reset-btn {
-            flex: 1;
-            padding: 18px;
+        /* OYUN ALANI */
+        .game-board {
+            background: #0F1324;
             border-radius: 25px;
-            border: none;
-            font-weight: 700;
-            font-size: 16px;
+            padding: 15px;
+            border: 3px solid #2D3450;
+            margin-bottom: 20px;
+        }
+
+        .board-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 4px;
+            aspect-ratio: 1;
+        }
+
+        .board-cell {
+            background: #1E233B;
+            border-radius: 6px;
+            aspect-ratio: 1;
+            transition: all 0.1s;
+            border: 1px solid #2D3450;
+        }
+
+        .board-cell.filled {
+            background: linear-gradient(145deg, #FFD966, #FFB347);
+            border-color: #FF6B6B;
+            box-shadow: 0 0 10px rgba(255,215,0,0.5);
+        }
+
+        .board-cell.placed {
+            animation: placePop 0.2s ease;
+        }
+
+        @keyframes placePop {
+            0% { transform: scale(0.8); }
+            100% { transform: scale(1); }
+        }
+
+        /* BLOK PANELİ */
+        .blocks-panel {
+            background: #1E233B;
+            border-radius: 25px;
+            padding: 20px;
+            border: 3px solid #2D3450;
+        }
+
+        .blocks-title {
+            color: #FFF;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .refresh-btn {
+            color: #FFD966;
             cursor: pointer;
-            transition: all 0.2s ease;
+            padding: 5px 10px;
         }
 
-        .merge-btn {
-            background: linear-gradient(145deg, #FFD700, #FFA500);
-            color: #1A1F35;
-            box-shadow: 0 10px 20px rgba(255, 215, 0, 0.3);
+        .blocks-container {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+            min-height: 100px;
         }
 
-        .reset-btn {
-            background: rgba(255, 255, 255, 0.05);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+        .block-item {
+            background: #2D3450;
+            border-radius: 15px;
+            padding: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
         }
 
-        .merge-btn:active, .reset-btn:active, .back-btn:active, .level-card:active {
-            transform: scale(0.95);
+        .block-item.selected {
+            border-color: #FFD966;
+            transform: scale(1.05);
+            background: #3A4260;
         }
 
-        /* Settings Modal */
+        .block-preview {
+            display: grid;
+            gap: 3px;
+            background: #13172B;
+            padding: 5px;
+            border-radius: 10px;
+        }
+
+        .block-preview-cell {
+            width: 20px;
+            height: 20px;
+            background: #1E233B;
+            border-radius: 4px;
+        }
+
+        .block-preview-cell.filled {
+            background: linear-gradient(145deg, #FFD966, #FFB347);
+        }
+
+        .block-label {
+            text-align: center;
+            color: #FFF;
+            font-size: 12px;
+            margin-top: 5px;
+            font-weight: 600;
+        }
+
+        /* AYARLAR MODAL */
         .modal {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0,0,0,0.9);
             backdrop-filter: blur(10px);
             display: none;
             align-items: center;
@@ -343,67 +402,67 @@
         }
 
         .modal-content {
-            background: #1E2749;
+            background: #1E233B;
             border-radius: 40px;
             padding: 30px;
             width: 90%;
             max-width: 340px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 3px solid #2D3450;
         }
 
         .modal-title {
-            color: white;
+            color: #FFF;
             font-size: 28px;
             font-weight: 800;
             margin-bottom: 25px;
             text-align: center;
         }
 
-        .setting-item {
+        .modal-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 15px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            color: white;
+            border-bottom: 2px solid #2D3450;
+            color: #FFF;
         }
 
-        .toggle-switch {
-            width: 50px;
+        .modal-toggle {
+            width: 55px;
             height: 30px;
-            background: rgba(255, 255, 255, 0.1);
+            background: #2D3450;
             border-radius: 30px;
             position: relative;
             cursor: pointer;
         }
 
-        .toggle-switch.active {
-            background: linear-gradient(145deg, #FFD700, #FFA500);
+        .modal-toggle.active {
+            background: linear-gradient(145deg, #FFD966, #FFB347);
         }
 
-        .toggle-switch::after {
+        .modal-toggle::after {
             content: '';
             position: absolute;
             width: 26px;
             height: 26px;
-            background: white;
+            background: #FFF;
             border-radius: 50%;
             top: 2px;
             left: 2px;
             transition: 0.2s;
         }
 
-        .toggle-switch.active::after {
-            left: 22px;
+        .modal-toggle.active::after {
+            left: 27px;
         }
 
-        .close-modal {
+        .modal-close {
             width: 100%;
             padding: 15px;
-            background: linear-gradient(145deg, #FFD700, #FFA500);
+            background: linear-gradient(145deg, #FFD966, #FFB347);
             border: none;
             border-radius: 25px;
-            color: #1A1F35;
+            color: #13172B;
             font-weight: 700;
             font-size: 16px;
             margin-top: 20px;
@@ -413,346 +472,425 @@
 </head>
 <body>
     <div id="game-container">
-        <!-- Lobi Ekranı -->
+        <!-- STATUS BAR -->
+        <div class="status-bar">
+            <div class="level-info" id="status-level">LEVEL 1</div>
+            <div class="stats">
+                <div class="stat-item">⭐ <span id="status-stars">0</span></div>
+                <div class="stat-item">🎯 <span id="status-score">0</span></div>
+            </div>
+        </div>
+
+        <!-- LOBBY EKRANI -->
         <div id="lobby-screen" class="lobby-screen">
             <div class="lobby-header">
-                <div class="game-title">MERGE TOWER</div>
-                <div class="title-badge">⚡ BİRLEŞTİR VE YÜKSEL</div>
+                <div class="game-title">BLAST PRO</div>
             </div>
-            
-            <div class="level-cards" id="level-cards">
+
+            <div class="player-card">
+                <div class="player-avatar">👤</div>
+                <div class="player-info">
+                    <div class="player-name">OYUNCU #1</div>
+                    <div class="player-level">TOP: 12.450 ⭐</div>
+                </div>
+            </div>
+
+            <div style="color: #FFF; margin-bottom: 10px; font-weight: 600;">LEVEL SEÇ</div>
+            <div class="level-grid" id="level-grid">
                 <!-- Level kartları JS ile doldurulacak -->
             </div>
 
             <div class="lobby-footer">
-                <div class="settings-btn" id="settings-btn">⚙️ AYARLAR</div>
-                <div class="leaderboard-btn" id="leaderboard-btn">🏆 SIRALAMA</div>
+                <div class="lobby-btn" id="settings-btn">
+                    ⚙️ AYARLAR
+                </div>
+                <div class="lobby-btn" id="leaderboard-btn">
+                    🏆 SIRALAMA
+                </div>
             </div>
         </div>
 
-        <!-- Oyun Ekranı -->
+        <!-- OYUN EKRANI -->
         <div id="game-screen" class="game-screen">
             <div class="game-header">
                 <div class="back-btn" id="back-btn">←</div>
-                <div class="level-progress" id="level-display">LEVEL 1</div>
-                <div class="score-box" id="score">0</div>
+                <div class="level-badge" id="current-level">LVL 1</div>
+                <div style="width:45px;"></div>
             </div>
 
-            <div class="game-area">
-                <div class="tower-container">
-                    <div class="tower-grid" id="tower-grid">
-                        <!-- Grid JS ile doldurulacak -->
-                    </div>
-                </div>
+            <div class="goal-info">
+                <span class="goal-text">LEVEL HEDEFİ:</span>
+                <span class="goal-value" id="level-goal">500</span>
+            </div>
 
-                <div class="next-piece">
-                    <span class="next-label">SIRADAKİ:</span>
-                    <div class="next-value" id="next-value">1</div>
+            <!-- OYUN TAHTASI -->
+            <div class="game-board">
+                <div class="board-grid" id="board-grid">
+                    <!-- 8x8 grid JS ile doldurulacak -->
                 </div>
             </div>
 
-            <div class="game-footer">
-                <button class="merge-btn" id="merge-btn">⚡ BİRLEŞTİR</button>
-                <button class="reset-btn" id="reset-btn">🔄 SIFIRLA</button>
+            <!-- BLOK PANELİ -->
+            <div class="blocks-panel">
+                <div class="blocks-title">
+                    <span>🎲 MEVCUT BLOKLAR</span>
+                    <span class="refresh-btn" id="refresh-blocks">⟳ YENİLE</span>
+                </div>
+                <div class="blocks-container" id="blocks-container">
+                    <!-- Bloklar JS ile doldurulacak -->
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Settings Modal -->
+    <!-- AYARLAR MODAL -->
     <div id="settings-modal" class="modal">
         <div class="modal-content">
             <div class="modal-title">⚙️ AYARLAR</div>
-            <div class="setting-item">
-                <span>🔊 Ses Efektleri</span>
-                <div class="toggle-switch active" id="sound-toggle"></div>
+            <div class="modal-item">
+                <span>🔊 SES</span>
+                <div class="modal-toggle active" id="sound-toggle"></div>
             </div>
-            <div class="setting-item">
-                <span>🎵 Müzik</span>
-                <div class="toggle-switch active" id="music-toggle"></div>
+            <div class="modal-item">
+                <span>🎵 MÜZİK</span>
+                <div class="modal-toggle active" id="music-toggle"></div>
             </div>
-            <div class="setting-item">
-                <span>📳 Titreşim</span>
-                <div class="toggle-switch" id="vibration-toggle"></div>
+            <div class="modal-item">
+                <span>📳 TİTREŞİM</span>
+                <div class="modal-toggle" id="vibration-toggle"></div>
             </div>
-            <button class="close-modal" id="close-settings">KAPAT</button>
+            <div class="modal-item">
+                <span>🌙 KOYU MOD</span>
+                <div class="modal-toggle active" id="darkmode-toggle"></div>
+            </div>
+            <button class="modal-close" id="close-settings">KAPAT</button>
         </div>
     </div>
 
-    <!-- Leaderboard Modal -->
+    <!-- LEADERBOARD MODAL -->
     <div id="leaderboard-modal" class="modal">
         <div class="modal-content">
             <div class="modal-title">🏆 SIRALAMA</div>
-            <div style="color: white; text-align: center; padding: 20px;" id="leaderboard-content">
-                <!-- Leaderboard JS ile doldurulacak -->
+            <div style="color: #FFF; margin-bottom: 20px;" id="leaderboard-list">
+                <div style="display: flex; justify-content: space-between; padding: 10px; background: #2D3450; border-radius: 15px; margin-bottom: 10px;">
+                    <span>🥇 1.</span> <span>EMRE</span> <span>12.450</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 10px; background: #2D3450; border-radius: 15px; margin-bottom: 10px;">
+                    <span>🥈 2.</span> <span>AYŞE</span> <span>11.230</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 10px; background: #2D3450; border-radius: 15px; margin-bottom: 10px;">
+                    <span>🥉 3.</span> <span>MEHMET</span> <span>10.980</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 10px; background: #2D3450; border-radius: 15px;">
+                    <span>📊 SİZ</span> <span>OYUNCU</span> <span id="player-score">0</span>
+                </div>
             </div>
-            <button class="close-modal" id="close-leaderboard">KAPAT</button>
+            <button class="modal-close" id="close-leaderboard">KAPAT</button>
         </div>
     </div>
 
     <script>
-        // Oyun durumu
+        // OYUN DEĞİŞKENLERİ
         let currentLevel = 1;
-        let tower = [
-            [0, 0, 0, 0],
-            [0, 0, 0, 0],
-            [0, 0, 0, 0],
-            [0, 0, 0, 0]
-        ];
-        let nextBlock = 1;
-        let score = 0;
-        let selectedRow = -1;
-        let selectedCol = -1;
+        let totalStars = 0;
+        let currentScore = 0;
+        let board = Array(8).fill().map(() => Array(8).fill(0));
+        let availableBlocks = [];
+        let selectedBlock = null;
+        let blocksRefreshed = false;
 
-        // Level verileri
+        // LEVEL TANIMLARI (SINIRSIZ)
         const levels = [
-            { id: 1, name: "BAŞLANGIÇ", desc: "Temel birleştirme", target: 500, stars: 3 },
-            { id: 2, name: "YÜKSELEN", desc: "Daha hızlı ol!", target: 1000, stars: 3 },
-            { id: 3, name: "UZMAN", desc: "Strateji zamanı", target: 2000, stars: 3 },
-            { id: 4, name: "EFSANE", desc: "Zorlu mücadele", target: 5000, stars: 3 },
-            { id: 5, name: "MİTOLOJİK", desc: "En yüksek seviye", target: 10000, stars: 3 }
+            { id: 1, name: "BAŞLANGIÇ", goal: 500, stars: 3, unlocked: true },
+            { id: 2, name: "ÇAYLAK", goal: 800, stars: 3, unlocked: true },
+            { id: 3, name: "ACE Mİ", goal: 1200, stars: 3, unlocked: true },
+            { id: 4, name: "UZMAN", goal: 1800, stars: 3, unlocked: false },
+            { id: 5, name: "PROFESYONEL", goal: 2500, stars: 3, unlocked: false },
+            { id: 6, name: "EFSANE", goal: 3500, stars: 3, unlocked: false },
+            { id: 7, name: "MİTOLOJİK", goal: 5000, stars: 3, unlocked: false },
+            { id: 8, name: "İLAHİ", goal: 7500, stars: 3, unlocked: false },
+            { id: 9, name: "ÖLÜMSÜZ", goal: 10000, stars: 3, unlocked: false },
+            { id: 10, name: "TANRISAL", goal: 15000, stars: 3, unlocked: false },
+            { id: 11, name: "KAOSTAN", goal: 20000, stars: 3, unlocked: false },
+            { id: 12, name: "SONSUZ", goal: 30000, stars: 3, unlocked: false }
         ];
 
-        // Lobi ekranını doldur
+        // BLOK ŞEKİLLERİ
+        const blockShapes = [
+            { shape: [[1]], size: 1, color: 1 }, // Tek blok
+            { shape: [[1,1]], size: 2, color: 1 }, // 2 yatay
+            { shape: [[1],[1]], size: 2, color: 1 }, // 2 dikey
+            { shape: [[1,1,1]], size: 3, color: 1 }, // 3 yatay
+            { shape: [[1],[1],[1]], size: 3, color: 1 }, // 3 dikey
+            { shape: [[1,1],[1,1]], size: 4, color: 1 }, // 2x2 kare
+            { shape: [[1,1,1,1]], size: 4, color: 1 }, // 4 yatay
+            { shape: [[1],[1],[1],[1]], size: 4, color: 1 }, // 4 dikey
+            { shape: [[1,1,0],[0,1,1]], size: 4, color: 1 }, // Z şekli
+            { shape: [[0,1,1],[1,1,0]], size: 4, color: 1 }, // Ters Z
+            { shape: [[1,0],[1,1]], size: 3, color: 1 }, // L şekli
+            { shape: [[0,1],[1,1]], size: 3, color: 1 }, // Ters L
+        ];
+
+        // LOBİYİ RENDER ET
         function renderLobby() {
-            const container = document.getElementById('level-cards');
-            container.innerHTML = '';
-            
-            levels.forEach(level => {
+            const grid = document.getElementById('level-grid');
+            grid.innerHTML = '';
+
+            levels.forEach((level, index) => {
                 const card = document.createElement('div');
-                card.className = 'level-card';
-                card.onclick = () => startLevel(level.id);
-                
-                let stars = '';
-                for (let i = 0; i < level.stars; i++) {
-                    stars += '<span class="star">★</span>';
+                card.className = `level-card ${level.unlocked ? 'unlocked' : 'locked'}`;
+                if (level.unlocked) {
+                    card.onclick = () => startLevel(level.id);
                 }
                 
                 card.innerHTML = `
                     <div class="level-number">${level.id}</div>
-                    <div class="level-info">
-                        <div class="level-name">${level.name}</div>
-                        <div class="level-desc">${level.desc}</div>
-                        <div class="level-stars">${stars}</div>
-                    </div>
-                    <div style="color: #FFD700; font-weight: 700;">${level.target}</div>
+                    <div style="color: #FFF; font-weight: 600; margin-bottom: 5px;">${level.name}</div>
+                    <div class="level-best">🎯 ${level.goal}</div>
                 `;
                 
-                container.appendChild(card);
+                grid.appendChild(card);
             });
         }
 
-        // Oyun grid'ini render et
-        function renderGame() {
-            const grid = document.getElementById('tower-grid');
-            grid.innerHTML = '';
+        // OYUN TAHTASINI RENDER ET
+        function renderBoard() {
+            const boardGrid = document.getElementById('board-grid');
+            boardGrid.innerHTML = '';
             
-            for (let i = 0; i < 4; i++) {
-                for (let j = 0; j < 4; j++) {
+            for (let i = 0; i < 8; i++) {
+                for (let j = 0; j < 8; j++) {
                     const cell = document.createElement('div');
-                    cell.className = 'tower-cell';
-                    if (tower[i][j] > 0) {
-                        cell.setAttribute('data-value', tower[i][j]);
-                        cell.textContent = tower[i][j];
+                    cell.className = `board-cell ${board[i][j] === 1 ? 'filled' : ''}`;
+                    cell.dataset.row = i;
+                    cell.dataset.col = j;
+                    boardGrid.appendChild(cell);
+                }
+            }
+        }
+
+        // RASTGELE BLOK ÜRET
+        function generateRandomBlocks(count = 3) {
+            const blocks = [];
+            for (let i = 0; i < count; i++) {
+                const randomIndex = Math.floor(Math.random() * blockShapes.length);
+                blocks.push({ ...blockShapes[randomIndex], id: i });
+            }
+            return blocks;
+        }
+
+        // BLOKLARI GÖSTER
+        function renderBlocks() {
+            const container = document.getElementById('blocks-container');
+            container.innerHTML = '';
+
+            availableBlocks.forEach((block, index) => {
+                const blockEl = document.createElement('div');
+                blockEl.className = `block-item ${selectedBlock === index ? 'selected' : ''}`;
+                
+                // Blok önizlemesi oluştur
+                const preview = document.createElement('div');
+                preview.className = 'block-preview';
+                preview.style.gridTemplateColumns = `repeat(${block.shape[0].length}, 1fr)`;
+                
+                for (let i = 0; i < block.shape.length; i++) {
+                    for (let j = 0; j < block.shape[i].length; j++) {
+                        const cell = document.createElement('div');
+                        cell.className = `block-preview-cell ${block.shape[i][j] === 1 ? 'filled' : ''}`;
+                        preview.appendChild(cell);
                     }
-                    cell.onclick = () => selectCell(i, j);
-                    grid.appendChild(cell);
+                }
+                
+                blockEl.appendChild(preview);
+                blockEl.innerHTML += `<div class="block-label">${block.size} birim</div>`;
+                
+                blockEl.onclick = () => selectBlock(index);
+                container.appendChild(blockEl);
+            });
+        }
+
+        // BLOK SEÇ
+        function selectBlock(index) {
+            selectedBlock = selectedBlock === index ? null : index;
+            renderBlocks();
+        }
+
+        // BLOK YERLEŞTİR
+        function tryPlaceBlock(block, startRow, startCol) {
+            // Blok sığar mı kontrol et
+            for (let i = 0; i < block.shape.length; i++) {
+                for (let j = 0; j < block.shape[i].length; j++) {
+                    if (block.shape[i][j] === 1) {
+                        const newRow = startRow + i;
+                        const newCol = startCol + j;
+                        
+                        // Sınır kontrolü
+                        if (newRow >= 8 || newCol >= 8) return false;
+                        
+                        // Dolu mu kontrol
+                        if (board[newRow][newCol] === 1) return false;
+                    }
                 }
             }
             
-            document.getElementById('next-value').textContent = nextBlock;
-            document.getElementById('score').textContent = score;
-            document.getElementById('level-display').textContent = `LEVEL ${currentLevel}`;
-        }
-
-        // Hücre seç
-        function selectCell(row, col) {
-            if (tower[row][col] === 0) {
-                // Seçili hücreyi temizle
-                if (selectedRow !== -1 && selectedCol !== -1) {
-                    document.querySelectorAll('.tower-cell')[selectedRow * 4 + selectedCol].style.border = 'none';
+            // Blok yerleştir
+            for (let i = 0; i < block.shape.length; i++) {
+                for (let j = 0; j < block.shape[i].length; j++) {
+                    if (block.shape[i][j] === 1) {
+                        const newRow = startRow + i;
+                        const newCol = startCol + j;
+                        board[newRow][newCol] = 1;
+                        
+                        // Animasyon efekti
+                        const cellIndex = newRow * 8 + newCol;
+                        const cell = document.querySelectorAll('.board-cell')[cellIndex];
+                        cell.classList.add('placed');
+                        setTimeout(() => cell.classList.remove('placed'), 200);
+                    }
                 }
-                
-                selectedRow = row;
-                selectedCol = col;
-                
-                // Seçili hücreyi vurgula
-                document.querySelectorAll('.tower-cell')[row * 4 + col].style.border = '3px solid #FFD700';
-            }
-        }
-
-        // Blok yerleştir
-        function placeBlock() {
-            if (selectedRow === -1 || selectedCol === -1) {
-                alert('Önce bir hücre seç!');
-                return false;
             }
             
-            if (tower[selectedRow][selectedCol] !== 0) {
-                alert('Bu hücre dolu!');
-                return false;
+            // Puan ekle
+            currentScore += block.size * 10;
+            document.getElementById('status-score').textContent = currentScore;
+            document.getElementById('player-score').textContent = currentScore;
+            
+            // Blok kaldır
+            availableBlocks.splice(selectedBlock, 1);
+            selectedBlock = null;
+            
+            // Tam satır/sütun kontrolü
+            checkCompleteLines();
+            
+            renderBoard();
+            renderBlocks();
+            
+            // Level kontrolü
+            const currentLevelData = levels[currentLevel - 1];
+            if (currentScore >= currentLevelData.goal) {
+                setTimeout(() => {
+                    alert(`🎉 TEBRİKLER! Level ${currentLevel} TAMAMLANDI!`);
+                    if (currentLevel < levels.length) {
+                        // Sonraki level'ı aç
+                        levels[currentLevel].unlocked = true;
+                        currentLevel++;
+                        startLevel(currentLevel);
+                    } else {
+                        alert('🌟 TÜM LEVELLER TAMAMLANDI! SEN BİR EFSANESİN!');
+                    }
+                }, 100);
             }
             
-            tower[selectedRow][selectedCol] = nextBlock;
-            
-            // Yeni blok üret
-            nextBlock = Math.floor(Math.random() * 3) + 1;
-            
-            // Seçimi temizle
-            document.querySelectorAll('.tower-cell')[selectedRow * 4 + selectedCol].style.border = 'none';
-            selectedRow = -1;
-            selectedCol = -1;
-            
-            renderGame();
             return true;
         }
 
-        // Birleştirme işlemi
-        function mergeBlocks() {
-            let merged = false;
+        // TAM SATIR/SÜTUN KONTROLÜ
+        function checkCompleteLines() {
+            let linesCleared = 0;
             
-            // Yatay birleştirme
-            for (let i = 0; i < 4; i++) {
-                for (let j = 0; j < 3; j++) {
-                    if (tower[i][j] > 0 && tower[i][j] === tower[i][j + 1]) {
-                        // Üçlü kontrol
-                        if (j < 2 && tower[i][j] === tower[i][j + 2]) {
-                            // Üçlü birleştirme
-                            let value = tower[i][j];
-                            tower[i][j] = 0;
-                            tower[i][j + 1] = 0;
-                            tower[i][j + 2] = 0;
-                            
-                            // Yeni blok oluştur (en uygun yere)
-                            for (let k = 0; k < 4; k++) {
-                                if (tower[i][k] === 0) {
-                                    tower[i][k] = value + 1;
-                                    score += (value + 1) * 100;
-                                    break;
-                                }
-                            }
-                            merged = true;
-                            j += 2;
-                        }
-                        // İkili birleştirme
-                        else {
-                            let value = tower[i][j];
-                            tower[i][j] = 0;
-                            tower[i][j + 1] = 0;
-                            
-                            // Yeni blok oluştur
-                            for (let k = 0; k < 4; k++) {
-                                if (tower[i][k] === 0) {
-                                    tower[i][k] = value + 1;
-                                    score += (value + 1) * 50;
-                                    break;
-                                }
-                            }
-                            merged = true;
-                            j++;
-                        }
+            // Satır kontrolü
+            for (let i = 0; i < 8; i++) {
+                let fullRow = true;
+                for (let j = 0; j < 8; j++) {
+                    if (board[i][j] === 0) {
+                        fullRow = false;
+                        break;
                     }
+                }
+                if (fullRow) {
+                    // Satırı temizle
+                    for (let j = 0; j < 8; j++) {
+                        board[i][j] = 0;
+                    }
+                    linesCleared++;
                 }
             }
             
-            // Dikey birleştirme
-            for (let j = 0; j < 4; j++) {
-                for (let i = 0; i < 3; i++) {
-                    if (tower[i][j] > 0 && tower[i][j] === tower[i + 1][j]) {
-                        // Üçlü kontrol
-                        if (i < 2 && tower[i][j] === tower[i + 2][j]) {
-                            let value = tower[i][j];
-                            tower[i][j] = 0;
-                            tower[i + 1][j] = 0;
-                            tower[i + 2][j] = 0;
-                            
-                            for (let k = 0; k < 4; k++) {
-                                if (tower[k][j] === 0) {
-                                    tower[k][j] = value + 1;
-                                    score += (value + 1) * 100;
-                                    break;
-                                }
-                            }
-                            merged = true;
-                            i += 2;
-                        }
-                        // İkili birleştirme
-                        else {
-                            let value = tower[i][j];
-                            tower[i][j] = 0;
-                            tower[i + 1][j] = 0;
-                            
-                            for (let k = 0; k < 4; k++) {
-                                if (tower[k][j] === 0) {
-                                    tower[k][j] = value + 1;
-                                    score += (value + 1) * 50;
-                                    break;
-                                }
-                            }
-                            merged = true;
-                            i++;
-                        }
+            // Sütun kontrolü
+            for (let j = 0; j < 8; j++) {
+                let fullCol = true;
+                for (let i = 0; i < 8; i++) {
+                    if (board[i][j] === 0) {
+                        fullCol = false;
+                        break;
                     }
+                }
+                if (fullCol) {
+                    // Sütunu temizle
+                    for (let i = 0; i < 8; i++) {
+                        board[i][j] = 0;
+                    }
+                    linesCleared++;
                 }
             }
             
-            if (merged) {
-                // Birleştirme olduysa ses efekti (opsiyonel)
-                renderGame();
-                
-                // Level kontrolü
-                const level = levels[currentLevel - 1];
-                if (score >= level.target) {
-                    alert(`🎉 Tebrikler! Level ${currentLevel} tamamlandı!`);
-                    if (currentLevel < levels.length) {
-                        currentLevel++;
-                        resetGame();
-                    }
-                }
-            } else {
-                alert('Birleştirilecek blok yok!');
+            if (linesCleared > 0) {
+                currentScore += linesCleared * 100;
+                document.getElementById('status-score').textContent = currentScore;
+                document.getElementById('player-score').textContent = currentScore;
             }
         }
 
-        // Oyunu sıfırla
-        function resetGame() {
-            tower = [
-                [0, 0, 0, 0],
-                [0, 0, 0, 0],
-                [0, 0, 0, 0],
-                [0, 0, 0, 0]
-            ];
-            nextBlock = 1;
-            score = 0;
-            selectedRow = -1;
-            selectedCol = -1;
-            renderGame();
+        // BLOKLARI YENİLE
+        function refreshBlocks() {
+            if (!blocksRefreshed) {
+                availableBlocks = generateRandomBlocks(3);
+                selectedBlock = null;
+                renderBlocks();
+                blocksRefreshed = true;
+                setTimeout(() => blocksRefreshed = false, 1000);
+            }
         }
 
-        // Level başlat
+        // LEVEL BAŞLAT
         function startLevel(levelId) {
             currentLevel = levelId;
-            resetGame();
+            currentScore = 0;
+            board = Array(8).fill().map(() => Array(8).fill(0));
+            availableBlocks = generateRandomBlocks(3);
+            selectedBlock = null;
+            
             document.getElementById('lobby-screen').style.display = 'none';
             document.getElementById('game-screen').style.display = 'flex';
+            document.getElementById('current-level').textContent = `LVL ${levelId}`;
+            document.getElementById('level-goal').textContent = levels[levelId - 1].goal;
+            document.getElementById('status-level').textContent = `LEVEL ${levelId}`;
+            document.getElementById('status-score').textContent = '0';
+            document.getElementById('status-stars').textContent = totalStars;
+            document.getElementById('player-score').textContent = '0';
+            
+            renderBoard();
+            renderBlocks();
         }
 
-        // Lobiye dön
+        // LOBIYE DÖN
         function backToLobby() {
             document.getElementById('game-screen').style.display = 'none';
             document.getElementById('lobby-screen').style.display = 'flex';
             renderLobby();
         }
 
-        // Event listeners
-        document.getElementById('merge-btn').addEventListener('click', () => {
-            placeBlock();
-        });
-
-        document.getElementById('reset-btn').addEventListener('click', resetGame);
-
+        // EVENT LİSTENERS
         document.getElementById('back-btn').addEventListener('click', backToLobby);
 
-        // Settings
+        document.getElementById('refresh-blocks').addEventListener('click', refreshBlocks);
+
+        // BOARD TIKLAMA
+        document.getElementById('board-grid').addEventListener('click', (e) => {
+            if (!e.target.classList.contains('board-cell')) return;
+            if (selectedBlock === null) {
+                alert('Önce bir blok seç!');
+                return;
+            }
+            
+            const row = parseInt(e.target.dataset.row);
+            const col = parseInt(e.target.dataset.col);
+            const block = availableBlocks[selectedBlock];
+            
+            tryPlaceBlock(block, row, col);
+        });
+
+        // AYARLAR
         document.getElementById('settings-btn').addEventListener('click', () => {
             document.getElementById('settings-modal').style.display = 'flex';
         });
@@ -761,21 +899,15 @@
             document.getElementById('settings-modal').style.display = 'none';
         });
 
-        // Toggle switches
-        document.querySelectorAll('.toggle-switch').forEach(toggle => {
+        // TOGGLE BUTONLARI
+        document.querySelectorAll('.modal-toggle').forEach(toggle => {
             toggle.addEventListener('click', function() {
                 this.classList.toggle('active');
             });
         });
 
-        // Leaderboard
+        // LEADERBOARD
         document.getElementById('leaderboard-btn').addEventListener('click', () => {
-            document.getElementById('leaderboard-content').innerHTML = `
-                <div style="margin-bottom: 15px;">🥇 1. OYUNCU - 50.000</div>
-                <div style="margin-bottom: 15px;">🥈 2. OYUNCU - 45.000</div>
-                <div style="margin-bottom: 15px;">🥉 3. OYUNCU - 40.000</div>
-                <div>📊 SEN - ${score}</div>
-            `;
             document.getElementById('leaderboard-modal').style.display = 'flex';
         });
 
@@ -783,14 +915,14 @@
             document.getElementById('leaderboard-modal').style.display = 'none';
         });
 
-        // Modal dışına tıklayınca kapat
+        // MODAL DIŞINA TIKLAMA
         window.addEventListener('click', (e) => {
             if (e.target.classList.contains('modal')) {
                 e.target.style.display = 'none';
             }
         });
 
-        // Oyunu başlat
+        // İLK YÜKLEME
         renderLobby();
     </script>
 </body>
