@@ -2,748 +2,806 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Meyve Patlatma - Sonsuz Eğlence</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Meyve Şatosu · Profesyonel Eşleştirme</title>
     <style>
         * {
-            box-sizing: border-box;
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
             user-select: none;
             -webkit-tap-highlight-color: transparent;
+            font-family: 'Segoe UI', Roboto, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
         }
 
         body {
-            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
-            background: linear-gradient(145deg, #2b5e3b 0%, #1d7a3b 100%);
+            background: radial-gradient(circle at 20% 30%, #3b5e3b, #1d4a1d);
             min-height: 100vh;
             display: flex;
-            justify-content: center;
             align-items: center;
-            margin: 0;
-            padding: 10px;
+            justify-content: center;
+            padding: 8px;
             touch-action: pan-y pinch-zoom;
         }
 
-        .game-container {
+        /* ANA KAPSAM — PROFESYONEL TASARIM */
+        .game-suite {
             max-width: 500px;
             width: 100%;
-            background: #f5e7d3;
-            border-radius: 40px 40px 30px 30px;
-            box-shadow: 0 20px 30px rgba(0,0,0,0.5), inset 0 2px 5px rgba(255,255,255,0.5);
-            padding: 20px 15px 25px;
-            border: 4px solid #b48b5a;
+            background: linear-gradient(165deg, #ffdbb5 0%, #f7c98a 100%);
+            border-radius: 56px 56px 48px 48px;
+            box-shadow: 0 30px 35px -10px rgba(0,0,0,0.6), inset 0 -4px 8px rgba(255,215,140,0.8), inset 0 4px 6px #fff3cf;
+            border: 5px solid #e3a56d;
+            overflow: hidden;
+            padding: 20px 16px 25px;
+            transition: all 0.2s;
         }
 
-        .header {
+        /* STATUS BAR (PROFESYONEL) */
+        .status-bar {
+            background: #604020;
+            border-radius: 100px;
+            padding: 8px 16px 8px 24px;
+            margin-bottom: 20px;
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
-            background: #fcead8;
-            padding: 10px 15px;
-            border-radius: 60px;
-            border: 2px solid #d4a76a;
-            box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);
+            justify-content: space-between;
+            border: 3px solid #eec18e;
+            box-shadow: inset 0 3px 6px #302010, 0 8px 0 #3f2c14;
         }
 
-        .score-box {
-            background: #7b4f2e;
-            color: #ffefc0;
-            padding: 8px 20px;
+        .score-glass {
+            background: #ffefc0;
             border-radius: 40px;
+            padding: 10px 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 800;
+            font-size: 1.9rem;
+            color: #412f1b;
+            text-shadow: 2px 2px 0 #dba959;
+            border: 2px solid #f5b468;
+            box-shadow: inset 0 -5px 0 #bb9246;
+            letter-spacing: 1px;
+        }
+        .score-glass span {
+            font-size: 1.2rem;
+            background: #b37b42;
+            color: #ffe39a;
+            padding: 6px 16px;
+            border-radius: 40px;
+            box-shadow: inset 0 -3px 0 #7a5629;
+        }
+
+        .level-badge {
+            background: #b37b42;
+            border-radius: 50px;
+            padding: 8px 22px;
             font-weight: bold;
             font-size: 1.5rem;
-            letter-spacing: 1px;
-            text-shadow: 2px 2px 0 #4f3620;
-            box-shadow: inset 0 -3px 0 #4f3620;
-            display: flex;
-            align-items: center;
-            gap: 5px;
+            color: #fff3c9;
+            border: 3px solid #ffe8b0;
+            box-shadow: inset 0 -4px 0 #6b4f2b, 0 5px 0 #4d3a1f;
         }
 
-        .score-box span {
-            font-size: 1rem;
-            background: #dba959;
-            color: #3b2c1a;
-            padding: 4px 10px;
-            border-radius: 20px;
-            text-shadow: none;
-            box-shadow: inset 0 -2px 0 #a57c3d;
-        }
-
-        .level-box {
-            background: #d9b382;
-            color: #402d1b;
-            padding: 8px 18px;
-            border-radius: 40px;
-            font-weight: bold;
-            font-size: 1.3rem;
-            border: 2px solid #aa7c48;
-            box-shadow: inset 0 -2px 0 #7b5a36;
-        }
-
-        .board-wrapper {
-            background: #d6b185;
-            padding: 15px 10px;
-            border-radius: 40px;
-            border: 3px solid #b48b5a;
-            box-shadow: inset 0 0 0 2px #efd7b6;
-            margin-bottom: 15px;
+        /* OYUN TAHTASI - PREMIUM */
+        .board-container {
+            background: #b0763a;
+            padding: 16px 12px;
+            border-radius: 64px 64px 48px 48px;
+            border: 5px solid #f5cd94;
+            box-shadow: inset 0 0 0 5px #faeac6, 0 15px 0 #694e2c;
+            margin-bottom: 25px;
         }
 
         .board {
             display: grid;
             grid-template-columns: repeat(8, 1fr);
             gap: 5px;
-            aspect-ratio: 1 / 1;
-            background: #b48b5a;
+            aspect-ratio: 1/1;
+            background: #e2b681;
             padding: 8px;
-            border-radius: 30px;
-            box-shadow: inset 0 0 0 3px #8b633a;
+            border-radius: 40px;
+            border: 3px solid #ffdcaa;
         }
 
         .cell {
-            background: #fcf2e1;
-            border-radius: 18px;
+            background: #fffcf0;
+            border-radius: 20px;
+            box-shadow: 0 0 0 2px #b4823b, inset 0 -6px 0 rgba(0,0,0,0.15);
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 0 0 2px #ab8a5e, inset 0 -3px 0 rgba(0,0,0,0.2);
-            transition: 0.1s transform;
+            transition: transform 0.08s, box-shadow 0.08s;
+            aspect-ratio: 1/1;
             cursor: pointer;
             -webkit-tap-highlight-color: transparent;
-            aspect-ratio: 1 / 1;
+            position: relative;
+        }
+        .cell:active {
+            transform: scale(0.94);
+            box-shadow: 0 0 0 2px #b4823b, inset 0 -2px 0 rgba(0,0,0,0.15);
         }
 
+        /* MEYVE STİLLERİ — GERÇEKÇİ, EMOJİ YOK */
         .fruit {
-            width: 80%;
-            height: 80%;
+            width: 85%;
+            height: 85%;
             border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 0 rgba(0,0,0,0.15);
-            font-size: 0; /* Emoji yok, gerçek meyve stilleri */
+            position: relative;
+            box-shadow: 0 8px 0 rgba(0,0,0,0.2), 0 3px 8px rgba(0,0,0,0.3);
+            transition: all 0.1s;
         }
 
-        /* Meyve tasarımları - gerçek meyve görünümü */
-        .fruit-apple {
-            background: radial-gradient(circle at 30% 30%, #ff6b6b, #c0392b);
-            position: relative;
+        /* ELMA */
+        .fruit-0 {
+            background: radial-gradient(circle at 35% 35%, #ff4f4f, #b32e2e);
         }
-        .fruit-apple::after {
+        .fruit-0::after {
             content: "";
             position: absolute;
-            width: 15%;
-            height: 15%;
-            background: #6b4f32;
+            width: 14%;
+            height: 14%;
+            background: #5a3e1f;
             border-radius: 40% 40% 0 0;
-            top: -8%;
-            left: 45%;
-            transform: rotate(-10deg);
+            top: -10%;
+            left: 43%;
+            transform: rotate(-8deg);
         }
-        .fruit-apple::before {
+        .fruit-0::before {
             content: "";
             position: absolute;
-            width: 20%;
-            height: 10%;
-            background: #27ae60;
+            width: 25%;
+            height: 12%;
+            background: #3a7734;
             border-radius: 50%;
-            top: -12%;
-            left: 40%;
-            transform: rotate(-15deg);
+            top: -15%;
+            left: 37%;
+            transform: rotate(-12deg);
         }
 
-        .fruit-banana {
-            background: linear-gradient(145deg, #f4d03f, #f1c40f);
+        /* MUZ */
+        .fruit-1 {
+            background: linear-gradient(145deg, #fde551, #e4b004);
             border-radius: 50% 50% 40% 40%;
-            transform: rotate(15deg);
-            position: relative;
+            transform: rotate(12deg);
         }
-        .fruit-banana::after {
+        .fruit-1::after {
             content: "";
             position: absolute;
             width: 30%;
             height: 20%;
-            background: #7d3c1b;
+            background: #7c491b;
             border-radius: 50%;
-            top: 10%;
+            top: 15%;
             right: 5%;
         }
 
-        .fruit-orange {
-            background: radial-gradient(circle at 35% 35%, #f39c12, #e67e22);
-            position: relative;
+        /* PORTAKAL */
+        .fruit-2 {
+            background: radial-gradient(circle at 40% 40%, #ffae42, #d46400);
         }
-        .fruit-orange::after {
-            content: "";
-            position: absolute;
-            width: 15%;
-            height: 15%;
-            background: #2ecc71;
-            border-radius: 50%;
-            top: 5%;
-            right: 20%;
-        }
-
-        .fruit-strawberry {
-            background: #e74c3c;
-            border-radius: 45% 45% 50% 50%;
-            position: relative;
-        }
-        .fruit-strawberry::after {
-            content: "⚫";
-            position: absolute;
-            font-size: 10px;
-            color: #2c2c2c;
-            top: 30%;
-            left: 20%;
-            transform: scale(1.2);
-        }
-        .fruit-strawberry::before {
-            content: "";
-            position: absolute;
-            width: 25%;
-            height: 15%;
-            background: #27ae60;
-            border-radius: 40%;
-            top: -8%;
-            left: 35%;
-        }
-
-        .fruit-grape {
-            background: #8e44ad;
-            border-radius: 50%;
-            position: relative;
-        }
-        .fruit-grape::after {
-            content: "";
-            position: absolute;
-            width: 40%;
-            height: 40%;
-            background: #9b59b6;
-            border-radius: 50%;
-            top: -10%;
-            right: -5%;
-            opacity: 0.8;
-        }
-        .fruit-grape::before {
-            content: "";
-            position: absolute;
-            width: 30%;
-            height: 30%;
-            background: #6c3483;
-            border-radius: 50%;
-            bottom: -5%;
-            left: -5%;
-        }
-
-        .fruit-watermelon {
-            background: #2ecc71;
-            border-radius: 50%;
-            position: relative;
-            overflow: hidden;
-        }
-        .fruit-watermelon::after {
-            content: "";
-            position: absolute;
-            width: 90%;
-            height: 45%;
-            background: #e67e22;
-            bottom: 0;
-            border-radius: 0 0 50% 50%;
-        }
-        .fruit-watermelon::before {
-            content: "⚫";
-            position: absolute;
-            font-size: 10px;
-            color: #2c3e50;
-            z-index: 2;
-            top: 40%;
-            left: 20%;
-        }
-
-        .fruit-pear {
-            background: linear-gradient(145deg, #f7dc6f, #e5c76b);
-            border-radius: 60% 60% 50% 50%;
-            transform: rotate(-5deg);
-        }
-
-        .fruit-peach {
-            background: radial-gradient(circle at 35% 35%, #ffb6c1, #f58b9f);
-            border-radius: 55% 45% 50% 50%;
-            position: relative;
-        }
-        .fruit-peach::after {
+        .fruit-2::after {
             content: "";
             position: absolute;
             width: 20%;
-            height: 15%;
-            background: #a0522d;
-            border-radius: 40%;
-            top: 5%;
+            height: 18%;
+            background: #308530;
+            border-radius: 60% 60% 0 0;
+            top: -6%;
             left: 40%;
         }
 
-        .controls {
+        /* ÇİLEK */
+        .fruit-3 {
+            background: #e84342;
+            border-radius: 45% 45% 50% 50%;
+        }
+        .fruit-3::after {
+            content: "⚫";
+            position: absolute;
+            font-size: 12px;
+            color: #222;
+            top: 25%;
+            left: 20%;
+            transform: scale(1.3);
+            text-shadow: 1px 1px 0 #553322;
+        }
+        .fruit-3::before {
+            content: "";
+            position: absolute;
+            width: 30%;
+            height: 16%;
+            background: #3daa3d;
+            border-radius: 50%;
+            top: -12%;
+            left: 35%;
+        }
+
+        /* ÜZÜM */
+        .fruit-4 {
+            background: #884eaf;
+        }
+        .fruit-4::after, .fruit-4::before {
+            content: "";
+            position: absolute;
+            width: 35%;
+            height: 35%;
+            background: #a868d1;
+            border-radius: 50%;
+            top: -10%;
+            right: -5%;
+            opacity: 0.9;
+        }
+        .fruit-4::before {
+            top: auto;
+            bottom: -10%;
+            left: -5%;
+            background: #6d3894;
+        }
+
+        /* KARPUZ */
+        .fruit-5 {
+            background: #27ae60;
+            overflow: hidden;
+        }
+        .fruit-5::after {
+            content: "";
+            position: absolute;
+            width: 100%;
+            height: 48%;
+            background: #d17237;
+            bottom: 0;
+            left: 0;
+            border-radius: 0 0 50% 50%;
+        }
+        .fruit-5::before {
+            content: "⚫⚫";
+            position: absolute;
+            font-size: 10px;
+            color: #2d2d2d;
+            top: 38%;
+            left: 20%;
+            letter-spacing: 4px;
+        }
+
+        /* ARMUT */
+        .fruit-6 {
+            background: linear-gradient(145deg, #f0d830, #dbb010);
+            border-radius: 55% 55% 45% 45%;
+            transform: rotate(-5deg);
+        }
+
+        /* ŞEFTALİ */
+        .fruit-7 {
+            background: radial-gradient(circle at 35% 35%, #ffb6b6, #f66b8d);
+            border-radius: 55% 45% 50% 50%;
+        }
+        .fruit-7::after {
+            content: "";
+            position: absolute;
+            width: 24%;
+            height: 18%;
+            background: #9c6b42;
+            border-radius: 40%;
+            top: 2%;
+            left: 38%;
+        }
+
+        /* KONTROLLER */
+        .action-bar {
             display: flex;
-            gap: 12px;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .action-btn {
+            flex: 1;
+            background: #febf5e;
+            border: none;
+            font-weight: 800;
+            font-size: 1.3rem;
+            padding: 16px 8px;
+            border-radius: 50px;
+            color: #35220b;
+            border-bottom: 6px solid #b1702a;
+            box-shadow: 0 8px 0 #744d22;
+            transition: all 0.04s linear;
+            cursor: pointer;
+            display: flex;
             align-items: center;
             justify-content: center;
-            margin-top: 15px;
+            gap: 6px;
+            letter-spacing: 1px;
         }
-
-        button {
-            background: #ffb142;
-            border: none;
-            font-weight: bold;
-            font-size: 1.3rem;
-            padding: 12px 25px;
-            border-radius: 50px;
-            color: #3d2b13;
-            border-bottom: 5px solid #cc7f2a;
-            box-shadow: 0 5px 0 #8f5720;
-            transition: 0.05s linear;
-            cursor: pointer;
-            touch-action: manipulation;
-            flex: 1;
-            max-width: 180px;
-        }
-
-        button:active {
-            transform: translateY(4px);
+        .action-btn:active {
+            transform: translateY(8px);
             border-bottom-width: 2px;
-            box-shadow: 0 2px 0 #8f5720;
+            box-shadow: 0 2px 0 #744d22;
         }
 
-        .lobby {
+        /* LOBI — SONSUZ LEVEL */
+        .lobby-panel {
+            background: #dba15d;
+            border-radius: 60px 60px 40px 40px;
+            padding: 16px 12px;
+            border: 5px solid #fdd49c;
+            box-shadow: inset 0 -4px 8px #a56f38, 0 10px 0 #7a502b;
+        }
+
+        .lobby-header {
             display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-top: 15px;
-            background: #eacba4;
-            padding: 15px;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 10px 8px;
+        }
+        .lobby-header h3 {
+            font-size: 1.8rem;
+            color: #2f1f0e;
+            text-shadow: 2px 2px 0 #ecc184;
+        }
+        .lobby-header span {
+            background: #5a3a1a;
+            color: #fdebbc;
+            padding: 8px 18px;
             border-radius: 40px;
-            border: 3px solid #b48b5a;
-        }
-
-        .lobby h3 {
-            color: #4d2f16;
-            font-size: 1.3rem;
-            text-align: center;
-        }
-
-        .level-selector {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            justify-content: center;
-            max-height: 150px;
-            overflow-y: auto;
-            padding: 5px;
-        }
-
-        .level-btn {
-            background: #fef5e7;
-            border: 3px solid #ac7339;
-            border-radius: 40px;
-            padding: 10px 18px;
             font-weight: bold;
             font-size: 1.2rem;
-            color: #563e1f;
+        }
+
+        .level-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            max-height: 135px;
+            overflow-y: auto;
+            padding: 8px 5px;
+            scrollbar-width: thin;
+            scrollbar-color: #ab6d30 #fad69c;
+        }
+        .level-grid::-webkit-scrollbar {
+            width: 6px;
+        }
+        .level-grid::-webkit-scrollbar-thumb {
+            background: #ab6d30;
+            border-radius: 10px;
+        }
+
+        .level-chip {
+            background: #fef3db;
+            border: 3px solid #c18b4a;
+            border-radius: 50px;
+            padding: 12px 18px;
+            font-weight: 800;
+            font-size: 1.4rem;
+            color: #55380e;
+            box-shadow: 0 6px 0 #8b5f2e, 0 8px 8px rgba(0,0,0,0.3);
+            transition: 0.04s;
+            cursor: pointer;
             flex: 0 0 auto;
-            box-shadow: 0 4px 0 #8b5e32;
-            transition: 0.05s;
+        }
+        .level-chip:active {
+            transform: translateY(6px);
+            box-shadow: 0 2px 0 #8b5f2e, 0 8px 8px rgba(0,0,0,0.2);
+        }
+        .level-chip.active-level {
+            background: #feca57;
+            border-color: #f39c12;
+            transform: scale(1.07);
+            box-shadow: 0 0 0 3px #fff1b5, 0 6px 0 #b46f20;
         }
 
-        .level-btn:active {
-            transform: translateY(4px);
-            box-shadow: 0 1px 0 #8b5e32;
-        }
-
-        .footer-text {
+        .watermark {
             text-align: center;
-            margin-top: 12px;
-            color: #fceedb;
-            text-shadow: 2px 2px 0 #6b4c2c;
+            margin-top: 20px;
+            color: #fcf0c0;
+            text-shadow: 2px 2px 0 #7b5c36;
             font-weight: bold;
+            font-size: 1rem;
         }
     </style>
 </head>
 <body>
-<div class="game-container">
-    <div class="header">
-        <div class="score-box">🍬<span id="scoreDisplay">0</span></div>
-        <div class="level-box" id="levelDisplay">Seviye 1</div>
+<div class="game-suite" id="gameSuite">
+    <div class="status-bar">
+        <div class="score-glass" id="scoreDisplay">0 <span>puan</span></div>
+        <div class="level-badge" id="levelDisplay">LVL 1</div>
     </div>
 
-    <div class="board-wrapper">
-        <div class="board" id="gameBoard"></div>
+    <div class="board-container">
+        <div class="board" id="boardEl"></div>
     </div>
 
-    <div class="controls">
-        <button id="newGameBtn">🔄 Yeni</button>
-        <button id="nextLevelBtn">➡️ Sonraki</button>
+    <div class="action-bar">
+        <button class="action-btn" id="newGameBtn">🔄 YENİ OYUN</button>
+        <button class="action-btn" id="nextLevelBtn">🌟 SONRAKİ</button>
     </div>
 
-    <div class="lobby">
-        <h3>🍒 Seviye Lobi 🍊</h3>
-        <div class="level-selector" id="levelLobby"></div>
+    <div class="lobby-panel">
+        <div class="lobby-header">
+            <h3>🍒 MEYVE LOBİSİ 🍊</h3>
+            <span id="lobbyLevelCounter">∞</span>
+        </div>
+        <div class="level-grid" id="levelLobby"></div>
     </div>
-    <div class="footer-text">👇 Meyveye dokun ve kaydır 👇</div>
+    <div class="watermark">👇 DOKUN & KAYDIR — PROFESYONEL MEYVE PATLATMA 👇</div>
 </div>
 
 <script>
-    (function() {
-        // Oyun sabitleri
-        const ROWS = 8;
-        const COLS = 8;
-        const FRUIT_TYPES = 7; // 7 farklı meyve
+(function() {
+    // -------------------- PROFESYONEL OYUN MOTORU --------------------
+    const ROWS = 8, COLS = 8;
+    const FRUIT_COUNT = 8;  // 8 farklı meyve (0-7)
 
-        // Meyve sınıfları (görsel CSS)
-        const fruitClasses = [
-            'fruit-apple',
-            'fruit-banana',
-            'fruit-orange',
-            'fruit-strawberry',
-            'fruit-grape',
-            'fruit-watermelon',
-            'fruit-pear',
-            'fruit-peach'
-        ];
+    let board = [];
+    let currentLevel = 1;
+    let score = 0;
+    let selectedRow = -1, selectedCol = -1;
+    let isDragging = false;
+    let touchMoved = false;
 
-        // Oyun durumu
-        let board = [];
-        let currentLevel = 1;
-        let score = 0;
-        let baseScore = 0; // level bazlı score sabiti
+    // DOM elemanları
+    const boardEl = document.getElementById('boardEl');
+    const scoreDisplay = document.getElementById('scoreDisplay');
+    const levelDisplay = document.getElementById('levelDisplay');
+    const levelLobby = document.getElementById('levelLobby');
+    const newGameBtn = document.getElementById('newGameBtn');
+    const nextLevelBtn = document.getElementById('nextLevelBtn');
 
-        let selectedRow = -1, selectedCol = -1;
-        let touchMoved = false;
-        let gameBoardElement = document.getElementById('gameBoard');
-        let scoreDisplay = document.getElementById('scoreDisplay');
-        let levelDisplay = document.getElementById('levelDisplay');
+    // -------------------- TAHTA İŞLEMLERİ (KUSURSUZ) --------------------
+    function createEmptyBoard() {
+        return Array(ROWS).fill().map(() => Array(COLS).fill(0));
+    }
 
-        // Başlangıç
-        function initBoard(level) {
-            // level'e göre rastgelelik, daha yüksek level daha çeşitli ama karışık
-            const diversity = Math.min(7, 4 + Math.floor(level / 2));
-            board = [];
-            for (let r = 0; r < ROWS; r++) {
-                let row = [];
-                for (let c = 0; c < COLS; c++) {
-                    row.push(Math.floor(Math.random() * diversity) % FRUIT_TYPES);
-                }
-                board.push(row);
-            }
-            // patlamaları temizle (başlangıçta patlama olmasın)
-            while (scanAndCrush(true)) { }
-            fillVacancies();
-        }
-
-        // Tahtayı render et
-        function renderBoard() {
-            gameBoardElement.innerHTML = '';
-            for (let r = 0; r < ROWS; r++) {
-                for (let c = 0; c < COLS; c++) {
-                    const cell = document.createElement('div');
-                    cell.className = 'cell';
-                    cell.dataset.row = r;
-                    cell.dataset.col = c;
-
-                    const fruitValue = board[r][c];
-                    if (fruitValue !== -1) { // -1 boşluk olursa doldur
-                        const fruitDiv = document.createElement('div');
-                        fruitDiv.className = `fruit ${fruitClasses[fruitValue % fruitClasses.length]}`;
-                        cell.appendChild(fruitDiv);
-                    } else {
-                        // boş hücre (ani boşluklarda gözükmesin)
-                        cell.style.background = '#eedbba';
-                    }
-
-                    // Olaylar (mouse ve touch)
-                    cell.addEventListener('touchstart', handleTouchStart, { passive: false });
-                    cell.addEventListener('touchmove', handleTouchMove, { passive: false });
-                    cell.addEventListener('touchend', handleTouchEnd);
-                    cell.addEventListener('touchcancel', handleTouchEnd);
-                    
-                    // Mouse için (debug / hybrid)
-                    cell.addEventListener('mousedown', handleMouseDown);
-                    cell.addEventListener('mousemove', handleMouseMove);
-                    cell.addEventListener('mouseup', handleMouseUp);
-                    cell.addEventListener('mouseleave', handleMouseLeave);
-
-                    gameBoardElement.appendChild(cell);
-                }
-            }
-        }
-
-        // ------ PATLATMA VE DOLDURMA MEKANİĞİ ------
-        function checkMatch(r, c, type) {
-            if (type === -1) return false;
-            let horizontal = 1;
-            // sağa
-            for (let i = c + 1; i < COLS && board[r][i] === type; i++) horizontal++;
-            // sola
-            for (let i = c - 1; i >= 0 && board[r][i] === type; i--) horizontal++;
-            
-            let vertical = 1;
-            for (let i = r + 1; i < ROWS && board[i] && board[i][c] === type; i++) vertical++;
-            for (let i = r - 1; i >= 0 && board[i] && board[i][c] === type; i--) vertical++;
-            
-            return horizontal >= 3 || vertical >= 3;
-        }
-
-        function scanAndCrush(justCheck = false) {
-            let crushed = false;
-            const crushMask = Array(ROWS).fill().map(() => Array(COLS).fill(false));
-
-            // Yatay
-            for (let r = 0; r < ROWS; r++) {
-                for (let c = 0; c < COLS - 2; c++) {
-                    const val = board[r][c];
-                    if (val === -1) continue;
-                    if (board[r][c + 1] === val && board[r][c + 2] === val) {
-                        let end = c + 2;
-                        while (end + 1 < COLS && board[r][end + 1] === val) end++;
-                        for (let k = c; k <= end; k++) crushMask[r][k] = true;
-                    }
-                }
-            }
-            // Dikey
+    // Seviyeye göre rastgele tahta (daha yüksek seviye = daha fazla çeşitlilik)
+    function generateBoardForLevel(level) {
+        const variety = Math.min(FRUIT_COUNT, 4 + Math.floor(level / 1.5));
+        const newBoard = [];
+        for (let r = 0; r < ROWS; r++) {
+            const row = [];
             for (let c = 0; c < COLS; c++) {
-                for (let r = 0; r < ROWS - 2; r++) {
-                    const val = board[r][c];
-                    if (val === -1) continue;
-                    if (board[r + 1][c] === val && board[r + 2][c] === val) {
-                        let end = r + 2;
-                        while (end + 1 < ROWS && board[end + 1][c] === val) end++;
-                        for (let k = r; k <= end; k++) crushMask[k][c] = true;
-                    }
+                row.push(Math.floor(Math.random() * variety) % FRUIT_COUNT);
+            }
+            newBoard.push(row);
+        }
+        return newBoard;
+    }
+
+    // Başlangıçta patlamasız bir tahta oluştur (patlamaları temizle)
+    function initBoard(level) {
+        let attempts = 0;
+        let newBoard;
+        do {
+            newBoard = generateBoardForLevel(level);
+            board = newBoard;
+            // Tahtada patlama var mı kontrol et (sadece kontrol)
+        } while (hasAnyMatch(board) && attempts++ < 30); // max 30 deneme
+
+        // Yine de patlama varsa son çare manuel düzelt
+        while (hasAnyMatch(board)) {
+            board = breakMatches(board);
+        }
+
+        // Puan sıfırlanmasın, sadece yeni level başlangıcında istenen olur
+        renderBoard();
+    }
+
+    // Herhangi bir eşleşme var mı?
+    function hasAnyMatch(board) {
+        for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < COLS; c++) {
+                if (board[r][c] === -1) continue;
+                if (checkMatchAt(board, r, c)) return true;
+            }
+        }
+        return false;
+    }
+
+    function checkMatchAt(board, r, c) {
+        const val = board[r][c];
+        if (val === -1) return false;
+        // yatay 3+
+        if (c + 2 < COLS && board[r][c+1] === val && board[r][c+2] === val) return true;
+        // dikey 3+
+        if (r + 2 < ROWS && board[r+1][c] === val && board[r+2][c] === val) return true;
+        return false;
+    }
+
+    // Basit kırma: eşleşenleri -1 yap, tahtayı döndür (başlangıç için)
+    function breakMatches(board) {
+        const newBoard = board.map(row => [...row]);
+        for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < COLS; c++) {
+                if (newBoard[r][c] === -1) continue;
+                if (c + 2 < COLS && newBoard[r][c] === newBoard[r][c+1] && newBoard[r][c] === newBoard[r][c+2]) {
+                    newBoard[r][c] = -1;
+                    newBoard[r][c+1] = -1;
+                    newBoard[r][c+2] = -1;
+                }
+                if (r + 2 < ROWS && newBoard[r][c] === newBoard[r+1][c] && newBoard[r][c] === newBoard[r+2][c]) {
+                    newBoard[r][c] = -1;
+                    newBoard[r+1][c] = -1;
+                    newBoard[r+2][c] = -1;
                 }
             }
+        }
+        // boşları rastgele doldur
+        for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < COLS; c++) {
+                if (newBoard[r][c] === -1) {
+                    newBoard[r][c] = Math.floor(Math.random() * FRUIT_COUNT);
+                }
+            }
+        }
+        return newBoard;
+    }
 
-            // ezilenleri -1 yap ve puan ekle
-            for (let r = 0; r < ROWS; r++) {
-                for (let c = 0; c < COLS; c++) {
-                    if (crushMask[r][c] && board[r][c] !== -1) {
-                        if (!justCheck) {
-                            board[r][c] = -1;
-                            score += 10 + currentLevel * 2;
-                            crushed = true;
-                        } else {
-                            return true; // patlama var
+    // ------------------ PATLATMA MOTORU (ÇEKİRDEK) ------------------
+    function scanMatchesAndCrush(addScore = true) {
+        let crushed = false;
+        const crushMap = Array(ROWS).fill().map(() => Array(COLS).fill(false));
+
+        // Yatay tarama
+        for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < COLS - 2; c++) {
+                const val = board[r][c];
+                if (val === -1) continue;
+                if (board[r][c+1] === val && board[r][c+2] === val) {
+                    let end = c+2;
+                    while (end+1 < COLS && board[r][end+1] === val) end++;
+                    for (let k = c; k <= end; k++) crushMap[r][k] = true;
+                }
+            }
+        }
+        // Dikey tarama
+        for (let c = 0; c < COLS; c++) {
+            for (let r = 0; r < ROWS - 2; r++) {
+                const val = board[r][c];
+                if (val === -1) continue;
+                if (board[r+1][c] === val && board[r+2][c] === val) {
+                    let end = r+2;
+                    while (end+1 < ROWS && board[end+1][c] === val) end++;
+                    for (let k = r; k <= end; k++) crushMap[k][c] = true;
+                }
+            }
+        }
+
+        // Patlat ve puan ekle
+        for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < COLS; c++) {
+                if (crushMap[r][c] && board[r][c] !== -1) {
+                    if (addScore) {
+                        score += 15 + currentLevel * 3;
+                    }
+                    board[r][c] = -1;
+                    crushed = true;
+                }
+            }
+        }
+
+        if (addScore) updateScore();
+        return crushed;
+    }
+
+    // Boşlukları doldur (yukarıdan yeni meyve)
+    function fillGaps() {
+        for (let c = 0; c < COLS; c++) {
+            for (let r = ROWS-1; r >= 0; r--) {
+                if (board[r][c] === -1) {
+                    // üstte dolu ara
+                    for (let k = r-1; k >= 0; k--) {
+                        if (board[k][c] !== -1) {
+                            board[r][c] = board[k][c];
+                            board[k][c] = -1;
+                            break;
                         }
                     }
-                }
-            }
-
-            if (justCheck) return false; // eğer justCheck modunda ise ve döngüye girmediyse false
-            if (crushed) updateScore();
-            return crushed;
-        }
-
-        function fillVacancies() {
-            for (let c = 0; c < COLS; c++) {
-                for (let r = ROWS - 1; r >= 0; r--) {
+                    // hala -1 ise yeni meyve oluş
                     if (board[r][c] === -1) {
-                        for (let k = r - 1; k >= 0; k--) {
-                            if (board[k][c] !== -1) {
-                                board[r][c] = board[k][c];
-                                board[k][c] = -1;
-                                break;
-                            }
-                        }
-                        if (board[r][c] === -1) {
-                            // üstte dolu yoksa yeni meyve
-                            board[r][c] = Math.floor(Math.random() * FRUIT_TYPES);
-                        }
+                        board[r][c] = Math.floor(Math.random() * FRUIT_COUNT);
                     }
                 }
             }
         }
+    }
 
-        // döngü: patlat - doldur - patlat kalmayana kadar
-        function settleBoard() {
-            let anyCrush = false;
-            while (scanAndCrush(false)) {
-                anyCrush = true;
-                fillVacancies();
-            }
-            if (anyCrush) updateScore();
-            renderBoard();
-        }
+    // Patlama ve doldurma döngüsü (kademeli)
+    function settleBoard() {
+        let any;
+        do {
+            any = scanMatchesAndCrush(true);
+            if (any) fillGaps();
+        } while (any);
+        renderBoard();
+    }
 
-        // Yer değiştir ve patlama kontrolü
-        function trySwap(r1, c1, r2, c2) {
-            if (r1 < 0 || r1 >= ROWS || c1 < 0 || c1 >= COLS || r2 < 0 || r2 >= ROWS || c2 < 0 || c2 >= COLS) return false;
-            if (Math.abs(r1 - r2) + Math.abs(c1 - c2) !== 1) return false; // komşu değil
-            if (board[r1][c1] === -1 || board[r2][c2] === -1) return false;
+    // İki hücreyi değiştir ve patlama kontrolü
+    function trySwap(r1, c1, r2, c2) {
+        if (r1 < 0 || r1 >= ROWS || c1 < 0 || c1 >= COLS || r2 < 0 || r2 >= ROWS || c2 < 0 || c2 >= COLS) return false;
+        if (Math.abs(r1 - r2) + Math.abs(c1 - c2) !== 1) return false;
+        if (board[r1][c1] === -1 || board[r2][c2] === -1) return false;
 
-            // swap
+        // swap
+        [board[r1][c1], board[r2][c2]] = [board[r2][c2], board[r1][c1]];
+
+        const match1 = checkMatchAt(board, r1, c1);
+        const match2 = checkMatchAt(board, r2, c2);
+
+        if (match1 || match2) {
+            settleBoard();  // tüm patlamaları tetikle
+            return true;
+        } else {
+            // geri al
             [board[r1][c1], board[r2][c2]] = [board[r2][c2], board[r1][c1]];
+            return false;
+        }
+    }
 
-            // patlama var mı?
-            const match1 = checkMatch(r1, c1, board[r1][c1]);
-            const match2 = checkMatch(r2, c2, board[r2][c2]);
+    // ------------------ RENDER ------------------
+    function renderBoard() {
+        boardEl.innerHTML = '';
+        for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < COLS; c++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.dataset.row = r;
+                cell.dataset.col = c;
 
-            if (match1 || match2) {
-                settleBoard();
-                return true;
-            } else {
-                // geri swap
-                [board[r1][c1], board[r2][c2]] = [board[r2][c2], board[r1][c1]];
-                return false;
+                const fruitType = board[r][c];
+                if (fruitType !== -1) {
+                    const fruitDiv = document.createElement('div');
+                    fruitDiv.className = `fruit fruit-${fruitType % FRUIT_COUNT}`;
+                    cell.appendChild(fruitDiv);
+                }
+
+                // Touch Events (Mobil)
+                cell.addEventListener('touchstart', handleTouchStart, { passive: false });
+                cell.addEventListener('touchmove', handleTouchMove, { passive: false });
+                cell.addEventListener('touchend', handleTouchEnd);
+                cell.addEventListener('touchcancel', handleTouchEnd);
+
+                // Mouse Events (Geliştirme için)
+                cell.addEventListener('mousedown', handleMouseDown);
+                cell.addEventListener('mousemove', handleMouseMove);
+                cell.addEventListener('mouseup', handleMouseUp);
+                cell.addEventListener('mouseleave', handleMouseLeave);
+
+                boardEl.appendChild(cell);
             }
         }
+    }
 
-        // ------ OLAY YÖNETİCİLERİ (dokunma ve kaydırma) ------
-        let startRow, startCol;
+    // ------------------ OLAY YÖNETİCİLERİ (PROFESYONEL) ------------------
+    function handleTouchStart(e) {
+        e.preventDefault();
+        const cell = e.target.closest('.cell');
+        if (!cell) return;
+        const r = parseInt(cell.dataset.row);
+        const c = parseInt(cell.dataset.col);
+        selectedRow = r; selectedCol = c;
+        isDragging = true;
+        touchMoved = false;
+    }
 
-        function handleTouchStart(e) {
+    function handleTouchMove(e) {
+        e.preventDefault();
+        if (!isDragging || selectedRow === -1 || selectedCol === -1) return;
+        const touch = e.touches[0];
+        const el = document.elementFromPoint(touch.clientX, touch.clientY);
+        const cell = el?.closest('.cell');
+        if (!cell) return;
+
+        const r = parseInt(cell.dataset.row);
+        const c = parseInt(cell.dataset.col);
+        if (r === selectedRow && c === selectedCol) return;
+
+        if (Math.abs(r - selectedRow) + Math.abs(c - selectedCol) === 1) {
             e.preventDefault();
-            const cell = e.target.closest('.cell');
-            if (!cell) return;
-            startRow = parseInt(cell.dataset.row);
-            startCol = parseInt(cell.dataset.col);
-            selectedRow = startRow;
-            selectedCol = startCol;
-            touchMoved = false;
+            touchMoved = true;
+            trySwap(selectedRow, selectedCol, r, c);
+            selectedRow = -1; selectedCol = -1;
+            isDragging = false;
         }
+    }
 
-        function handleTouchMove(e) {
-            e.preventDefault();
-            if (selectedRow === -1 || selectedCol === -1) return;
-            const touch = e.touches[0];
-            const element = document.elementFromPoint(touch.clientX, touch.clientY);
-            const cell = element?.closest('.cell');
-            if (!cell) return;
-            
-            const row = parseInt(cell.dataset.row);
-            const col = parseInt(cell.dataset.col);
-            if (row === selectedRow && col === selectedCol) return;
+    function handleTouchEnd(e) {
+        e.preventDefault();
+        selectedRow = -1; selectedCol = -1;
+        isDragging = false;
+    }
 
-            // komşuluk kontrolü
-            if (Math.abs(row - selectedRow) + Math.abs(col - selectedCol) === 1) {
+    // Mouse sürükleme
+    function handleMouseDown(e) {
+        e.preventDefault();
+        const cell = e.target.closest('.cell');
+        if (!cell) return;
+        selectedRow = parseInt(cell.dataset.row);
+        selectedCol = parseInt(cell.dataset.col);
+        isDragging = true;
+        touchMoved = false;
+    }
+
+    function handleMouseMove(e) {
+        if (!isDragging || selectedRow === -1) return;
+        e.preventDefault();
+        const cell = e.target.closest('.cell');
+        if (!cell) return;
+        const r = parseInt(cell.dataset.row);
+        const c = parseInt(cell.dataset.col);
+        if (Math.abs(r - selectedRow) + Math.abs(c - selectedCol) === 1) {
+            trySwap(selectedRow, selectedCol, r, c);
+            selectedRow = -1; selectedCol = -1;
+            isDragging = false;
+        }
+    }
+
+    function handleMouseUp(e) { selectedRow = -1; selectedCol = -1; isDragging = false; }
+    function handleMouseLeave(e) { selectedRow = -1; selectedCol = -1; isDragging = false; }
+
+    // ------------------ PUAN & SEVİYE ------------------
+    function updateScore() {
+        scoreDisplay.innerHTML = `${score} <span>puan</span>`;
+    }
+
+    function loadLevel(level) {
+        currentLevel = Math.max(1, level);
+        initBoard(currentLevel);
+        levelDisplay.innerText = `LVL ${currentLevel}`;
+        document.querySelectorAll('.level-chip').forEach(chip => {
+            chip.classList.remove('active-level');
+            if (parseInt(chip.innerText) === currentLevel) chip.classList.add('active-level');
+        });
+    }
+
+    function resetGame() {
+        score = 0;
+        updateScore();
+        loadLevel(1);
+    }
+
+    function nextLevel() {
+        loadLevel(currentLevel + 1);
+    }
+
+    // ------------------ LOBİ OLUŞTUR (SONSUZ) ------------------
+    function buildLobby() {
+        levelLobby.innerHTML = '';
+        // 30 seviye göster (sonsuz hissi)
+        for (let i = 1; i <= 30; i++) {
+            const chip = document.createElement('div');
+            chip.className = 'level-chip';
+            chip.innerText = i;
+            chip.addEventListener('click', (e) => {
                 e.preventDefault();
-                touchMoved = true;
-                // swap dene
-                trySwap(selectedRow, selectedCol, row, col);
-                // seçimi sıfırla
-                selectedRow = -1;
-                selectedCol = -1;
-            }
+                loadLevel(i);
+            });
+            levelLobby.appendChild(chip);
         }
+    }
 
-        function handleTouchEnd(e) {
+    // ------------------ BAŞLANGIÇ ------------------
+    window.addEventListener('load', () => {
+        buildLobby();
+        resetGame();
+
+        newGameBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            if (!touchMoved && selectedRow !== -1 && selectedCol !== -1) {
-                // sadece tıklama, seçimi göster veya herhangi bir işlem yapma
-                // (opsiyonel olarak seçili efekti verilebilir, şimdilik pasif)
-            }
-            selectedRow = -1;
-            selectedCol = -1;
-        }
-
-        // Mouse olayları (test için, touch öncelikli)
-        function handleMouseDown(e) {
-            e.preventDefault();
-            const cell = e.target.closest('.cell');
-            if (!cell) return;
-            startRow = parseInt(cell.dataset.row);
-            startCol = parseInt(cell.dataset.col);
-            selectedRow = startRow;
-            selectedCol = startCol;
-            touchMoved = false;
-        }
-
-        function handleMouseMove(e) {
-            if (selectedRow === -1 || selectedCol === -1) return;
-            e.preventDefault();
-            const cell = e.target.closest('.cell');
-            if (!cell) return;
-            const row = parseInt(cell.dataset.row);
-            const col = parseInt(cell.dataset.col);
-            if (row === selectedRow && col === selectedCol) return;
-            if (Math.abs(row - selectedRow) + Math.abs(col - selectedCol) === 1) {
-                touchMoved = true;
-                trySwap(selectedRow, selectedCol, row, col);
-                selectedRow = -1;
-                selectedCol = -1;
-            }
-        }
-
-        function handleMouseUp(e) {
-            selectedRow = -1;
-            selectedCol = -1;
-        }
-        function handleMouseLeave(e) {
-            selectedRow = -1;
-            selectedCol = -1;
-        }
-
-        // ----- PUAN & LOBİ -----
-        function updateScore() {
-            scoreDisplay.innerText = score;
-        }
-
-        function loadLevel(level) {
-            currentLevel = level;
-            initBoard(level);
-            renderBoard();
-            levelDisplay.innerText = `Seviye ${level}`;
-        }
-
-        function resetGame() {
-            score = 0;
-            updateScore();
-            loadLevel(1);
-        }
-
-        // lobi oluştur
-        function buildLobby() {
-            const lobbyDiv = document.getElementById('levelLobby');
-            lobbyDiv.innerHTML = '';
-            for (let i = 1; i <= 20; i++) { // 20 seviye lobisi
-                const btn = document.createElement('button');
-                btn.className = 'level-btn';
-                btn.innerText = i;
-                btn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    loadLevel(i);
-                });
-                lobbyDiv.appendChild(btn);
-            }
-        }
-
-        // Sonraki level
-        function nextLevel() {
-            loadLevel(currentLevel + 1);
-        }
-
-        // Sayfa yüklendi
-        window.addEventListener('load', () => {
-            buildLobby();
             resetGame();
-
-            document.getElementById('newGameBtn').addEventListener('click', (e) => {
-                e.preventDefault();
-                resetGame();
-            });
-
-            document.getElementById('nextLevelBtn').addEventListener('click', (e) => {
-                e.preventDefault();
-                nextLevel();
-            });
-
-            // mobil kaydırmayı engelleme (sayfa dışı)
-            document.body.addEventListener('touchmove', (e) => {
-                if (e.target.closest('.board')) e.preventDefault();
-            }, { passive: false });
         });
 
-    })();
+        nextLevelBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            nextLevel();
+        });
+
+        // Sayfa dışı touchmove engelle
+        document.body.addEventListener('touchmove', (e) => {
+            if (e.target.closest('.board')) e.preventDefault();
+        }, { passive: false });
+    });
+
+})();
 </script>
 </body>
 </html>
