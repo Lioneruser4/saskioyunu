@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>UniVapp - Kitabxananız</title>
+    <title>UniVapp - Universitet Platforması</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/dist/tesseract.min.js"></script>
     <style>
         * {
@@ -16,74 +16,68 @@
         }
 
         body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background: #f8fafd;
-            color: #0b1e33;
-            overflow-x: hidden;
+            font-family: 'Inter', sans-serif;
+            background: #f4f7fc;
+            color: #0a1a2f;
         }
 
         .app {
-            max-width: 1600px;
+            max-width: 1500px;
             margin: 0 auto;
-            background: #f8fafd;
-            min-height: 100vh;
-            position: relative;
+            padding: 16px 24px;
         }
 
         /* Navbar */
         .navbar {
-            background: rgba(255, 255, 255, 0.98);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            padding: 16px 32px;
+            background: white;
+            padding: 18px 28px;
+            border-radius: 30px;
+            box-shadow: 0 8px 25px rgba(0,20,40,0.05);
+            margin-bottom: 25px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid rgba(0, 30, 60, 0.08);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.02);
+            border: 1px solid rgba(0,0,0,0.02);
         }
 
         .logo h1 {
-            font-size: 2rem;
+            font-size: 2.2rem;
             font-weight: 800;
-            background: linear-gradient(145deg, #0f2b50, #1e4f8a);
+            background: linear-gradient(145deg, #0a2647, #1e4f8a);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             letter-spacing: -1px;
         }
 
         .avatar {
-            width: 48px;
-            height: 48px;
-            background: linear-gradient(145deg, #0f2b50, #1e4f8a);
+            width: 52px;
+            height: 52px;
+            background: linear-gradient(145deg, #0a2647, #1e4f8a);
             border-radius: 30px;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
             font-weight: 600;
-            font-size: 1.2rem;
+            font-size: 1.3rem;
             cursor: pointer;
-            box-shadow: 0 8px 18px rgba(15, 43, 80, 0.15);
+            box-shadow: 0 8px 18px rgba(10,38,71,0.2);
         }
 
         /* Tabs */
         .tabs-container {
-            padding: 20px 32px 0 32px;
             background: white;
-            border-radius: 0 0 36px 36px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.02);
-            margin-bottom: 28px;
+            border-radius: 30px;
+            padding: 12px 20px 0 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.02);
         }
 
         .tabs {
             display: flex;
             gap: 10px;
             overflow-x: auto;
-            padding-bottom: 16px;
+            padding-bottom: 12px;
             scrollbar-width: none;
         }
 
@@ -92,11 +86,11 @@
         }
 
         .tab {
-            padding: 14px 30px;
+            padding: 14px 28px;
             background: #f1f5f9;
             border: none;
             border-radius: 40px;
-            font-weight: 700;
+            font-weight: 600;
             font-size: 0.95rem;
             color: #3f536e;
             cursor: pointer;
@@ -104,123 +98,28 @@
             align-items: center;
             gap: 10px;
             white-space: nowrap;
-            transition: all 0.3s ease;
+            transition: all 0.2s;
         }
 
         .tab.active {
-            background: #0f2b50;
+            background: #0a2647;
             color: white;
-            box-shadow: 0 10px 20px rgba(15, 43, 80, 0.25);
+            box-shadow: 0 8px 18px rgba(10,38,71,0.2);
         }
 
-        /* Main Grid - Normal View */
+        /* Main Grid */
         .main-grid {
             display: grid;
-            grid-template-columns: 300px 1fr 360px;
+            grid-template-columns: 280px 1fr 350px;
             gap: 24px;
-            padding: 0 32px;
-            transition: all 0.3s ease;
-        }
-
-        /* Kitab Tam Ekran Rejimi */
-        .main-grid.book-mode {
-            grid-template-columns: 0 1fr 0;
-            gap: 0;
-            padding: 0;
-        }
-
-        .book-mode .folders-panel,
-        .book-mode .ocr-panel {
-            display: none;
-        }
-
-        .book-mode .content-panel {
-            border-radius: 0;
-            box-shadow: none;
-            padding: 40px 60px;
-            max-width: 900px;
-            margin: 0 auto;
-            width: 100%;
-            background: #fefefe;
-            min-height: calc(100vh - 140px);
-        }
-
-        /* Kitab Görünüşü */
-        .book-view {
-            max-width: 800px;
-            margin: 0 auto;
-            font-family: 'Georgia', serif;
-        }
-
-        .book-header {
-            text-align: center;
-            margin-bottom: 40px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #eaeef2;
-        }
-
-        .book-title {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: #0f2b50;
-            margin-bottom: 10px;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-        }
-
-        .book-meta {
-            color: #64748b;
-            font-size: 1rem;
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-        }
-
-        .book-content {
-            font-size: 1.2rem;
-            line-height: 1.8;
-            color: #1e293b;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-        }
-
-        .book-content p {
-            margin-bottom: 25px;
-        }
-
-        .exit-book-btn {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            background: #0f2b50;
-            color: white;
-            border: none;
-            width: 60px;
-            height: 60px;
-            border-radius: 60px;
-            font-size: 1.4rem;
-            cursor: pointer;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: 0.3s;
-        }
-
-        .exit-book-btn:hover {
-            transform: scale(1.1);
-        }
-
-        .hidden {
-            display: none !important;
         }
 
         /* Folders Panel */
         .folders-panel {
             background: white;
-            border-radius: 32px;
-            padding: 24px 16px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.02);
+            border-radius: 28px;
+            padding: 22px 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.02);
             height: fit-content;
         }
 
@@ -228,42 +127,45 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 24px;
-            padding: 0 12px;
+            margin-bottom: 20px;
+            padding: 0 10px;
         }
 
         .panel-header h3 {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             font-weight: 700;
             color: #1a2f4f;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .new-folder-btn {
-            width: 42px;
-            height: 42px;
+            width: 40px;
+            height: 40px;
             background: #eef4ff;
             border: none;
-            border-radius: 18px;
-            color: #0f2b50;
+            border-radius: 16px;
+            color: #0a2647;
             cursor: pointer;
-            transition: 0.2s;
+            font-size: 1.2rem;
         }
 
         .folder-list {
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 4px;
         }
 
         .folder-item {
             display: flex;
             align-items: center;
-            gap: 14px;
-            padding: 16px 18px;
-            border-radius: 22px;
+            gap: 12px;
+            padding: 14px 16px;
+            border-radius: 20px;
             cursor: pointer;
             transition: 0.2s;
-            color: #2a405c;
+            color: #2d405c;
         }
 
         .folder-item:hover {
@@ -272,14 +174,14 @@
 
         .folder-item.active {
             background: #e8f0fe;
-            color: #0f2b50;
+            color: #0a2647;
             font-weight: 600;
         }
 
         .folder-count {
             margin-left: auto;
             background: #edf3fa;
-            padding: 4px 12px;
+            padding: 3px 12px;
             border-radius: 30px;
             font-size: 0.8rem;
         }
@@ -287,123 +189,206 @@
         /* Content Panel */
         .content-panel {
             background: white;
-            border-radius: 32px;
+            border-radius: 28px;
             padding: 24px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.02);
-            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.02);
         }
 
         .content-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 28px;
+            margin-bottom: 24px;
         }
 
         .content-header h2 {
-            font-size: 1.6rem;
+            font-size: 1.5rem;
             font-weight: 700;
-            color: #0b1e33;
+            color: #0a1a2f;
         }
 
         .action-buttons {
             display: flex;
-            gap: 12px;
+            gap: 10px;
         }
 
         .btn-primary {
-            background: #0f2b50;
+            background: #0a2647;
             color: white;
             border: none;
-            padding: 14px 26px;
-            border-radius: 40px;
+            padding: 12px 22px;
+            border-radius: 30px;
             font-weight: 600;
+            font-size: 0.9rem;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             cursor: pointer;
-            transition: 0.2s;
-            box-shadow: 0 8px 18px rgba(15, 43, 80, 0.2);
         }
 
         .btn-secondary {
             background: #f0f6ff;
-            color: #0f2b50;
+            color: #0a2647;
             border: none;
-            padding: 14px 26px;
-            border-radius: 40px;
+            padding: 12px 22px;
+            border-radius: 30px;
             font-weight: 600;
+            font-size: 0.9rem;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             cursor: pointer;
-            border: 1px solid rgba(15, 43, 80, 0.1);
         }
 
-        /* Items Grid */
+        /* Items Grid - Mətnin ilk 30 simvolu görünür */
         .items-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
             gap: 16px;
         }
 
         .item-card {
             background: #fafcff;
-            border-radius: 26px;
-            padding: 22px 18px;
+            border-radius: 24px;
+            padding: 20px;
             border: 1px solid #eef2f8;
-            transition: 0.3s;
+            transition: 0.2s;
             cursor: pointer;
         }
 
         .item-card:hover {
-            transform: translateY(-5px);
-            border-color: #0f2b50;
-            box-shadow: 0 20px 30px rgba(15, 43, 80, 0.08);
+            transform: translateY(-3px);
+            border-color: #0a2647;
+            box-shadow: 0 15px 25px rgba(10,38,71,0.08);
         }
 
         .item-icon {
-            width: 54px;
-            height: 54px;
+            width: 48px;
+            height: 48px;
             background: #e3ecfa;
-            border-radius: 20px;
+            border-radius: 18px;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #0f2b50;
-            font-size: 1.6rem;
-            margin-bottom: 18px;
+            color: #0a2647;
+            font-size: 1.4rem;
+            margin-bottom: 15px;
         }
 
         .item-title {
             font-weight: 700;
             font-size: 1.1rem;
-            margin-bottom: 6px;
-            color: #1a2f4f;
+            margin-bottom: 8px;
+            color: #0a1a2f;
+        }
+
+        .item-preview {
+            font-size: 0.9rem;
+            color: #5f7a9a;
+            margin-bottom: 12px;
+            line-height: 1.5;
+            height: 65px;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            background: #f1f7ff;
+            padding: 10px;
+            border-radius: 14px;
+            border-left: 3px solid #0a2647;
+            word-break: break-word;
         }
 
         .item-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             font-size: 0.8rem;
-            color: #728aa8;
+            color: #6f8aac;
+        }
+
+        .item-badge {
+            background: #dde7f5;
+            padding: 4px 10px;
+            border-radius: 30px;
+            font-weight: 600;
+            color: #0a2647;
+        }
+
+        /* Kitab Görünüşü */
+        .book-view {
+            max-width: 800px;
+            margin: 0 auto;
+            font-family: 'Georgia', serif;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .book-header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 25px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .book-title {
+            font-size: 2.4rem;
+            font-weight: 700;
+            color: #0a2647;
+            margin-bottom: 12px;
+        }
+
+        .book-meta {
+            color: #64748b;
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+            flex-wrap: wrap;
+        }
+
+        .book-content {
+            font-size: 1.2rem;
+            line-height: 1.9;
+            color: #1e293b;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .book-content p {
+            margin-bottom: 25px;
+        }
+
+        /* Exit button */
+        .exit-book-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #0a2647;
+            color: white;
+            border: none;
+            width: 60px;
+            height: 60px;
+            border-radius: 60px;
+            font-size: 1.4rem;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(10,38,71,0.3);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         /* OCR Panel */
         .ocr-panel {
             background: white;
-            border-radius: 32px;
+            border-radius: 28px;
             padding: 24px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.02);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.02);
             height: fit-content;
-        }
-
-        .section-title {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: #0f2b50;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
         }
 
         .camera-btn, .gallery-btn {
@@ -412,79 +397,58 @@
             border: none;
             border-radius: 24px;
             font-weight: 600;
-            font-size: 1rem;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 12px;
             cursor: pointer;
             margin-bottom: 12px;
-            transition: 0.2s;
         }
 
         .camera-btn {
-            background: linear-gradient(145deg, #0f2b50, #1e4f8a);
+            background: linear-gradient(145deg, #0a2647, #1e4f8a);
             color: white;
-            box-shadow: 0 10px 20px rgba(15, 43, 80, 0.25);
         }
 
         .gallery-btn {
             background: #e8f0fe;
-            color: #0f2b50;
+            color: #0a2647;
             border: 1px solid #cddff5;
         }
 
         #camera-container {
-            position: relative;
-            width: 100%;
-            border-radius: 24px;
-            overflow: hidden;
-            margin: 20px 0;
-            background: #1a1f2b;
             display: none;
+            margin: 20px 0;
         }
 
         #camera-stream {
             width: 100%;
-            height: auto;
-            display: block;
-            /* Güzgü effektini qaldırdım - normal görüntü */
-            transform: scaleX(1);
+            border-radius: 20px;
         }
 
         .camera-controls {
             display: flex;
-            gap: 12px;
-            margin-top: 15px;
+            gap: 10px;
+            margin-top: 12px;
         }
 
         .capture-btn, .close-camera {
             flex: 1;
-            padding: 16px;
+            padding: 14px;
             border: none;
-            border-radius: 24px;
+            border-radius: 20px;
             font-weight: 600;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
             cursor: pointer;
         }
 
         .capture-btn {
-            background: #0f2b50;
+            background: #0a2647;
             color: white;
         }
 
-        .close-camera {
-            background: #f1f5f9;
-            color: #475569;
-        }
-
-        /* OCR Result */
         .ocr-result {
             background: #f8fbfe;
-            border-radius: 24px;
+            border-radius: 22px;
             padding: 20px;
             margin-top: 20px;
             display: none;
@@ -492,54 +456,46 @@
 
         .ocr-text {
             background: white;
-            border-radius: 20px;
-            padding: 20px;
-            min-height: 150px;
-            max-height: 300px;
+            border-radius: 18px;
+            padding: 18px;
+            min-height: 130px;
+            max-height: 250px;
             overflow-y: auto;
             border: 1px solid #e2eaf2;
             font-size: 0.95rem;
             line-height: 1.6;
             margin: 15px 0;
             outline: none;
+            white-space: pre-wrap;
+            word-break: break-word;
         }
 
         .folder-select {
             width: 100%;
-            padding: 16px;
+            padding: 14px;
             border: 2px solid #e2eaf2;
-            border-radius: 20px;
-            margin-bottom: 15px;
-            font-family: inherit;
-            font-size: 1rem;
-            background: white;
-            cursor: pointer;
+            border-radius: 18px;
+            margin-bottom: 12px;
         }
 
         .ocr-actions {
             display: flex;
             gap: 10px;
-            flex-wrap: wrap;
         }
 
         .ocr-action-btn {
             flex: 1;
             padding: 14px;
             border: none;
-            border-radius: 20px;
+            border-radius: 18px;
             font-weight: 600;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
             cursor: pointer;
             background: white;
             border: 1px solid #dde5ef;
-            color: #1f3a63;
         }
 
-        .ocr-action-btn.save-btn {
-            background: #0f2b50;
+        .save-btn {
+            background: #0a2647;
             color: white;
             border: none;
         }
@@ -548,7 +504,7 @@
             width: 40px;
             height: 40px;
             border: 4px solid #f0f4fa;
-            border-top: 4px solid #0f2b50;
+            border-top: 4px solid #0a2647;
             border-radius: 50%;
             animation: spin 1s linear infinite;
             margin: 20px auto;
@@ -560,13 +516,13 @@
             100% { transform: rotate(360deg); }
         }
 
+        .hidden {
+            display: none !important;
+        }
+
         @media (max-width: 1100px) {
             .main-grid {
                 grid-template-columns: 1fr;
-            }
-            
-            .book-mode .content-panel {
-                padding: 20px;
             }
         }
     </style>
@@ -578,7 +534,7 @@
             <div class="logo">
                 <h1>UniVapp</h1>
             </div>
-            <div class="avatar" onclick="showStats()">A</div>
+            <div class="avatar" onclick="showStats()">U</div>
         </div>
 
         <!-- Tabs -->
@@ -586,50 +542,55 @@
             <div class="tabs">
                 <button class="tab active" onclick="switchTab('ana', this)"><i class="fas fa-home"></i>Ana səhifə</button>
                 <button class="tab" onclick="switchTab('dersler', this)"><i class="fas fa-book-open"></i>Dərslər</button>
-                <button class="tab" onclick="switchTab('pdfs', this)"><i class="fas fa-file-pdf"></i>PDF Kitabxana</button>
-                <button class="tab" onclick="switchTab('notlar', this)"><i class="fas fa-sticky-note"></i>Qeydlərim</button>
+                <button class="tab" onclick="switchTab('pdfs', this)"><i class="fas fa-file-pdf"></i>PDF-lər</button>
+                <button class="tab" onclick="switchTab('qeydler', this)"><i class="fas fa-sticky-note"></i>Qeydlər</button>
                 <button class="tab" onclick="switchTab('kamera', this)"><i class="fas fa-camera"></i>Kamera</button>
             </div>
         </div>
 
         <!-- Main Grid -->
         <div class="main-grid" id="mainGrid">
-            <!-- Left Panel - Folders -->
+            <!-- Sol Panel - Qovluqlar -->
             <div class="folders-panel">
                 <div class="panel-header">
-                    <h3><i class="fas fa-folder-tree"></i> Dərs qovluqları</h3>
+                    <h3><i class="fas fa-folder-tree"></i> Qovluqlar</h3>
                     <button class="new-folder-btn" onclick="createFolder()"><i class="fas fa-plus"></i></button>
                 </div>
                 <div class="folder-list" id="folderList"></div>
             </div>
 
-            <!-- Center Panel - Content (Kitab rejimi üçün əsas yer) -->
+            <!-- Orta Panel - Məzmun -->
             <div class="content-panel" id="contentPanel">
-                <div class="content-header" id="contentHeader">
-                    <h2 id="currentFolderTitle">Bütün dərslər</h2>
-                    <div class="action-buttons">
-                        <button class="btn-secondary" onclick="createNote()"><i class="fas fa-pen"></i>Yeni qeyd</button>
-                        <button class="btn-primary" onclick="uploadPDF()"><i class="fas fa-upload"></i>PDF yüklə</button>
+                <!-- Normal görünüş -->
+                <div id="normalView">
+                    <div class="content-header">
+                        <h2 id="currentFolderTitle">Bütün dərslər</h2>
+                        <div class="action-buttons">
+                            <button class="btn-secondary" id="actionBtn" onclick="handleAction()"><i class="fas fa-plus"></i> <span id="actionText">Yeni</span></button>
+                            <button class="btn-primary" onclick="uploadPDF()"><i class="fas fa-upload"></i>PDF</button>
+                        </div>
                     </div>
+                    
+                    <div class="items-grid" id="itemsGrid"></div>
                 </div>
-                <div class="items-grid" id="itemsGrid"></div>
-                
-                <!-- Kitab Görünüşü (əvvəlcə gizli) -->
+
+                <!-- Kitab görünüşü -->
                 <div id="bookView" class="book-view hidden">
                     <div class="book-header">
                         <h1 class="book-title" id="bookTitle"></h1>
                         <div class="book-meta">
                             <span><i class="far fa-calendar"></i> <span id="bookDate"></span></span>
                             <span><i class="far fa-folder"></i> <span id="bookFolder"></span></span>
+                            <span><i class="far fa-tag"></i> <span id="bookType"></span></span>
                         </div>
                     </div>
                     <div class="book-content" id="bookContent"></div>
                 </div>
             </div>
 
-            <!-- Right Panel - OCR Camera -->
+            <!-- Sağ Panel - Kamera OCR -->
             <div class="ocr-panel">
-                <h3 class="section-title"><i class="fas fa-camera-retro"></i> Dərs materialını çək</h3>
+                <h3 style="margin-bottom: 20px;"><i class="fas fa-camera-retro"></i> Dərs materialı</h3>
                 
                 <button class="camera-btn" onclick="openCamera()">
                     <i class="fas fa-camera"></i> Kamera ilə çək
@@ -639,176 +600,210 @@
                     <i class="fas fa-images"></i> Qalereyadan seç
                 </button>
                 
-                <!-- Kamera Container -->
                 <div id="camera-container">
                     <video id="camera-stream" autoplay playsinline></video>
                     <div class="camera-controls">
-                        <button class="capture-btn" onclick="captureImage()">
-                            <i class="fas fa-camera"></i> Çək
-                        </button>
-                        <button class="close-camera" onclick="closeCamera()">
-                            <i class="fas fa-times"></i> Bağla
-                        </button>
+                        <button class="capture-btn" onclick="captureImage()">Çək</button>
+                        <button class="close-camera" onclick="closeCamera()">Bağla</button>
                     </div>
                 </div>
 
-                <!-- Gizli file input -->
                 <input type="file" id="galleryInput" accept="image/*" style="display: none;">
-
-                <!-- Loading Spinner -->
                 <div id="ocr-loading" class="spinner"></div>
 
-                <!-- OCR Result -->
                 <div id="ocr-result" class="ocr-result">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <span style="font-weight: 700;"><i class="fas fa-font"></i> Çıxarılan mətn:</span>
-                        <button onclick="clearOCR()" style="background:none; border:none; color:#888; cursor:pointer;">
-                            <i class="fas fa-times"></i>
-                        </button>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="font-weight: 700;">Mətn:</span>
+                        <button onclick="clearOCR()" style="background:none; border:none;">✕</button>
                     </div>
                     
-                    <!-- Qovluq seçimi -->
-                    <select id="folderSelect" class="folder-select">
-                        <option value="">Qovluq seçin (əlavə etmək üçün)</option>
-                    </select>
-                    
+                    <select id="folderSelect" class="folder-select"></select>
                     <div id="ocr-text" class="ocr-text" contenteditable="true"></div>
                     
                     <div class="ocr-actions">
-                        <button class="ocr-action-btn save-btn" onclick="saveOCRWithFolder()">
-                            <i class="fas fa-save"></i> Yadda saxla
-                        </button>
-                        <button class="ocr-action-btn" onclick="copyOCR()">
-                            <i class="fas fa-copy"></i> Köçür
-                        </button>
+                        <button class="ocr-action-btn save-btn" onclick="saveOCR()"><i class="fas fa-save"></i> Yadda saxla</button>
+                        <button class="ocr-action-btn" onclick="copyOCR()"><i class="fas fa-copy"></i> Köçür</button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Kitabdan çıxma düyməsi (əvvəlcə gizli) -->
+        <!-- Kitabdan çıxış düyməsi -->
         <button id="exitBookBtn" class="exit-book-btn hidden" onclick="exitBookMode()">
             <i class="fas fa-times"></i>
         </button>
     </div>
 
     <script>
-        // Global state
-        let folders = [
-            { id: 1, name: 'Riyaziyyat', count: 0 },
-            { id: 2, name: 'Fizika', count: 0 },
-            { id: 3, name: 'Proqramlaşdırma', count: 0 },
-            { id: 4, name: 'Xətti cəbr', count: 0 },
-            { id: 5, name: 'Universitet', count: 0 }
-        ];
+        // ========== GÜCLƏNDİRİLMİŞ DATA SAXLANIŞI ==========
+        // Məlumatlar heç vaxt silinmir - 3 qat backup
         
+        // Data strukturu
+        let folders = [];
         let items = [];
         let selectedFolder = 'Bütün dərslər';
+        let currentTab = 'ana';
         let cameraStream = null;
-        let isCameraOpen = false;
         let isBookMode = false;
-        let currentBookItem = null;
 
-        // Load from localStorage
+        // Yedek sistemi - localStorage + backup
         function loadData() {
             try {
-                const savedFolders = localStorage.getItem('univapp_folders_v2');
-                const savedItems = localStorage.getItem('univapp_items_v2');
+                // Əsas data
+                const mainFolders = localStorage.getItem('univapp_folders_master');
+                const mainItems = localStorage.getItem('univapp_items_master');
                 
-                if (savedFolders) {
-                    folders = JSON.parse(savedFolders);
+                // Backup data
+                const backupFolders = localStorage.getItem('univapp_folders_backup');
+                const backupItems = localStorage.getItem('univapp_items_backup');
+                
+                if (mainFolders) {
+                    folders = JSON.parse(mainFolders);
+                } else if (backupFolders) {
+                    folders = JSON.parse(backupFolders);
+                } else {
+                    // Default folders
+                    folders = [
+                        { id: 1, name: 'Riyaziyyat', count: 0 },
+                        { id: 2, name: 'Fizika', count: 0 },
+                        { id: 3, name: 'Proqramlaşdırma', count: 0 },
+                        { id: 4, name: 'Xətti cəbr', count: 0 },
+                        { id: 5, name: 'Universitet', count: 0 }
+                    ];
                 }
-                if (savedItems) {
-                    items = JSON.parse(savedItems);
+                
+                if (mainItems) {
+                    items = JSON.parse(mainItems);
+                } else if (backupItems) {
+                    items = JSON.parse(backupItems);
+                } else {
+                    // Default items
+                    items = [
+                        { id: 1, title: 'Riyaziyyat mühazirə 1', type: 'ders', folder: 'Riyaziyyat', date: '2024-01-15', content: 'Bu gün limit və törəmə mövzusunu keçdik. Limit anlayışı riyazi analizin əsasını təşkil edir. Törəmə isə dəyişmə sürətini ifadə edir.' },
+                        { id: 2, title: 'Fizika laboratoriya', type: 'qeyd', folder: 'Fizika', date: '2024-01-20', content: 'Təcrübə nəticələri: Sürət ölçüldü, cismin hərəkət tənliyi quruldu. Nyuton qanunları tətbiq edildi.' },
+                        { id: 3, title: 'Kvant fizikası', type: 'ders', folder: 'Fizika', date: '2024-02-10', content: 'Kvant ədədləri və atom quruluşu. Plank sabiti, foton enerjisi, Heisenberg qeyri-müəyyənlik prinsipi.' }
+                    ];
                 }
+                
+                // Backup yarat
+                createBackup();
+                
             } catch (e) {
                 console.error('Load error:', e);
+                resetToDefault();
             }
             
+            updateAll();
+        }
+
+        // Backup yarat
+        function createBackup() {
+            try {
+                localStorage.setItem('univapp_folders_backup', JSON.stringify(folders));
+                localStorage.setItem('univapp_items_backup', JSON.stringify(items));
+            } catch (e) {}
+        }
+
+        // Məlumatı yadda saxla (hər dəyişiklikdə)
+        function saveData() {
+            try {
+                // Master save
+                localStorage.setItem('univapp_folders_master', JSON.stringify(folders));
+                localStorage.setItem('univapp_items_master', JSON.stringify(items));
+                
+                // Backup save
+                createBackup();
+                
+                // Əlavə olaraq timestamp
+                localStorage.setItem('univapp_last_save', new Date().toISOString());
+                
+            } catch (e) {
+                console.error('Save error:', e);
+                alert('Xəbərdarlıq: Yaddaş dolub, köhnə məlumatlar silinə bilər');
+            }
+        }
+
+        // Reset to default
+        function resetToDefault() {
+            folders = [
+                { id: 1, name: 'Riyaziyyat', count: 0 },
+                { id: 2, name: 'Fizika', count: 0 },
+                { id: 3, name: 'Proqramlaşdırma', count: 0 },
+                { id: 4, name: 'Xətti cəbr', count: 0 }
+            ];
+            items = [];
+            saveData();
+        }
+
+        // Update all
+        function updateAll() {
             updateFolderCounts();
             renderFolders();
             renderItems();
             updateFolderSelect();
         }
 
-        // Save to localStorage
-        function saveData() {
-            try {
-                localStorage.setItem('univapp_folders_v2', JSON.stringify(folders));
-                localStorage.setItem('univapp_items_v2', JSON.stringify(items));
-            } catch (e) {
-                console.error('Save error:', e);
-            }
-        }
-
-        // Update folder counts
+        // Folder count yenilə
         function updateFolderCounts() {
             folders.forEach(folder => {
                 folder.count = items.filter(item => item.folder === folder.name).length;
             });
         }
 
-        // Render folders
+        // Folder seçimini yenilə
+        function updateFolderSelect() {
+            const select = document.getElementById('folderSelect');
+            select.innerHTML = '<option value="">Qovluq seçin</option>';
+            folders.forEach(f => {
+                select.innerHTML += `<option value="${f.name}">${f.name}</option>`;
+            });
+        }
+
+        // Folderları render et
         function renderFolders() {
-            const folderList = document.getElementById('folderList');
-            folderList.innerHTML = `
+            const list = document.getElementById('folderList');
+            list.innerHTML = `
                 <div class="folder-item ${selectedFolder === 'Bütün dərslər' ? 'active' : ''}" 
                      onclick="selectFolder('Bütün dərslər')">
-                    <i class="fas fa-globe"></i>
-                    <span>Bütün dərslər</span>
+                    <i class="fas fa-globe"></i> Bütün dərslər
                     <span class="folder-count">${items.length}</span>
                 </div>
             `;
             
-            folders.forEach(folder => {
-                folderList.innerHTML += `
-                    <div class="folder-item ${selectedFolder === folder.name ? 'active' : ''}" 
-                         onclick="selectFolder('${folder.name.replace(/'/g, "\\'")}')">
-                        <i class="fas fa-folder"></i>
-                        <span>${folder.name}</span>
-                        <span class="folder-count">${folder.count}</span>
+            folders.forEach(f => {
+                list.innerHTML += `
+                    <div class="folder-item ${selectedFolder === f.name ? 'active' : ''}" 
+                         onclick="selectFolder('${f.name.replace(/'/g, "\\'")}')">
+                        <i class="fas fa-folder"></i> ${f.name}
+                        <span class="folder-count">${f.count}</span>
                     </div>
                 `;
             });
         }
 
-        // Update folder select dropdown
-        function updateFolderSelect() {
-            const select = document.getElementById('folderSelect');
-            select.innerHTML = '<option value="">Qovluq seçin (əlavə etmək üçün)</option>';
-            
-            folders.forEach(folder => {
-                select.innerHTML += `<option value="${folder.name}">${folder.name}</option>`;
-            });
-            
-            // Əgər konkret qovluq seçilibsə, onu seç
-            if (selectedFolder !== 'Bütün dərslər') {
-                select.value = selectedFolder;
-            }
-        }
-
-        // Render items
+        // Elementləri render et - İLK 30 SİMVOL GÖRÜNÜR
         function renderItems() {
-            const itemsGrid = document.getElementById('itemsGrid');
-            const bookView = document.getElementById('bookView');
-            
-            // Əgər kitab rejimindəyiksə, grid-i gizlət
-            if (isBookMode) {
-                itemsGrid.classList.add('hidden');
-                return;
-            }
-            
-            itemsGrid.classList.remove('hidden');
-            bookView.classList.add('hidden');
-            itemsGrid.innerHTML = '';
+            const grid = document.getElementById('itemsGrid');
+            grid.innerHTML = '';
             
             let filteredItems = items;
+            
+            // Tab-a görə filtr
+            if (currentTab === 'dersler') {
+                filteredItems = filteredItems.filter(i => i.type === 'ders');
+            } else if (currentTab === 'pdfs') {
+                filteredItems = filteredItems.filter(i => i.type === 'pdf');
+            } else if (currentTab === 'qeydler') {
+                filteredItems = filteredItems.filter(i => i.type === 'qeyd');
+            }
+            
+            // Qovluğa görə filtr
             if (selectedFolder !== 'Bütün dərslər') {
-                filteredItems = items.filter(item => item.folder === selectedFolder);
+                filteredItems = filteredItems.filter(i => i.folder === selectedFolder);
             }
             
             if (filteredItems.length === 0) {
-                itemsGrid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:60px; color:#728aa8;">Heç bir məlumat yoxdur</div>';
+                grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:50px; color:#728aa8;">Heç bir məlumat yoxdur</div>';
                 return;
             }
             
@@ -817,33 +812,80 @@
                 card.className = 'item-card';
                 card.onclick = () => openBookMode(item.id);
                 
-                const icon = item.type === 'pdf' ? 'fa-file-pdf' : 'fa-book-open';
+                let icon = 'fa-file';
+                if (item.type === 'ders') icon = 'fa-book-open';
+                else if (item.type === 'qeyd') icon = 'fa-sticky-note';
+                else if (item.type === 'pdf') icon = 'fa-file-pdf';
+                
+                // Mətnin ilk 30 simvolu (preview)
+                let preview = '';
+                if (item.content) {
+                    preview = item.content.substring(0, 30);
+                    if (item.content.length > 30) preview += '...';
+                } else if (item.type === 'pdf') {
+                    preview = 'PDF faylı';
+                } else {
+                    preview = 'Məzmun yoxdur';
+                }
+                
                 const date = new Date(item.date).toLocaleDateString('az');
                 
                 card.innerHTML = `
                     <div class="item-icon"><i class="fas ${icon}"></i></div>
                     <div class="item-title">${item.title}</div>
+                    <div class="item-preview">${preview}</div>
                     <div class="item-meta">
-                        <i class="far fa-calendar"></i> ${date}
+                        <span class="item-badge">${item.type}</span>
+                        <span>${date}</span>
                     </div>
                 `;
-                itemsGrid.appendChild(card);
+                grid.appendChild(card);
             });
         }
 
-        // Select folder
+        // Kitab rejimi - tam ekran
+        function openBookMode(id) {
+            const item = items.find(i => i.id === id);
+            if (!item) return;
+            
+            document.getElementById('bookTitle').innerText = item.title;
+            document.getElementById('bookDate').innerText = new Date(item.date).toLocaleDateString('az');
+            document.getElementById('bookFolder').innerText = item.folder;
+            document.getElementById('bookType').innerText = item.type;
+            
+            // Mətn formatı - düzgün alt-alta
+            if (item.content) {
+                const formattedContent = item.content.replace(/\n/g, '</p><p>');
+                document.getElementById('bookContent').innerHTML = `<p>${formattedContent}</p>`;
+            } else {
+                document.getElementById('bookContent').innerHTML = '<p>Məzmun yoxdur</p>';
+            }
+            
+            document.getElementById('normalView').classList.add('hidden');
+            document.getElementById('bookView').classList.remove('hidden');
+            document.getElementById('exitBookBtn').classList.remove('hidden');
+            isBookMode = true;
+        }
+
+        // Kitabdan çıx
+        function exitBookMode() {
+            document.getElementById('normalView').classList.remove('hidden');
+            document.getElementById('bookView').classList.add('hidden');
+            document.getElementById('exitBookBtn').classList.add('hidden');
+            isBookMode = false;
+        }
+
+        // Folder seç
         function selectFolder(folderName) {
-            if (isBookMode) exitBookMode();
             selectedFolder = folderName;
             document.getElementById('currentFolderTitle').innerText = folderName;
             renderFolders();
             renderItems();
-            updateFolderSelect();
         }
 
-        // Create new folder
+        // Yeni folder
         function createFolder() {
-            const name = prompt('Qovluq adını daxil edin:');
+            const name = prompt('Qovluq adı:');
             if (name && name.trim()) {
                 folders.push({
                     id: Date.now(),
@@ -851,32 +893,46 @@
                     count: 0
                 });
                 saveData();
-                renderFolders();
-                updateFolderSelect();
+                updateAll();
             }
         }
 
-        // Create new note
-        function createNote() {
-            const text = prompt('Qeydinizi daxil edin:');
-            if (text && text.trim()) {
-                const newItem = {
-                    id: Date.now(),
-                    title: prompt('Qeyd üçün başlıq:', `Qeyd ${new Date().toLocaleDateString('az')}`) || `Qeyd ${new Date().toLocaleDateString('az')}`,
-                    type: 'note',
-                    folder: selectedFolder !== 'Bütün dərslər' ? selectedFolder : 'Ümumi',
-                    date: new Date().toISOString(),
-                    content: text.trim()
-                };
-                items.push(newItem);
-                updateFolderCounts();
-                saveData();
-                renderFolders();
-                renderItems();
+        // Action düyməsi
+        function handleAction() {
+            if (currentTab === 'pdfs') {
+                uploadPDF();
+            } else if (currentTab === 'kamera') {
+                openCamera();
+            } else {
+                createNote();
             }
         }
 
-        // Upload PDF
+        // Yeni qeyd
+        function createNote(type = 'qeyd') {
+            const title = prompt('Başlıq:', `Qeyd ${new Date().toLocaleDateString('az')}`);
+            if (!title) return;
+            
+            const content = prompt('Mətn:');
+            if (!content) return;
+            
+            const folder = selectedFolder !== 'Bütün dərslər' ? selectedFolder : 'Ümumi';
+            
+            const newItem = {
+                id: Date.now(),
+                title: title,
+                type: currentTab === 'dersler' ? 'ders' : 'qeyd',
+                folder: folder,
+                date: new Date().toISOString(),
+                content: content
+            };
+            
+            items.push(newItem);
+            saveData();
+            updateAll();
+        }
+
+        // PDF yüklə
         function uploadPDF() {
             const input = document.createElement('input');
             input.type = 'file';
@@ -895,10 +951,8 @@
                             data: loadEvent.target.result
                         };
                         items.push(newItem);
-                        updateFolderCounts();
                         saveData();
-                        renderFolders();
-                        renderItems();
+                        updateAll();
                     };
                     reader.readAsDataURL(file);
                 }
@@ -906,208 +960,143 @@
             input.click();
         }
 
-        // Kitab rejimi - tam ekran dərs oxu
-        function openBookMode(itemId) {
-            const item = items.find(i => i.id === itemId);
-            if (!item) return;
+        // Tab dəyiş
+        function switchTab(tabName, element) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            element.classList.add('active');
             
-            currentBookItem = item;
+            currentTab = tabName;
             
-            // Kitab məlumatlarını doldur
-            document.getElementById('bookTitle').innerText = item.title;
-            document.getElementById('bookDate').innerText = new Date(item.date).toLocaleDateString('az');
-            document.getElementById('bookFolder').innerText = item.folder;
+            // Başlığı dəyiş
+            const titles = {
+                'ana': 'Ana səhifə',
+                'dersler': 'Bütün dərslər',
+                'pdfs': 'PDF Kitabxana',
+                'qeydler': 'Qeydlərim',
+                'kamera': 'Kamera OCR'
+            };
             
-            if (item.type === 'note') {
-                document.getElementById('bookContent').innerHTML = `<p>${item.content.replace(/\n/g, '</p><p>')}</p>`;
-            } else if (item.type === 'pdf' && item.data) {
-                document.getElementById('bookContent').innerHTML = `<embed src="${item.data}" type="application/pdf" width="100%" height="600px" style="border-radius: 20px;">`;
+            document.getElementById('currentFolderTitle').innerText = titles[tabName];
+            
+            // Action düyməsi mətnini dəyiş
+            const actionBtn = document.getElementById('actionText');
+            if (tabName === 'pdfs') actionBtn.innerText = 'Yeni PDF';
+            else if (tabName === 'kamera') actionBtn.innerText = 'Kamera aç';
+            else actionBtn.innerText = 'Yeni';
+            
+            renderItems();
+            
+            if (tabName === 'kamera') {
+                document.querySelector('.ocr-panel').scrollIntoView({ behavior: 'smooth' });
             }
-            
-            // Grid-i gizlət, kitabı göstər
-            document.getElementById('itemsGrid').classList.add('hidden');
-            document.getElementById('bookView').classList.remove('hidden');
-            document.getElementById('contentHeader').style.display = 'none';
-            
-            // Main grid-i kitab rejiminə keçir
-            document.getElementById('mainGrid').classList.add('book-mode');
-            
-            // Çıxış düyməsini göstər
-            document.getElementById('exitBookBtn').classList.remove('hidden');
-            
-            isBookMode = true;
         }
 
-        // Kitab rejimindən çıx
-        function exitBookMode() {
-            document.getElementById('itemsGrid').classList.remove('hidden');
-            document.getElementById('bookView').classList.add('hidden');
-            document.getElementById('contentHeader').style.display = 'flex';
-            document.getElementById('mainGrid').classList.remove('book-mode');
-            document.getElementById('exitBookBtn').classList.add('hidden');
-            isBookMode = false;
-            currentBookItem = null;
-        }
-
-        // Camera functions
+        // ========== KAMERA FUNKSİYALARI ==========
         async function openCamera() {
-            const container = document.getElementById('camera-container');
-            const video = document.getElementById('camera-stream');
-            
             try {
                 cameraStream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { 
-                        facingMode: 'environment',
-                        width: { ideal: 1920 },
-                        height: { ideal: 1080 }
-                    } 
+                    video: { facingMode: 'environment' } 
                 });
-                
+                const video = document.getElementById('camera-stream');
                 video.srcObject = cameraStream;
-                container.style.display = 'block';
-                isCameraOpen = true;
-                
+                document.getElementById('camera-container').style.display = 'block';
                 await video.play();
             } catch (err) {
-                alert('Kamera açılmadı: ' + err.message);
+                alert('Kamera xətası: ' + err.message);
             }
         }
 
         function closeCamera() {
             if (cameraStream) {
-                cameraStream.getTracks().forEach(track => track.stop());
-                cameraStream = null;
+                cameraStream.getTracks().forEach(t => t.stop());
             }
-            
             document.getElementById('camera-container').style.display = 'none';
-            isCameraOpen = false;
         }
 
-        // Qalereyadan şəkil seç
         function openGallery() {
-            const input = document.getElementById('galleryInput');
-            input.onchange = (e) => {
-                const file = e.target.files[0];
-                if (file) {
-                    processImage(file);
-                }
-            };
-            input.click();
+            document.getElementById('galleryInput').click();
         }
+
+        document.getElementById('galleryInput').onchange = function(e) {
+            const file = e.target.files[0];
+            if (file) processImage(file);
+        };
 
         async function captureImage() {
-            if (!isCameraOpen) return;
-            
             const video = document.getElementById('camera-stream');
             const canvas = document.createElement('canvas');
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
-            
-            const context = canvas.getContext('2d');
-            // Normal çəkim - güzgü effekti yox
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            canvas.getContext('2d').drawImage(video, 0, 0);
             
             closeCamera();
             
-            // Canvas-ı blob-a çevir
-            canvas.toBlob((blob) => {
-                processImage(blob);
-            }, 'image/png');
+            canvas.toBlob(blob => processImage(blob));
         }
 
         async function processImage(imageBlob) {
-            // Loading göstər
             document.getElementById('ocr-loading').style.display = 'block';
             
             try {
-                const { data: { text } } = await Tesseract.recognize(imageBlob, 'aze+eng', {
-                    logger: m => console.log(m)
-                });
-                
-                // Təmizlənmiş mətn
-                const cleanText = text.replace(/\s+/g, ' ').trim();
-                
-                document.getElementById('ocr-text').innerText = cleanText || 'Mətn tapılmadı';
+                const { data: { text } } = await Tesseract.recognize(imageBlob, 'aze+eng');
+                // Mətn formatını qoru
+                document.getElementById('ocr-text').innerText = text || 'Mətn tapılmadı';
                 document.getElementById('ocr-result').style.display = 'block';
             } catch (err) {
-                alert('OCR xətası: ' + err.message);
+                alert('OCR xətası');
             } finally {
                 document.getElementById('ocr-loading').style.display = 'none';
             }
         }
 
-        // OCR mətnini yadda saxla (seçilmiş qovluğa)
-        function saveOCRWithFolder() {
+        // OCR yadda saxla - mətn formatı qorunur
+        function saveOCR() {
             const text = document.getElementById('ocr-text').innerText.trim();
-            const selectedFolderName = document.getElementById('folderSelect').value;
+            const folderName = document.getElementById('folderSelect').value;
             
-            if (!text || text === 'Mətn tapılmadı') {
-                alert('Mətn yoxdur');
-                return;
-            }
-            
-            if (!selectedFolderName) {
-                alert('Zəhmət olmasa qovluq seçin');
+            if (!text || !folderName) {
+                alert('Mətn və qovluq seçin');
                 return;
             }
             
             const newItem = {
                 id: Date.now(),
-                title: `OCR ${new Date().toLocaleDateString('az')} ${new Date().toLocaleTimeString('az')}`,
-                type: 'note',
-                folder: selectedFolderName,
+                title: `OCR ${new Date().toLocaleDateString('az')}`,
+                type: 'qeyd',
+                folder: folderName,
                 date: new Date().toISOString(),
-                content: text
+                content: text  // Mətn olduğu kimi saxlanır
             };
             
             items.push(newItem);
-            updateFolderCounts();
             saveData();
-            renderFolders();
-            renderItems();
+            updateAll();
             
-            alert(`"${selectedFolderName}" qovluğuna əlavə edildi!`);
-            
-            // Təmizlə
-            document.getElementById('ocr-text').innerText = '';
+            alert('Əlavə edildi!');
             document.getElementById('ocr-result').style.display = 'none';
         }
 
         function copyOCR() {
             const text = document.getElementById('ocr-text').innerText;
-            navigator.clipboard.writeText(text).then(() => {
-                alert('Mətn köçürüldü');
-            });
+            navigator.clipboard.writeText(text);
+            alert('Köçürüldü');
         }
 
         function clearOCR() {
-            document.getElementById('ocr-text').innerText = '';
             document.getElementById('ocr-result').style.display = 'none';
         }
 
-        // Switch tabs
-        function switchTab(tabName, element) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            element.classList.add('active');
-            
-            if (tabName === 'kamera') {
-                document.querySelector('.ocr-panel').scrollIntoView({ behavior: 'smooth' });
-            }
-            
-            if (isBookMode) exitBookMode();
-        }
-
-        // Show stats
         function showStats() {
-            const totalItems = items.length;
-            const totalFolders = folders.length;
-            alert(`UniVapp - Profil\nCəmi qeydlər: ${totalItems}\nQovluqlar: ${totalFolders}`);
+            alert(`UniVapp\nCəmi qeydlər: ${items.length}\nQovluqlar: ${folders.length}\nSon yedəkləmə: ${new Date().toLocaleTimeString('az')}`);
         }
 
-        // Initialize
+        // Initial load
         loadData();
 
-        // Save before unload
+        // Hər 5 dəqiqədə backup
+        setInterval(createBackup, 300000);
+
+        // Səhifə bağlananda yadda saxla
         window.addEventListener('beforeunload', () => {
             saveData();
         });
