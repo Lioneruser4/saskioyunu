@@ -71,6 +71,26 @@
             align-items: center;
             gap: 12px;
             border: 1px solid var(--border-color);
+            position: relative;
+        }
+
+        .back-btn {
+            width: 40px;
+            height: 40px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--gold);
+            font-size: 1.2rem;
+            transition: 0.3s;
+        }
+
+        .back-btn:hover {
+            background: var(--gold);
+            color: #0a1a2f;
         }
 
         .avatar {
@@ -207,11 +227,17 @@
         .game-header {
             display: flex;
             justify-content: space-between;
+            align-items: center;
             background: var(--card-bg);
             border-radius: 40px;
             padding: 12px 20px;
             margin-bottom: 20px;
             border: 1px solid var(--border-color);
+        }
+
+        .game-info {
+            display: flex;
+            gap: 25px;
         }
 
         .game-info-item {
@@ -400,6 +426,13 @@
             flex: 1;
         }
 
+        .leaderboard-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
         .leaderboard-list {
             background: var(--card-bg);
             border-radius: 40px;
@@ -550,6 +583,9 @@
     <div class="app">
         <!-- Header (Hər zaman görünür) -->
         <div class="header">
+            <div class="back-btn" id="globalBackBtn" onclick="handleBack()" style="display: none;">
+                <i class="fas fa-arrow-left"></i>
+            </div>
             <div class="avatar" id="avatarContainer">
                 <span id="avatarText">U</span>
                 <img id="avatarImg" src="" style="display: none;">
@@ -581,7 +617,7 @@
                 <div class="menu-icon"><i class="fas fa-trophy"></i></div>
                 <div class="menu-text">
                     <h3>SIRALAMA</h3>
-                    <p>TOP 10 oyunçu • Profil şəkilləri</p>
+                    <p>TOP 10 oyunçu • Yalnız real istifadəçilər</p>
                 </div>
                 <i class="fas fa-arrow-right" style="color: var(--gold);"></i>
             </div>
@@ -599,20 +635,22 @@
         <!-- Oyun Bölməsi -->
         <div id="gameSection" class="game-area">
             <div class="game-header">
-                <div class="game-info-item">
-                    <div class="game-info-value" id="questionCounter">1</div>
-                    <div class="game-info-label">Sual</div>
+                <div class="game-info">
+                    <div class="game-info-item">
+                        <div class="game-info-value" id="questionCounter">1</div>
+                        <div class="game-info-label">Sual</div>
+                    </div>
+                    <div class="game-info-item">
+                        <div class="game-info-value" id="gameBalance">0</div>
+                        <div class="game-info-label">AZN</div>
+                    </div>
+                    <div class="game-info-item">
+                        <div class="game-info-value" id="jokerCount">1</div>
+                        <div class="game-info-label">Joker</div>
+                    </div>
                 </div>
-                <div class="game-info-item">
-                    <div class="game-info-value" id="gameBalance">0</div>
-                    <div class="game-info-label">AZN</div>
-                </div>
-                <div class="game-info-item">
-                    <div class="game-info-value" id="jokerCount">1</div>
-                    <div class="game-info-label">Joker</div>
-                </div>
-                <div class="back-btn" onclick="showLobby()" style="cursor:pointer;">
-                    <i class="fas fa-times" style="color: var(--gold); font-size:1.5rem;"></i>
+                <div class="back-btn" onclick="showLobby()">
+                    <i class="fas fa-times"></i>
                 </div>
             </div>
 
@@ -644,6 +682,12 @@
 
         <!-- Leaderboard Bölməsi -->
         <div id="leaderboardSection" class="leaderboard-area">
+            <div class="leaderboard-header">
+                <div class="back-btn" onclick="showLobby()">
+                    <i class="fas fa-arrow-left"></i>
+                </div>
+                <h2 style="flex:1; color: var(--gold);"><i class="fas fa-trophy"></i> TOP 10</h2>
+            </div>
             <div class="leaderboard-list" id="leaderboardList">
                 <div style="text-align:center; padding:40px;">Yüklənir...</div>
             </div>
@@ -677,13 +721,14 @@
         tg.ready();
         tg.expand();
 
-        const user = tg.initDataUnsafe?.user || {
-            id: Math.floor(Math.random() * 1000000),
-            first_name: 'İstifadəçi',
-            last_name: '',
-            username: 'user' + Math.floor(Math.random() * 1000),
-            photo_url: null
-        };
+        // Telegram istifadəçi məlumatları
+        const user = tg.initDataUnsafe?.user || null;
+        
+        // Guest olub-olmadığını yoxla
+        const isGuest = !user || !user.id || user.id.toString().length > 10;
+        
+        // Real istifadəçi məlumatları (guest varsa, null saxlayırıq)
+        const realUser = isGuest ? null : user;
 
         // ========== STATE ==========
         let currentScreen = 'lobby';
@@ -699,13 +744,109 @@
             questionsHistory: []
         };
 
+        // ========== AZƏRBAYCANCA SUALLAR (Yerli API) ==========
+        const AZERBAIJANI_QUESTIONS = {
+            easy: [
+                { question: "Azərbaycanın paytaxtı hansı şəhərdir?", correct: "Bakı", options: ["Bakı", "Gəncə", "Sumqayıt", "Naxçıvan"] },
+                { question: "2 + 2 * 2 = ?", correct: "6", options: ["4", "6", "8", "2"] },
+                { question: "Azərbaycanın milli valyutası nədir?", correct: "Manat", options: ["Manat", "Dollar", "Rubl", "Lirə"] },
+                { question: "Dünyanın ən böyük okeanı hansıdır?", correct: "Sakit okean", options: ["Atlantik", "Hind", "Şimal Buzlu", "Sakit okean"] },
+                { question: "İnsanda neçə xromosom var?", correct: "46", options: ["46", "48", "44", "42"] },
+                { question: "Azərbaycanın ən uzun çayı hansıdır?", correct: "Kür", options: ["Araz", "Kür", "Tərtər", "Qanıx"] },
+                { question: "Günəş sistemində ən böyük planet hansıdır?", correct: "Yupiter", options: ["Yupiter", "Saturn", "Neptun", "Uran"] },
+                { question: "Bakı Neft İnstitutu neçənci ildə yaradılıb?", correct: "1920", options: ["1920", "1930", "1940", "1950"] },
+                { question: "Ən sürətli quru heyvanı hansıdır?", correct: "Çita", options: ["Çita", "Aslan", "Maral", "Pələng"] },
+                { question: "Su neçə dərəcədə qaynayır?", correct: "100", options: ["90", "100", "110", "120"] }
+            ],
+            medium: [
+                { question: "Azərbaycan neçənci ildə müstəqillik qazanıb?", correct: "1991", options: ["1990", "1991", "1992", "1993"] },
+                { question: "Dünyanın ən hündür dağı hansıdır?", correct: "Everest", options: ["Everest", "K2", "Kilimancaro", "Elbrus"] },
+                { question: "Azərbaycanın ən böyük gölü hansıdır?", correct: "Sarısu", options: ["Sarısu", "Göygöl", "Ağgöl", "Böyükşor"] },
+                { question: "Hüceyrənin əsas enerji mərkəzi nə adlanır?", correct: "Mitoxondri", options: ["Mitoxondri", "Ribosom", "Nüvə", "Xloroplast"] },
+                { question: "Bakı Dövlət Universiteti neçənci ildə yaradılıb?", correct: "1919", options: ["1919", "1920", "1921", "1922"] },
+                { question: "Qız qalasının hündürlüyü nə qədərdir?", correct: "28 m", options: ["25 m", "28 m", "30 m", "32 m"] },
+                { question: "Dünyanın ən kiçik dövləti hansıdır?", correct: "Vatikan", options: ["Vatikan", "Monako", "San Marino", "Malta"] },
+                { question: "Azərbaycanın milli qəhrəmanlarından biri?", correct: "Mübariz İbrahimov", options: ["Mübariz İbrahimov", "Xocalı", "Şəhidlər", "Qarabağ"] },
+                { question: "Ən böyük orqan hansıdır?", correct: "Dəri", options: ["Dəri", "Qaraciyər", "Ürək", "Ağciyər"] },
+                { question: "Azərbaycan neçə rayona bölünür?", correct: "66", options: ["66", "70", "75", "80"] }
+            ],
+            hard: [
+                { question: "Dünyanın ən dərin gölü hansıdır?", correct: "Baykal", options: ["Baykal", "Viktoriya", "Superior", "Tanganika"] },
+                { question: "Azərbaycanın ən qədim insan məskəni?", correct: "Azıx mağarası", options: ["Azıx mağarası", "Tağlar", "Damcılı", "Qobustan"] },
+                { question: "Bakı Dövlət Universitetinin ilk rektoru kim olub?", correct: "Vasili Razumovski", options: ["Vasili Razumovski", "Heydər Əliyev", "Nəriman Nərimanov", "Məmməd Əmin Rəsulzadə"] },
+                { question: "Xəzər dənizinin orta dərinliyi neçə metrdir?", correct: "208 m", options: ["150 m", "180 m", "208 m", "250 m"] },
+                { question: "Azərbaycan ərazisində neçə iqlim qurşağı var?", correct: "9", options: ["7", "8", "9", "10"] },
+                { question: "İnsan beynində neçə neyron var?", correct: "86 milyard", options: ["50 milyard", "86 milyard", "100 milyard", "120 milyard"] },
+                { question: "Ən uzun ömürlü ağac hansıdır?", correct: "Sekvoya", options: ["Sekvoya", "Palıd", "Şam", "Zeytun"] },
+                { question: "Azərbaycanda neçə dövlət qoruğu var?", correct: "14", options: ["10", "12", "14", "16"] },
+                { question: "Dünyanın ən sürətli quşu hansıdır?", correct: "Şahin", options: ["Şahin", "Qaranquş", "Qartal", "Bayquş"] },
+                { question: "Bakı metrosu neçənci ildə açılıb?", correct: "1967", options: ["1965", "1966", "1967", "1968"] }
+            ]
+        };
+
+        // ========== SUAL ÇƏKMƏ (Yerli Azərbaycanca) ==========
+        async function fetchQuestion(difficulty) {
+            // API cəhdi (əgər işləsə, ingiliscə gələ bilər, ona görə yerli bazadan istifadə edirik)
+            try {
+                // Yerli bazadan çək (tam Azərbaycanca)
+                const questions = AZERBAIJANI_QUESTIONS[difficulty] || AZERBAIJANI_QUESTIONS.easy;
+                const randomIndex = Math.floor(Math.random() * questions.length);
+                const q = questions[randomIndex];
+                
+                // Cavabları qarışdır
+                const options = [...q.options];
+                shuffleArray(options);
+                
+                return {
+                    id: Date.now() + Math.random(),
+                    question: q.question,
+                    correct: q.correct,
+                    options: options,
+                    difficulty: difficulty
+                };
+            } catch (error) {
+                console.log('Sual xətası, fallback istifadə edilir');
+                return getFallbackQuestion(difficulty);
+            }
+        }
+
+        function getFallbackQuestion(difficulty) {
+            const fallbacks = AZERBAIJANI_QUESTIONS[difficulty] || AZERBAIJANI_QUESTIONS.easy;
+            const q = fallbacks[Math.floor(Math.random() * fallbacks.length)];
+            
+            return {
+                id: Date.now() + Math.random(),
+                question: q.question,
+                correct: q.correct,
+                options: [...q.options],
+                difficulty: difficulty
+            };
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
         // ========== UI FUNKSİYALARI ==========
+        function handleBack() {
+            if (currentScreen === 'game') {
+                showLobby();
+            } else if (currentScreen === 'leaderboard') {
+                showLobby();
+            }
+        }
+
         function showLobby() {
             currentScreen = 'lobby';
             document.getElementById('lobbySection').style.display = 'flex';
             document.getElementById('gameSection').style.display = 'none';
             document.getElementById('leaderboardSection').style.display = 'none';
             document.getElementById('gameOverScreen').style.display = 'none';
+            document.getElementById('globalBackBtn').style.display = 'none';
             
             if (gameState.timer) clearInterval(gameState.timer);
             gameState.gameActive = false;
@@ -717,6 +858,7 @@
             document.getElementById('gameSection').style.display = 'flex';
             document.getElementById('leaderboardSection').style.display = 'none';
             document.getElementById('gameOverScreen').style.display = 'none';
+            document.getElementById('globalBackBtn').style.display = 'none';
             
             restartGame();
         }
@@ -727,6 +869,7 @@
             document.getElementById('gameSection').style.display = 'none';
             document.getElementById('leaderboardSection').style.display = 'flex';
             document.getElementById('gameOverScreen').style.display = 'none';
+            document.getElementById('globalBackBtn').style.display = 'block';
             
             loadLeaderboard();
         }
@@ -736,24 +879,29 @@
             const avatarImg = document.getElementById('avatarImg');
             const avatarText = document.getElementById('avatarText');
             
-            if (user.photo_url) {
-                avatarImg.src = user.photo_url;
+            if (realUser && realUser.photo_url) {
+                avatarImg.src = realUser.photo_url;
                 avatarImg.style.display = 'block';
                 avatarText.style.display = 'none';
             } else {
                 avatarText.style.display = 'flex';
-                avatarText.innerText = user.first_name.charAt(0).toUpperCase();
+                avatarText.innerText = realUser ? realUser.first_name.charAt(0).toUpperCase() : 'G';
                 avatarImg.style.display = 'none';
             }
             
-            document.getElementById('userName').innerText = user.first_name + ' ' + (user.last_name || '');
-            document.getElementById('currentUserName').innerText = user.first_name;
+            const displayName = realUser ? 
+                (realUser.first_name + ' ' + (realUser.last_name || '')) : 
+                'Qonaq İstifadəçi';
+            document.getElementById('userName').innerText = displayName;
+            document.getElementById('currentUserName').innerText = displayName;
         }
 
         // ========== BALANS ==========
         function loadUserBalance() {
+            if (!realUser) return;
+            
             try {
-                const saved = localStorage.getItem(`milyoncu_${user.id}`);
+                const saved = localStorage.getItem(`milyoncu_${realUser.id}`);
                 if (saved) {
                     const data = JSON.parse(saved);
                     gameState.balance = data.balance || 0;
@@ -768,72 +916,14 @@
             document.getElementById('gameBalance').innerText = gameState.balance;
             document.getElementById('questionCounter').innerText = gameState.questionCount + 1;
             
+            if (!realUser) return;
+            
             try {
-                localStorage.setItem(`milyoncu_${user.id}`, JSON.stringify({
+                localStorage.setItem(`milyoncu_${realUser.id}`, JSON.stringify({
                     balance: gameState.balance,
                     lastPlayed: new Date().toISOString()
                 }));
             } catch (e) {}
-        }
-
-        // ========== SUAL ÇƏKMƏ ==========
-        async function fetchQuestion(difficulty) {
-            try {
-                const categories = [9, 17, 18, 19, 22, 23];
-                const randomCategory = categories[Math.floor(Math.random() * categories.length)];
-                
-                const response = await fetch(`https://opentdb.com/api.php?amount=1&category=${randomCategory}&difficulty=${difficulty}&type=multiple`);
-                const data = await response.json();
-                
-                if (data.response_code === 0 && data.results.length > 0) {
-                    const q = data.results[0];
-                    
-                    function decodeHTMLEntities(text) {
-                        const textArea = document.createElement('textarea');
-                        textArea.innerHTML = text;
-                        return textArea.value;
-                    }
-                    
-                    const allAnswers = [q.correct_answer, ...q.incorrect_answers];
-                    const shuffled = shuffleArray(allAnswers);
-                    
-                    return {
-                        id: Date.now() + Math.random(),
-                        question: decodeHTMLEntities(q.question),
-                        correct: decodeHTMLEntities(q.correct_answer),
-                        options: shuffled.map(a => decodeHTMLEntities(a)),
-                        difficulty: q.difficulty
-                    };
-                }
-                throw new Error('API xətası');
-            } catch (error) {
-                return getFallbackQuestion(difficulty);
-            }
-        }
-
-        function getFallbackQuestion(difficulty) {
-            const fallbacks = {
-                easy: [
-                    { question: "Azərbaycanın paytaxtı hansı şəhərdir?", correct: "Bakı", options: ["Bakı", "Gəncə", "Sumqayıt", "Naxçıvan"] },
-                    { question: "2 + 2 * 2 = ?", correct: "6", options: ["4", "6", "8", "2"] }
-                ],
-                medium: [
-                    { question: "Azərbaycan neçinci ildə müstəqillik qazanıb?", correct: "1991", options: ["1990", "1991", "1992", "1993"] }
-                ],
-                hard: [
-                    { question: "Dünyanın ən dərin gölü hansıdır?", correct: "Baykal", options: ["Baykal", "Viktoriya", "Superior", "Tanganika"] }
-                ]
-            };
-            const list = fallbacks[difficulty] || fallbacks.easy;
-            return list[Math.floor(Math.random() * list.length)];
-        }
-
-        function shuffleArray(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
-            }
-            return array;
         }
 
         // ========== ADAPTİV ÇƏTİNLİK ==========
@@ -1045,36 +1135,48 @@
 
         // ========== STATİSTİKA ==========
         function updateStats(isCorrect) {
+            if (!realUser) return;
+            
             try {
-                const stats = JSON.parse(localStorage.getItem(`milyoncu_stats_${user.id}`) || '{"games":1,"correct":0,"wrong":0,"highest":0}');
+                const stats = JSON.parse(localStorage.getItem(`milyoncu_stats_${realUser.id}`) || '{"games":1,"correct":0,"wrong":0,"highest":0}');
                 if (isCorrect) stats.correct++;
                 else stats.wrong++;
                 if (gameState.balance > stats.highest) stats.highest = gameState.balance;
-                localStorage.setItem(`milyoncu_stats_${user.id}`, JSON.stringify(stats));
+                localStorage.setItem(`milyoncu_stats_${realUser.id}`, JSON.stringify(stats));
             } catch (e) {}
         }
 
         function showStats() {
-            const stats = JSON.parse(localStorage.getItem(`milyoncu_stats_${user.id}`) || '{"games":0,"correct":0,"wrong":0,"highest":0}');
+            if (!realUser) {
+                alert('📊 STATİSTİKA\nStatistika yalnız real istifadəçilər üçündür.\nTelegram hesabınızla daxil olun!');
+                return;
+            }
+            
+            const stats = JSON.parse(localStorage.getItem(`milyoncu_stats_${realUser.id}`) || '{"games":0,"correct":0,"wrong":0,"highest":0}');
             alert(`
 📊 STATİSTİKA
-Oyun sayı: ${stats.games || 1}
-Düzgün: ${stats.correct}
-Səhv: ${stats.wrong}
-Ən yüksək xal: ${stats.highest} AZN
+📋 Oyun sayı: ${stats.games || 1}
+✅ Düzgün cavab: ${stats.correct}
+❌ Səhv cavab: ${stats.wrong}
+🏆 Ən yüksək xal: ${stats.highest} AZN
             `);
         }
 
-        // ========== LEADERBOARD ==========
+        // ========== LEADERBOARD (YALNIZ REAL İSTİFADƏÇİLƏR) ==========
         function updateLeaderboard() {
+            if (!realUser) return;
+            
             try {
                 let leaderboard = JSON.parse(localStorage.getItem('milyoncu_leaderboard') || '[]');
                 
-                const existingIndex = leaderboard.findIndex(p => p.id === user.id);
+                // Yalnız real istifadəçilər (id < 1000000)
+                leaderboard = leaderboard.filter(p => p.id && p.id.toString().length < 10);
+                
+                const existingIndex = leaderboard.findIndex(p => p.id === realUser.id);
                 const playerData = {
-                    id: user.id,
-                    name: user.first_name + ' ' + (user.last_name || ''),
-                    photo_url: user.photo_url || null,
+                    id: realUser.id,
+                    name: realUser.first_name + ' ' + (realUser.last_name || ''),
+                    photo_url: realUser.photo_url || null,
                     score: gameState.balance,
                     date: new Date().toISOString()
                 };
@@ -1084,10 +1186,15 @@ Səhv: ${stats.wrong}
                         leaderboard[existingIndex] = playerData;
                     }
                 } else {
-                    leaderboard.push(playerData);
+                    if (gameState.balance > 0) {
+                        leaderboard.push(playerData);
+                    }
                 }
                 
+                // Skora görə sırala və yalnız 0-dan böyük olanları saxla
+                leaderboard = leaderboard.filter(p => p.score > 0);
                 leaderboard.sort((a, b) => b.score - a.score);
+                
                 localStorage.setItem('milyoncu_leaderboard', JSON.stringify(leaderboard));
                 
             } catch (e) {}
@@ -1095,11 +1202,16 @@ Səhv: ${stats.wrong}
 
         function loadLeaderboard() {
             try {
-                const leaderboard = JSON.parse(localStorage.getItem('milyoncu_leaderboard') || '[]');
+                let leaderboard = JSON.parse(localStorage.getItem('milyoncu_leaderboard') || '[]');
+                
+                // Yalnız real istifadəçilər və skoru > 0 olanlar
+                leaderboard = leaderboard.filter(p => p.id && p.id.toString().length < 10 && p.score > 0);
+                
                 const list = document.getElementById('leaderboardList');
                 
                 if (leaderboard.length === 0) {
                     list.innerHTML = '<div style="text-align:center; padding:40px;">Hələ oyunçu yoxdur</div>';
+                    document.getElementById('currentUserRankValue').innerText = '#0';
                     return;
                 }
                 
@@ -1129,8 +1241,12 @@ Səhv: ${stats.wrong}
                     list.appendChild(div);
                 });
                 
-                const userRank = leaderboard.findIndex(p => p.id === user.id) + 1;
-                document.getElementById('currentUserRankValue').innerText = userRank ? `#${userRank}` : '#0';
+                if (realUser) {
+                    const userRank = leaderboard.findIndex(p => p.id === realUser.id) + 1;
+                    document.getElementById('currentUserRankValue').innerText = userRank ? `#${userRank}` : '#0';
+                } else {
+                    document.getElementById('currentUserRankValue').innerText = '#0';
+                }
                 
             } catch (e) {}
         }
@@ -1144,7 +1260,9 @@ Səhv: ${stats.wrong}
             document.getElementById('gameOverScreen').style.display = 'flex';
             document.getElementById('finalBalance').innerText = gameState.balance;
             
-            updateLeaderboard();
+            if (realUser) {
+                updateLeaderboard();
+            }
         }
 
         function restartGame() {
