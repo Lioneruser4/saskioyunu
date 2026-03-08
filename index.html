@@ -1,807 +1,783 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="az">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Meyve Şatosu · Profesyonel Eşleştirme</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>UniVapp - Universitet Platforması</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <!-- Tesseract.js OCR üçün -->
+    <script src='https://unpkg.com/tesseract.js@4.0.2/dist/tesseract.min.js'></script>
+    <!-- PDF.js library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
-            font-family: 'Segoe UI', Roboto, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
         }
 
         body {
-            background: radial-gradient(circle at 20% 30%, #3b5e3b, #1d4a1d);
-            min-height: 100vh;
+            font-family: 'Inter', sans-serif;
+            background: #f0f4fa;
+            color: #1a2b3e;
+        }
+
+        .app {
+            max-width: 1500px;
+            margin: 0 auto;
+            padding: 16px 24px;
+        }
+
+        /* Navbar */
+        .navbar {
+            background: rgba(255,255,255,0.85);
+            backdrop-filter: blur(12px);
+            padding: 16px 32px;
+            border-radius: 50px;
+            box-shadow: 0 10px 30px rgba(0,20,50,0.1);
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid rgba(255,255,255,0.5);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            background: linear-gradient(145deg, #0b2b4a, #1e4b8c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+
+        .badge {
+            background: #1e4b8c;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 25px;
+        }
+
+        .uni-badge {
+            background: #e9eff8;
+            padding: 8px 18px;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #1e4b8c;
+        }
+
+        .avatar {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(145deg, #1e4b8c, #0f2f52);
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 8px;
-            touch-action: pan-y pinch-zoom;
-        }
-
-        /* ANA KAPSAM — PROFESYONEL TASARIM */
-        .game-suite {
-            max-width: 500px;
-            width: 100%;
-            background: linear-gradient(165deg, #ffdbb5 0%, #f7c98a 100%);
-            border-radius: 56px 56px 48px 48px;
-            box-shadow: 0 30px 35px -10px rgba(0,0,0,0.6), inset 0 -4px 8px rgba(255,215,140,0.8), inset 0 4px 6px #fff3cf;
-            border: 5px solid #e3a56d;
-            overflow: hidden;
-            padding: 20px 16px 25px;
-            transition: all 0.2s;
-        }
-
-        /* STATUS BAR (PROFESYONEL) */
-        .status-bar {
-            background: #604020;
-            border-radius: 100px;
-            padding: 8px 16px 8px 24px;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border: 3px solid #eec18e;
-            box-shadow: inset 0 3px 6px #302010, 0 8px 0 #3f2c14;
-        }
-
-        .score-glass {
-            background: #ffefc0;
-            border-radius: 40px;
-            padding: 10px 25px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-weight: 800;
-            font-size: 1.9rem;
-            color: #412f1b;
-            text-shadow: 2px 2px 0 #dba959;
-            border: 2px solid #f5b468;
-            box-shadow: inset 0 -5px 0 #bb9246;
-            letter-spacing: 1px;
-        }
-        .score-glass span {
+            color: white;
+            font-weight: 600;
             font-size: 1.2rem;
-            background: #b37b42;
-            color: #ffe39a;
-            padding: 6px 16px;
-            border-radius: 40px;
-            box-shadow: inset 0 -3px 0 #7a5629;
         }
 
-        .level-badge {
-            background: #b37b42;
-            border-radius: 50px;
-            padding: 8px 22px;
-            font-weight: bold;
-            font-size: 1.5rem;
-            color: #fff3c9;
-            border: 3px solid #ffe8b0;
-            box-shadow: inset 0 -4px 0 #6b4f2b, 0 5px 0 #4d3a1f;
-        }
-
-        /* OYUN TAHTASI - PREMIUM */
-        .board-container {
-            background: #b0763a;
-            padding: 16px 12px;
-            border-radius: 64px 64px 48px 48px;
-            border: 5px solid #f5cd94;
-            box-shadow: inset 0 0 0 5px #faeac6, 0 15px 0 #694e2c;
+        /* Tabs - Professional */
+        .tabs-wrapper {
+            background: white;
+            border-radius: 28px;
+            padding: 10px 20px 0 20px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.03);
             margin-bottom: 25px;
         }
 
-        .board {
-            display: grid;
-            grid-template-columns: repeat(8, 1fr);
-            gap: 5px;
-            aspect-ratio: 1/1;
-            background: #e2b681;
-            padding: 8px;
-            border-radius: 40px;
-            border: 3px solid #ffdcaa;
-        }
-
-        .cell {
-            background: #fffcf0;
-            border-radius: 20px;
-            box-shadow: 0 0 0 2px #b4823b, inset 0 -6px 0 rgba(0,0,0,0.15);
+        .tabs {
             display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: transform 0.08s, box-shadow 0.08s;
-            aspect-ratio: 1/1;
-            cursor: pointer;
-            -webkit-tap-highlight-color: transparent;
-            position: relative;
-        }
-        .cell:active {
-            transform: scale(0.94);
-            box-shadow: 0 0 0 2px #b4823b, inset 0 -2px 0 rgba(0,0,0,0.15);
+            gap: 8px;
+            flex-wrap: wrap;
+            border-bottom: 2px solid #eef2f6;
         }
 
-        /* MEYVE STİLLERİ — GERÇEKÇİ, EMOJİ YOK */
-        .fruit {
-            width: 85%;
-            height: 85%;
-            border-radius: 50%;
-            position: relative;
-            box-shadow: 0 8px 0 rgba(0,0,0,0.2), 0 3px 8px rgba(0,0,0,0.3);
-            transition: all 0.1s;
-        }
-
-        /* ELMA */
-        .fruit-0 {
-            background: radial-gradient(circle at 35% 35%, #ff4f4f, #b32e2e);
-        }
-        .fruit-0::after {
-            content: "";
-            position: absolute;
-            width: 14%;
-            height: 14%;
-            background: #5a3e1f;
-            border-radius: 40% 40% 0 0;
-            top: -10%;
-            left: 43%;
-            transform: rotate(-8deg);
-        }
-        .fruit-0::before {
-            content: "";
-            position: absolute;
-            width: 25%;
-            height: 12%;
-            background: #3a7734;
-            border-radius: 50%;
-            top: -15%;
-            left: 37%;
-            transform: rotate(-12deg);
-        }
-
-        /* MUZ */
-        .fruit-1 {
-            background: linear-gradient(145deg, #fde551, #e4b004);
-            border-radius: 50% 50% 40% 40%;
-            transform: rotate(12deg);
-        }
-        .fruit-1::after {
-            content: "";
-            position: absolute;
-            width: 30%;
-            height: 20%;
-            background: #7c491b;
-            border-radius: 50%;
-            top: 15%;
-            right: 5%;
-        }
-
-        /* PORTAKAL */
-        .fruit-2 {
-            background: radial-gradient(circle at 40% 40%, #ffae42, #d46400);
-        }
-        .fruit-2::after {
-            content: "";
-            position: absolute;
-            width: 20%;
-            height: 18%;
-            background: #308530;
-            border-radius: 60% 60% 0 0;
-            top: -6%;
-            left: 40%;
-        }
-
-        /* ÇİLEK */
-        .fruit-3 {
-            background: #e84342;
-            border-radius: 45% 45% 50% 50%;
-        }
-        .fruit-3::after {
-            content: "⚫";
-            position: absolute;
-            font-size: 12px;
-            color: #222;
-            top: 25%;
-            left: 20%;
-            transform: scale(1.3);
-            text-shadow: 1px 1px 0 #553322;
-        }
-        .fruit-3::before {
-            content: "";
-            position: absolute;
-            width: 30%;
-            height: 16%;
-            background: #3daa3d;
-            border-radius: 50%;
-            top: -12%;
-            left: 35%;
-        }
-
-        /* ÜZÜM */
-        .fruit-4 {
-            background: #884eaf;
-        }
-        .fruit-4::after, .fruit-4::before {
-            content: "";
-            position: absolute;
-            width: 35%;
-            height: 35%;
-            background: #a868d1;
-            border-radius: 50%;
-            top: -10%;
-            right: -5%;
-            opacity: 0.9;
-        }
-        .fruit-4::before {
-            top: auto;
-            bottom: -10%;
-            left: -5%;
-            background: #6d3894;
-        }
-
-        /* KARPUZ */
-        .fruit-5 {
-            background: #27ae60;
-            overflow: hidden;
-        }
-        .fruit-5::after {
-            content: "";
-            position: absolute;
-            width: 100%;
-            height: 48%;
-            background: #d17237;
-            bottom: 0;
-            left: 0;
-            border-radius: 0 0 50% 50%;
-        }
-        .fruit-5::before {
-            content: "⚫⚫";
-            position: absolute;
-            font-size: 10px;
-            color: #2d2d2d;
-            top: 38%;
-            left: 20%;
-            letter-spacing: 4px;
-        }
-
-        /* ARMUT */
-        .fruit-6 {
-            background: linear-gradient(145deg, #f0d830, #dbb010);
-            border-radius: 55% 55% 45% 45%;
-            transform: rotate(-5deg);
-        }
-
-        /* ŞEFTALİ */
-        .fruit-7 {
-            background: radial-gradient(circle at 35% 35%, #ffb6b6, #f66b8d);
-            border-radius: 55% 45% 50% 50%;
-        }
-        .fruit-7::after {
-            content: "";
-            position: absolute;
-            width: 24%;
-            height: 18%;
-            background: #9c6b42;
-            border-radius: 40%;
-            top: 2%;
-            left: 38%;
-        }
-
-        /* KONTROLLER */
-        .action-bar {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        .action-btn {
-            flex: 1;
-            background: #febf5e;
+        .tab {
+            padding: 16px 28px;
+            background: transparent;
             border: none;
-            font-weight: 800;
-            font-size: 1.3rem;
-            padding: 16px 8px;
-            border-radius: 50px;
-            color: #35220b;
-            border-bottom: 6px solid #b1702a;
-            box-shadow: 0 8px 0 #744d22;
-            transition: all 0.04s linear;
+            font-weight: 600;
+            font-size: 1rem;
+            color: #5a6f8c;
             cursor: pointer;
             display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 6px;
-            letter-spacing: 1px;
-        }
-        .action-btn:active {
-            transform: translateY(8px);
-            border-bottom-width: 2px;
-            box-shadow: 0 2px 0 #744d22;
+            gap: 10px;
+            border-radius: 30px 30px 0 0;
+            transition: all 0.2s;
+            position: relative;
         }
 
-        /* LOBI — SONSUZ LEVEL */
-        .lobby-panel {
-            background: #dba15d;
-            border-radius: 60px 60px 40px 40px;
-            padding: 16px 12px;
-            border: 5px solid #fdd49c;
-            box-shadow: inset 0 -4px 8px #a56f38, 0 10px 0 #7a502b;
-        }
-
-        .lobby-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 10px 8px;
-        }
-        .lobby-header h3 {
-            font-size: 1.8rem;
-            color: #2f1f0e;
-            text-shadow: 2px 2px 0 #ecc184;
-        }
-        .lobby-header span {
-            background: #5a3a1a;
-            color: #fdebbc;
-            padding: 8px 18px;
-            border-radius: 40px;
-            font-weight: bold;
+        .tab i {
             font-size: 1.2rem;
         }
 
-        .level-grid {
+        .tab.active {
+            color: #1e4b8c;
+            background: #f0f7ff;
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: #1e4b8c;
+            border-radius: 3px 3px 0 0;
+        }
+
+        /* Main Grid */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 300px 1fr 350px;
+            gap: 24px;
+            margin-bottom: 30px;
+        }
+
+        /* Sidebar - Qovluqlar */
+        .folders-panel {
+            background: white;
+            border-radius: 28px;
+            padding: 24px 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.02);
+            height: fit-content;
+        }
+
+        .panel-header {
             display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            justify-content: center;
-            max-height: 135px;
-            overflow-y: auto;
-            padding: 8px 5px;
-            scrollbar-width: thin;
-            scrollbar-color: #ab6d30 #fad69c;
-        }
-        .level-grid::-webkit-scrollbar {
-            width: 6px;
-        }
-        .level-grid::-webkit-scrollbar-thumb {
-            background: #ab6d30;
-            border-radius: 10px;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 22px;
+            padding: 0 8px;
         }
 
-        .level-chip {
-            background: #fef3db;
-            border: 3px solid #c18b4a;
-            border-radius: 50px;
-            padding: 12px 18px;
-            font-weight: 800;
-            font-size: 1.4rem;
-            color: #55380e;
-            box-shadow: 0 6px 0 #8b5f2e, 0 8px 8px rgba(0,0,0,0.3);
-            transition: 0.04s;
+        .panel-header h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #334e77;
+        }
+
+        .new-folder-btn {
+            background: #eef5ff;
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 12px;
+            color: #1e4b8c;
+            font-size: 1.2rem;
             cursor: pointer;
-            flex: 0 0 auto;
-        }
-        .level-chip:active {
-            transform: translateY(6px);
-            box-shadow: 0 2px 0 #8b5f2e, 0 8px 8px rgba(0,0,0,0.2);
-        }
-        .level-chip.active-level {
-            background: #feca57;
-            border-color: #f39c12;
-            transform: scale(1.07);
-            box-shadow: 0 0 0 3px #fff1b5, 0 6px 0 #b46f20;
+            transition: 0.2s;
         }
 
-        .watermark {
-            text-align: center;
+        .folder-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            border-radius: 18px;
+            margin-bottom: 4px;
+            cursor: pointer;
+            transition: 0.2s;
+            color: #2c3f5c;
+        }
+
+        .folder-item:hover {
+            background: #f5f9ff;
+        }
+
+        .folder-item.active {
+            background: #e4edfb;
+            color: #1e4b8c;
+            font-weight: 500;
+        }
+
+        .folder-item i {
+            width: 24px;
+            color: #7895b8;
+        }
+
+        .folder-count {
+            margin-left: auto;
+            background: #e9f0f9;
+            padding: 2px 10px;
+            border-radius: 40px;
+            font-size: 0.8rem;
+        }
+
+        /* Center Content */
+        .content-area {
+            background: white;
+            border-radius: 32px;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.02);
+        }
+
+        .content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .content-header h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1a2b3e;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn-primary {
+            background: #1e4b8c;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-secondary {
+            background: #f0f7ff;
+            color: #1e4b8c;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        /* Item Cards */
+        .items-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
             margin-top: 20px;
-            color: #fcf0c0;
-            text-shadow: 2px 2px 0 #7b5c36;
-            font-weight: bold;
-            font-size: 1rem;
+        }
+
+        .item-card {
+            background: #f8fbfe;
+            border-radius: 20px;
+            padding: 20px 16px;
+            border: 1px solid #e2eaf2;
+            transition: 0.2s;
+            cursor: pointer;
+        }
+
+        .item-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 15px 30px rgba(30,75,140,0.1);
+            border-color: #1e4b8c30;
+        }
+
+        .item-icon {
+            width: 48px;
+            height: 48px;
+            background: #e1ebfa;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1e4b8c;
+            font-size: 1.5rem;
+            margin-bottom: 16px;
+        }
+
+        .item-title {
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .item-meta {
+            font-size: 0.8rem;
+            color: #7189a7;
+        }
+
+        /* Right Panel - OCR & Details */
+        .right-panel {
+            background: white;
+            border-radius: 28px;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.02);
+        }
+
+        .camera-section {
+            margin-bottom: 28px;
+        }
+
+        .camera-btn {
+            width: 100%;
+            background: linear-gradient(145deg, #0b2b4a, #1e4b8c);
+            color: white;
+            border: none;
+            padding: 18px;
+            border-radius: 24px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            cursor: pointer;
+            margin-bottom: 16px;
+            transition: 0.3s;
+        }
+
+        .ocr-result {
+            background: #f8fbfe;
+            border-radius: 20px;
+            padding: 18px;
+            margin-top: 16px;
+        }
+
+        .ocr-text {
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            min-height: 120px;
+            border: 1px solid #e2eaf2;
+            margin: 12px 0;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: #1e2f42;
+        }
+
+        .text-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .text-actions button {
+            background: #e9f1fa;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 30px;
+            color: #1e4b8c;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* PDF Upload */
+        .pdf-upload-area {
+            border: 2px dashed #cbd6e8;
+            border-radius: 24px;
+            padding: 30px 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .pdf-upload-area:hover {
+            border-color: #1e4b8c;
+            background: #f5faff;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 1100px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
-<div class="game-suite" id="gameSuite">
-    <div class="status-bar">
-        <div class="score-glass" id="scoreDisplay">0 <span>puan</span></div>
-        <div class="level-badge" id="levelDisplay">LVL 1</div>
-    </div>
-
-    <div class="board-container">
-        <div class="board" id="boardEl"></div>
-    </div>
-
-    <div class="action-bar">
-        <button class="action-btn" id="newGameBtn">🔄 YENİ OYUN</button>
-        <button class="action-btn" id="nextLevelBtn">🌟 SONRAKİ</button>
-    </div>
-
-    <div class="lobby-panel">
-        <div class="lobby-header">
-            <h3>🍒 MEYVE LOBİSİ 🍊</h3>
-            <span id="lobbyLevelCounter">∞</span>
+    <div class="app">
+        <!-- Navbar -->
+        <div class="navbar">
+            <div class="logo">
+                <h1>UniVapp</h1>
+                <span class="badge">Universitet Platformu</span>
+            </div>
+            <div class="user-profile">
+                <div class="uni-badge">
+                    <i class="fas fa-university" style="margin-right: 8px;"></i>Bakı Dövlət Universiteti
+                </div>
+                <div class="avatar">A</div>
+            </div>
         </div>
-        <div class="level-grid" id="levelLobby"></div>
+
+        <!-- Tabs -->
+        <div class="tabs-wrapper">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('ana')"><i class="fas fa-home"></i> Ana səhifə</button>
+                <button class="tab" onclick="switchTab('dersler')"><i class="fas fa-book-open"></i> Dərslər</button>
+                <button class="tab" onclick="switchTab('pdfs')"><i class="fas fa-file-pdf"></i> PDF Kitabxana</button>
+                <button class="tab" onclick="switchTab('notlar')"><i class="fas fa-sticky-note"></i> Qeydlərim</button>
+                <button class="tab" onclick="switchTab('kamerali')"><i class="fas fa-camera"></i> Kamera OCR</button>
+                <button class="tab" onclick="switchTab('teqvim')"><i class="far fa-calendar"></i> Təqvim</button>
+            </div>
+        </div>
+
+        <!-- Main Grid -->
+        <div class="main-grid">
+            <!-- Sol Panel - Qovluqlar -->
+            <div class="folders-panel">
+                <div class="panel-header">
+                    <h3><i class="far fa-folder-open" style="margin-right: 10px;"></i>Qovluqlar</h3>
+                    <button class="new-folder-btn" onclick="yeniQovluq()"><i class="fas fa-plus"></i></button>
+                </div>
+                <div id="folderList">
+                    <div class="folder-item active" onclick="selectFolder('butun')">
+                        <i class="fas fa-college"></i>
+                        <span>Bütün dərslər</span>
+                        <span class="folder-count" id="totalCount">12</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Orta Panel - Məzmun -->
+            <div class="content-area" id="contentArea">
+                <div class="content-header">
+                    <h2 id="currentFolderTitle">Bütün dərslər</h2>
+                    <div class="action-buttons">
+                        <button class="btn-secondary" onclick="yeniQeyd()"><i class="fas fa-pen"></i>Yeni qeyd</button>
+                        <button class="btn-primary" onclick="pdfYukle()"><i class="fas fa-upload"></i>PDF yüklə</button>
+                    </div>
+                </div>
+                <div class="items-grid" id="itemsGrid">
+                    <!-- Dinamik doldurulacaq -->
+                </div>
+            </div>
+
+            <!-- Sağ Panel - Kamera/OCR -->
+            <div class="right-panel">
+                <div class="camera-section">
+                    <h3 style="margin-bottom: 16px;"><i class="fas fa-camera-retro"></i> Kamera ilə çək</h3>
+                    <button class="camera-btn" onclick="kameraAc()">
+                        <i class="fas fa-camera"></i> Lövhəni çək, yazını çıxart
+                    </button>
+                    <video id="cameraStream" class="hidden" style="width:100%; border-radius:20px; margin-bottom:15px;" autoplay></video>
+                    <canvas id="cameraCanvas" class="hidden"></canvas>
+                    
+                    <div id="ocrResultArea" class="ocr-result hidden">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <span><i class="fas fa-font"></i> Çıxarılan mətn:</span>
+                            <button onclick="qovlugaElaveEt()" style="background:none; border:none; color:#1e4b8c; cursor:pointer;"><i class="fas fa-folder-plus"></i></button>
+                        </div>
+                        <div id="ocrText" class="ocr-text" contenteditable="true">
+                            Mətn burada görünəcək...
+                        </div>
+                        <div class="text-actions">
+                            <button onclick="ocrYaddaSaxla()"><i class="fas fa-save"></i> Yadda saxla</button>
+                            <button onclick="ocrDuzenle()"><i class="fas fa-edit"></i> Düzəliş</button>
+                            <button onclick="ocrSil()"><i class="fas fa-trash"></i> Sil</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PDF Preview -->
+                <div id="pdfPreview" class="hidden">
+                    <h4><i class="fas fa-file-pdf"></i> PDF önizləmə</h4>
+                    <canvas id="pdfCanvas" style="width:100%; margin-top:15px; border-radius:16px;"></canvas>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="watermark">👇 DOKUN & KAYDIR — PROFESYONEL MEYVE PATLATMA 👇</div>
-</div>
 
-<script>
-(function() {
-    // -------------------- PROFESYONEL OYUN MOTORU --------------------
-    const ROWS = 8, COLS = 8;
-    const FRUIT_COUNT = 8;  // 8 farklı meyve (0-7)
+    <script>
+        // Universitet dataları
+        let folders = [
+            { id: 1, name: 'Riyaziyyat', count: 4 },
+            { id: 2, name: 'Fizika', count: 3 },
+            { id: 3, name: 'Proqramlaşdırma', count: 5 },
+            { id: 4, name: 'Xətti cəbr', count: 2 }
+        ];
 
-    let board = [];
-    let currentLevel = 1;
-    let score = 0;
-    let selectedRow = -1, selectedCol = -1;
-    let isDragging = false;
-    let touchMoved = false;
+        let items = [
+            { id: 1, title: 'Riyaziyyat mühazirə 1', type: 'pdf', folder: 'Riyaziyyat', date: '2024-01-15' },
+            { id: 2, title: 'Fizika laboratoriya', type: 'note', folder: 'Fizika', date: '2024-01-20' },
+            { id: 3, title: 'JavaScript dərsləri', type: 'pdf', folder: 'Proqramlaşdırma', date: '2024-02-01' },
+            { id: 4, title: 'Matris hesablamaları', type: 'note', folder: 'Xətti cəbr', date: '2024-02-05' },
+            { id: 5, title: 'Kvant fizikası', type: 'pdf', folder: 'Fizika', date: '2024-02-10' }
+        ];
 
-    // DOM elemanları
-    const boardEl = document.getElementById('boardEl');
-    const scoreDisplay = document.getElementById('scoreDisplay');
-    const levelDisplay = document.getElementById('levelDisplay');
-    const levelLobby = document.getElementById('levelLobby');
-    const newGameBtn = document.getElementById('newGameBtn');
-    const nextLevelBtn = document.getElementById('nextLevelBtn');
-
-    // -------------------- TAHTA İŞLEMLERİ (KUSURSUZ) --------------------
-    function createEmptyBoard() {
-        return Array(ROWS).fill().map(() => Array(COLS).fill(0));
-    }
-
-    // Seviyeye göre rastgele tahta (daha yüksek seviye = daha fazla çeşitlilik)
-    function generateBoardForLevel(level) {
-        const variety = Math.min(FRUIT_COUNT, 4 + Math.floor(level / 1.5));
-        const newBoard = [];
-        for (let r = 0; r < ROWS; r++) {
-            const row = [];
-            for (let c = 0; c < COLS; c++) {
-                row.push(Math.floor(Math.random() * variety) % FRUIT_COUNT);
+        // LocalStorage-dan yüklə
+        function loadFromStorage() {
+            const saved = localStorage.getItem('univapp_data');
+            if(saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    if(data.folders) folders = data.folders;
+                    if(data.items) items = data.items;
+                } catch(e) {}
             }
-            newBoard.push(row);
-        }
-        return newBoard;
-    }
-
-    // Başlangıçta patlamasız bir tahta oluştur (patlamaları temizle)
-    function initBoard(level) {
-        let attempts = 0;
-        let newBoard;
-        do {
-            newBoard = generateBoardForLevel(level);
-            board = newBoard;
-            // Tahtada patlama var mı kontrol et (sadece kontrol)
-        } while (hasAnyMatch(board) && attempts++ < 30); // max 30 deneme
-
-        // Yine de patlama varsa son çare manuel düzelt
-        while (hasAnyMatch(board)) {
-            board = breakMatches(board);
+            updateUI();
         }
 
-        // Puan sıfırlanmasın, sadece yeni level başlangıcında istenen olur
-        renderBoard();
-    }
+        // LocalStorage-a yadda saxla
+        function saveToStorage() {
+            localStorage.setItem('univapp_data', JSON.stringify({ folders, items }));
+            updateUI();
+        }
 
-    // Herhangi bir eşleşme var mı?
-    function hasAnyMatch(board) {
-        for (let r = 0; r < ROWS; r++) {
-            for (let c = 0; c < COLS; c++) {
-                if (board[r][c] === -1) continue;
-                if (checkMatchAt(board, r, c)) return true;
+        // Qovluq seçmə
+        let selectedFolder = 'Bütün dərslər';
+        
+        function selectFolder(folderName) {
+            selectedFolder = folderName;
+            document.getElementById('currentFolderTitle').innerText = folderName;
+            updateItemsGrid();
+            
+            // Active class
+            document.querySelectorAll('.folder-item').forEach(el => el.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+        }
+
+        function updateItemsGrid() {
+            const grid = document.getElementById('itemsGrid');
+            grid.innerHTML = '';
+            
+            let filteredItems = items;
+            if(selectedFolder !== 'Bütün dərslər') {
+                filteredItems = items.filter(item => item.folder === selectedFolder);
             }
-        }
-        return false;
-    }
-
-    function checkMatchAt(board, r, c) {
-        const val = board[r][c];
-        if (val === -1) return false;
-        // yatay 3+
-        if (c + 2 < COLS && board[r][c+1] === val && board[r][c+2] === val) return true;
-        // dikey 3+
-        if (r + 2 < ROWS && board[r+1][c] === val && board[r+2][c] === val) return true;
-        return false;
-    }
-
-    // Basit kırma: eşleşenleri -1 yap, tahtayı döndür (başlangıç için)
-    function breakMatches(board) {
-        const newBoard = board.map(row => [...row]);
-        for (let r = 0; r < ROWS; r++) {
-            for (let c = 0; c < COLS; c++) {
-                if (newBoard[r][c] === -1) continue;
-                if (c + 2 < COLS && newBoard[r][c] === newBoard[r][c+1] && newBoard[r][c] === newBoard[r][c+2]) {
-                    newBoard[r][c] = -1;
-                    newBoard[r][c+1] = -1;
-                    newBoard[r][c+2] = -1;
-                }
-                if (r + 2 < ROWS && newBoard[r][c] === newBoard[r+1][c] && newBoard[r][c] === newBoard[r+2][c]) {
-                    newBoard[r][c] = -1;
-                    newBoard[r+1][c] = -1;
-                    newBoard[r+2][c] = -1;
-                }
-            }
-        }
-        // boşları rastgele doldur
-        for (let r = 0; r < ROWS; r++) {
-            for (let c = 0; c < COLS; c++) {
-                if (newBoard[r][c] === -1) {
-                    newBoard[r][c] = Math.floor(Math.random() * FRUIT_COUNT);
-                }
-            }
-        }
-        return newBoard;
-    }
-
-    // ------------------ PATLATMA MOTORU (ÇEKİRDEK) ------------------
-    function scanMatchesAndCrush(addScore = true) {
-        let crushed = false;
-        const crushMap = Array(ROWS).fill().map(() => Array(COLS).fill(false));
-
-        // Yatay tarama
-        for (let r = 0; r < ROWS; r++) {
-            for (let c = 0; c < COLS - 2; c++) {
-                const val = board[r][c];
-                if (val === -1) continue;
-                if (board[r][c+1] === val && board[r][c+2] === val) {
-                    let end = c+2;
-                    while (end+1 < COLS && board[r][end+1] === val) end++;
-                    for (let k = c; k <= end; k++) crushMap[r][k] = true;
-                }
-            }
-        }
-        // Dikey tarama
-        for (let c = 0; c < COLS; c++) {
-            for (let r = 0; r < ROWS - 2; r++) {
-                const val = board[r][c];
-                if (val === -1) continue;
-                if (board[r+1][c] === val && board[r+2][c] === val) {
-                    let end = r+2;
-                    while (end+1 < ROWS && board[end+1][c] === val) end++;
-                    for (let k = r; k <= end; k++) crushMap[k][c] = true;
-                }
-            }
-        }
-
-        // Patlat ve puan ekle
-        for (let r = 0; r < ROWS; r++) {
-            for (let c = 0; c < COLS; c++) {
-                if (crushMap[r][c] && board[r][c] !== -1) {
-                    if (addScore) {
-                        score += 15 + currentLevel * 3;
-                    }
-                    board[r][c] = -1;
-                    crushed = true;
-                }
-            }
-        }
-
-        if (addScore) updateScore();
-        return crushed;
-    }
-
-    // Boşlukları doldur (yukarıdan yeni meyve)
-    function fillGaps() {
-        for (let c = 0; c < COLS; c++) {
-            for (let r = ROWS-1; r >= 0; r--) {
-                if (board[r][c] === -1) {
-                    // üstte dolu ara
-                    for (let k = r-1; k >= 0; k--) {
-                        if (board[k][c] !== -1) {
-                            board[r][c] = board[k][c];
-                            board[k][c] = -1;
-                            break;
-                        }
-                    }
-                    // hala -1 ise yeni meyve oluş
-                    if (board[r][c] === -1) {
-                        board[r][c] = Math.floor(Math.random() * FRUIT_COUNT);
-                    }
-                }
-            }
-        }
-    }
-
-    // Patlama ve doldurma döngüsü (kademeli)
-    function settleBoard() {
-        let any;
-        do {
-            any = scanMatchesAndCrush(true);
-            if (any) fillGaps();
-        } while (any);
-        renderBoard();
-    }
-
-    // İki hücreyi değiştir ve patlama kontrolü
-    function trySwap(r1, c1, r2, c2) {
-        if (r1 < 0 || r1 >= ROWS || c1 < 0 || c1 >= COLS || r2 < 0 || r2 >= ROWS || c2 < 0 || c2 >= COLS) return false;
-        if (Math.abs(r1 - r2) + Math.abs(c1 - c2) !== 1) return false;
-        if (board[r1][c1] === -1 || board[r2][c2] === -1) return false;
-
-        // swap
-        [board[r1][c1], board[r2][c2]] = [board[r2][c2], board[r1][c1]];
-
-        const match1 = checkMatchAt(board, r1, c1);
-        const match2 = checkMatchAt(board, r2, c2);
-
-        if (match1 || match2) {
-            settleBoard();  // tüm patlamaları tetikle
-            return true;
-        } else {
-            // geri al
-            [board[r1][c1], board[r2][c2]] = [board[r2][c2], board[r1][c1]];
-            return false;
-        }
-    }
-
-    // ------------------ RENDER ------------------
-    function renderBoard() {
-        boardEl.innerHTML = '';
-        for (let r = 0; r < ROWS; r++) {
-            for (let c = 0; c < COLS; c++) {
-                const cell = document.createElement('div');
-                cell.className = 'cell';
-                cell.dataset.row = r;
-                cell.dataset.col = c;
-
-                const fruitType = board[r][c];
-                if (fruitType !== -1) {
-                    const fruitDiv = document.createElement('div');
-                    fruitDiv.className = `fruit fruit-${fruitType % FRUIT_COUNT}`;
-                    cell.appendChild(fruitDiv);
-                }
-
-                // Touch Events (Mobil)
-                cell.addEventListener('touchstart', handleTouchStart, { passive: false });
-                cell.addEventListener('touchmove', handleTouchMove, { passive: false });
-                cell.addEventListener('touchend', handleTouchEnd);
-                cell.addEventListener('touchcancel', handleTouchEnd);
-
-                // Mouse Events (Geliştirme için)
-                cell.addEventListener('mousedown', handleMouseDown);
-                cell.addEventListener('mousemove', handleMouseMove);
-                cell.addEventListener('mouseup', handleMouseUp);
-                cell.addEventListener('mouseleave', handleMouseLeave);
-
-                boardEl.appendChild(cell);
-            }
-        }
-    }
-
-    // ------------------ OLAY YÖNETİCİLERİ (PROFESYONEL) ------------------
-    function handleTouchStart(e) {
-        e.preventDefault();
-        const cell = e.target.closest('.cell');
-        if (!cell) return;
-        const r = parseInt(cell.dataset.row);
-        const c = parseInt(cell.dataset.col);
-        selectedRow = r; selectedCol = c;
-        isDragging = true;
-        touchMoved = false;
-    }
-
-    function handleTouchMove(e) {
-        e.preventDefault();
-        if (!isDragging || selectedRow === -1 || selectedCol === -1) return;
-        const touch = e.touches[0];
-        const el = document.elementFromPoint(touch.clientX, touch.clientY);
-        const cell = el?.closest('.cell');
-        if (!cell) return;
-
-        const r = parseInt(cell.dataset.row);
-        const c = parseInt(cell.dataset.col);
-        if (r === selectedRow && c === selectedCol) return;
-
-        if (Math.abs(r - selectedRow) + Math.abs(c - selectedCol) === 1) {
-            e.preventDefault();
-            touchMoved = true;
-            trySwap(selectedRow, selectedCol, r, c);
-            selectedRow = -1; selectedCol = -1;
-            isDragging = false;
-        }
-    }
-
-    function handleTouchEnd(e) {
-        e.preventDefault();
-        selectedRow = -1; selectedCol = -1;
-        isDragging = false;
-    }
-
-    // Mouse sürükleme
-    function handleMouseDown(e) {
-        e.preventDefault();
-        const cell = e.target.closest('.cell');
-        if (!cell) return;
-        selectedRow = parseInt(cell.dataset.row);
-        selectedCol = parseInt(cell.dataset.col);
-        isDragging = true;
-        touchMoved = false;
-    }
-
-    function handleMouseMove(e) {
-        if (!isDragging || selectedRow === -1) return;
-        e.preventDefault();
-        const cell = e.target.closest('.cell');
-        if (!cell) return;
-        const r = parseInt(cell.dataset.row);
-        const c = parseInt(cell.dataset.col);
-        if (Math.abs(r - selectedRow) + Math.abs(c - selectedCol) === 1) {
-            trySwap(selectedRow, selectedCol, r, c);
-            selectedRow = -1; selectedCol = -1;
-            isDragging = false;
-        }
-    }
-
-    function handleMouseUp(e) { selectedRow = -1; selectedCol = -1; isDragging = false; }
-    function handleMouseLeave(e) { selectedRow = -1; selectedCol = -1; isDragging = false; }
-
-    // ------------------ PUAN & SEVİYE ------------------
-    function updateScore() {
-        scoreDisplay.innerHTML = `${score} <span>puan</span>`;
-    }
-
-    function loadLevel(level) {
-        currentLevel = Math.max(1, level);
-        initBoard(currentLevel);
-        levelDisplay.innerText = `LVL ${currentLevel}`;
-        document.querySelectorAll('.level-chip').forEach(chip => {
-            chip.classList.remove('active-level');
-            if (parseInt(chip.innerText) === currentLevel) chip.classList.add('active-level');
-        });
-    }
-
-    function resetGame() {
-        score = 0;
-        updateScore();
-        loadLevel(1);
-    }
-
-    function nextLevel() {
-        loadLevel(currentLevel + 1);
-    }
-
-    // ------------------ LOBİ OLUŞTUR (SONSUZ) ------------------
-    function buildLobby() {
-        levelLobby.innerHTML = '';
-        // 30 seviye göster (sonsuz hissi)
-        for (let i = 1; i <= 30; i++) {
-            const chip = document.createElement('div');
-            chip.className = 'level-chip';
-            chip.innerText = i;
-            chip.addEventListener('click', (e) => {
-                e.preventDefault();
-                loadLevel(i);
+            
+            filteredItems.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'item-card';
+                card.onclick = () => itemClick(item.id);
+                card.innerHTML = `
+                    <div class="item-icon"><i class="fas ${item.type === 'pdf' ? 'fa-file-pdf' : 'fa-sticky-note'}"></i></div>
+                    <div class="item-title">${item.title}</div>
+                    <div class="item-meta">${item.date}</div>
+                `;
+                grid.appendChild(card);
             });
-            levelLobby.appendChild(chip);
         }
-    }
 
-    // ------------------ BAŞLANGIÇ ------------------
-    window.addEventListener('load', () => {
-        buildLobby();
-        resetGame();
+        function yeniQovluq() {
+            const name = prompt('Qovluq adını daxil edin:');
+            if(name) {
+                folders.push({ id: Date.now(), name, count: 0 });
+                saveToStorage();
+                renderFolders();
+            }
+        }
 
-        newGameBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            resetGame();
-        });
+        function renderFolders() {
+            const list = document.getElementById('folderList');
+            list.innerHTML = `
+                <div class="folder-item ${selectedFolder === 'Bütün dərslər' ? 'active' : ''}" onclick="selectFolder('Bütün dərslər')">
+                    <i class="fas fa-college"></i><span>Bütün dərslər</span>
+                    <span class="folder-count">${items.length}</span>
+                </div>
+            `;
+            
+            folders.forEach(f => {
+                const itemCount = items.filter(i => i.folder === f.name).length;
+                list.innerHTML += `
+                    <div class="folder-item ${selectedFolder === f.name ? 'active' : ''}" onclick="selectFolder('${f.name}')">
+                        <i class="fas fa-folder"></i><span>${f.name}</span>
+                        <span class="folder-count">${itemCount}</span>
+                    </div>
+                `;
+            });
+            
+            document.getElementById('totalCount').innerText = items.length;
+        }
 
-        nextLevelBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            nextLevel();
-        });
+        // Kamera funksiyaları
+        let stream = null;
+        
+        function kameraAc() {
+            const video = document.getElementById('cameraStream');
+            video.classList.remove('hidden');
+            
+            if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+                    .then(function(videoStream) {
+                        stream = videoStream;
+                        video.srcObject = videoStream;
+                        video.play();
+                        
+                        // 2 saniyə sonra çək
+                        setTimeout(() => {
+                            cekVeOCR();
+                        }, 2000);
+                    })
+                    .catch(function(err) {
+                        alert('Kamera açılmadı: ' + err);
+                    });
+            }
+        }
 
-        // Sayfa dışı touchmove engelle
-        document.body.addEventListener('touchmove', (e) => {
-            if (e.target.closest('.board')) e.preventDefault();
-        }, { passive: false });
-    });
+        function cekVeOCR() {
+            const video = document.getElementById('cameraStream');
+            const canvas = document.getElementById('cameraCanvas');
+            const context = canvas.getContext('2d');
+            
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            // Kameranı dayandır
+            if(stream) {
+                stream.getTracks().forEach(track => track.stop());
+                video.classList.add('hidden');
+            }
+            
+            // OCR işlə
+            canvas.toBlob(function(blob) {
+                Tesseract.recognize(blob, 'aze+eng', {
+                    logger: m => console.log(m)
+                }).then(({ data: { text } }) => {
+                    document.getElementById('ocrText').innerText = text;
+                    document.getElementById('ocrResultArea').classList.remove('hidden');
+                });
+            });
+        }
 
-})();
-</script>
+        function ocrYaddaSaxla() {
+            const text = document.getElementById('ocrText').innerText;
+            if(text && text !== 'Mətn burada görünəcək...') {
+                const folder = selectedFolder !== 'Bütün dərslər' ? selectedFolder : 'Ümumi';
+                items.push({
+                    id: Date.now(),
+                    title: 'OCR qeyd - ' + new Date().toLocaleDateString('az'),
+                    type: 'note',
+                    folder: folder,
+                    date: new Date().toISOString().split('T')[0],
+                    content: text
+                });
+                saveToStorage();
+                alert('Yadda saxlanıldı!');
+            }
+        }
+
+        function qovlugaElaveEt() {
+            const text = document.getElementById('ocrText').innerText;
+            if(text && text !== 'Mətn burada görünəcək...') {
+                const folderName = prompt('Hansı qovluğa əlavə edilsin?');
+                if(folderName) {
+                    items.push({
+                        id: Date.now(),
+                        title: 'OCR - ' + new Date().toLocaleTimeString('az'),
+                        type: 'note',
+                        folder: folderName,
+                        date: new Date().toISOString().split('T')[0],
+                        content: text
+                    });
+                    saveToStorage();
+                }
+            }
+        }
+
+        // PDF yükləmə
+        function pdfYukle() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.pdf';
+            input.onchange = function(e) {
+                const file = e.target.files[0];
+                if(file) {
+                    const reader = new FileReader();
+                    reader.onload = function(loadEvent) {
+                        const folder = selectedFolder !== 'Bütün dərslər' ? selectedFolder : 'PDF-lər';
+                        items.push({
+                            id: Date.now(),
+                            title: file.name,
+                            type: 'pdf',
+                            folder: folder,
+                            date: new Date().toISOString().split('T')[0],
+                            data: loadEvent.target.result
+                        });
+                        saveToStorage();
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+            input.click();
+        }
+
+        function yeniQeyd() {
+            const text = prompt('Qeydinizi yazın:');
+            if(text) {
+                const folder = selectedFolder !== 'Bütün dərslər' ? selectedFolder : 'Ümumi';
+                items.push({
+                    id: Date.now(),
+                    title: 'Qeyd - ' + new Date().toLocaleDateString('az'),
+                    type: 'note',
+                    folder: folder,
+                    date: new Date().toISOString().split('T')[0],
+                    content: text
+                });
+                saveToStorage();
+            }
+        }
+
+        function itemClick(id) {
+            const item = items.find(i => i.id === id);
+            if(item) {
+                if(item.type === 'note') {
+                    document.getElementById('ocrText').innerText = item.content || 'Məzmun yoxdur';
+                    document.getElementById('ocrResultArea').classList.remove('hidden');
+                } else if(item.type === 'pdf' && item.data) {
+                    // PDF göstər
+                }
+            }
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            
+            if(tabName === 'kamerali') {
+                document.querySelector('.camera-btn').scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        function ocrDuzenle() {
+            document.getElementById('ocrText').focus();
+        }
+
+        function ocrSil() {
+            document.getElementById('ocrText').innerText = 'Mətn silindi...';
+        }
+
+        // Initial render
+        loadFromStorage();
+        renderFolders();
+        updateItemsGrid();
+    </script>
 </body>
 </html>
