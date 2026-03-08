@@ -3,512 +3,367 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>UniVapp - Universitet Platforması</title>
+    <title>Milyonçu AZ - Kim Milyonçu Olmaq İstər?</title>
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/dist/tesseract.min.js"></script>
+    <!-- Telegram Web App -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- MongoDB Realm SDK (Serverless) -->
+    <script src="https://unpkg.com/realm-web@2.0.0/dist/bundle.iife.js" type="text/javascript"></script>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
+            font-family: 'Inter', sans-serif;
         }
 
         body {
-            font-family: 'Inter', sans-serif;
-            background: #f4f7fc;
-            color: #0a1a2f;
+            background: linear-gradient(145deg, #0a1a2f, #0d2b4b);
+            min-height: 100vh;
+            color: white;
+            overflow-x: hidden;
         }
 
+        /* Telegram Tam Ekran */
         .app {
-            max-width: 1500px;
+            max-width: 480px;
             margin: 0 auto;
-            padding: 16px 24px;
-        }
-
-        /* Navbar */
-        .navbar {
-            background: white;
-            padding: 18px 28px;
-            border-radius: 30px;
-            box-shadow: 0 8px 25px rgba(0,20,40,0.05);
-            margin-bottom: 25px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border: 1px solid rgba(0,0,0,0.02);
-        }
-
-        .logo h1 {
-            font-size: 2.2rem;
-            font-weight: 800;
-            background: linear-gradient(145deg, #0a2647, #1e4f8a);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            letter-spacing: -1px;
-        }
-
-        .avatar {
-            width: 52px;
-            height: 52px;
-            background: linear-gradient(145deg, #0a2647, #1e4f8a);
-            border-radius: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 600;
-            font-size: 1.3rem;
-            cursor: pointer;
-            box-shadow: 0 8px 18px rgba(10,38,71,0.2);
-        }
-
-        /* Tabs */
-        .tabs-container {
-            background: white;
-            border-radius: 30px;
-            padding: 12px 20px 0 20px;
-            margin-bottom: 25px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.02);
-        }
-
-        .tabs {
-            display: flex;
-            gap: 10px;
-            overflow-x: auto;
-            padding-bottom: 12px;
-            scrollbar-width: none;
-        }
-
-        .tabs::-webkit-scrollbar {
-            display: none;
-        }
-
-        .tab {
-            padding: 14px 28px;
-            background: #f1f5f9;
-            border: none;
-            border-radius: 40px;
-            font-weight: 600;
-            font-size: 0.95rem;
-            color: #3f536e;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            white-space: nowrap;
-            transition: all 0.2s;
-        }
-
-        .tab.active {
-            background: #0a2647;
-            color: white;
-            box-shadow: 0 8px 18px rgba(10,38,71,0.2);
-        }
-
-        /* Main Grid */
-        .main-grid {
-            display: grid;
-            grid-template-columns: 280px 1fr 350px;
-            gap: 24px;
-        }
-
-        /* Folders Panel */
-        .folders-panel {
-            background: white;
-            border-radius: 28px;
-            padding: 22px 16px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.02);
-            height: fit-content;
-        }
-
-        .panel-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding: 0 10px;
-        }
-
-        .panel-header h3 {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: #1a2f4f;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .new-folder-btn {
-            width: 40px;
-            height: 40px;
-            background: #eef4ff;
-            border: none;
-            border-radius: 16px;
-            color: #0a2647;
-            cursor: pointer;
-            font-size: 1.2rem;
-        }
-
-        .folder-list {
+            padding: 16px;
+            min-height: 100vh;
+            position: relative;
             display: flex;
             flex-direction: column;
-            gap: 4px;
         }
 
-        .folder-item {
+        /* Header - Telegram user info */
+        .tg-header {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 40px;
+            padding: 12px 20px;
+            margin-bottom: 20px;
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 14px 16px;
-            border-radius: 20px;
-            cursor: pointer;
-            transition: 0.2s;
-            color: #2d405c;
+            gap: 15px;
+            border: 1px solid rgba(255,255,255,0.1);
         }
 
-        .folder-item:hover {
-            background: #f5f9ff;
-        }
-
-        .folder-item.active {
-            background: #e8f0fe;
-            color: #0a2647;
-            font-weight: 600;
-        }
-
-        .folder-count {
-            margin-left: auto;
-            background: #edf3fa;
-            padding: 3px 12px;
-            border-radius: 30px;
-            font-size: 0.8rem;
-        }
-
-        /* Content Panel */
-        .content-panel {
-            background: white;
-            border-radius: 28px;
-            padding: 24px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.02);
-        }
-
-        .content-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 24px;
-        }
-
-        .content-header h2 {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #0a1a2f;
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 10px;
-        }
-
-        .btn-primary {
-            background: #0a2647;
-            color: white;
-            border: none;
-            padding: 12px 22px;
-            border-radius: 30px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            cursor: pointer;
-        }
-
-        .btn-secondary {
-            background: #f0f6ff;
-            color: #0a2647;
-            border: none;
-            padding: 12px 22px;
-            border-radius: 30px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            cursor: pointer;
-        }
-
-        /* Items Grid - Mətnin ilk 30 simvolu görünür */
-        .items-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-            gap: 16px;
-        }
-
-        .item-card {
-            background: #fafcff;
-            border-radius: 24px;
-            padding: 20px;
-            border: 1px solid #eef2f8;
-            transition: 0.2s;
-            cursor: pointer;
-        }
-
-        .item-card:hover {
-            transform: translateY(-3px);
-            border-color: #0a2647;
-            box-shadow: 0 15px 25px rgba(10,38,71,0.08);
-        }
-
-        .item-icon {
+        .tg-avatar {
             width: 48px;
             height: 48px;
-            background: #e3ecfa;
-            border-radius: 18px;
+            border-radius: 48px;
+            background: linear-gradient(145deg, #ffd966, #ffb347);
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #0a2647;
+            font-weight: 700;
             font-size: 1.4rem;
-            margin-bottom: 15px;
-        }
-
-        .item-title {
-            font-weight: 700;
-            font-size: 1.1rem;
-            margin-bottom: 8px;
             color: #0a1a2f;
+            box-shadow: 0 8px 18px rgba(255,200,0,0.3);
         }
 
-        .item-preview {
-            font-size: 0.9rem;
-            color: #5f7a9a;
-            margin-bottom: 12px;
-            line-height: 1.5;
-            height: 65px;
-            overflow: hidden;
-            display: -webkit-box;
-            -webkit-line-clamp: 3;
-            -webkit-box-orient: vertical;
-            background: #f1f7ff;
-            padding: 10px;
-            border-radius: 14px;
-            border-left: 3px solid #0a2647;
-            word-break: break-word;
+        .tg-info {
+            flex: 1;
         }
 
-        .item-meta {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.8rem;
-            color: #6f8aac;
-        }
-
-        .item-badge {
-            background: #dde7f5;
-            padding: 4px 10px;
-            border-radius: 30px;
-            font-weight: 600;
-            color: #0a2647;
-        }
-
-        /* Kitab Görünüşü */
-        .book-view {
-            max-width: 800px;
-            margin: 0 auto;
-            font-family: 'Georgia', serif;
-            animation: fadeIn 0.3s;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        .book-header {
-            text-align: center;
-            margin-bottom: 40px;
-            padding-bottom: 25px;
-            border-bottom: 2px solid #e2e8f0;
-        }
-
-        .book-title {
-            font-size: 2.4rem;
+        .tg-name {
             font-weight: 700;
-            color: #0a2647;
-            margin-bottom: 12px;
-        }
-
-        .book-meta {
-            color: #64748b;
-            display: flex;
-            justify-content: center;
-            gap: 25px;
-            flex-wrap: wrap;
-        }
-
-        .book-content {
             font-size: 1.2rem;
-            line-height: 1.9;
-            color: #1e293b;
-            white-space: pre-wrap;
-            word-break: break-word;
+            margin-bottom: 4px;
         }
 
-        .book-content p {
+        .tg-balance {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0,0,0,0.3);
+            padding: 6px 14px;
+            border-radius: 40px;
+            width: fit-content;
+            font-weight: 600;
+            color: #ffd966;
+        }
+
+        /* Lobby Buttons */
+        .lobby-buttons {
+            display: flex;
+            gap: 12px;
             margin-bottom: 25px;
         }
 
-        /* Exit button */
-        .exit-book-btn {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            background: #0a2647;
-            color: white;
-            border: none;
-            width: 60px;
-            height: 60px;
-            border-radius: 60px;
-            font-size: 1.4rem;
-            cursor: pointer;
-            box-shadow: 0 10px 25px rgba(10,38,71,0.3);
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        /* OCR Panel */
-        .ocr-panel {
-            background: white;
-            border-radius: 28px;
-            padding: 24px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.02);
-            height: fit-content;
-        }
-
-        .camera-btn, .gallery-btn {
-            width: 100%;
-            padding: 18px;
-            border: none;
-            border-radius: 24px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            cursor: pointer;
-            margin-bottom: 12px;
-        }
-
-        .camera-btn {
-            background: linear-gradient(145deg, #0a2647, #1e4f8a);
-            color: white;
-        }
-
-        .gallery-btn {
-            background: #e8f0fe;
-            color: #0a2647;
-            border: 1px solid #cddff5;
-        }
-
-        #camera-container {
-            display: none;
-            margin: 20px 0;
-        }
-
-        #camera-stream {
-            width: 100%;
-            border-radius: 20px;
-        }
-
-        .camera-controls {
-            display: flex;
-            gap: 10px;
-            margin-top: 12px;
-        }
-
-        .capture-btn, .close-camera {
+        .lobby-btn {
             flex: 1;
-            padding: 14px;
+            background: linear-gradient(145deg, #2a3f5e, #1a2f4f);
             border: none;
-            border-radius: 20px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-
-        .capture-btn {
-            background: #0a2647;
+            border-radius: 30px;
+            padding: 18px 0;
             color: white;
+            font-weight: 700;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: 0.2s;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
         }
 
-        .ocr-result {
-            background: #f8fbfe;
-            border-radius: 22px;
+        .lobby-btn i {
+            font-size: 1.4rem;
+            color: #ffd966;
+        }
+
+        .lobby-btn.active {
+            background: linear-gradient(145deg, #ffd966, #ffb347);
+            color: #0a1a2f;
+        }
+
+        .lobby-btn.active i {
+            color: #0a1a2f;
+        }
+
+        /* Main Game Area */
+        .game-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Question Card */
+        .question-card {
+            background: rgba(255,255,255,0.03);
+            backdrop-filter: blur(20px);
+            border-radius: 40px;
+            padding: 30px 20px;
+            border: 1px solid rgba(255,215,0,0.2);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            margin-bottom: 20px;
+        }
+
+        .difficulty-badge {
+            display: inline-block;
+            background: rgba(255,215,0,0.15);
+            padding: 8px 18px;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #ffd966;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255,215,0,0.3);
+        }
+
+        .question-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            line-height: 1.4;
+            margin-bottom: 20px;
+            min-height: 100px;
+        }
+
+        .prize-info {
+            background: linear-gradient(145deg, #1e3a5f, #0f2b50);
+            border-radius: 30px;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 700;
+            border: 1px solid #ffd96650;
+        }
+
+        .current-prize {
+            font-size: 2rem;
+            color: #ffd966;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .question-counter {
+            background: rgba(255,255,255,0.1);
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-size: 1rem;
+        }
+
+        /* Options */
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .option-btn {
+            background: rgba(255,255,255,0.05);
+            border: 2px solid rgba(255,215,0,0.2);
+            border-radius: 30px;
+            padding: 20px 12px;
+            color: white;
+            font-weight: 600;
+            font-size: 1.1rem;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            backdrop-filter: blur(10px);
+        }
+
+        .option-prefix {
+            width: 40px;
+            height: 40px;
+            background: rgba(255,215,0,0.15);
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1.3rem;
+            color: #ffd966;
+        }
+
+        .option-btn:hover {
+            background: rgba(255,215,0,0.1);
+            border-color: #ffd966;
+            transform: translateY(-2px);
+        }
+
+        .option-btn.correct {
+            background: linear-gradient(145deg, #28a745, #218838);
+            border-color: #fff;
+            animation: pulse 0.5s;
+        }
+
+        .option-btn.wrong {
+            background: linear-gradient(145deg, #dc3545, #c82333);
+            border-color: #fff;
+            animation: shake 0.5s;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes shake {
+            0%,100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        /* Leaderboard */
+        .leaderboard-section {
+            background: rgba(255,255,255,0.03);
+            border-radius: 40px;
             padding: 20px;
             margin-top: 20px;
-            display: none;
         }
 
-        .ocr-text {
-            background: white;
-            border-radius: 18px;
-            padding: 18px;
-            min-height: 130px;
-            max-height: 250px;
-            overflow-y: auto;
-            border: 1px solid #e2eaf2;
-            font-size: 0.95rem;
-            line-height: 1.6;
-            margin: 15px 0;
-            outline: none;
-            white-space: pre-wrap;
-            word-break: break-word;
-        }
-
-        .folder-select {
-            width: 100%;
-            padding: 14px;
-            border: 2px solid #e2eaf2;
-            border-radius: 18px;
-            margin-bottom: 12px;
-        }
-
-        .ocr-actions {
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 20px;
             display: flex;
+            align-items: center;
             gap: 10px;
+            color: #ffd966;
         }
 
-        .ocr-action-btn {
+        .leaderboard-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .leaderboard-item {
+            background: rgba(255,255,255,0.05);
+            border-radius: 30px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border: 1px solid rgba(255,215,0,0.1);
+        }
+
+        .rank {
+            width: 35px;
+            height: 35px;
+            background: #ffd96620;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            color: #ffd966;
+        }
+
+        .user-avatar-small {
+            width: 40px;
+            height: 40px;
+            border-radius: 40px;
+            background: linear-gradient(145deg, #ffd966, #ffb347);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: #0a1a2f;
+        }
+
+        .user-info-small {
             flex: 1;
-            padding: 14px;
-            border: none;
-            border-radius: 18px;
             font-weight: 600;
-            cursor: pointer;
-            background: white;
-            border: 1px solid #dde5ef;
         }
 
-        .save-btn {
-            background: #0a2647;
-            color: white;
-            border: none;
+        .user-score-small {
+            font-weight: 800;
+            color: #ffd966;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .current-user-rank {
+            background: rgba(255,215,0,0.2);
+            border-radius: 30px;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-weight: 600;
+            border: 2px solid #ffd966;
+        }
+
+        .rank-position {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: #ffd966;
+        }
+
+        /* Loading */
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 200px;
         }
 
         .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid #f0f4fa;
-            border-top: 4px solid #0a2647;
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255,215,0,0.1);
+            border-top: 4px solid #ffd966;
             border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin: 20px auto;
-            display: none;
         }
 
         @keyframes spin {
@@ -520,586 +375,531 @@
             display: none !important;
         }
 
-        @media (max-width: 1100px) {
-            .main-grid {
+        /* Game Over */
+        .game-over {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .game-over h2 {
+            font-size: 2.5rem;
+            color: #ffd966;
+            margin-bottom: 20px;
+        }
+
+        .final-score {
+            font-size: 2rem;
+            margin-bottom: 30px;
+        }
+
+        .play-again-btn {
+            background: linear-gradient(145deg, #ffd966, #ffb347);
+            border: none;
+            border-radius: 50px;
+            padding: 20px 40px;
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: #0a1a2f;
+            cursor: pointer;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+
+        /* Responsive */
+        @media (max-width: 400px) {
+            .options-grid {
                 grid-template-columns: 1fr;
+            }
+            
+            .question-text {
+                font-size: 1.3rem;
             }
         }
     </style>
 </head>
 <body>
-    <div class="app">
-        <!-- Navbar -->
-        <div class="navbar">
-            <div class="logo">
-                <h1>UniVapp</h1>
-            </div>
-            <div class="avatar" onclick="showStats()">U</div>
-        </div>
-
-        <!-- Tabs -->
-        <div class="tabs-container">
-            <div class="tabs">
-                <button class="tab active" onclick="switchTab('ana', this)"><i class="fas fa-home"></i>Ana səhifə</button>
-                <button class="tab" onclick="switchTab('dersler', this)"><i class="fas fa-book-open"></i>Dərslər</button>
-                <button class="tab" onclick="switchTab('pdfs', this)"><i class="fas fa-file-pdf"></i>PDF-lər</button>
-                <button class="tab" onclick="switchTab('qeydler', this)"><i class="fas fa-sticky-note"></i>Qeydlər</button>
-                <button class="tab" onclick="switchTab('kamera', this)"><i class="fas fa-camera"></i>Kamera</button>
-            </div>
-        </div>
-
-        <!-- Main Grid -->
-        <div class="main-grid" id="mainGrid">
-            <!-- Sol Panel - Qovluqlar -->
-            <div class="folders-panel">
-                <div class="panel-header">
-                    <h3><i class="fas fa-folder-tree"></i> Qovluqlar</h3>
-                    <button class="new-folder-btn" onclick="createFolder()"><i class="fas fa-plus"></i></button>
+    <div class="app" id="app">
+        <!-- Telegram Header -->
+        <div class="tg-header" id="tgHeader">
+            <div class="tg-avatar" id="tgAvatar">U</div>
+            <div class="tg-info">
+                <div class="tg-name" id="tgName">Yüklənir...</div>
+                <div class="tg-balance">
+                    <i class="fas fa-coins"></i>
+                    <span id="userBalance">0</span> AZN
                 </div>
-                <div class="folder-list" id="folderList"></div>
+            </div>
+        </div>
+
+        <!-- Lobby Buttons -->
+        <div class="lobby-buttons">
+            <button class="lobby-btn active" id="gameBtn" onclick="showGame()">
+                <i class="fas fa-gamepad"></i> Oyun
+            </button>
+            <button class="lobby-btn" id="leaderboardBtn" onclick="showLeaderboard()">
+                <i class="fas fa-trophy"></i> Sıralama
+            </button>
+        </div>
+
+        <!-- Main Game Area -->
+        <div class="game-area" id="gameArea">
+            <!-- Loading -->
+            <div id="loading" class="loading-spinner">
+                <div class="spinner"></div>
             </div>
 
-            <!-- Orta Panel - Məzmun -->
-            <div class="content-panel" id="contentPanel">
-                <!-- Normal görünüş -->
-                <div id="normalView">
-                    <div class="content-header">
-                        <h2 id="currentFolderTitle">Bütün dərslər</h2>
-                        <div class="action-buttons">
-                            <button class="btn-secondary" id="actionBtn" onclick="handleAction()"><i class="fas fa-plus"></i> <span id="actionText">Yeni</span></button>
-                            <button class="btn-primary" onclick="uploadPDF()"><i class="fas fa-upload"></i>PDF</button>
+            <!-- Game Content (hidden initially) -->
+            <div id="gameContent" class="hidden">
+                <div class="question-card">
+                    <span class="difficulty-badge" id="difficultyBadge">Sadə</span>
+                    <div class="question-text" id="questionText">Sual yüklənir...</div>
+                    <div class="prize-info">
+                        <div class="current-prize">
+                            <i class="fas fa-coins"></i>
+                            <span id="currentPrize">100</span> AZN
+                        </div>
+                        <div class="question-counter">
+                            <span id="currentQuestionNum">1</span>/<span id="totalQuestions">∞</span>
                         </div>
                     </div>
-                    
-                    <div class="items-grid" id="itemsGrid"></div>
                 </div>
 
-                <!-- Kitab görünüşü -->
-                <div id="bookView" class="book-view hidden">
-                    <div class="book-header">
-                        <h1 class="book-title" id="bookTitle"></h1>
-                        <div class="book-meta">
-                            <span><i class="far fa-calendar"></i> <span id="bookDate"></span></span>
-                            <span><i class="far fa-folder"></i> <span id="bookFolder"></span></span>
-                            <span><i class="far fa-tag"></i> <span id="bookType"></span></span>
-                        </div>
-                    </div>
-                    <div class="book-content" id="bookContent"></div>
+                <div class="options-grid" id="optionsContainer">
+                    <!-- Options will be injected here -->
                 </div>
             </div>
 
-            <!-- Sağ Panel - Kamera OCR -->
-            <div class="ocr-panel">
-                <h3 style="margin-bottom: 20px;"><i class="fas fa-camera-retro"></i> Dərs materialı</h3>
-                
-                <button class="camera-btn" onclick="openCamera()">
-                    <i class="fas fa-camera"></i> Kamera ilə çək
-                </button>
-                
-                <button class="gallery-btn" onclick="openGallery()">
-                    <i class="fas fa-images"></i> Qalereyadan seç
-                </button>
-                
-                <div id="camera-container">
-                    <video id="camera-stream" autoplay playsinline></video>
-                    <div class="camera-controls">
-                        <button class="capture-btn" onclick="captureImage()">Çək</button>
-                        <button class="close-camera" onclick="closeCamera()">Bağla</button>
-                    </div>
+            <!-- Game Over Screen (hidden initially) -->
+            <div id="gameOverScreen" class="game-over hidden">
+                <h2>Oyun Bitdi!</h2>
+                <div class="final-score">
+                    <i class="fas fa-coins"></i>
+                    <span id="finalPrize">0</span> AZN
                 </div>
-
-                <input type="file" id="galleryInput" accept="image/*" style="display: none;">
-                <div id="ocr-loading" class="spinner"></div>
-
-                <div id="ocr-result" class="ocr-result">
-                    <div style="display: flex; justify-content: space-between;">
-                        <span style="font-weight: 700;">Mətn:</span>
-                        <button onclick="clearOCR()" style="background:none; border:none;">✕</button>
-                    </div>
-                    
-                    <select id="folderSelect" class="folder-select"></select>
-                    <div id="ocr-text" class="ocr-text" contenteditable="true"></div>
-                    
-                    <div class="ocr-actions">
-                        <button class="ocr-action-btn save-btn" onclick="saveOCR()"><i class="fas fa-save"></i> Yadda saxla</button>
-                        <button class="ocr-action-btn" onclick="copyOCR()"><i class="fas fa-copy"></i> Köçür</button>
-                    </div>
-                </div>
+                <button class="play-again-btn" onclick="restartGame()">
+                    <i class="fas fa-redo-alt"></i> Yenidən Başla
+                </button>
             </div>
         </div>
 
-        <!-- Kitabdan çıxış düyməsi -->
-        <button id="exitBookBtn" class="exit-book-btn hidden" onclick="exitBookMode()">
-            <i class="fas fa-times"></i>
-        </button>
+        <!-- Leaderboard Section (hidden initially) -->
+        <div id="leaderboardSection" class="leaderboard-section hidden">
+            <div class="section-title">
+                <i class="fas fa-trophy" style="color: #ffd966;"></i> TOP 10
+            </div>
+            <div class="leaderboard-list" id="leaderboardList">
+                <!-- Leaderboard items will be injected here -->
+            </div>
+            <div class="current-user-rank" id="userRankSection">
+                <span>Sizin yeriniz:</span>
+                <span class="rank-position" id="userRank">-</span>
+            </div>
+        </div>
     </div>
 
     <script>
-        // ========== GÜCLƏNDİRİLMİŞ DATA SAXLANIŞI ==========
-        // Məlumatlar heç vaxt silinmir - 3 qat backup
+        // ========== TELEGRAM WEBAPP ==========
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand(); // Tam ekran
         
-        // Data strukturu
-        let folders = [];
-        let items = [];
-        let selectedFolder = 'Bütün dərslər';
-        let currentTab = 'ana';
-        let cameraStream = null;
-        let isBookMode = false;
-
-        // Yedek sistemi - localStorage + backup
-        function loadData() {
+        // Telegram istifadəçi məlumatları
+        const user = tg.initDataUnsafe?.user || {
+            id: Math.floor(Math.random() * 1000000),
+            first_name: 'İstifadəçi',
+            last_name: '',
+            username: 'user' + Math.floor(Math.random() * 1000)
+        };
+        
+        // ========== MONGODB BAĞLANTI ==========
+        const APP_ID = 'application-0-zlqyy'; // Realm App ID (MongoDB Atlas)
+        const MONGO_URI = 'mongodb+srv://xaliqmustafayev7313_db_user:R4Cno5z1Enhtr09u@sayt.1oqunne.mongodb.net/domino_game?retryWrites=true&w=majority';
+        
+        let realmApp;
+        let mongoClient;
+        
+        async function connectMongoDB() {
             try {
-                // Əsas data
-                const mainFolders = localStorage.getItem('univapp_folders_master');
-                const mainItems = localStorage.getItem('univapp_items_master');
+                // MongoDB Realm vasitəsilə bağlantı
+                realmApp = new Realm.App({ id: APP_ID });
                 
-                // Backup data
-                const backupFolders = localStorage.getItem('univapp_folders_backup');
-                const backupItems = localStorage.getItem('univapp_items_backup');
+                // Anonim login
+                const credentials = Realm.Credentials.anonymous();
+                const user = await realmApp.logIn(credentials);
                 
-                if (mainFolders) {
-                    folders = JSON.parse(mainFolders);
-                } else if (backupFolders) {
-                    folders = JSON.parse(backupFolders);
-                } else {
-                    // Default folders
-                    folders = [
-                        { id: 1, name: 'Riyaziyyat', count: 0 },
-                        { id: 2, name: 'Fizika', count: 0 },
-                        { id: 3, name: 'Proqramlaşdırma', count: 0 },
-                        { id: 4, name: 'Xətti cəbr', count: 0 },
-                        { id: 5, name: 'Universitet', count: 0 }
-                    ];
-                }
+                // MongoDB service
+                mongoClient = user.mongoClient('mongodb-atlas');
                 
-                if (mainItems) {
-                    items = JSON.parse(mainItems);
-                } else if (backupItems) {
-                    items = JSON.parse(backupItems);
-                } else {
-                    // Default items
-                    items = [
-                        { id: 1, title: 'Riyaziyyat mühazirə 1', type: 'ders', folder: 'Riyaziyyat', date: '2024-01-15', content: 'Bu gün limit və törəmə mövzusunu keçdik. Limit anlayışı riyazi analizin əsasını təşkil edir. Törəmə isə dəyişmə sürətini ifadə edir.' },
-                        { id: 2, title: 'Fizika laboratoriya', type: 'qeyd', folder: 'Fizika', date: '2024-01-20', content: 'Təcrübə nəticələri: Sürət ölçüldü, cismin hərəkət tənliyi quruldu. Nyuton qanunları tətbiq edildi.' },
-                        { id: 3, title: 'Kvant fizikası', type: 'ders', folder: 'Fizika', date: '2024-02-10', content: 'Kvant ədədləri və atom quruluşu. Plank sabiti, foton enerjisi, Heisenberg qeyri-müəyyənlik prinsipi.' }
-                    ];
-                }
+                console.log('MongoDB bağlantısı uğurlu');
+                return true;
+            } catch (error) {
+                console.error('MongoDB xətası:', error);
                 
-                // Backup yarat
-                createBackup();
-                
-            } catch (e) {
-                console.error('Load error:', e);
-                resetToDefault();
+                // Offline mode - localStorage istifadə et
+                return false;
             }
-            
-            updateAll();
         }
 
-        // Backup yarat
-        function createBackup() {
+        // ========== SORU ÇƏKMƏ API ==========
+        // Open Trivia Database (çoxdilli dəstək)
+        async function fetchQuestion(difficulty = 'easy') {
             try {
-                localStorage.setItem('univapp_folders_backup', JSON.stringify(folders));
-                localStorage.setItem('univapp_items_backup', JSON.stringify(items));
-            } catch (e) {}
-        }
-
-        // Məlumatı yadda saxla (hər dəyişiklikdə)
-        function saveData() {
-            try {
-                // Master save
-                localStorage.setItem('univapp_folders_master', JSON.stringify(folders));
-                localStorage.setItem('univapp_items_master', JSON.stringify(items));
+                // difficulty: easy, medium, hard
+                const response = await fetch(`https://opentdb.com/api.php?amount=1&category=9&difficulty=${difficulty}&type=multiple`);
+                const data = await response.json();
                 
-                // Backup save
-                createBackup();
-                
-                // Əlavə olaraq timestamp
-                localStorage.setItem('univapp_last_save', new Date().toISOString());
-                
-            } catch (e) {
-                console.error('Save error:', e);
-                alert('Xəbərdarlıq: Yaddaş dolub, köhnə məlumatlar silinə bilər');
-            }
-        }
-
-        // Reset to default
-        function resetToDefault() {
-            folders = [
-                { id: 1, name: 'Riyaziyyat', count: 0 },
-                { id: 2, name: 'Fizika', count: 0 },
-                { id: 3, name: 'Proqramlaşdırma', count: 0 },
-                { id: 4, name: 'Xətti cəbr', count: 0 }
-            ];
-            items = [];
-            saveData();
-        }
-
-        // Update all
-        function updateAll() {
-            updateFolderCounts();
-            renderFolders();
-            renderItems();
-            updateFolderSelect();
-        }
-
-        // Folder count yenilə
-        function updateFolderCounts() {
-            folders.forEach(folder => {
-                folder.count = items.filter(item => item.folder === folder.name).length;
-            });
-        }
-
-        // Folder seçimini yenilə
-        function updateFolderSelect() {
-            const select = document.getElementById('folderSelect');
-            select.innerHTML = '<option value="">Qovluq seçin</option>';
-            folders.forEach(f => {
-                select.innerHTML += `<option value="${f.name}">${f.name}</option>`;
-            });
-        }
-
-        // Folderları render et
-        function renderFolders() {
-            const list = document.getElementById('folderList');
-            list.innerHTML = `
-                <div class="folder-item ${selectedFolder === 'Bütün dərslər' ? 'active' : ''}" 
-                     onclick="selectFolder('Bütün dərslər')">
-                    <i class="fas fa-globe"></i> Bütün dərslər
-                    <span class="folder-count">${items.length}</span>
-                </div>
-            `;
-            
-            folders.forEach(f => {
-                list.innerHTML += `
-                    <div class="folder-item ${selectedFolder === f.name ? 'active' : ''}" 
-                         onclick="selectFolder('${f.name.replace(/'/g, "\\'")}')">
-                        <i class="fas fa-folder"></i> ${f.name}
-                        <span class="folder-count">${f.count}</span>
-                    </div>
-                `;
-            });
-        }
-
-        // Elementləri render et - İLK 30 SİMVOL GÖRÜNÜR
-        function renderItems() {
-            const grid = document.getElementById('itemsGrid');
-            grid.innerHTML = '';
-            
-            let filteredItems = items;
-            
-            // Tab-a görə filtr
-            if (currentTab === 'dersler') {
-                filteredItems = filteredItems.filter(i => i.type === 'ders');
-            } else if (currentTab === 'pdfs') {
-                filteredItems = filteredItems.filter(i => i.type === 'pdf');
-            } else if (currentTab === 'qeydler') {
-                filteredItems = filteredItems.filter(i => i.type === 'qeyd');
-            }
-            
-            // Qovluğa görə filtr
-            if (selectedFolder !== 'Bütün dərslər') {
-                filteredItems = filteredItems.filter(i => i.folder === selectedFolder);
-            }
-            
-            if (filteredItems.length === 0) {
-                grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:50px; color:#728aa8;">Heç bir məlumat yoxdur</div>';
-                return;
-            }
-            
-            filteredItems.forEach(item => {
-                const card = document.createElement('div');
-                card.className = 'item-card';
-                card.onclick = () => openBookMode(item.id);
-                
-                let icon = 'fa-file';
-                if (item.type === 'ders') icon = 'fa-book-open';
-                else if (item.type === 'qeyd') icon = 'fa-sticky-note';
-                else if (item.type === 'pdf') icon = 'fa-file-pdf';
-                
-                // Mətnin ilk 30 simvolu (preview)
-                let preview = '';
-                if (item.content) {
-                    preview = item.content.substring(0, 30);
-                    if (item.content.length > 30) preview += '...';
-                } else if (item.type === 'pdf') {
-                    preview = 'PDF faylı';
-                } else {
-                    preview = 'Məzmun yoxdur';
-                }
-                
-                const date = new Date(item.date).toLocaleDateString('az');
-                
-                card.innerHTML = `
-                    <div class="item-icon"><i class="fas ${icon}"></i></div>
-                    <div class="item-title">${item.title}</div>
-                    <div class="item-preview">${preview}</div>
-                    <div class="item-meta">
-                        <span class="item-badge">${item.type}</span>
-                        <span>${date}</span>
-                    </div>
-                `;
-                grid.appendChild(card);
-            });
-        }
-
-        // Kitab rejimi - tam ekran
-        function openBookMode(id) {
-            const item = items.find(i => i.id === id);
-            if (!item) return;
-            
-            document.getElementById('bookTitle').innerText = item.title;
-            document.getElementById('bookDate').innerText = new Date(item.date).toLocaleDateString('az');
-            document.getElementById('bookFolder').innerText = item.folder;
-            document.getElementById('bookType').innerText = item.type;
-            
-            // Mətn formatı - düzgün alt-alta
-            if (item.content) {
-                const formattedContent = item.content.replace(/\n/g, '</p><p>');
-                document.getElementById('bookContent').innerHTML = `<p>${formattedContent}</p>`;
-            } else {
-                document.getElementById('bookContent').innerHTML = '<p>Məzmun yoxdur</p>';
-            }
-            
-            document.getElementById('normalView').classList.add('hidden');
-            document.getElementById('bookView').classList.remove('hidden');
-            document.getElementById('exitBookBtn').classList.remove('hidden');
-            isBookMode = true;
-        }
-
-        // Kitabdan çıx
-        function exitBookMode() {
-            document.getElementById('normalView').classList.remove('hidden');
-            document.getElementById('bookView').classList.add('hidden');
-            document.getElementById('exitBookBtn').classList.add('hidden');
-            isBookMode = false;
-        }
-
-        // Folder seç
-        function selectFolder(folderName) {
-            selectedFolder = folderName;
-            document.getElementById('currentFolderTitle').innerText = folderName;
-            renderFolders();
-            renderItems();
-        }
-
-        // Yeni folder
-        function createFolder() {
-            const name = prompt('Qovluq adı:');
-            if (name && name.trim()) {
-                folders.push({
-                    id: Date.now(),
-                    name: name.trim(),
-                    count: 0
-                });
-                saveData();
-                updateAll();
-            }
-        }
-
-        // Action düyməsi
-        function handleAction() {
-            if (currentTab === 'pdfs') {
-                uploadPDF();
-            } else if (currentTab === 'kamera') {
-                openCamera();
-            } else {
-                createNote();
-            }
-        }
-
-        // Yeni qeyd
-        function createNote(type = 'qeyd') {
-            const title = prompt('Başlıq:', `Qeyd ${new Date().toLocaleDateString('az')}`);
-            if (!title) return;
-            
-            const content = prompt('Mətn:');
-            if (!content) return;
-            
-            const folder = selectedFolder !== 'Bütün dərslər' ? selectedFolder : 'Ümumi';
-            
-            const newItem = {
-                id: Date.now(),
-                title: title,
-                type: currentTab === 'dersler' ? 'ders' : 'qeyd',
-                folder: folder,
-                date: new Date().toISOString(),
-                content: content
-            };
-            
-            items.push(newItem);
-            saveData();
-            updateAll();
-        }
-
-        // PDF yüklə
-        function uploadPDF() {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = '.pdf';
-            input.onchange = (e) => {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = (loadEvent) => {
-                        const newItem = {
-                            id: Date.now(),
-                            title: file.name,
-                            type: 'pdf',
-                            folder: selectedFolder !== 'Bütün dərslər' ? selectedFolder : 'PDF-lər',
-                            date: new Date().toISOString(),
-                            data: loadEvent.target.result
-                        };
-                        items.push(newItem);
-                        saveData();
-                        updateAll();
+                if (data.results && data.results.length > 0) {
+                    const q = data.results[0];
+                    
+                    // Cavabları qarışdır
+                    const answers = [...q.incorrect_answers, q.correct_answer];
+                    shuffleArray(answers);
+                    
+                    return {
+                        id: Date.now() + Math.random(),
+                        question: decodeHTML(q.question),
+                        correct_answer: decodeHTML(q.correct_answer),
+                        options: answers.map(a => decodeHTML(a)),
+                        difficulty: q.difficulty,
+                        category: q.category
                     };
-                    reader.readAsDataURL(file);
                 }
-            };
-            input.click();
-        }
-
-        // Tab dəyiş
-        function switchTab(tabName, element) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            element.classList.add('active');
-            
-            currentTab = tabName;
-            
-            // Başlığı dəyiş
-            const titles = {
-                'ana': 'Ana səhifə',
-                'dersler': 'Bütün dərslər',
-                'pdfs': 'PDF Kitabxana',
-                'qeydler': 'Qeydlərim',
-                'kamera': 'Kamera OCR'
-            };
-            
-            document.getElementById('currentFolderTitle').innerText = titles[tabName];
-            
-            // Action düyməsi mətnini dəyiş
-            const actionBtn = document.getElementById('actionText');
-            if (tabName === 'pdfs') actionBtn.innerText = 'Yeni PDF';
-            else if (tabName === 'kamera') actionBtn.innerText = 'Kamera aç';
-            else actionBtn.innerText = 'Yeni';
-            
-            renderItems();
-            
-            if (tabName === 'kamera') {
-                document.querySelector('.ocr-panel').scrollIntoView({ behavior: 'smooth' });
+                return null;
+            } catch (error) {
+                console.error('Sual xətası:', error);
+                return getFallbackQuestion();
             }
         }
 
-        // ========== KAMERA FUNKSİYALARI ==========
-        async function openCamera() {
-            try {
-                cameraStream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: 'environment' } 
-                });
-                const video = document.getElementById('camera-stream');
-                video.srcObject = cameraStream;
-                document.getElementById('camera-container').style.display = 'block';
-                await video.play();
-            } catch (err) {
-                alert('Kamera xətası: ' + err.message);
+        // Fallback suallar (API işləməsə)
+        function getFallbackQuestion() {
+            const fallbacks = [
+                {
+                    question: "Azərbaycanın paytaxtı hansı şəhərdir?",
+                    correct_answer: "Bakı",
+                    options: ["Bakı", "Gəncə", "Sumqayıt", "Naxçıvan"],
+                    difficulty: "easy"
+                },
+                {
+                    question: "2 + 2 * 2 = ?",
+                    correct_answer: "6",
+                    options: ["4", "6", "8", "2"],
+                    difficulty: "medium"
+                },
+                {
+                    question: "Dünyanın ən böyük okeanı hansıdır?",
+                    correct_answer: "Sakit okean",
+                    options: ["Atlantik", "Hind", "Şimal Buzlu", "Sakit okean"],
+                    difficulty: "hard"
+                }
+            ];
+            return fallbacks[Math.floor(Math.random() * fallbacks.length)];
+        }
+
+        // HTML decode
+        function decodeHTML(html) {
+            const txt = document.createElement('textarea');
+            txt.innerHTML = html;
+            return txt.value;
+        }
+
+        // Array qarışdır
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
             }
         }
 
-        function closeCamera() {
-            if (cameraStream) {
-                cameraStream.getTracks().forEach(t => t.stop());
-            }
-            document.getElementById('camera-container').style.display = 'none';
-        }
-
-        function openGallery() {
-            document.getElementById('galleryInput').click();
-        }
-
-        document.getElementById('galleryInput').onchange = function(e) {
-            const file = e.target.files[0];
-            if (file) processImage(file);
+        // ========== OYUN STATE ==========
+        let gameState = {
+            userId: user.id,
+            userName: user.first_name + ' ' + (user.last_name || ''),
+            balance: 0,
+            currentQuestion: null,
+            questionHistory: [], // Görülmüş suallar (təkrarlanmamaq üçün)
+            difficulty: 'easy',
+            questionCount: 0,
+            gameActive: false
         };
 
-        async function captureImage() {
-            const video = document.getElementById('camera-stream');
-            const canvas = document.createElement('canvas');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            canvas.getContext('2d').drawImage(video, 0, 0);
-            
-            closeCamera();
-            
-            canvas.toBlob(blob => processImage(blob));
-        }
-
-        async function processImage(imageBlob) {
-            document.getElementById('ocr-loading').style.display = 'block';
-            
+        // LocalStorage-dan yüklə (offline üçün)
+        function loadGameState() {
             try {
-                const { data: { text } } = await Tesseract.recognize(imageBlob, 'aze+eng');
-                // Mətn formatını qoru
-                document.getElementById('ocr-text').innerText = text || 'Mətn tapılmadı';
-                document.getElementById('ocr-result').style.display = 'block';
-            } catch (err) {
-                alert('OCR xətası');
-            } finally {
-                document.getElementById('ocr-loading').style.display = 'none';
+                const saved = localStorage.getItem(`game_${user.id}`);
+                if (saved) {
+                    const data = JSON.parse(saved);
+                    gameState.balance = data.balance || 0;
+                    gameState.questionHistory = data.questionHistory || [];
+                    gameState.difficulty = data.difficulty || 'easy';
+                    gameState.questionCount = data.questionCount || 0;
+                }
+            } catch (e) {}
+            
+            updateBalanceUI();
+        }
+
+        // Yadda saxla
+        function saveGameState() {
+            try {
+                localStorage.setItem(`game_${user.id}`, JSON.stringify({
+                    balance: gameState.balance,
+                    questionHistory: gameState.questionHistory,
+                    difficulty: gameState.difficulty,
+                    questionCount: gameState.questionCount
+                }));
+            } catch (e) {}
+            
+            // MongoDB-yə də yaz (online olsa)
+            saveToMongoDB();
+        }
+
+        // MongoDB-yə yaz
+        async function saveToMongoDB() {
+            // TODO: MongoDB Realm ilə sinxronizasiya
+            console.log('MongoDB save:', gameState);
+        }
+
+        // ========== OYUN FUNKSİYALARI ==========
+        async function startGame() {
+            showLoading();
+            gameState.gameActive = true;
+            gameState.questionCount = 0;
+            gameState.difficulty = 'easy';
+            
+            await loadNextQuestion();
+        }
+
+        async function loadNextQuestion() {
+            if (!gameState.gameActive) return;
+            
+            showLoading();
+            
+            // Zorluq səviyyəsini təyin et (hər 5 sualdan bir artır)
+            if (gameState.questionCount >= 5) gameState.difficulty = 'medium';
+            if (gameState.questionCount >= 10) gameState.difficulty = 'hard';
+            
+            let question = null;
+            let attempts = 0;
+            
+            // Təkrarlanmamış sual tap
+            while (attempts < 10) {
+                question = await fetchQuestion(gameState.difficulty);
+                if (question && !gameState.questionHistory.includes(question.id)) {
+                    break;
+                }
+                attempts++;
+            }
+            
+            if (!question) {
+                question = getFallbackQuestion();
+            }
+            
+            gameState.currentQuestion = question;
+            gameState.questionHistory.push(question.id);
+            
+            // UI yenilə
+            document.getElementById('difficultyBadge').innerText = 
+                gameState.difficulty === 'easy' ? 'Sadə' : 
+                gameState.difficulty === 'medium' ? 'Orta' : 'Çətin';
+            
+            document.getElementById('questionText').innerText = question.question;
+            document.getElementById('currentPrize').innerText = gameState.balance;
+            document.getElementById('currentQuestionNum').innerText = gameState.questionCount + 1;
+            
+            // Optionları yarat
+            const optionsContainer = document.getElementById('optionsContainer');
+            optionsContainer.innerHTML = '';
+            
+            const letters = ['A', 'B', 'C', 'D'];
+            question.options.forEach((option, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.onclick = () => checkAnswer(option, question.correct_answer, btn);
+                btn.innerHTML = `
+                    <span class="option-prefix">${letters[index]}</span>
+                    <span>${option}</span>
+                `;
+                optionsContainer.appendChild(btn);
+            });
+            
+            hideLoading();
+        }
+
+        async function checkAnswer(selected, correct, btnElement) {
+            if (!gameState.gameActive) return;
+            
+            const isCorrect = selected === correct;
+            
+            if (isCorrect) {
+                // Düzgün cavab
+                gameState.balance += 100;
+                gameState.questionCount++;
+                
+                btnElement.classList.add('correct');
+                
+                // Yadda saxla
+                saveGameState();
+                updateBalanceUI();
+                
+                // Növbəti sual
+                setTimeout(() => {
+                    if (gameState.gameActive) {
+                        loadNextQuestion();
+                    }
+                }, 1000);
+            } else {
+                // Səhv cavab
+                gameState.balance = Math.max(0, gameState.balance - 100);
+                
+                btnElement.classList.add('wrong');
+                
+                // Düzgün cavabı göstər
+                const allOptions = document.querySelectorAll('.option-btn');
+                allOptions.forEach(btn => {
+                    if (btn.innerHTML.includes(correct)) {
+                        btn.classList.add('correct');
+                    }
+                });
+                
+                // Yadda saxla
+                saveGameState();
+                updateBalanceUI();
+                
+                // Oyun bitdi
+                setTimeout(() => {
+                    endGame();
+                }, 2000);
             }
         }
 
-        // OCR yadda saxla - mətn formatı qorunur
-        function saveOCR() {
-            const text = document.getElementById('ocr-text').innerText.trim();
-            const folderName = document.getElementById('folderSelect').value;
+        function endGame() {
+            gameState.gameActive = false;
+            document.getElementById('gameContent').classList.add('hidden');
+            document.getElementById('gameOverScreen').classList.remove('hidden');
+            document.getElementById('finalPrize').innerText = gameState.balance;
             
-            if (!text || !folderName) {
-                alert('Mətn və qovluq seçin');
-                return;
+            // Leaderboard yenilə
+            updateLeaderboard();
+        }
+
+        function restartGame() {
+            gameState.balance = 0;
+            gameState.questionHistory = [];
+            gameState.questionCount = 0;
+            gameState.difficulty = 'easy';
+            
+            saveGameState();
+            updateBalanceUI();
+            
+            document.getElementById('gameOverScreen').classList.add('hidden');
+            document.getElementById('gameContent').classList.remove('hidden');
+            
+            startGame();
+        }
+
+        // ========== LEADERBOARD ==========
+        let leaderboardData = [];
+
+        async function updateLeaderboard() {
+            // TODO: MongoDB-dən TOP 10 çək
+            // İndilik mock data
+            leaderboardData = generateMockLeaderboard();
+            
+            const leaderboardList = document.getElementById('leaderboardList');
+            leaderboardList.innerHTML = '';
+            
+            leaderboardData.slice(0, 10).forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'leaderboard-item';
+                div.innerHTML = `
+                    <div class="rank">${index + 1}</div>
+                    <div class="user-avatar-small">${item.name.charAt(0)}</div>
+                    <div class="user-info-small">${item.name}</div>
+                    <div class="user-score-small"><i class="fas fa-coins"></i> ${item.score}</div>
+                `;
+                leaderboardList.appendChild(div);
+            });
+            
+            // İstifadəçinin sırasını tap
+            const userRank = leaderboardData.findIndex(u => u.id === user.id) + 1;
+            document.getElementById('userRank').innerText = userRank > 0 ? `${userRank}.` : '100+';
+        }
+
+        function generateMockLeaderboard() {
+            const mock = [];
+            for (let i = 1; i <= 15; i++) {
+                mock.push({
+                    id: i,
+                    name: `İstifadəçi ${i}`,
+                    score: Math.floor(Math.random() * 5000)
+                });
             }
+            // İstifadəçini əlavə et
+            mock.push({
+                id: user.id,
+                name: gameState.userName,
+                score: gameState.balance
+            });
             
-            const newItem = {
-                id: Date.now(),
-                title: `OCR ${new Date().toLocaleDateString('az')}`,
-                type: 'qeyd',
-                folder: folderName,
-                date: new Date().toISOString(),
-                content: text  // Mətn olduğu kimi saxlanır
-            };
+            return mock.sort((a, b) => b.score - a.score);
+        }
+
+        // ========== UI FUNKSİYALARI ==========
+        function showLoading() {
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('gameContent').classList.add('hidden');
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('gameContent').classList.remove('hidden');
+        }
+
+        function updateBalanceUI() {
+            document.getElementById('userBalance').innerText = gameState.balance;
+        }
+
+        function showGame() {
+            document.getElementById('gameBtn').classList.add('active');
+            document.getElementById('leaderboardBtn').classList.remove('active');
+            document.getElementById('gameArea').classList.remove('hidden');
+            document.getElementById('leaderboardSection').classList.add('hidden');
             
-            items.push(newItem);
-            saveData();
-            updateAll();
+            if (!gameState.gameActive && gameState.balance === 0) {
+                startGame();
+            }
+        }
+
+        function showLeaderboard() {
+            document.getElementById('leaderboardBtn').classList.add('active');
+            document.getElementById('gameBtn').classList.remove('active');
+            document.getElementById('gameArea').classList.add('hidden');
+            document.getElementById('leaderboardSection').classList.remove('hidden');
             
-            alert('Əlavə edildi!');
-            document.getElementById('ocr-result').style.display = 'none';
+            updateLeaderboard();
         }
 
-        function copyOCR() {
-            const text = document.getElementById('ocr-text').innerText;
-            navigator.clipboard.writeText(text);
-            alert('Köçürüldü');
+        // ========== INIT ==========
+        async function init() {
+            // Telegram UI
+            document.getElementById('tgName').innerText = user.first_name + ' ' + (user.last_name || '');
+            document.getElementById('tgAvatar').innerText = user.first_name.charAt(0);
+            
+            // MongoDB bağlantısı
+            await connectMongoDB();
+            
+            // Oyun state yüklə
+            loadGameState();
+            
+            // Oyunu başlat
+            startGame();
+            
+            // Hər 30 saniyədə leaderboard yenilə
+            setInterval(updateLeaderboard, 30000);
         }
 
-        function clearOCR() {
-            document.getElementById('ocr-result').style.display = 'none';
-        }
-
-        function showStats() {
-            alert(`UniVapp\nCəmi qeydlər: ${items.length}\nQovluqlar: ${folders.length}\nSon yedəkləmə: ${new Date().toLocaleTimeString('az')}`);
-        }
-
-        // Initial load
-        loadData();
-
-        // Hər 5 dəqiqədə backup
-        setInterval(createBackup, 300000);
-
-        // Səhifə bağlananda yadda saxla
-        window.addEventListener('beforeunload', () => {
-            saveData();
-        });
+        init();
     </script>
 </body>
 </html>
