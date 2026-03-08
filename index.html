@@ -2,45 +2,49 @@
 <html lang="az">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>UniVapp - Universitet Platforması</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>UniVapp - Professional Universitet Platforması</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
-    <!-- Tesseract.js OCR üçün -->
-    <script src='https://unpkg.com/tesseract.js@4.0.2/dist/tesseract.min.js'></script>
-    <!-- PDF.js library -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/dist/tesseract.min.js"></script>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
-            font-family: 'Inter', sans-serif;
-            background: #f0f4fa;
-            color: #1a2b3e;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: #f5f7fa;
+            color: #0b1e33;
+            overflow-x: hidden;
         }
 
+        /* Professional App Container */
         .app {
-            max-width: 1500px;
+            max-width: 1440px;
             margin: 0 auto;
-            padding: 16px 24px;
+            background: #f5f7fa;
+            min-height: 100vh;
+            position: relative;
         }
 
-        /* Navbar */
+        /* Glassmorphism Navbar */
         .navbar {
-            background: rgba(255,255,255,0.85);
-            backdrop-filter: blur(12px);
-            padding: 16px 32px;
-            border-radius: 50px;
-            box-shadow: 0 10px 30px rgba(0,20,50,0.1);
-            margin-bottom: 30px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 18px 28px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border: 1px solid rgba(255,255,255,0.5);
+            border-bottom: 1px solid rgba(0, 40, 80, 0.08);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.02);
         }
 
         .logo {
@@ -50,81 +54,80 @@
         }
 
         .logo h1 {
-            font-size: 2.2rem;
-            font-weight: 700;
-            background: linear-gradient(145deg, #0b2b4a, #1e4b8c);
+            font-size: 1.9rem;
+            font-weight: 800;
+            background: linear-gradient(145deg, #0a2647, #1b4a8b);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            letter-spacing: -0.5px;
+            letter-spacing: -1px;
         }
 
-        .badge {
-            background: #1e4b8c;
-            color: white;
-            padding: 4px 12px;
-            border-radius: 40px;
-            font-size: 0.75rem;
-            font-weight: 500;
-        }
-
-        .user-profile {
-            display: flex;
-            align-items: center;
-            gap: 25px;
-        }
-
-        .uni-badge {
-            background: #e9eff8;
+        .university-badge {
+            background: #f0f4fe;
             padding: 8px 18px;
             border-radius: 40px;
             font-size: 0.9rem;
-            font-weight: 500;
-            color: #1e4b8c;
+            font-weight: 600;
+            color: #1e4f8a;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid rgba(30, 79, 138, 0.15);
         }
 
         .avatar {
             width: 48px;
             height: 48px;
-            background: linear-gradient(145deg, #1e4b8c, #0f2f52);
-            border-radius: 50%;
+            background: linear-gradient(145deg, #0a2647, #1b4a8b);
+            border-radius: 30px;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
             font-weight: 600;
             font-size: 1.2rem;
+            box-shadow: 0 8px 18px rgba(10, 38, 71, 0.15);
+            cursor: pointer;
+            transition: 0.2s;
         }
 
-        /* Tabs - Professional */
-        .tabs-wrapper {
+        /* Professional Tabs */
+        .tabs-container {
+            padding: 20px 28px 0 28px;
             background: white;
-            border-radius: 28px;
-            padding: 10px 20px 0 20px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.03);
-            margin-bottom: 25px;
+            border-radius: 0 0 32px 32px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.02);
+            margin-bottom: 28px;
         }
 
         .tabs {
             display: flex;
             gap: 8px;
-            flex-wrap: wrap;
-            border-bottom: 2px solid #eef2f6;
+            overflow-x: auto;
+            padding-bottom: 16px;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .tabs::-webkit-scrollbar {
+            display: none;
         }
 
         .tab {
-            padding: 16px 28px;
-            background: transparent;
+            padding: 14px 28px;
+            background: #f1f5f9;
             border: none;
-            font-weight: 600;
-            font-size: 1rem;
-            color: #5a6f8c;
+            border-radius: 40px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: #3f536e;
             cursor: pointer;
             display: flex;
             align-items: center;
             gap: 10px;
-            border-radius: 30px 30px 0 0;
-            transition: all 0.2s;
-            position: relative;
+            white-space: nowrap;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid transparent;
         }
 
         .tab i {
@@ -132,74 +135,78 @@
         }
 
         .tab.active {
-            color: #1e4b8c;
-            background: #f0f7ff;
+            background: #0a2647;
+            color: white;
+            box-shadow: 0 10px 20px rgba(10, 38, 71, 0.25);
+            transform: translateY(-2px);
         }
 
-        .tab.active::after {
-            content: '';
-            position: absolute;
-            bottom: -2px;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: #1e4b8c;
-            border-radius: 3px 3px 0 0;
-        }
-
-        /* Main Grid */
+        /* Main Grid Professional */
         .main-grid {
             display: grid;
-            grid-template-columns: 300px 1fr 350px;
+            grid-template-columns: 300px 1fr 360px;
             gap: 24px;
-            margin-bottom: 30px;
+            padding: 0 28px;
         }
 
-        /* Sidebar - Qovluqlar */
+        /* Left Panel - Folders */
         .folders-panel {
             background: white;
-            border-radius: 28px;
+            border-radius: 32px;
             padding: 24px 16px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.02);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.02);
             height: fit-content;
+            border: 1px solid rgba(0,0,0,0.02);
         }
 
         .panel-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 22px;
-            padding: 0 8px;
+            margin-bottom: 24px;
+            padding: 0 12px;
         }
 
         .panel-header h3 {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: #334e77;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #1a2f4f;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .new-folder-btn {
-            background: #eef5ff;
+            width: 42px;
+            height: 42px;
+            background: #eef4ff;
             border: none;
-            width: 36px;
-            height: 36px;
-            border-radius: 12px;
-            color: #1e4b8c;
+            border-radius: 18px;
+            color: #0a2647;
             font-size: 1.2rem;
             cursor: pointer;
             transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .folder-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
         }
 
         .folder-item {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 14px 16px;
-            border-radius: 18px;
-            margin-bottom: 4px;
+            gap: 14px;
+            padding: 16px 18px;
+            border-radius: 22px;
             cursor: pointer;
-            transition: 0.2s;
-            color: #2c3f5c;
+            transition: all 0.2s;
+            color: #2a405c;
+            font-weight: 500;
         }
 
         .folder-item:hover {
@@ -207,43 +214,45 @@
         }
 
         .folder-item.active {
-            background: #e4edfb;
-            color: #1e4b8c;
-            font-weight: 500;
+            background: #e8f0fe;
+            color: #0a2647;
+            font-weight: 600;
         }
 
         .folder-item i {
             width: 24px;
-            color: #7895b8;
+            font-size: 1.2rem;
+            color: #5f7da0;
         }
 
         .folder-count {
             margin-left: auto;
-            background: #e9f0f9;
-            padding: 2px 10px;
-            border-radius: 40px;
+            background: #edf3fa;
+            padding: 4px 12px;
+            border-radius: 30px;
             font-size: 0.8rem;
+            font-weight: 600;
         }
 
         /* Center Content */
-        .content-area {
+        .content-panel {
             background: white;
             border-radius: 32px;
             padding: 24px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.02);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.02);
         }
 
         .content-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 24px;
+            margin-bottom: 28px;
         }
 
         .content-header h2 {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: #1a2b3e;
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #0b1e33;
         }
 
         .action-buttons {
@@ -252,164 +261,231 @@
         }
 
         .btn-primary {
-            background: #1e4b8c;
+            background: #0a2647;
             color: white;
             border: none;
-            padding: 12px 24px;
-            border-radius: 30px;
+            padding: 14px 26px;
+            border-radius: 40px;
             font-weight: 600;
+            font-size: 0.95rem;
             display: flex;
             align-items: center;
             gap: 10px;
             cursor: pointer;
             transition: 0.2s;
+            box-shadow: 0 8px 18px rgba(10, 38, 71, 0.2);
         }
 
         .btn-secondary {
-            background: #f0f7ff;
-            color: #1e4b8c;
+            background: #f0f6ff;
+            color: #0a2647;
             border: none;
-            padding: 12px 24px;
-            border-radius: 30px;
+            padding: 14px 26px;
+            border-radius: 40px;
             font-weight: 600;
+            font-size: 0.95rem;
             display: flex;
             align-items: center;
             gap: 10px;
             cursor: pointer;
+            transition: 0.2s;
+            border: 1px solid rgba(10, 38, 71, 0.1);
         }
 
-        /* Item Cards */
+        /* Items Grid */
         .items-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
             gap: 16px;
-            margin-top: 20px;
         }
 
         .item-card {
-            background: #f8fbfe;
-            border-radius: 20px;
-            padding: 20px 16px;
-            border: 1px solid #e2eaf2;
-            transition: 0.2s;
+            background: #fafcff;
+            border-radius: 26px;
+            padding: 22px 18px;
+            border: 1px solid #eef2f8;
+            transition: 0.3s;
             cursor: pointer;
         }
 
         .item-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 15px 30px rgba(30,75,140,0.1);
-            border-color: #1e4b8c30;
+            transform: translateY(-5px);
+            border-color: #0a2647;
+            box-shadow: 0 20px 30px rgba(10, 38, 71, 0.08);
         }
 
         .item-icon {
-            width: 48px;
-            height: 48px;
-            background: #e1ebfa;
-            border-radius: 16px;
+            width: 54px;
+            height: 54px;
+            background: #e3ecfa;
+            border-radius: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #1e4b8c;
-            font-size: 1.5rem;
-            margin-bottom: 16px;
+            color: #0a2647;
+            font-size: 1.6rem;
+            margin-bottom: 18px;
         }
 
         .item-title {
-            font-weight: 600;
+            font-weight: 700;
+            font-size: 1.1rem;
             margin-bottom: 6px;
+            color: #1a2f4f;
         }
 
         .item-meta {
             font-size: 0.8rem;
-            color: #7189a7;
+            color: #728aa8;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
-        /* Right Panel - OCR & Details */
-        .right-panel {
+        /* Right Panel - OCR & Camera */
+        .ocr-panel {
             background: white;
-            border-radius: 28px;
+            border-radius: 32px;
             padding: 24px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.02);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.02);
+            height: fit-content;
         }
 
         .camera-section {
-            margin-bottom: 28px;
+            margin-bottom: 24px;
         }
 
         .camera-btn {
             width: 100%;
-            background: linear-gradient(145deg, #0b2b4a, #1e4b8c);
+            background: linear-gradient(145deg, #0a2647, #1b4a8b);
             color: white;
             border: none;
-            padding: 18px;
-            border-radius: 24px;
-            font-weight: 600;
+            padding: 22px;
+            border-radius: 28px;
+            font-weight: 700;
             font-size: 1.1rem;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 12px;
             cursor: pointer;
-            margin-bottom: 16px;
+            margin-bottom: 20px;
+            box-shadow: 0 15px 30px rgba(10, 38, 71, 0.3);
             transition: 0.3s;
+        }
+
+        .camera-btn:active {
+            transform: scale(0.98);
+        }
+
+        #camera-container {
+            position: relative;
+            width: 100%;
+            border-radius: 24px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            background: #1a1f2b;
+            display: none;
+        }
+
+        #camera-stream {
+            width: 100%;
+            height: auto;
+            display: block;
+            transform: scaleX(-1);
+        }
+
+        .camera-controls {
+            display: flex;
+            gap: 12px;
+            margin-top: 15px;
+        }
+
+        .capture-btn, .close-camera {
+            flex: 1;
+            padding: 16px;
+            border: none;
+            border-radius: 24px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .capture-btn {
+            background: #0a2647;
+            color: white;
+        }
+
+        .close-camera {
+            background: #f1f5f9;
+            color: #475569;
         }
 
         .ocr-result {
             background: #f8fbfe;
-            border-radius: 20px;
-            padding: 18px;
-            margin-top: 16px;
+            border-radius: 24px;
+            padding: 20px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .ocr-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
         }
 
         .ocr-text {
             background: white;
-            border-radius: 16px;
-            padding: 16px;
-            min-height: 120px;
+            border-radius: 20px;
+            padding: 20px;
+            min-height: 150px;
             border: 1px solid #e2eaf2;
-            margin: 12px 0;
             font-size: 0.95rem;
             line-height: 1.6;
-            color: #1e2f42;
+            margin-bottom: 16px;
+            outline: none;
+            overflow-y: auto;
+            max-height: 250px;
         }
 
-        .text-actions {
+        .ocr-actions {
             display: flex;
             gap: 10px;
-            justify-content: flex-end;
+            flex-wrap: wrap;
         }
 
-        .text-actions button {
-            background: #e9f1fa;
+        .ocr-action-btn {
+            flex: 1;
+            min-width: 90px;
+            padding: 14px;
             border: none;
-            padding: 10px 16px;
-            border-radius: 30px;
-            color: #1e4b8c;
-            font-weight: 500;
-            cursor: pointer;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 8px;
-        }
-
-        /* PDF Upload */
-        .pdf-upload-area {
-            border: 2px dashed #cbd6e8;
-            border-radius: 24px;
-            padding: 30px 20px;
-            text-align: center;
-            margin-bottom: 20px;
             cursor: pointer;
+            background: white;
+            border: 1px solid #dde5ef;
+            color: #1f3a63;
             transition: 0.2s;
         }
 
-        .pdf-upload-area:hover {
-            border-color: #1e4b8c;
-            background: #f5faff;
+        .ocr-action-btn:hover {
+            background: #eaf1fb;
         }
 
-        .hidden {
-            display: none;
+        .ocr-action-btn.save-btn {
+            background: #0a2647;
+            color: white;
+            border: none;
         }
 
         /* Responsive */
@@ -417,6 +493,60 @@
             .main-grid {
                 grid-template-columns: 1fr;
             }
+            
+            .navbar {
+                padding: 14px 20px;
+            }
+            
+            .university-badge {
+                display: none;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .tabs-container {
+                padding: 16px 16px 0 16px;
+            }
+            
+            .main-grid {
+                padding: 0 16px;
+            }
+            
+            .content-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
+            .action-buttons {
+                width: 100%;
+            }
+            
+            .btn-primary, .btn-secondary {
+                flex: 1;
+                padding: 14px;
+            }
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f0f4fa;
+            border-top: 4px solid #0a2647;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+            display: none;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none !important;
         }
     </style>
 </head>
@@ -426,302 +556,265 @@
         <div class="navbar">
             <div class="logo">
                 <h1>UniVapp</h1>
-                <span class="badge">Universitet Platformu</span>
             </div>
-            <div class="user-profile">
-                <div class="uni-badge">
-                    <i class="fas fa-university" style="margin-right: 8px;"></i>Bakı Dövlət Universiteti
-                </div>
-                <div class="avatar">A</div>
-            </div>
+            <div class="avatar" onclick="showUserMenu()">A</div>
         </div>
 
         <!-- Tabs -->
-        <div class="tabs-wrapper">
+        <div class="tabs-container">
             <div class="tabs">
-                <button class="tab active" onclick="switchTab('ana')"><i class="fas fa-home"></i> Ana səhifə</button>
-                <button class="tab" onclick="switchTab('dersler')"><i class="fas fa-book-open"></i> Dərslər</button>
-                <button class="tab" onclick="switchTab('pdfs')"><i class="fas fa-file-pdf"></i> PDF Kitabxana</button>
-                <button class="tab" onclick="switchTab('notlar')"><i class="fas fa-sticky-note"></i> Qeydlərim</button>
-                <button class="tab" onclick="switchTab('kamerali')"><i class="fas fa-camera"></i> Kamera OCR</button>
-                <button class="tab" onclick="switchTab('teqvim')"><i class="far fa-calendar"></i> Təqvim</button>
+                <button class="tab active" onclick="switchTab('ana', this)"><i class="fas fa-home"></i>Ana səhifə</button>
+                <button class="tab" onclick="switchTab('dersler', this)"><i class="fas fa-book-open"></i>Dərslər</button>
+                <button class="tab" onclick="switchTab('pdfs', this)"><i class="fas fa-file-pdf"></i>PDF Kitabxana</button>
+                <button class="tab" onclick="switchTab('notlar', this)"><i class="fas fa-sticky-note"></i>Qeydlərim</button>
+                <button class="tab" onclick="switchTab('kamera', this)"><i class="fas fa-camera"></i>Kamera OCR</button>
             </div>
         </div>
 
         <!-- Main Grid -->
         <div class="main-grid">
-            <!-- Sol Panel - Qovluqlar -->
+            <!-- Left Panel - Folders -->
             <div class="folders-panel">
                 <div class="panel-header">
-                    <h3><i class="far fa-folder-open" style="margin-right: 10px;"></i>Qovluqlar</h3>
-                    <button class="new-folder-btn" onclick="yeniQovluq()"><i class="fas fa-plus"></i></button>
+                    <h3><i class="fas fa-folder-tree"></i> Qovluqlar</h3>
+                    <button class="new-folder-btn" onclick="createFolder()"><i class="fas fa-plus"></i></button>
                 </div>
-                <div id="folderList">
-                    <div class="folder-item active" onclick="selectFolder('butun')">
-                        <i class="fas fa-college"></i>
-                        <span>Bütün dərslər</span>
-                        <span class="folder-count" id="totalCount">12</span>
-                    </div>
+                <div class="folder-list" id="folderList">
+                    <!-- Folders will be populated here -->
                 </div>
             </div>
 
-            <!-- Orta Panel - Məzmun -->
-            <div class="content-area" id="contentArea">
+            <!-- Center Panel - Content -->
+            <div class="content-panel" id="contentPanel">
                 <div class="content-header">
                     <h2 id="currentFolderTitle">Bütün dərslər</h2>
                     <div class="action-buttons">
-                        <button class="btn-secondary" onclick="yeniQeyd()"><i class="fas fa-pen"></i>Yeni qeyd</button>
-                        <button class="btn-primary" onclick="pdfYukle()"><i class="fas fa-upload"></i>PDF yüklə</button>
+                        <button class="btn-secondary" onclick="createNote()"><i class="fas fa-pen"></i>Yeni qeyd</button>
+                        <button class="btn-primary" onclick="uploadPDF()"><i class="fas fa-upload"></i>PDF yüklə</button>
                     </div>
                 </div>
                 <div class="items-grid" id="itemsGrid">
-                    <!-- Dinamik doldurulacaq -->
+                    <!-- Items will be populated here -->
                 </div>
             </div>
 
-            <!-- Sağ Panel - Kamera/OCR -->
-            <div class="right-panel">
+            <!-- Right Panel - OCR Camera -->
+            <div class="ocr-panel">
                 <div class="camera-section">
-                    <h3 style="margin-bottom: 16px;"><i class="fas fa-camera-retro"></i> Kamera ilə çək</h3>
-                    <button class="camera-btn" onclick="kameraAc()">
-                        <i class="fas fa-camera"></i> Lövhəni çək, yazını çıxart
+                    <button class="camera-btn" onclick="openCamera()">
+                        <i class="fas fa-camera"></i> Lövhəni çək və yazını çıxart
                     </button>
-                    <video id="cameraStream" class="hidden" style="width:100%; border-radius:20px; margin-bottom:15px;" autoplay></video>
-                    <canvas id="cameraCanvas" class="hidden"></canvas>
                     
-                    <div id="ocrResultArea" class="ocr-result hidden">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                            <span><i class="fas fa-font"></i> Çıxarılan mətn:</span>
-                            <button onclick="qovlugaElaveEt()" style="background:none; border:none; color:#1e4b8c; cursor:pointer;"><i class="fas fa-folder-plus"></i></button>
-                        </div>
-                        <div id="ocrText" class="ocr-text" contenteditable="true">
-                            Mətn burada görünəcək...
-                        </div>
-                        <div class="text-actions">
-                            <button onclick="ocrYaddaSaxla()"><i class="fas fa-save"></i> Yadda saxla</button>
-                            <button onclick="ocrDuzenle()"><i class="fas fa-edit"></i> Düzəliş</button>
-                            <button onclick="ocrSil()"><i class="fas fa-trash"></i> Sil</button>
+                    <div id="camera-container">
+                        <video id="camera-stream" autoplay playsinline></video>
+                        <div class="camera-controls">
+                            <button class="capture-btn" onclick="captureImage()">
+                                <i class="fas fa-camera"></i> Çək
+                            </button>
+                            <button class="close-camera" onclick="closeCamera()">
+                                <i class="fas fa-times"></i> Bağla
+                            </button>
                         </div>
                     </div>
-                </div>
 
-                <!-- PDF Preview -->
-                <div id="pdfPreview" class="hidden">
-                    <h4><i class="fas fa-file-pdf"></i> PDF önizləmə</h4>
-                    <canvas id="pdfCanvas" style="width:100%; margin-top:15px; border-radius:16px;"></canvas>
+                    <div id="ocr-loading" class="spinner"></div>
+
+                    <div id="ocr-result" class="ocr-result">
+                        <div class="ocr-header">
+                            <span style="font-weight: 700; color: #0a2647;"><i class="fas fa-font"></i> Çıxarılan mətn:</span>
+                            <button onclick="addToFolder()" style="background: none; border: none; color: #0a2647; cursor: pointer; font-size: 1.2rem;">
+                                <i class="fas fa-folder-plus"></i>
+                            </button>
+                        </div>
+                        <div id="ocr-text" class="ocr-text" contenteditable="true"></div>
+                        <div class="ocr-actions">
+                            <button class="ocr-action-btn save-btn" onclick="saveOCR()"><i class="fas fa-save"></i> Yadda saxla</button>
+                            <button class="ocr-action-btn" onclick="editOCR()"><i class="fas fa-edit"></i> Düzəliş</button>
+                            <button class="ocr-action-btn" onclick="clearOCR()"><i class="fas fa-trash"></i> Təmizlə</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // Universitet dataları
+        // Global state
         let folders = [
-            { id: 1, name: 'Riyaziyyat', count: 4 },
-            { id: 2, name: 'Fizika', count: 3 },
-            { id: 3, name: 'Proqramlaşdırma', count: 5 },
-            { id: 4, name: 'Xətti cəbr', count: 2 }
+            { id: 1, name: 'Riyaziyyat', count: 0 },
+            { id: 2, name: 'Fizika', count: 0 },
+            { id: 3, name: 'Proqramlaşdırma', count: 0 },
+            { id: 4, name: 'Xətti cəbr', count: 0 }
         ];
-
-        let items = [
-            { id: 1, title: 'Riyaziyyat mühazirə 1', type: 'pdf', folder: 'Riyaziyyat', date: '2024-01-15' },
-            { id: 2, title: 'Fizika laboratoriya', type: 'note', folder: 'Fizika', date: '2024-01-20' },
-            { id: 3, title: 'JavaScript dərsləri', type: 'pdf', folder: 'Proqramlaşdırma', date: '2024-02-01' },
-            { id: 4, title: 'Matris hesablamaları', type: 'note', folder: 'Xətti cəbr', date: '2024-02-05' },
-            { id: 5, title: 'Kvant fizikası', type: 'pdf', folder: 'Fizika', date: '2024-02-10' }
-        ];
-
-        // LocalStorage-dan yüklə
-        function loadFromStorage() {
-            const saved = localStorage.getItem('univapp_data');
-            if(saved) {
-                try {
-                    const data = JSON.parse(saved);
-                    if(data.folders) folders = data.folders;
-                    if(data.items) items = data.items;
-                } catch(e) {}
-            }
-            updateUI();
-        }
-
-        // LocalStorage-a yadda saxla
-        function saveToStorage() {
-            localStorage.setItem('univapp_data', JSON.stringify({ folders, items }));
-            updateUI();
-        }
-
-        // Qovluq seçmə
-        let selectedFolder = 'Bütün dərslər';
         
-        function selectFolder(folderName) {
-            selectedFolder = folderName;
-            document.getElementById('currentFolderTitle').innerText = folderName;
-            updateItemsGrid();
+        let items = [];
+        let selectedFolder = 'Bütün dərslər';
+        let cameraStream = null;
+        let isCameraOpen = false;
+
+        // Load from localStorage
+        function loadData() {
+            try {
+                const savedFolders = localStorage.getItem('univapp_folders');
+                const savedItems = localStorage.getItem('univapp_items');
+                
+                if (savedFolders) {
+                    folders = JSON.parse(savedFolders);
+                }
+                if (savedItems) {
+                    items = JSON.parse(savedItems);
+                }
+            } catch (e) {
+                console.error('Load error:', e);
+            }
             
-            // Active class
-            document.querySelectorAll('.folder-item').forEach(el => el.classList.remove('active'));
-            event.currentTarget.classList.add('active');
+            updateFolderCounts();
+            renderFolders();
+            renderItems();
         }
 
-        function updateItemsGrid() {
-            const grid = document.getElementById('itemsGrid');
-            grid.innerHTML = '';
+        // Save to localStorage
+        function saveData() {
+            try {
+                localStorage.setItem('univapp_folders', JSON.stringify(folders));
+                localStorage.setItem('univapp_items', JSON.stringify(items));
+            } catch (e) {
+                console.error('Save error:', e);
+                alert('Məlumat saxlanılmadı. Yaddaş dolub.');
+            }
+        }
+
+        // Update folder counts
+        function updateFolderCounts() {
+            folders.forEach(folder => {
+                folder.count = items.filter(item => item.folder === folder.name).length;
+            });
+        }
+
+        // Render folders
+        function renderFolders() {
+            const folderList = document.getElementById('folderList');
+            folderList.innerHTML = `
+                <div class="folder-item ${selectedFolder === 'Bütün dərslər' ? 'active' : ''}" 
+                     onclick="selectFolder('Bütün dərslər')">
+                    <i class="fas fa-globe"></i>
+                    <span>Bütün dərslər</span>
+                    <span class="folder-count">${items.length}</span>
+                </div>
+            `;
+            
+            folders.forEach(folder => {
+                folderList.innerHTML += `
+                    <div class="folder-item ${selectedFolder === folder.name ? 'active' : ''}" 
+                         onclick="selectFolder('${folder.name.replace(/'/g, "\\'")}')">
+                        <i class="fas fa-folder"></i>
+                        <span>${folder.name}</span>
+                        <span class="folder-count">${folder.count}</span>
+                    </div>
+                `;
+            });
+        }
+
+        // Render items
+        function renderItems() {
+            const itemsGrid = document.getElementById('itemsGrid');
+            itemsGrid.innerHTML = '';
             
             let filteredItems = items;
-            if(selectedFolder !== 'Bütün dərslər') {
+            if (selectedFolder !== 'Bütün dərslər') {
                 filteredItems = items.filter(item => item.folder === selectedFolder);
+            }
+            
+            if (filteredItems.length === 0) {
+                itemsGrid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px; color:#728aa8;">Heç bir məlumat yoxdur</div>';
+                return;
             }
             
             filteredItems.forEach(item => {
                 const card = document.createElement('div');
                 card.className = 'item-card';
-                card.onclick = () => itemClick(item.id);
+                card.onclick = () => openItem(item.id);
+                
+                const icon = item.type === 'pdf' ? 'fa-file-pdf' : 'fa-sticky-note';
+                const date = new Date(item.date).toLocaleDateString('az');
+                
                 card.innerHTML = `
-                    <div class="item-icon"><i class="fas ${item.type === 'pdf' ? 'fa-file-pdf' : 'fa-sticky-note'}"></i></div>
+                    <div class="item-icon"><i class="fas ${icon}"></i></div>
                     <div class="item-title">${item.title}</div>
-                    <div class="item-meta">${item.date}</div>
+                    <div class="item-meta">
+                        <i class="far fa-calendar"></i> ${date}
+                    </div>
                 `;
-                grid.appendChild(card);
+                itemsGrid.appendChild(card);
             });
         }
 
-        function yeniQovluq() {
+        // Select folder
+        function selectFolder(folderName) {
+            selectedFolder = folderName;
+            document.getElementById('currentFolderTitle').innerText = folderName;
+            renderFolders();
+            renderItems();
+        }
+
+        // Create new folder
+        function createFolder() {
             const name = prompt('Qovluq adını daxil edin:');
-            if(name) {
-                folders.push({ id: Date.now(), name, count: 0 });
-                saveToStorage();
+            if (name && name.trim()) {
+                const newFolder = {
+                    id: Date.now(),
+                    name: name.trim(),
+                    count: 0
+                };
+                folders.push(newFolder);
+                saveData();
                 renderFolders();
             }
         }
 
-        function renderFolders() {
-            const list = document.getElementById('folderList');
-            list.innerHTML = `
-                <div class="folder-item ${selectedFolder === 'Bütün dərslər' ? 'active' : ''}" onclick="selectFolder('Bütün dərslər')">
-                    <i class="fas fa-college"></i><span>Bütün dərslər</span>
-                    <span class="folder-count">${items.length}</span>
-                </div>
-            `;
-            
-            folders.forEach(f => {
-                const itemCount = items.filter(i => i.folder === f.name).length;
-                list.innerHTML += `
-                    <div class="folder-item ${selectedFolder === f.name ? 'active' : ''}" onclick="selectFolder('${f.name}')">
-                        <i class="fas fa-folder"></i><span>${f.name}</span>
-                        <span class="folder-count">${itemCount}</span>
-                    </div>
-                `;
-            });
-            
-            document.getElementById('totalCount').innerText = items.length;
-        }
-
-        // Kamera funksiyaları
-        let stream = null;
-        
-        function kameraAc() {
-            const video = document.getElementById('cameraStream');
-            video.classList.remove('hidden');
-            
-            if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-                navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-                    .then(function(videoStream) {
-                        stream = videoStream;
-                        video.srcObject = videoStream;
-                        video.play();
-                        
-                        // 2 saniyə sonra çək
-                        setTimeout(() => {
-                            cekVeOCR();
-                        }, 2000);
-                    })
-                    .catch(function(err) {
-                        alert('Kamera açılmadı: ' + err);
-                    });
-            }
-        }
-
-        function cekVeOCR() {
-            const video = document.getElementById('cameraStream');
-            const canvas = document.getElementById('cameraCanvas');
-            const context = canvas.getContext('2d');
-            
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-            
-            // Kameranı dayandır
-            if(stream) {
-                stream.getTracks().forEach(track => track.stop());
-                video.classList.add('hidden');
-            }
-            
-            // OCR işlə
-            canvas.toBlob(function(blob) {
-                Tesseract.recognize(blob, 'aze+eng', {
-                    logger: m => console.log(m)
-                }).then(({ data: { text } }) => {
-                    document.getElementById('ocrText').innerText = text;
-                    document.getElementById('ocrResultArea').classList.remove('hidden');
-                });
-            });
-        }
-
-        function ocrYaddaSaxla() {
-            const text = document.getElementById('ocrText').innerText;
-            if(text && text !== 'Mətn burada görünəcək...') {
-                const folder = selectedFolder !== 'Bütün dərslər' ? selectedFolder : 'Ümumi';
-                items.push({
+        // Create new note
+        function createNote() {
+            const text = prompt('Qeydinizi daxil edin:');
+            if (text && text.trim()) {
+                const newItem = {
                     id: Date.now(),
-                    title: 'OCR qeyd - ' + new Date().toLocaleDateString('az'),
+                    title: `Qeyd ${new Date().toLocaleDateString('az')}`,
                     type: 'note',
-                    folder: folder,
-                    date: new Date().toISOString().split('T')[0],
-                    content: text
-                });
-                saveToStorage();
-                alert('Yadda saxlanıldı!');
+                    folder: selectedFolder !== 'Bütün dərslər' ? selectedFolder : 'Ümumi',
+                    date: new Date().toISOString(),
+                    content: text.trim()
+                };
+                items.push(newItem);
+                updateFolderCounts();
+                saveData();
+                renderFolders();
+                renderItems();
             }
         }
 
-        function qovlugaElaveEt() {
-            const text = document.getElementById('ocrText').innerText;
-            if(text && text !== 'Mətn burada görünəcək...') {
-                const folderName = prompt('Hansı qovluğa əlavə edilsin?');
-                if(folderName) {
-                    items.push({
-                        id: Date.now(),
-                        title: 'OCR - ' + new Date().toLocaleTimeString('az'),
-                        type: 'note',
-                        folder: folderName,
-                        date: new Date().toISOString().split('T')[0],
-                        content: text
-                    });
-                    saveToStorage();
-                }
-            }
-        }
-
-        // PDF yükləmə
-        function pdfYukle() {
+        // Upload PDF
+        function uploadPDF() {
             const input = document.createElement('input');
             input.type = 'file';
             input.accept = '.pdf';
-            input.onchange = function(e) {
+            input.onchange = (e) => {
                 const file = e.target.files[0];
-                if(file) {
+                if (file) {
                     const reader = new FileReader();
-                    reader.onload = function(loadEvent) {
-                        const folder = selectedFolder !== 'Bütün dərslər' ? selectedFolder : 'PDF-lər';
-                        items.push({
+                    reader.onload = (loadEvent) => {
+                        const newItem = {
                             id: Date.now(),
                             title: file.name,
                             type: 'pdf',
-                            folder: folder,
-                            date: new Date().toISOString().split('T')[0],
+                            folder: selectedFolder !== 'Bütün dərslər' ? selectedFolder : 'PDF-lər',
+                            date: new Date().toISOString(),
                             data: loadEvent.target.result
-                        });
-                        saveToStorage();
+                        };
+                        items.push(newItem);
+                        updateFolderCounts();
+                        saveData();
+                        renderFolders();
+                        renderItems();
                     };
                     reader.readAsDataURL(file);
                 }
@@ -729,55 +822,182 @@
             input.click();
         }
 
-        function yeniQeyd() {
-            const text = prompt('Qeydinizi yazın:');
-            if(text) {
-                const folder = selectedFolder !== 'Bütün dərslər' ? selectedFolder : 'Ümumi';
-                items.push({
-                    id: Date.now(),
-                    title: 'Qeyd - ' + new Date().toLocaleDateString('az'),
-                    type: 'note',
-                    folder: folder,
-                    date: new Date().toISOString().split('T')[0],
-                    content: text
-                });
-                saveToStorage();
-            }
-        }
-
-        function itemClick(id) {
+        // Open item
+        function openItem(id) {
             const item = items.find(i => i.id === id);
-            if(item) {
-                if(item.type === 'note') {
-                    document.getElementById('ocrText').innerText = item.content || 'Məzmun yoxdur';
-                    document.getElementById('ocrResultArea').classList.remove('hidden');
-                } else if(item.type === 'pdf' && item.data) {
-                    // PDF göstər
+            if (item) {
+                if (item.type === 'note') {
+                    document.getElementById('ocr-text').innerText = item.content || 'Məzmun yoxdur';
+                    document.getElementById('ocr-result').style.display = 'block';
+                    
+                    // Scroll to OCR panel
+                    document.querySelector('.ocr-panel').scrollIntoView({ behavior: 'smooth' });
+                } else if (item.type === 'pdf' && item.data) {
+                    window.open(item.data, '_blank');
                 }
             }
         }
 
-        function switchTab(tabName) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            event.currentTarget.classList.add('active');
+        // Camera functions
+        async function openCamera() {
+            const container = document.getElementById('camera-container');
+            const video = document.getElementById('camera-stream');
             
-            if(tabName === 'kamerali') {
-                document.querySelector('.camera-btn').scrollIntoView({ behavior: 'smooth' });
+            try {
+                cameraStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'environment' } 
+                });
+                
+                video.srcObject = cameraStream;
+                container.style.display = 'block';
+                isCameraOpen = true;
+                
+                await video.play();
+            } catch (err) {
+                alert('Kamera açılmadı: ' + err.message);
             }
         }
 
-        function ocrDuzenle() {
-            document.getElementById('ocrText').focus();
+        function closeCamera() {
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+                cameraStream = null;
+            }
+            
+            document.getElementById('camera-container').style.display = 'none';
+            isCameraOpen = false;
         }
 
-        function ocrSil() {
-            document.getElementById('ocrText').innerText = 'Mətn silindi...';
+        async function captureImage() {
+            if (!isCameraOpen) return;
+            
+            const video = document.getElementById('camera-stream');
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            
+            const context = canvas.getContext('2d');
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            // Close camera
+            closeCamera();
+            
+            // Show loading
+            document.getElementById('ocr-loading').style.display = 'block';
+            
+            try {
+                // Convert canvas to blob and run OCR
+                const blob = await new Promise(resolve => canvas.toBlob(resolve));
+                
+                const { data: { text } } = await Tesseract.recognize(blob, 'aze+eng', {
+                    logger: m => console.log(m)
+                });
+                
+                // Show result
+                document.getElementById('ocr-text').innerText = text || 'Mətn tapılmadı';
+                document.getElementById('ocr-result').style.display = 'block';
+            } catch (err) {
+                alert('OCR xətası: ' + err.message);
+            } finally {
+                document.getElementById('ocr-loading').style.display = 'none';
+            }
         }
 
-        // Initial render
-        loadFromStorage();
-        renderFolders();
-        updateItemsGrid();
+        // OCR functions
+        function saveOCR() {
+            const text = document.getElementById('ocr-text').innerText.trim();
+            if (text && text !== 'Mətn tapılmadı') {
+                const folder = selectedFolder !== 'Bütün dərslər' ? selectedFolder : 'OCR Qeydlər';
+                
+                const newItem = {
+                    id: Date.now(),
+                    title: `OCR ${new Date().toLocaleDateString('az')} ${new Date().toLocaleTimeString('az')}`,
+                    type: 'note',
+                    folder: folder,
+                    date: new Date().toISOString(),
+                    content: text
+                };
+                
+                items.push(newItem);
+                updateFolderCounts();
+                saveData();
+                renderFolders();
+                renderItems();
+                
+                alert('Yadda saxlanıldı!');
+            }
+        }
+
+        function addToFolder() {
+            const text = document.getElementById('ocr-text').innerText.trim();
+            if (text && text !== 'Mətn tapılmadı') {
+                const folderName = prompt('Hansı qovluğa əlavə edilsin?');
+                if (folderName && folderName.trim()) {
+                    // Check if folder exists
+                    let folder = folders.find(f => f.name === folderName.trim());
+                    if (!folder) {
+                        // Create new folder
+                        folder = {
+                            id: Date.now(),
+                            name: folderName.trim(),
+                            count: 0
+                        };
+                        folders.push(folder);
+                    }
+                    
+                    const newItem = {
+                        id: Date.now(),
+                        title: `OCR ${new Date().toLocaleDateString('az')}`,
+                        type: 'note',
+                        folder: folder.name,
+                        date: new Date().toISOString(),
+                        content: text
+                    };
+                    
+                    items.push(newItem);
+                    updateFolderCounts();
+                    saveData();
+                    renderFolders();
+                    renderItems();
+                    
+                    alert(`"${folder.name}" qovluğuna əlavə edildi!`);
+                }
+            }
+        }
+
+        function editOCR() {
+            document.getElementById('ocr-text').focus();
+        }
+
+        function clearOCR() {
+            document.getElementById('ocr-text').innerText = '';
+            document.getElementById('ocr-result').style.display = 'none';
+        }
+
+        // Switch tabs
+        function switchTab(tabName, element) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            element.classList.add('active');
+            
+            if (tabName === 'kamera') {
+                document.querySelector('.ocr-panel').scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        // User menu
+        function showUserMenu() {
+            const totalItems = items.length;
+            const totalFolders = folders.length;
+            alert(`UniVapp - Şəxsi hesab\nCəmi qeydlər: ${totalItems}\nQovluqlar: ${totalFolders}`);
+        }
+
+        // Initialize
+        loadData();
+
+        // Save before unload
+        window.addEventListener('beforeunload', () => {
+            saveData();
+        });
     </script>
 </body>
 </html>
