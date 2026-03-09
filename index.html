@@ -1,1455 +1,1299 @@
 <!DOCTYPE html>
+
 <html lang="tr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>8 Ball Pool Pro | Profesyonel Bilardo</title>
-    
-    <!-- Telegram -->
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LENSIQ — See Beyond the Frame</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        :root {
-            --bg-primary: #0B1A2F;
-            --bg-secondary: #152A3A;
-            --bg-card: #1E3A4A;
-            --accent: #2E8B57;
-            --accent-glow: #3CB371;
-            --text: #FFFFFF;
-            --text-secondary: #A0B8CC;
-            --border: #2C4A5A;
-            --success: #27AE60;
-            --warning: #F39C12;
-            --danger: #E74C3C;
-        }
+:root {
+–bg: #080a0f;
+–bg2: #0d1018;
+–surface: #131720;
+–surface2: #1a2030;
+–border: #ffffff0f;
+–border2: #ffffff1a;
+–accent: #00e5ff;
+–accent2: #ff3d71;
+–accent3: #a259ff;
+–text: #e8ecf4;
+–muted: #6b7a99;
+–success: #00e096;
+–warn: #ffaa00;
+}
 
-        body {
-            min-height: 100vh;
-            background: var(--bg-primary);
-            color: var(--text);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            overflow: hidden;
-        }
+html { scroll-behavior: smooth; }
 
-        /* Yükleme Ekranı */
-        .loading-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: var(--bg-primary);
-            z-index: 10000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: opacity 0.5s;
-        }
+body {
+background: var(–bg);
+color: var(–text);
+font-family: ‘DM Sans’, sans-serif;
+min-height: 100vh;
+overflow-x: hidden;
+cursor: crosshair;
+}
 
-        .loading-content {
-            text-align: center;
-        }
+/* Noise overlay */
+body::before {
+content: ‘’;
+position: fixed;
+inset: 0;
+background-image: url(“data:image/svg+xml,%3Csvg viewBox=‘0 0 256 256’ xmlns=‘http://www.w3.org/2000/svg’%3E%3Cfilter id=‘noise’%3E%3CfeTurbulence type=‘fractalNoise’ baseFrequency=‘0.9’ numOctaves=‘4’ stitchTiles=‘stitch’/%3E%3C/filter%3E%3Crect width=‘100%25’ height=‘100%25’ filter=‘url(%23noise)’ opacity=‘0.04’/%3E%3C/svg%3E”);
+pointer-events: none;
+z-index: 9999;
+opacity: 0.5;
+}
 
-        .loading-logo {
-            width: 120px;
-            height: 120px;
-            background: linear-gradient(135deg, var(--accent), var(--accent-glow));
-            border-radius: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 30px;
-            font-size: 60px;
-            color: white;
-            box-shadow: 0 20px 40px rgba(46, 139, 87, 0.3);
-            animation: float 3s infinite;
-        }
+/* Animated grid background */
+.grid-bg {
+position: fixed;
+inset: 0;
+background-image:
+linear-gradient(var(–border) 1px, transparent 1px),
+linear-gradient(90deg, var(–border) 1px, transparent 1px);
+background-size: 60px 60px;
+pointer-events: none;
+z-index: 0;
+animation: gridDrift 20s ease-in-out infinite;
+}
 
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-20px); }
-        }
+@keyframes gridDrift {
+0%, 100% { transform: translate(0,0); }
+50% { transform: translate(-10px, -10px); }
+}
 
-        .loading-bar {
-            width: 300px;
-            height: 8px;
-            background: var(--bg-card);
-            border-radius: 10px;
-            overflow: hidden;
-            margin: 20px auto;
-        }
+/* Glow orbs */
+.orb {
+position: fixed;
+border-radius: 50%;
+filter: blur(80px);
+pointer-events: none;
+z-index: 0;
+opacity: 0.15;
+animation: float 8s ease-in-out infinite;
+}
+.orb1 { width: 400px; height: 400px; background: var(–accent); top: -100px; right: -100px; animation-delay: 0s; }
+.orb2 { width: 300px; height: 300px; background: var(–accent3); bottom: 20%; left: -100px; animation-delay: -3s; }
+.orb3 { width: 250px; height: 250px; background: var(–accent2); bottom: -50px; right: 30%; animation-delay: -6s; }
 
-        .loading-progress {
-            height: 100%;
-            width: 0%;
-            background: linear-gradient(90deg, var(--accent), var(--accent-glow));
-            transition: width 0.3s;
-        }
+@keyframes float {
+0%,100% { transform: translateY(0) scale(1); }
+50% { transform: translateY(-30px) scale(1.05); }
+}
 
-        .loading-text {
-            color: var(--text-secondary);
-            font-size: 16px;
-            margin-top: 20px;
-        }
+/* Header */
+header {
+position: relative;
+z-index: 10;
+display: flex;
+align-items: center;
+justify-content: space-between;
+padding: 24px 40px;
+border-bottom: 1px solid var(–border);
+backdrop-filter: blur(20px);
+background: rgba(8,10,15,0.7);
+position: sticky;
+top: 0;
+}
 
-        /* Ana Oyun Container */
-        .game-container {
-            width: 100%;
-            max-width: 1400px;
-            height: 95vh;
-            background: var(--bg-secondary);
-            border-radius: 50px;
-            overflow: hidden;
-            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
-            display: flex;
-            opacity: 0;
-            transform: scale(0.95);
-            transition: opacity 0.5s, transform 0.5s;
-        }
+.logo {
+font-family: ‘Bebas Neue’, sans-serif;
+font-size: 28px;
+letter-spacing: 4px;
+background: linear-gradient(135deg, var(–accent), var(–accent3));
+-webkit-background-clip: text;
+-webkit-text-fill-color: transparent;
+background-clip: text;
+}
 
-        .game-container.visible {
-            opacity: 1;
-            transform: scale(1);
-        }
+.logo span {
+font-family: ‘JetBrains Mono’, monospace;
+font-size: 11px;
+font-weight: 400;
+color: var(–muted);
+-webkit-text-fill-color: var(–muted);
+letter-spacing: 2px;
+display: block;
+margin-top: -4px;
+}
 
-        /* Sol Panel - Oyun Alanı */
-        .game-area {
-            flex: 2;
-            background: linear-gradient(135deg, #1E3A4A, #152A3A);
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-        }
+.status-pill {
+display: flex;
+align-items: center;
+gap: 8px;
+padding: 8px 16px;
+border: 1px solid var(–border2);
+border-radius: 100px;
+font-family: ‘JetBrains Mono’, monospace;
+font-size: 11px;
+color: var(–muted);
+background: var(–surface);
+}
 
-        /* Üst Skor Bar */
-        .score-bar {
-            background: rgba(0, 0, 0, 0.3);
-            backdrop-filter: blur(10px);
-            border-radius: 30px;
-            padding: 15px 25px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
+.status-dot {
+width: 6px; height: 6px;
+border-radius: 50%;
+background: var(–success);
+box-shadow: 0 0 8px var(–success);
+animation: pulse 2s infinite;
+}
 
-        .player-score {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
+@keyframes pulse {
+0%,100% { opacity: 1; }
+50% { opacity: 0.4; }
+}
 
-        .player-avatar {
-            width: 50px;
-            height: 50px;
-            border-radius: 15px;
-            background: linear-gradient(135deg, var(--accent), var(--accent-glow));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            font-weight: 700;
-            position: relative;
-        }
+/* Main */
+main {
+position: relative;
+z-index: 5;
+max-width: 1000px;
+margin: 0 auto;
+padding: 60px 24px 100px;
+}
 
-        .player-avatar img {
-            width: 100%;
-            height: 100%;
-            border-radius: 15px;
-            object-fit: cover;
-        }
+/* Hero */
+.hero {
+text-align: center;
+margin-bottom: 64px;
+animation: fadeUp 0.8s ease both;
+}
 
-        .telegram-badge {
-            position: absolute;
-            bottom: -5px;
-            right: -5px;
-            width: 20px;
-            height: 20px;
-            background: #0088cc;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 10px;
-            border: 2px solid var(--bg-secondary);
-        }
+@keyframes fadeUp {
+from { opacity: 0; transform: translateY(30px); }
+to { opacity: 1; transform: translateY(0); }
+}
 
-        .player-info h4 {
-            font-size: 16px;
-            margin-bottom: 5px;
-        }
+.hero-tag {
+display: inline-flex;
+align-items: center;
+gap: 8px;
+padding: 6px 14px;
+border: 1px solid var(–border2);
+border-radius: 100px;
+font-family: ‘JetBrains Mono’, monospace;
+font-size: 10px;
+letter-spacing: 2px;
+color: var(–accent);
+text-transform: uppercase;
+margin-bottom: 28px;
+background: rgba(0,229,255,0.05);
+}
 
-        .potted-count {
-            font-size: 14px;
-            color: var(--text-secondary);
-        }
+h1 {
+font-family: ‘Bebas Neue’, sans-serif;
+font-size: clamp(52px, 8vw, 96px);
+letter-spacing: 2px;
+line-height: 0.95;
+margin-bottom: 20px;
+color: var(–text);
+}
 
-        .potted-count span {
-            color: var(--accent);
-            font-weight: 700;
-            font-size: 18px;
-            margin-left: 5px;
-        }
+h1 .gradient {
+background: linear-gradient(135deg, var(–accent) 0%, var(–accent3) 50%, var(–accent2) 100%);
+-webkit-background-clip: text;
+-webkit-text-fill-color: transparent;
+background-clip: text;
+}
 
-        .vs-divider {
-            font-size: 20px;
-            font-weight: 800;
-            color: var(--accent);
-            background: rgba(255, 255, 255, 0.1);
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+.hero-sub {
+color: var(–muted);
+font-size: 16px;
+font-weight: 300;
+line-height: 1.7;
+max-width: 500px;
+margin: 0 auto;
+}
 
-        .turn-indicator {
-            background: var(--accent);
-            padding: 10px 25px;
-            border-radius: 30px;
-            font-weight: 700;
-            font-size: 14px;
-            letter-spacing: 1px;
-            box-shadow: 0 0 20px var(--accent-glow);
-        }
+/* Mode tabs */
+.mode-tabs {
+display: flex;
+gap: 0;
+border: 1px solid var(–border2);
+border-radius: 16px;
+overflow: hidden;
+margin-bottom: 40px;
+background: var(–surface);
+animation: fadeUp 0.8s 0.2s ease both;
+}
 
-        /* Bilardo Masası */
-        .table-wrapper {
-            flex: 1;
-            background: #0D5C2E;
-            border-radius: 100px 100px 50px 50px;
-            padding: 25px;
-            box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.6);
-            border: 15px solid #8B5A2B;
-            margin-bottom: 20px;
-            position: relative;
-        }
+.mode-tab {
+flex: 1;
+padding: 16px 24px;
+border: none;
+background: transparent;
+color: var(–muted);
+font-family: ‘DM Sans’, sans-serif;
+font-size: 14px;
+font-weight: 500;
+cursor: pointer;
+transition: all 0.3s;
+display: flex;
+align-items: center;
+justify-content: center;
+gap: 10px;
+border-right: 1px solid var(–border);
+position: relative;
+overflow: hidden;
+}
 
-        #gameCanvas {
-            width: 100%;
-            height: 100%;
-            background: #0D5C2E;
-            border-radius: 80px 80px 40px 40px;
-            box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.6);
-            touch-action: none;
-            cursor: none;
-        }
+.mode-tab:last-child { border-right: none; }
 
-        /* Vuruş Gücü Çubuğu */
-        .power-meter-container {
-            position: absolute;
-            bottom: 50px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 400px;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(10px);
-            border-radius: 30px;
-            padding: 15px 25px;
-            border: 1px solid var(--accent);
-            display: none;
-        }
+.mode-tab::before {
+content: ‘’;
+position: absolute;
+inset: 0;
+opacity: 0;
+transition: opacity 0.3s;
+}
 
-        .power-label {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-            font-size: 14px;
-        }
+.mode-tab.loc::before { background: linear-gradient(135deg, rgba(0,229,255,0.1), transparent); }
+.mode-tab.face::before { background: linear-gradient(135deg, rgba(162,89,255,0.1), transparent); }
 
-        .power-bar-bg {
-            height: 20px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 30px;
-            overflow: hidden;
-        }
+.mode-tab.active {
+color: var(–text);
+}
 
-        .power-bar-fill {
-            height: 100%;
-            width: 0%;
-            background: linear-gradient(90deg, #27AE60, #F39C12, #E74C3C);
-            transition: width 0.05s;
-        }
+.mode-tab.active::before { opacity: 1; }
 
-        /* Sağ Panel - Kontroller */
-        .control-panel {
-            flex: 0.8;
-            background: var(--bg-primary);
-            padding: 25px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            border-left: 2px solid var(--accent);
-        }
+.mode-tab.active.loc { color: var(–accent); border-bottom: 2px solid var(–accent); }
+.mode-tab.active.face { color: var(–accent3); border-bottom: 2px solid var(–accent3); }
 
-        /* Profil Kartı */
-        .profile-card {
-            background: var(--bg-card);
-            border-radius: 30px;
-            padding: 20px;
-            text-align: center;
-            border: 1px solid var(--border);
-        }
+.tab-icon { font-size: 18px; }
+.tab-label { display: flex; flex-direction: column; align-items: flex-start; }
+.tab-label strong { font-size: 14px; font-weight: 500; }
+.tab-label small { font-size: 11px; opacity: 0.6; font-family: ‘JetBrains Mono’, monospace; }
 
-        .profile-avatar-large {
-            width: 100px;
-            height: 100px;
-            border-radius: 30px;
-            background: linear-gradient(135deg, var(--accent), var(--accent-glow));
-            margin: 0 auto 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 40px;
-            font-weight: 700;
-            position: relative;
-        }
+/* Card */
+.card {
+background: var(–surface);
+border: 1px solid var(–border2);
+border-radius: 24px;
+padding: 40px;
+animation: fadeUp 0.8s 0.3s ease both;
+position: relative;
+overflow: hidden;
+}
 
-        .profile-avatar-large img {
-            width: 100%;
-            height: 100%;
-            border-radius: 30px;
-            object-fit: cover;
-        }
+.card::before {
+content: ‘’;
+position: absolute;
+top: 0; left: 0; right: 0;
+height: 1px;
+background: linear-gradient(90deg, transparent, var(–accent), transparent);
+opacity: 0.5;
+}
 
-        .profile-name {
-            font-size: 20px;
-            font-weight: 700;
-            margin-bottom: 5px;
-        }
+/* Upload zone */
+.upload-zone {
+border: 2px dashed var(–border2);
+border-radius: 16px;
+padding: 60px 40px;
+text-align: center;
+cursor: pointer;
+transition: all 0.3s;
+position: relative;
+background: var(–bg2);
+overflow: hidden;
+}
 
-        .rating-badge {
-            background: var(--accent);
-            padding: 8px 20px;
-            border-radius: 30px;
-            display: inline-block;
-            font-weight: 700;
-            margin-top: 10px;
-        }
+.upload-zone:hover, .upload-zone.drag-over {
+border-color: var(–accent);
+background: rgba(0,229,255,0.03);
+transform: scale(1.005);
+}
 
-        /* Oyun Modları */
-        .mode-selector {
-            background: var(--bg-card);
-            border-radius: 30px;
-            padding: 20px;
-        }
+.upload-zone.face-mode:hover, .upload-zone.face-mode.drag-over {
+border-color: var(–accent3);
+background: rgba(162,89,255,0.03);
+}
 
-        .mode-title {
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 15px;
-            color: var(--text-secondary);
-        }
+.upload-icon {
+font-size: 48px;
+margin-bottom: 16px;
+display: block;
+animation: bounce 2s ease-in-out infinite;
+}
 
-        .mode-buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
+@keyframes bounce {
+0%,100% { transform: translateY(0); }
+50% { transform: translateY(-8px); }
+}
 
-        .mode-btn {
-            background: var(--bg-secondary);
-            border: 2px solid transparent;
-            border-radius: 20px;
-            padding: 15px;
-            color: white;
-            font-weight: 600;
-            font-size: 16px;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
+.upload-zone h3 {
+font-size: 18px;
+font-weight: 500;
+margin-bottom: 8px;
+color: var(–text);
+}
 
-        .mode-btn i {
-            width: 30px;
-            font-size: 20px;
-        }
+.upload-zone p {
+color: var(–muted);
+font-size: 13px;
+font-family: ‘JetBrains Mono’, monospace;
+}
 
-        .mode-btn:hover {
-            background: var(--bg-primary);
-            border-color: var(--accent);
-            transform: translateX(5px);
-        }
+.upload-zone input { display: none; }
 
-        .mode-btn.active {
-            background: var(--accent);
-            border-color: var(--accent-glow);
-        }
+/* Result panel */
+.result-panel {
+display: none;
+margin-top: 32px;
+}
 
-        /* Zorluk Seviyesi */
-        .difficulty-selector {
-            background: var(--bg-card);
-            border-radius: 30px;
-            padding: 20px;
-        }
+.result-panel.show { display: block; }
 
-        .difficulty-buttons {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 10px;
-            margin-top: 15px;
-        }
+.result-header {
+display: flex;
+align-items: center;
+gap: 12px;
+margin-bottom: 24px;
+padding-bottom: 16px;
+border-bottom: 1px solid var(–border);
+}
 
-        .difficulty-btn {
-            background: var(--bg-secondary);
-            border: none;
-            border-radius: 15px;
-            padding: 15px 5px;
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.2s;
-            text-align: center;
-        }
+.result-badge {
+padding: 4px 12px;
+border-radius: 100px;
+font-family: ‘JetBrains Mono’, monospace;
+font-size: 10px;
+letter-spacing: 1px;
+text-transform: uppercase;
+font-weight: 700;
+}
 
-        .difficulty-btn.selected {
-            background: var(--accent);
-            transform: scale(1.05);
-        }
+.badge-loc { background: rgba(0,229,255,0.15); color: var(–accent); border: 1px solid rgba(0,229,255,0.3); }
+.badge-face { background: rgba(162,89,255,0.15); color: var(–accent3); border: 1px solid rgba(162,89,255,0.3); }
+.badge-err { background: rgba(255,61,113,0.15); color: var(–accent2); border: 1px solid rgba(255,61,113,0.3); }
+.badge-warn { background: rgba(255,170,0,0.15); color: var(–warn); border: 1px solid rgba(255,170,0,0.3); }
 
-        .difficulty-btn.easy { border-bottom: 4px solid #27AE60; }
-        .difficulty-btn.medium { border-bottom: 4px solid #F39C12; }
-        .difficulty-btn.hard { border-bottom: 4px solid #E74C3C; }
+/* Preview + info grid */
+.preview-grid {
+display: grid;
+grid-template-columns: 280px 1fr;
+gap: 24px;
+align-items: start;
+}
 
-        /* Oyun Kontrolleri */
-        .game-controls {
-            background: var(--bg-card);
-            border-radius: 30px;
-            padding: 20px;
-        }
+@media (max-width: 650px) {
+.preview-grid { grid-template-columns: 1fr; }
+}
 
-        .angle-indicator {
-            background: var(--bg-secondary);
-            border-radius: 20px;
-            padding: 15px;
-            text-align: center;
-            margin-bottom: 15px;
-        }
+.img-preview {
+width: 100%;
+aspect-ratio: 1;
+object-fit: cover;
+border-radius: 12px;
+border: 1px solid var(–border2);
+display: none;
+}
 
-        .angle-value {
-            font-size: 32px;
-            font-weight: 800;
-            color: var(--accent);
-        }
+.img-preview.show { display: block; }
 
-        .control-buttons {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
+/* Info rows */
+.info-rows { display: flex; flex-direction: column; gap: 12px; }
 
-        .control-btn {
-            background: var(--bg-secondary);
-            border: none;
-            border-radius: 20px;
-            padding: 15px;
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
+.info-row {
+background: var(–bg2);
+border: 1px solid var(–border);
+border-radius: 12px;
+padding: 16px 20px;
+display: flex;
+align-items: flex-start;
+gap: 14px;
+transition: border-color 0.3s;
+}
 
-        .control-btn.primary {
-            background: var(--accent);
-        }
+.info-row:hover { border-color: var(–border2); }
 
-        .control-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
+.info-row-icon {
+font-size: 20px;
+flex-shrink: 0;
+margin-top: 2px;
+}
 
-        /* Top Listesi */
-        .balls-list {
-            background: var(--bg-card);
-            border-radius: 30px;
-            padding: 20px;
-            flex: 1;
-        }
+.info-row-content { flex: 1; }
 
-        .balls-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-            margin-top: 15px;
-        }
+.info-label {
+font-family: ‘JetBrains Mono’, monospace;
+font-size: 10px;
+letter-spacing: 2px;
+text-transform: uppercase;
+color: var(–muted);
+margin-bottom: 4px;
+}
 
-        .ball-item {
-            aspect-ratio: 1;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 16px;
-            position: relative;
-            background: #f1c40f;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-        }
+.info-value {
+font-size: 15px;
+font-weight: 500;
+color: var(–text);
+line-height: 1.4;
+}
 
-        .ball-item.potted {
-            opacity: 0.3;
-            filter: grayscale(1);
-        }
+.info-value.accent { color: var(–accent); }
+.info-value.purple { color: var(–accent3); }
 
-        .ball-item::after {
-            content: '';
-            position: absolute;
-            top: 2px;
-            left: 2px;
-            right: 2px;
-            bottom: 2px;
-            border-radius: 50%;
-            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.8), transparent 70%);
-        }
+/* Map embed */
+.map-container {
+margin-top: 20px;
+border-radius: 16px;
+overflow: hidden;
+border: 1px solid var(–border2);
+display: none;
+}
 
-        /* Mesajlar */
-        .message-center {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 9999;
-        }
+.map-container.show { display: block; }
 
-        .toast {
-            background: var(--bg-card);
-            border-left: 5px solid var(--accent);
-            padding: 15px 25px;
-            border-radius: 15px;
-            margin-bottom: 10px;
-            animation: slideIn 0.3s;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            backdrop-filter: blur(10px);
-        }
+.map-container iframe {
+width: 100%;
+height: 300px;
+border: none;
+display: block;
+filter: invert(1) hue-rotate(180deg) saturate(0.8);
+}
 
-        @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
+/* Face mode */
+.face-slots {
+display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 20px;
+margin-bottom: 24px;
+}
 
-        /* Responsive */
-        @media (max-width: 1000px) {
-            .game-container {
-                flex-direction: column;
-                height: auto;
-                border-radius: 30px;
-            }
-            
-            .power-meter-container {
-                width: 300px;
-                bottom: 20px;
-            }
-        }
-    </style>
+@media (max-width: 550px) { .face-slots { grid-template-columns: 1fr; } }
+
+.face-slot {
+background: var(–bg2);
+border: 2px dashed var(–border2);
+border-radius: 16px;
+padding: 30px 20px;
+text-align: center;
+cursor: pointer;
+transition: all 0.3s;
+position: relative;
+overflow: hidden;
+}
+
+.face-slot:hover {
+border-color: var(–accent3);
+background: rgba(162,89,255,0.05);
+}
+
+.face-slot input { display: none; }
+
+.face-slot-num {
+font-family: ‘Bebas Neue’, sans-serif;
+font-size: 48px;
+color: var(–border2);
+line-height: 1;
+margin-bottom: 8px;
+transition: color 0.3s;
+}
+
+.face-slot:hover .face-slot-num { color: var(–accent3); }
+
+.face-slot-label {
+font-size: 12px;
+color: var(–muted);
+font-family: ‘JetBrains Mono’, monospace;
+}
+
+.face-slot-preview {
+width: 100%;
+height: 180px;
+object-fit: cover;
+border-radius: 10px;
+display: none;
+}
+
+.face-slot-preview.show { display: block; }
+
+/* Compare button */
+.btn-compare {
+width: 100%;
+padding: 18px;
+border: none;
+border-radius: 14px;
+background: linear-gradient(135deg, var(–accent3), #6c3aff);
+color: white;
+font-family: ‘Bebas Neue’, sans-serif;
+font-size: 20px;
+letter-spacing: 3px;
+cursor: pointer;
+transition: all 0.3s;
+margin-bottom: 24px;
+position: relative;
+overflow: hidden;
+}
+
+.btn-compare::before {
+content: ‘’;
+position: absolute;
+inset: 0;
+background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
+opacity: 0;
+transition: opacity 0.3s;
+}
+
+.btn-compare:hover { transform: translateY(-2px); box-shadow: 0 20px 40px rgba(162,89,255,0.4); }
+.btn-compare:hover::before { opacity: 1; }
+.btn-compare:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+/* Match result */
+.match-result {
+display: none;
+background: var(–bg2);
+border-radius: 16px;
+padding: 32px;
+text-align: center;
+border: 1px solid var(–border);
+}
+
+.match-result.show { display: block; }
+
+.match-score {
+font-family: ‘Bebas Neue’, sans-serif;
+font-size: 80px;
+line-height: 1;
+margin-bottom: 8px;
+}
+
+.match-score.high { color: var(–success); text-shadow: 0 0 40px rgba(0,224,150,0.5); }
+.match-score.mid { color: var(–warn); text-shadow: 0 0 40px rgba(255,170,0,0.5); }
+.match-score.low { color: var(–accent2); text-shadow: 0 0 40px rgba(255,61,113,0.5); }
+
+.match-verdict {
+font-size: 18px;
+font-weight: 500;
+margin-bottom: 8px;
+}
+
+.match-note {
+font-size: 13px;
+color: var(–muted);
+font-family: ‘JetBrains Mono’, monospace;
+}
+
+/* Progress bar */
+.match-bar-wrap {
+background: var(–surface2);
+border-radius: 100px;
+height: 8px;
+margin: 20px 0;
+overflow: hidden;
+}
+
+.match-bar {
+height: 100%;
+border-radius: 100px;
+width: 0;
+transition: width 1.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.match-bar.high { background: linear-gradient(90deg, var(–success), #00ffbb); }
+.match-bar.mid { background: linear-gradient(90deg, var(–warn), #ffdd00); }
+.match-bar.low { background: linear-gradient(90deg, var(–accent2), #ff6b9d); }
+
+/* Loading */
+.loading {
+display: none;
+text-align: center;
+padding: 40px;
+}
+
+.loading.show { display: block; }
+
+.spinner {
+width: 48px; height: 48px;
+border: 3px solid var(–border2);
+border-top-color: var(–accent);
+border-radius: 50%;
+animation: spin 0.8s linear infinite;
+margin: 0 auto 20px;
+}
+
+.spinner.purple { border-top-color: var(–accent3); }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.loading p {
+color: var(–muted);
+font-family: ‘JetBrains Mono’, monospace;
+font-size: 13px;
+animation: blink 1.5s ease-in-out infinite;
+}
+
+@keyframes blink {
+0%,100% { opacity: 1; }
+50% { opacity: 0.3; }
+}
+
+/* Canvas hidden */
+#faceCanvas { display: none; }
+
+/* Footer */
+footer {
+position: relative;
+z-index: 5;
+text-align: center;
+padding: 40px;
+color: var(–muted);
+font-family: ‘JetBrains Mono’, monospace;
+font-size: 11px;
+border-top: 1px solid var(–border);
+}
+
+/* Warning box */
+.warn-box {
+background: rgba(255,170,0,0.08);
+border: 1px solid rgba(255,170,0,0.2);
+border-radius: 12px;
+padding: 16px 20px;
+margin-top: 16px;
+font-size: 13px;
+color: var(–warn);
+display: flex;
+gap: 10px;
+align-items: flex-start;
+}
+
+.warn-box p { line-height: 1.6; }
+
+/* Exif details grid */
+.exif-grid {
+display: grid;
+grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+gap: 10px;
+margin-top: 16px;
+}
+
+.exif-chip {
+background: var(–bg2);
+border: 1px solid var(–border);
+border-radius: 10px;
+padding: 12px 14px;
+}
+
+.exif-chip .label {
+font-family: ‘JetBrains Mono’, monospace;
+font-size: 9px;
+text-transform: uppercase;
+letter-spacing: 1px;
+color: var(–muted);
+margin-bottom: 4px;
+}
+
+.exif-chip .val {
+font-size: 13px;
+font-weight: 500;
+color: var(–text);
+}
+
+/* Tabs content */
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* Reset btn */
+.btn-reset {
+background: transparent;
+border: 1px solid var(–border2);
+color: var(–muted);
+padding: 8px 16px;
+border-radius: 8px;
+font-size: 12px;
+cursor: pointer;
+font-family: ‘JetBrains Mono’, monospace;
+transition: all 0.2s;
+margin-left: auto;
+}
+
+.btn-reset:hover { border-color: var(–accent2); color: var(–accent2); }
+
+/* Model loading banner */
+#modelBanner {
+background: rgba(162,89,255,0.1);
+border-bottom: 1px solid rgba(162,89,255,0.2);
+padding: 10px 40px;
+text-align: center;
+font-family: ‘JetBrains Mono’, monospace;
+font-size: 11px;
+color: var(–accent3);
+display: none;
+position: relative;
+z-index: 10;
+}
+</style>
+
 </head>
 <body>
-    <!-- Yükleme Ekranı -->
-    <div class="loading-screen" id="loadingScreen">
-        <div class="loading-content">
-            <div class="loading-logo">
-                <i class="fas fa-billiard"></i>
-            </div>
-            <div class="loading-bar">
-                <div class="loading-progress" id="loadingProgress"></div>
-            </div>
-            <div class="loading-text" id="loadingText">Oyun yükleniyor...</div>
-        </div>
+
+<div class="grid-bg"></div>
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="orb orb3"></div>
+
+<div id="modelBanner">⚙️ FACE-API MODELS LOADING... PLEASE WAIT</div>
+
+<header>
+  <div class="logo">
+    LENSIQ
+    <span>IMAGE INTELLIGENCE ENGINE</span>
+  </div>
+  <div class="status-pill">
+    <div class="status-dot"></div>
+    CLIENT-SIDE ONLY
+  </div>
+</header>
+
+<main>
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-tag">
+      <span>◈</span> Zero Server · 100% Browser · GitHub Pages Ready
+    </div>
+    <h1>SEE <span class="gradient">BEYOND</span><br>THE FRAME</h1>
+    <p class="hero-sub">Upload any photo. Discover where it was taken — or compare faces with forensic precision. All processing happens in your browser.</p>
+  </div>
+
+  <!-- Mode Tabs -->
+
+  <div class="mode-tabs">
+    <button class="mode-tab loc active" onclick="switchMode('location')">
+      <span class="tab-icon">🌍</span>
+      <span class="tab-label">
+        <strong>LOCATION</strong>
+        <small>EXIF GPS → Map</small>
+      </span>
+    </button>
+    <button class="mode-tab face" onclick="switchMode('face')">
+      <span class="tab-icon">👤</span>
+      <span class="tab-label">
+        <strong>FACE COMPARE</strong>
+        <small>2 Photos → Match %</small>
+      </span>
+    </button>
+  </div>
+
+  <!-- LOCATION MODE -->
+
+  <div id="locationMode" class="tab-content active">
+    <div class="card">
+      <!-- Upload zone -->
+      <div class="upload-zone" id="locDropZone" onclick="document.getElementById('locInput').click()">
+        <span class="upload-icon">📍</span>
+        <h3>Drop your photo here</h3>
+        <p>JPG, JPEG, HEIC with GPS EXIF data · Click or drag & drop</p>
+        <input type="file" id="locInput" accept="image/*">
+      </div>
+
+```
+  <!-- Loading -->
+  <div class="loading" id="locLoading">
+    <div class="spinner"></div>
+    <p>READING EXIF METADATA...</p>
+  </div>
+
+  <!-- Result -->
+  <div class="result-panel" id="locResult">
+    <div class="result-header">
+      <div class="result-badge badge-loc" id="locBadge">LOCATION FOUND</div>
+      <button class="btn-reset" onclick="resetLocation()">↺ NEW PHOTO</button>
     </div>
 
-    <!-- Ana Oyun Container -->
-    <div class="game-container" id="gameContainer">
-        <!-- Sol Oyun Alanı -->
-        <div class="game-area">
-            <!-- Skor Bar -->
-            <div class="score-bar">
-                <div class="player-score">
-                    <div class="player-avatar" id="player1Avatar">
-                        <span id="player1AvatarText">S</span>
-                        <img id="player1AvatarImg" style="display: none;">
-                        <div class="telegram-badge" id="player1Badge" style="display: none;">
-                            <i class="fab fa-telegram"></i>
-                        </div>
-                    </div>
-                    <div class="player-info">
-                        <h4 id="player1Name">Sen</h4>
-                        <div class="potted-count">
-                            <i class="fas fa-circle"></i> <span id="player1Potted">0</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="vs-divider">VS</div>
-                <div class="player-score">
-                    <div class="player-avatar" id="player2Avatar">
-                        <span id="player2AvatarText">B</span>
-                    </div>
-                    <div class="player-info">
-                        <h4 id="player2Name">Bot Kolay</h4>
-                        <div class="potted-count">
-                            <i class="fas fa-circle"></i> <span id="player2Potted">0</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="turn-indicator" id="turnIndicator">SENİN SIRAN</div>
-            </div>
-
-            <!-- Bilardo Masası -->
-            <div class="table-wrapper">
-                <canvas id="gameCanvas"></canvas>
-                
-                <!-- Vuruş Gücü Çubuğu -->
-                <div class="power-meter-container" id="powerMeter">
-                    <div class="power-label">
-                        <span>Vuruş Gücü</span>
-                        <span id="powerPercent">0%</span>
-                    </div>
-                    <div class="power-bar-bg">
-                        <div class="power-bar-fill" id="powerBarFill" style="width: 0%;"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Sağ Kontrol Paneli -->
-        <div class="control-panel">
-            <!-- Profil Kartı -->
-            <div class="profile-card">
-                <div class="profile-avatar-large" id="profileAvatar">
-                    <span id="profileAvatarText">G</span>
-                    <img id="profileAvatarImg" style="display: none;">
-                </div>
-                <div class="profile-name" id="profileName">Misafir Oyuncu</div>
-                <div class="rating-badge" id="profileRating">
-                    <i class="fas fa-star"></i> 1200
-                </div>
-            </div>
-
-            <!-- Oyun Modları -->
-            <div class="mode-selector">
-                <div class="mode-title">OYUN MODU</div>
-                <div class="mode-buttons">
-                    <button class="mode-btn active" onclick="setGameMode('bot')">
-                        <i class="fas fa-robot"></i> Bot ile Oyna
-                    </button>
-                    <button class="mode-btn" onclick="setGameMode('private')">
-                        <i class="fas fa-lock"></i> Özel Oda
-                    </button>
-                    <button class="mode-btn" onclick="setGameMode('online')">
-                        <i class="fas fa-globe"></i> Online
-                    </button>
-                </div>
-            </div>
-
-            <!-- Zorluk Seviyesi (Bot Modu) -->
-            <div class="difficulty-selector" id="difficultySelector">
-                <div class="mode-title">ZORLUK SEVİYESİ</div>
-                <div class="difficulty-buttons">
-                    <button class="difficulty-btn easy" onclick="setDifficulty('easy')">
-                        🐣 Kolay
-                    </button>
-                    <button class="difficulty-btn medium selected" onclick="setDifficulty('medium')">
-                        ⚡ Orta
-                    </button>
-                    <button class="difficulty-btn hard" onclick="setDifficulty('hard')">
-                        👑 Zor
-                    </button>
-                </div>
-            </div>
-
-            <!-- Oda Kodu (Özel Oda Modu) -->
-            <div class="difficulty-selector" id="roomSelector" style="display: none;">
-                <div class="mode-title">ODA KODU</div>
-                <div style="display: flex; gap: 10px;">
-                    <input type="text" class="room-input" id="roomCode" maxlength="4" placeholder="0000" style="flex:1; background: var(--bg-secondary); border: none; border-radius: 15px; padding: 15px; color: white; text-align: center; font-size: 24px; letter-spacing: 5px;">
-                    <button class="control-btn primary" onclick="joinRoom()" style="padding: 15px;">
-                        <i class="fas fa-sign-in-alt"></i>
-                    </button>
-                </div>
-                <button class="control-btn" onclick="createRoom()" style="margin-top: 10px; width: 100%;">
-                    <i class="fas fa-plus"></i> Oda Oluştur
-                </button>
-            </div>
-
-            <!-- Oyun Kontrolleri -->
-            <div class="game-controls">
-                <div class="angle-indicator">
-                    <div class="angle-value" id="angleDisplay">0°</div>
-                    <div style="font-size: 12px; color: var(--text-secondary);">Vuruş Açısı</div>
-                </div>
-                <div class="control-buttons">
-                    <button class="control-btn" onclick="resetWhiteBall()" id="resetBtn">
-                        <i class="fas fa-undo-alt"></i> Sıfırla
-                    </button>
-                    <button class="control-btn primary" onclick="takeShot()" id="shotBtn" disabled>
-                        <i class="fas fa-bullseye"></i> VUR
-                    </button>
-                </div>
-            </div>
-
-            <!-- Top Listesi -->
-            <div class="balls-list">
-                <div class="mode-title">TOPLAR</div>
-                <div class="balls-grid" id="ballsGrid">
-                    <!-- JavaScript ile doldurulacak -->
-                </div>
-            </div>
-        </div>
+    <div class="preview-grid">
+      <img class="img-preview" id="locPreview" alt="Preview">
+      <div class="info-rows" id="locInfoRows"></div>
     </div>
 
-    <!-- Mesaj Merkezi -->
-    <div class="message-center" id="messageCenter"></div>
+    <div class="map-container" id="mapContainer">
+      <iframe id="mapFrame" allowfullscreen loading="lazy"></iframe>
+    </div>
 
-    <script>
-        // ==================== TELEGRAM ENTEGRASYONU ====================
-        const tg = window.Telegram?.WebApp;
-        const playerData = {
-            id: null,
-            username: 'Misafir Oyuncu',
-            photo: null,
-            platform: 'web',
-            rating: 1200
-        };
+    <div class="exif-grid" id="exifGrid"></div>
+  </div>
+</div>
+```
 
-        // Telegram kontrolü
-        if (tg) {
-            tg.ready();
-            tg.expand();
-            
-            const user = tg.initDataUnsafe?.user;
-            if (user) {
-                playerData.username = user.first_name + (user.last_name ? ' ' + user.last_name : '');
-                playerData.photo = user.photo_url;
-                playerData.platform = 'telegram';
-                playerData.id = user.id;
-                
-                document.getElementById('player1Badge').style.display = 'flex';
-                document.getElementById('profileName').textContent = playerData.username;
-                
-                if (playerData.photo) {
-                    document.getElementById('player1AvatarImg').src = playerData.photo;
-                    document.getElementById('player1AvatarImg').style.display = 'block';
-                    document.getElementById('player1AvatarText').style.display = 'none';
-                    
-                    document.getElementById('profileAvatarImg').src = playerData.photo;
-                    document.getElementById('profileAvatarImg').style.display = 'block';
-                    document.getElementById('profileAvatarText').style.display = 'none';
-                }
-            }
+  </div>
+
+  <!-- FACE COMPARE MODE -->
+
+  <div id="faceMode" class="tab-content">
+    <div class="card">
+      <div class="warn-box" style="margin-bottom:24px">
+        <span>⚠️</span>
+        <p><strong>Local Processing Only:</strong> Face analysis runs 100% in your browser using face-api.js (dlib models). No images are uploaded anywhere. This compares facial geometry — it cannot search the internet for a person.</p>
+      </div>
+
+```
+  <div class="face-slots">
+    <!-- Slot 1 -->
+    <div class="face-slot" onclick="document.getElementById('face1Input').click()">
+      <div class="face-slot-num" id="slot1num">01</div>
+      <img class="face-slot-preview" id="face1Preview" alt="">
+      <div class="face-slot-label" id="slot1label">PHOTO ONE</div>
+      <input type="file" id="face1Input" accept="image/*">
+    </div>
+    <!-- Slot 2 -->
+    <div class="face-slot" onclick="document.getElementById('face2Input').click()">
+      <div class="face-slot-num" id="slot2num">02</div>
+      <img class="face-slot-preview" id="face2Preview" alt="">
+      <div class="face-slot-label" id="slot2label">PHOTO TWO</div>
+      <input type="file" id="face2Input" accept="image/*">
+    </div>
+  </div>
+
+  <button class="btn-compare" id="compareBtn" onclick="compareFaces()" disabled>
+    ⚡ COMPARE FACES
+  </button>
+
+  <!-- Loading -->
+  <div class="loading" id="faceLoading">
+    <div class="spinner purple"></div>
+    <p>ANALYZING FACIAL LANDMARKS...</p>
+  </div>
+
+  <!-- Match Result -->
+  <div class="match-result" id="matchResult">
+    <div class="match-score" id="matchScore">--</div>
+    <div class="match-bar-wrap">
+      <div class="match-bar" id="matchBar"></div>
+    </div>
+    <div class="match-verdict" id="matchVerdict"></div>
+    <div class="match-note" id="matchNote"></div>
+    <div class="exif-grid" id="faceDetails" style="margin-top:20px;text-align:left"></div>
+  </div>
+
+  <canvas id="faceCanvas"></canvas>
+</div>
+```
+
+  </div>
+</main>
+
+<footer>
+  LENSIQ · All processing is client-side · No data leaves your browser · <a href="https://github.com" style="color:var(--accent);text-decoration:none">GITHUB PAGES READY</a>
+</footer>
+
+<script>
+// =============================================
+// MODE SWITCHING
+// =============================================
+function switchMode(mode) {
+  document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+
+  if (mode === 'location') {
+    document.querySelector('.mode-tab.loc').classList.add('active');
+    document.getElementById('locationMode').classList.add('active');
+  } else {
+    document.querySelector('.mode-tab.face').classList.add('active');
+    document.getElementById('faceMode').classList.add('active');
+    loadFaceModels();
+  }
+}
+
+// =============================================
+// LOCATION MODE
+// =============================================
+const locInput = document.getElementById('locInput');
+const locDropZone = document.getElementById('locDropZone');
+
+locInput.addEventListener('change', e => handleLocFile(e.target.files[0]));
+
+locDropZone.addEventListener('dragover', e => { e.preventDefault(); locDropZone.classList.add('drag-over'); });
+locDropZone.addEventListener('dragleave', () => locDropZone.classList.remove('drag-over'));
+locDropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  locDropZone.classList.remove('drag-over');
+  handleLocFile(e.dataTransfer.files[0]);
+});
+
+function handleLocFile(file) {
+  if (!file) return;
+  document.getElementById('locLoading').classList.add('show');
+  document.getElementById('locResult').classList.remove('show');
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = new Image();
+    img.onload = function() {
+      // Show preview
+      const preview = document.getElementById('locPreview');
+      preview.src = e.target.result;
+      preview.classList.add('show');
+
+      // Read EXIF
+      EXIF.getData(img, function() {
+        document.getElementById('locLoading').classList.remove('show');
+        document.getElementById('locResult').classList.add('show');
+
+        const lat = EXIF.getTag(this, 'GPSLatitude');
+        const latRef = EXIF.getTag(this, 'GPSLatitudeRef');
+        const lon = EXIF.getTag(this, 'GPSLongitude');
+        const lonRef = EXIF.getTag(this, 'GPSLongitudeRef');
+
+        const allTags = EXIF.getAllTags(this);
+
+        if (lat && lon) {
+          const latDec = toDecimal(lat, latRef);
+          const lonDec = toDecimal(lon, lonRef);
+          showLocationResult(latDec, lonDec, allTags, file);
+        } else {
+          showNoGPS(allTags, file);
         }
+      });
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
 
-        // ==================== YÜKLEME EKRANI ====================
-        let loadingProgress = 0;
-        const loadingInterval = setInterval(() => {
-            loadingProgress += Math.random() * 30;
-            if (loadingProgress >= 100) {
-                loadingProgress = 100;
-                clearInterval(loadingInterval);
-                
-                setTimeout(() => {
-                    document.getElementById('loadingScreen').style.opacity = '0';
-                    setTimeout(() => {
-                        document.getElementById('loadingScreen').style.display = 'none';
-                        document.getElementById('gameContainer').classList.add('visible');
-                    }, 500);
-                }, 500);
-            }
-            
-            document.getElementById('loadingProgress').style.width = loadingProgress + '%';
-            
-            if (loadingProgress < 30) {
-                document.getElementById('loadingText').textContent = 'Bilardo masası hazırlanıyor...';
-            } else if (loadingProgress < 60) {
-                document.getElementById('loadingText').textContent = 'Toplar diziliyor...';
-            } else if (loadingProgress < 90) {
-                document.getElementById('loadingText').textContent = 'Bot yapay zeka yükleniyor...';
-            } else {
-                document.getElementById('loadingText').textContent = 'Oyuna hazır!';
-            }
-        }, 100);
+function toDecimal(dms, ref) {
+  const d = dms[0];
+  const m = dms[1];
+  const s = dms[2];
+  let dec = d + m / 60 + s / 3600;
+  if (ref === 'S' || ref === 'W') dec = -dec;
+  return dec;
+}
 
-        // ==================== OYUN DEĞİŞKENLERİ ====================
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        
-        // Oyun durumu
-        let gameMode = 'bot';
-        let botDifficulty = 'medium';
-        let currentPlayer = 'player';
-        let gameState = 'aiming'; // aiming, shooting, moving, gameOver
-        let gameOver = false;
-        
-        // Fizik değişkenleri
-        let balls = [];
-        let whiteBall = null;
-        let playerPotted = [];
-        let opponentPotted = [];
-        
-        // Vuruş değişkenleri
-        let isDragging = false;
-        let dragStart = { x: 0, y: 0 };
-        let dragEnd = { x: 0, y: 0 };
-        let shotPower = 0;
-        let shotAngle = 0;
-        let isAiming = true;
-        
-        // Masa boyutları
-        let tableWidth, tableHeight;
-        const pocketRadius = 30;
-        const ballRadius = 15;
-        const friction = 0.98;
-        const minSpeed = 0.5;
+function showLocationResult(lat, lon, tags, file) {
+  const badge = document.getElementById('locBadge');
+  badge.textContent = 'GPS LOCATION FOUND';
+  badge.className = 'result-badge badge-loc';
 
-        // ==================== OYUNU BAŞLAT ====================
-        function initGame() {
-            resizeCanvas();
-            createBalls();
-            updateBallsGrid();
-            draw();
-            requestAnimationFrame(gameLoop);
-            
-            // Canvas olayları
-            canvas.addEventListener('mousedown', startDrag);
-            canvas.addEventListener('mousemove', onDrag);
-            canvas.addEventListener('mouseup', endDrag);
-            canvas.addEventListener('touchstart', startDrag);
-            canvas.addEventListener('touchmove', onDrag);
-            canvas.addEventListener('touchend', endDrag);
-            
-            showMessage('Bot ile oyuna başla!', 'info');
-        }
+  const rows = document.getElementById('locInfoRows');
 
-        // Canvas boyutlandır
-        function resizeCanvas() {
-            const container = document.querySelector('.table-wrapper');
-            canvas.width = container.clientWidth;
-            canvas.height = container.clientHeight;
-            tableWidth = canvas.width;
-            tableHeight = canvas.height;
-        }
+  // Reverse geocode via nominatim (free, no key needed)
+  fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`)
+    .then(r => r.json())
+    .then(data => {
+      const addr = data.address || {};
+      const country = addr.country || 'Unknown';
+      const city = addr.city || addr.town || addr.village || addr.county || 'Unknown';
+      const state = addr.state || '';
+      const road = addr.road || addr.suburb || '';
+      const displayName = data.display_name || `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
 
-        // Topları oluştur
-        function createBalls() {
-            balls = [];
-            
-            // Beyaz top
-            whiteBall = {
-                id: 0,
-                x: tableWidth * 0.25,
-                y: tableHeight / 2,
-                vx: 0,
-                vy: 0,
-                radius: ballRadius,
-                color: '#FFFFFF',
-                number: 0,
-                type: 'white',
-                potted: false
-            };
-            balls.push(whiteBall);
+      rows.innerHTML = `
+        <div class="info-row">
+          <span class="info-row-icon">🌍</span>
+          <div class="info-row-content">
+            <div class="info-label">COUNTRY</div>
+            <div class="info-value accent">${country} ${getFlag(addr.country_code)}</div>
+          </div>
+        </div>
+        <div class="info-row">
+          <span class="info-row-icon">🏙️</span>
+          <div class="info-row-content">
+            <div class="info-label">CITY / REGION</div>
+            <div class="info-value">${city}${state ? ', ' + state : ''}</div>
+          </div>
+        </div>
+        ${road ? `<div class="info-row">
+          <span class="info-row-icon">📍</span>
+          <div class="info-row-content">
+            <div class="info-label">STREET / AREA</div>
+            <div class="info-value">${road}</div>
+          </div>
+        </div>` : ''}
+        <div class="info-row">
+          <span class="info-row-icon">🔢</span>
+          <div class="info-row-content">
+            <div class="info-label">COORDINATES</div>
+            <div class="info-value" style="font-family:'JetBrains Mono',monospace;font-size:12px">${lat.toFixed(6)}°, ${lon.toFixed(6)}°</div>
+          </div>
+        </div>
+      `;
 
-            // Düz toplar (1-7)
-            const solidColors = ['#F1C40F', '#3498DB', '#E74C3C', '#9B59B6', '#E67E22', '#2ECC71', '#8B4513'];
-            for (let i = 0; i < 7; i++) {
-                balls.push({
-                    id: i + 1,
-                    x: tableWidth * 0.7 + Math.cos(i * 0.8) * ballRadius * 3,
-                    y: tableHeight * 0.4 + Math.sin(i * 0.8) * ballRadius * 2,
-                    vx: 0,
-                    vy: 0,
-                    radius: ballRadius,
-                    color: solidColors[i],
-                    number: i + 1,
-                    type: 'solid',
-                    potted: false
-                });
-            }
+      // Show map
+      const mapContainer = document.getElementById('mapContainer');
+      const mapFrame = document.getElementById('mapFrame');
+      mapFrame.src = `https://www.openstreetmap.org/export/embed.html?bbox=${lon-0.01},${lat-0.01},${lon+0.01},${lat+0.01}&layer=mapnik&marker=${lat},${lon}`;
+      mapContainer.classList.add('show');
+    })
+    .catch(() => {
+      rows.innerHTML = `
+        <div class="info-row">
+          <span class="info-row-icon">🔢</span>
+          <div class="info-row-content">
+            <div class="info-label">COORDINATES</div>
+            <div class="info-value accent" style="font-family:'JetBrains Mono',monospace;font-size:12px">${lat.toFixed(6)}°, ${lon.toFixed(6)}°</div>
+          </div>
+        </div>
+        <div class="warn-box" style="margin-top:0">
+          <span>ℹ️</span><p>Reverse geocoding failed. Check internet connection.</p>
+        </div>
+      `;
+    });
 
-            // Çizgili toplar (9-15)
-            const stripedColors = ['#F1C40F', '#3498DB', '#E74C3C', '#9B59B6', '#E67E22', '#2ECC71', '#8B4513'];
-            for (let i = 0; i < 7; i++) {
-                balls.push({
-                    id: i + 9,
-                    x: tableWidth * 0.7 + Math.cos(i * 0.8 + 0.4) * ballRadius * 4,
-                    y: tableHeight * 0.6 + Math.sin(i * 0.8 + 0.4) * ballRadius * 2,
-                    vx: 0,
-                    vy: 0,
-                    radius: ballRadius,
-                    color: stripedColors[i],
-                    number: i + 9,
-                    type: 'striped',
-                    potted: false,
-                    striped: true
-                });
-            }
+  // EXIF chips
+  buildExifChips(tags, file);
+}
 
-            // 8 top
-            balls.push({
-                id: 8,
-                x: tableWidth * 0.7,
-                y: tableHeight * 0.5,
-                vx: 0,
-                vy: 0,
-                radius: ballRadius,
-                color: '#000000',
-                number: 8,
-                type: 'black',
-                potted: false
-            });
-        }
+function showNoGPS(tags, file) {
+  const badge = document.getElementById('locBadge');
+  badge.textContent = 'NO GPS DATA';
+  badge.className = 'result-badge badge-warn';
 
-        // ==================== OYUN DÖNGÜSÜ ====================
-        function gameLoop() {
-            update();
-            draw();
-            requestAnimationFrame(gameLoop);
-        }
+  const rows = document.getElementById('locInfoRows');
 
-        function update() {
-            if (gameOver) return;
+  // Check if it's a screenshot or edited photo
+  const software = tags.Software || '';
+  const make = tags.Make || '';
+  const model = tags.Model || '';
 
-            let anyMoving = false;
-            
-            // Top hareketleri
-            balls.forEach(ball => {
-                if (ball.potted) return;
-                
-                if (Math.abs(ball.vx) > minSpeed || Math.abs(ball.vy) > minSpeed) {
-                    anyMoving = true;
-                    
-                    // Sürtünme
-                    ball.vx *= friction;
-                    ball.vy *= friction;
-                    
-                    // Pozisyon güncelle
-                    ball.x += ball.vx;
-                    ball.y += ball.vy;
-                    
-                    // Kenar çarpışmaları
-                    if (ball.x - ball.radius < 0) {
-                        ball.x = ball.radius;
-                        ball.vx *= -0.8;
-                    }
-                    if (ball.x + ball.radius > tableWidth) {
-                        ball.x = tableWidth - ball.radius;
-                        ball.vx *= -0.8;
-                    }
-                    if (ball.y - ball.radius < 0) {
-                        ball.y = ball.radius;
-                        ball.vy *= -0.8;
-                    }
-                    if (ball.y + ball.radius > tableHeight) {
-                        ball.y = tableHeight - ball.radius;
-                        ball.vy *= -0.8;
-                    }
-                }
-            });
+  rows.innerHTML = `
+    <div class="warn-box" style="margin-top:0">
+      <span>⚠️</span>
+      <p>This photo has <strong>no GPS metadata</strong>. This usually means:<br>
+      • GPS was disabled when photo was taken<br>
+      • Photo is a screenshot<br>
+      • EXIF data was stripped (social media, WhatsApp, etc.)<br>
+      • Camera doesn't have GPS capability</p>
+    </div>
+    ${make || model ? `<div class="info-row">
+      <span class="info-row-icon">📷</span>
+      <div class="info-row-content">
+        <div class="info-label">CAMERA</div>
+        <div class="info-value">${make} ${model}</div>
+      </div>
+    </div>` : ''}
+    ${software ? `<div class="info-row">
+      <span class="info-row-icon">💻</span>
+      <div class="info-row-content">
+        <div class="info-label">SOFTWARE</div>
+        <div class="info-value">${software}</div>
+      </div>
+    </div>` : ''}
+  `;
 
-            // Top çarpışmaları
-            for (let i = 0; i < balls.length; i++) {
-                for (let j = i + 1; j < balls.length; j++) {
-                    if (balls[i].potted || balls[j].potted) continue;
-                    
-                    const dx = balls[j].x - balls[i].x;
-                    const dy = balls[j].y - balls[i].y;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
-                    
-                    if (distance < ballRadius * 2) {
-                        // Çarpışma açısı
-                        const angle = Math.atan2(dy, dx);
-                        const sin = Math.sin(angle);
-                        const cos = Math.cos(angle);
-                        
-                        // Hız vektörlerini döndür
-                        const vx1 = balls[i].vx * cos + balls[i].vy * sin;
-                        const vy1 = balls[i].vy * cos - balls[i].vx * sin;
-                        const vx2 = balls[j].vx * cos + balls[j].vy * sin;
-                        const vy2 = balls[j].vy * cos - balls[j].vx * sin;
-                        
-                        // Çarpışma sonrası hızlar
-                        const vx1Final = vx2;
-                        const vx2Final = vx1;
-                        
-                        // Geri döndür
-                        balls[i].vx = vx1Final * cos - vy1 * sin;
-                        balls[i].vy = vy1 * cos + vx1Final * sin;
-                        balls[j].vx = vx2Final * cos - vy2 * sin;
-                        balls[j].vy = vy2 * cos + vx2Final * sin;
-                        
-                        // Topları ayır
-                        const overlap = (ballRadius * 2) - distance;
-                        const moveX = Math.cos(angle) * overlap / 2;
-                        const moveY = Math.sin(angle) * overlap / 2;
-                        
-                        balls[i].x -= moveX;
-                        balls[i].y -= moveY;
-                        balls[j].x += moveX;
-                        balls[j].y += moveY;
-                    }
-                }
-            }
+  buildExifChips(tags, file);
+}
 
-            // Cep kontrolü
-            checkPockets();
+function buildExifChips(tags, file) {
+  const grid = document.getElementById('exifGrid');
+  const chips = [];
 
-            // Hareket bittiğinde
-            if (!anyMoving && gameState === 'moving') {
-                endTurn();
-            }
+  if (tags.DateTime) chips.push({ label: 'DATE TAKEN', val: tags.DateTime });
+  if (tags.Make) chips.push({ label: 'CAMERA MAKE', val: tags.Make });
+  if (tags.Model) chips.push({ label: 'CAMERA MODEL', val: tags.Model });
+  if (tags.ISOSpeedRatings) chips.push({ label: 'ISO', val: tags.ISOSpeedRatings });
+  if (tags.FocalLength) chips.push({ label: 'FOCAL LENGTH', val: tags.FocalLength + 'mm' });
+  if (tags.ExposureTime) chips.push({ label: 'EXPOSURE', val: '1/' + Math.round(1/tags.ExposureTime) + 's' });
+  if (tags.FNumber) chips.push({ label: 'APERTURE', val: 'f/' + tags.FNumber });
+  if (tags.Flash !== undefined) chips.push({ label: 'FLASH', val: tags.Flash === 0 ? 'No Flash' : 'Flash Used' });
+  if (tags.PixelXDimension && tags.PixelYDimension) chips.push({ label: 'RESOLUTION', val: `${tags.PixelXDimension}×${tags.PixelYDimension}` });
+  chips.push({ label: 'FILE SIZE', val: (file.size / 1024 / 1024).toFixed(2) + ' MB' });
 
-            // Bot sırası
-            if (currentPlayer === 'bot' && gameMode === 'bot' && !anyMoving && gameState !== 'gameOver') {
-                setTimeout(botTakeShot, 500);
-            }
-        }
+  if (chips.length === 0) {
+    grid.innerHTML = '';
+    return;
+  }
 
-        function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // Cepleri çiz
-            drawPockets();
-            
-            // Topları çiz
-            balls.forEach(ball => {
-                if (!ball.potted) {
-                    drawBall(ball);
-                }
-            });
-            
-            // Nişan çizgisi
-            if (currentPlayer === 'player' && isDragging && gameState === 'aiming') {
-                drawAimLine();
-            }
-        }
+  grid.innerHTML = chips.map(c => `
+    <div class="exif-chip">
+      <div class="label">${c.label}</div>
+      <div class="val">${c.val}</div>
+    </div>
+  `).join('');
+}
 
-        function drawBall(ball) {
-            ctx.beginPath();
-            ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
-            
-            // Top rengi
-            ctx.fillStyle = ball.color;
-            ctx.fill();
-            
-            // Gölge
-            ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
-            ctx.shadowBlur = 10;
-            
-            // Parlaklık
-            ctx.shadowColor = 'rgba(255, 255, 255, 0.3)';
-            
-            // Numara
-            if (ball.number > 0 && ball.number !== 8) {
-                ctx.fillStyle = ball.striped ? 'black' : 'white';
-                ctx.font = 'bold 14px Arial';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(ball.number, ball.x, ball.y);
-            } else if (ball.number === 8) {
-                ctx.fillStyle = 'white';
-                ctx.font = 'bold 14px Arial';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText('8', ball.x, ball.y);
-            }
-            
-            ctx.shadowBlur = 0;
-        }
+function getFlag(code) {
+  if (!code) return '';
+  const chars = [...code.toUpperCase()].map(c => String.fromCodePoint(127397 + c.charCodeAt(0)));
+  return chars.join('');
+}
 
-        function drawPockets() {
-            const pockets = [
-                [pocketRadius, pocketRadius],
-                [tableWidth/2, pocketRadius],
-                [tableWidth - pocketRadius, pocketRadius],
-                [pocketRadius, tableHeight - pocketRadius],
-                [tableWidth/2, tableHeight - pocketRadius],
-                [tableWidth - pocketRadius, tableHeight - pocketRadius]
-            ];
-            
-            ctx.fillStyle = '#000000';
-            ctx.shadowColor = 'rgba(0,0,0,0.5)';
-            ctx.shadowBlur = 15;
-            
-            pockets.forEach(([x, y]) => {
-                ctx.beginPath();
-                ctx.arc(x, y, pocketRadius, 0, Math.PI * 2);
-                ctx.fill();
-            });
-            
-            ctx.shadowBlur = 0;
-        }
+function resetLocation() {
+  document.getElementById('locResult').classList.remove('show');
+  document.getElementById('locPreview').classList.remove('show');
+  document.getElementById('mapContainer').classList.remove('show');
+  document.getElementById('locInput').value = '';
+  document.getElementById('locInfoRows').innerHTML = '';
+  document.getElementById('exifGrid').innerHTML = '';
+}
 
-        function drawAimLine() {
-            if (!dragStart || !dragEnd) return;
-            
-            // Ana çizgi
-            ctx.beginPath();
-            ctx.strokeStyle = '#FFFFFF';
-            ctx.lineWidth = 2;
-            ctx.setLineDash([10, 10]);
-            ctx.moveTo(dragStart.x, dragStart.y);
-            ctx.lineTo(dragEnd.x, dragEnd.y);
-            ctx.stroke();
-            
-            // Hedef noktası
-            ctx.beginPath();
-            ctx.arc(dragEnd.x, dragEnd.y, 10, 0, Math.PI * 2);
-            ctx.strokeStyle = '#FFFFFF';
-            ctx.lineWidth = 2;
-            ctx.setLineDash([]);
-            ctx.stroke();
-            
-            // Beyaz top çevresi
-            ctx.beginPath();
-            ctx.arc(dragStart.x, dragStart.y, 40, 0, Math.PI * 2);
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-            ctx.stroke();
-        }
+// =============================================
+// FACE COMPARE MODE
+// =============================================
+let faceModelsLoaded = false;
+let faceModelsLoading = false;
+let face1Img = null, face2Img = null;
 
-        // ==================== CEP KONTROLÜ ====================
-        function checkPockets() {
-            const pockets = [
-                [pocketRadius, pocketRadius],
-                [tableWidth/2, pocketRadius],
-                [tableWidth - pocketRadius, pocketRadius],
-                [pocketRadius, tableHeight - pocketRadius],
-                [tableWidth/2, tableHeight - pocketRadius],
-                [tableWidth - pocketRadius, tableHeight - pocketRadius]
-            ];
-            
-            balls.forEach(ball => {
-                if (ball.potted) return;
-                
-                pockets.forEach(([px, py]) => {
-                    const dx = ball.x - px;
-                    const dy = ball.y - py;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
-                    
-                    if (dist < pocketRadius) {
-                        ball.potted = true;
-                        
-                        if (ball.id === 0) {
-                            // Beyaz top düştü
-                            showMessage('Beyaz top düştü! Rakip sırada', 'warning');
-                            currentPlayer = 'bot';
-                            document.getElementById('turnIndicator').textContent = 'BOT SIRASI';
-                            resetWhiteBall();
-                        } else {
-                            // Skor güncelle
-                            if (ball.type === 'solid') {
-                                playerPotted.push(ball);
-                                document.getElementById('player1Potted').textContent = playerPotted.length;
-                                showMessage('Top pot ettin!', 'success');
-                            } else {
-                                opponentPotted.push(ball);
-                                document.getElementById('player2Potted').textContent = opponentPotted.length;
-                            }
-                            
-                            // 8 top kontrolü
-                            if (ball.id === 8) {
-                                gameOver = true;
-                                gameState = 'gameOver';
-                                
-                                if (playerPotted.length === 7) {
-                                    showMessage('🎉 TEBRİKLER! KAZANDIN!', 'success');
-                                } else {
-                                    showMessage('😢 Kaybettin! Tekrar dene!', 'error');
-                                }
-                            }
-                        }
-                        
-                        updateBallsGrid();
-                    }
-                });
-            });
-        }
+const CDN = 'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights';
 
-        // ==================== VURUŞ MEKANİĞİ ====================
-        function startDrag(e) {
-            e.preventDefault();
-            if (currentPlayer !== 'player' || gameState !== 'aiming') return;
-            
-            const pos = getMousePos(e);
-            
-            // Beyaz topa tıklandı mı?
-            const dx = pos.x - whiteBall.x;
-            const dy = pos.y - whiteBall.y;
-            const dist = Math.sqrt(dx * dx + dy * dy);
-            
-            if (dist < ballRadius * 2) {
-                isDragging = true;
-                dragStart = { x: whiteBall.x, y: whiteBall.y };
-                dragEnd = pos;
-                
-                document.getElementById('powerMeter').style.display = 'block';
-                document.getElementById('shotBtn').disabled = false;
-            }
-        }
+async function loadFaceModels() {
+  if (faceModelsLoaded || faceModelsLoading) return;
+  faceModelsLoading = true;
+  document.getElementById('modelBanner').style.display = 'block';
+  document.getElementById('modelBanner').textContent = '⚙️ LOADING FACE RECOGNITION MODELS (first time only, ~12MB)...';
 
-        function onDrag(e) {
-            e.preventDefault();
-            if (!isDragging) return;
-            
-            dragEnd = getMousePos(e);
-            
-            // Açı hesapla
-            const dx = dragEnd.x - dragStart.x;
-            const dy = dragEnd.y - dragStart.y;
-            shotAngle = Math.atan2(dy, dx);
-            
-            // Güç hesapla
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            shotPower = Math.min(100, distance / 5);
-            
-            // UI güncelle
-            document.getElementById('powerBarFill').style.width = shotPower + '%';
-            document.getElementById('powerPercent').textContent = Math.round(shotPower) + '%';
-            document.getElementById('angleDisplay').textContent = Math.round(shotAngle * 180 / Math.PI) + '°';
-        }
+  try {
+    await Promise.all([
+      faceapi.nets.ssdMobilenetv1.loadFromUri(CDN),
+      faceapi.nets.faceLandmark68Net.loadFromUri(CDN),
+      faceapi.nets.faceRecognitionNet.loadFromUri(CDN),
+      faceapi.nets.ageGenderNet.loadFromUri(CDN)
+    ]);
+    faceModelsLoaded = true;
+    document.getElementById('modelBanner').style.display = 'none';
+  } catch(e) {
+    document.getElementById('modelBanner').textContent = '❌ MODEL LOAD FAILED — CHECK INTERNET CONNECTION';
+  }
+  faceModelsLoading = false;
+}
 
-        function endDrag(e) {
-            e.preventDefault();
-            if (!isDragging) return;
-            
-            isDragging = false;
-            
-            if (shotPower > 10) {
-                takeShot();
-            } else {
-                document.getElementById('powerMeter').style.display = 'none';
-                document.getElementById('shotBtn').disabled = true;
-            }
-        }
+// Face input handlers
+document.getElementById('face1Input').addEventListener('change', e => loadFaceSlot(1, e.target.files[0]));
+document.getElementById('face2Input').addEventListener('change', e => loadFaceSlot(2, e.target.files[0]));
 
-        function getMousePos(e) {
-            const rect = canvas.getBoundingClientRect();
-            const scaleX = canvas.width / rect.width;
-            const scaleY = canvas.height / rect.height;
-            
-            let clientX, clientY;
-            
-            if (e.touches) {
-                clientX = e.touches[0].clientX;
-                clientY = e.touches[0].clientY;
-            } else {
-                clientX = e.clientX;
-                clientY = e.clientY;
-            }
-            
-            return {
-                x: (clientX - rect.left) * scaleX,
-                y: (clientY - rect.top) * scaleY
-            };
-        }
+function loadFaceSlot(slot, file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const previewId = `face${slot}Preview`;
+    const numId = `slot${slot}num`;
+    const labelId = `slot${slot}label`;
+    const preview = document.getElementById(previewId);
+    preview.src = e.target.result;
+    preview.classList.add('show');
+    document.getElementById(numId).style.display = 'none';
+    document.getElementById(labelId).textContent = '✓ LOADED';
 
-        function takeShot() {
-            if (currentPlayer !== 'player' || gameState !== 'aiming') return;
-            
-            // Beyaz topa vuruş
-            whiteBall.vx = Math.cos(shotAngle) * shotPower * 0.5;
-            whiteBall.vy = Math.sin(shotAngle) * shotPower * 0.5;
-            
-            gameState = 'moving';
-            currentPlayer = 'bot';
-            document.getElementById('turnIndicator').textContent = 'BOT SIRASI';
-            document.getElementById('powerMeter').style.display = 'none';
-            document.getElementById('shotBtn').disabled = true;
-            
-            showMessage('Vuruş yapıldı!', 'info');
-        }
+    const img = new Image();
+    img.onload = () => {
+      if (slot === 1) face1Img = img;
+      else face2Img = img;
+      updateCompareBtn();
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
 
-        // ==================== BOT YAPAY ZEKA ====================
-        function botTakeShot() {
-            if (currentPlayer !== 'bot' || gameMode !== 'bot') return;
-            
-            gameState = 'thinking';
-            document.getElementById('turnIndicator').textContent = 'BOT DÜŞÜNÜYOR...';
-            
-            setTimeout(() => {
-                // Bot zorluğuna göre vuruş
-                let accuracy = 0.7; // medium
-                if (botDifficulty === 'easy') accuracy = 0.4;
-                if (botDifficulty === 'hard') accuracy = 0.9;
-                
-                // Hedef top bul
-                const targetBalls = balls.filter(b => !b.potted && b.type !== 'white');
-                if (targetBalls.length === 0) return;
-                
-                // Rastgele hedef
-                const target = targetBalls[Math.floor(Math.random() * targetBalls.length)];
-                
-                // Açı hesapla (biraz hata payı ile)
-                const dx = target.x - whiteBall.x;
-                const dy = target.y - whiteBall.y;
-                let angle = Math.atan2(dy, dx);
-                
-                // Hata payı ekle
-                angle += (Math.random() - 0.5) * (1 - accuracy) * 0.5;
-                
-                // Güç hesapla
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                let power = Math.min(80, distance * 0.3);
-                power *= accuracy + Math.random() * 0.2;
-                
-                // Vuruş
-                whiteBall.vx = Math.cos(angle) * power * 0.3;
-                whiteBall.vy = Math.sin(angle) * power * 0.3;
-                
-                gameState = 'moving';
-                currentPlayer = 'player';
-                document.getElementById('turnIndicator').textContent = 'SENİN SIRAN';
-                
-                showMessage('Bot vuruş yaptı!', 'info');
-            }, 1000);
-        }
+function updateCompareBtn() {
+  document.getElementById('compareBtn').disabled = !(face1Img && face2Img);
+}
 
-        function endTurn() {
-            gameState = 'aiming';
-            
-            // Beyaz top hareket etmiyorsa
-            if (Math.abs(whiteBall.vx) < minSpeed && Math.abs(whiteBall.vy) < minSpeed) {
-                whiteBall.vx = 0;
-                whiteBall.vy = 0;
-            }
-        }
+async function compareFaces() {
+  if (!face1Img || !face2Img) return;
 
-        // ==================== YARDIMCI FONKSİYONLAR ====================
-        function resetWhiteBall() {
-            if (currentPlayer !== 'player') return;
-            
-            whiteBall.x = tableWidth * 0.25;
-            whiteBall.y = tableHeight / 2;
-            whiteBall.vx = 0;
-            whiteBall.vy = 0;
-            whiteBall.potted = false;
-        }
+  // Ensure models loaded
+  if (!faceModelsLoaded) {
+    await loadFaceModels();
+    if (!faceModelsLoaded) {
+      alert('Face models could not be loaded. Check your internet connection.');
+      return;
+    }
+  }
 
-        function updateBallsGrid() {
-            const grid = document.getElementById('ballsGrid');
-            grid.innerHTML = '';
-            
-            const solidBalls = balls.filter(b => b.type === 'solid' && b.number !== 8);
-            const stripedBalls = balls.filter(b => b.type === 'striped');
-            const blackBall = balls.find(b => b.id === 8);
-            
-            [...solidBalls, blackBall, ...stripedBalls].forEach(ball => {
-                const div = document.createElement('div');
-                div.className = `ball-item ${ball.potted ? 'potted' : ''}`;
-                div.style.background = ball.color;
-                div.textContent = ball.number || '';
-                grid.appendChild(div);
-            });
-        }
+  document.getElementById('faceLoading').classList.add('show');
+  document.getElementById('matchResult').classList.remove('show');
+  document.getElementById('compareBtn').disabled = true;
 
-        function showMessage(text, type) {
-            const center = document.getElementById('messageCenter');
-            const toast = document.createElement('div');
-            toast.className = `toast ${type}`;
-            
-            let icon = 'info-circle';
-            if (type === 'success') icon = 'check-circle';
-            if (type === 'error') icon = 'times-circle';
-            if (type === 'warning') icon = 'exclamation-triangle';
-            
-            toast.innerHTML = `<i class="fas fa-${icon}"></i> ${text}`;
-            center.appendChild(toast);
-            
-            setTimeout(() => toast.remove(), 3000);
-        }
+  try {
+    const opts = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.3 });
 
-        // ==================== MOD DEĞİŞTİRME ====================
-        function setGameMode(mode) {
-            gameMode = mode;
-            
-            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
-            event.currentTarget.classList.add('active');
-            
-            if (mode === 'bot') {
-                document.getElementById('difficultySelector').style.display = 'block';
-                document.getElementById('roomSelector').style.display = 'none';
-            } else if (mode === 'private') {
-                document.getElementById('difficultySelector').style.display = 'none';
-                document.getElementById('roomSelector').style.display = 'block';
-            } else {
-                document.getElementById('difficultySelector').style.display = 'none';
-                document.getElementById('roomSelector').style.display = 'none';
-                showMessage('Online mod yakında!', 'info');
-            }
-        }
+    const [det1, det2] = await Promise.all([
+      faceapi.detectSingleFace(face1Img, opts).withFaceLandmarks().withFaceDescriptor().withAgeAndGender(),
+      faceapi.detectSingleFace(face2Img, opts).withFaceLandmarks().withFaceDescriptor().withAgeAndGender()
+    ]);
 
-        function setDifficulty(level) {
-            botDifficulty = level;
-            
-            document.querySelectorAll('.difficulty-btn').forEach(btn => btn.classList.remove('selected'));
-            event.currentTarget.classList.add('selected');
-            
-            let botName = 'Bot ';
-            if (level === 'easy') botName += 'Kolay 🐣';
-            if (level === 'medium') botName += 'Orta ⚡';
-            if (level === 'hard') botName += 'Zor 👑';
-            
-            document.getElementById('player2Name').textContent = botName;
-            
-            resetGame();
-        }
+    document.getElementById('faceLoading').classList.remove('show');
 
-        function resetGame() {
-            createBalls();
-            playerPotted = [];
-            opponentPotted = [];
-            currentPlayer = 'player';
-            gameState = 'aiming';
-            gameOver = false;
-            
-            document.getElementById('player1Potted').textContent = '0';
-            document.getElementById('player2Potted').textContent = '0';
-            document.getElementById('turnIndicator').textContent = 'SENİN SIRAN';
-            
-            updateBallsGrid();
-        }
+    if (!det1 && !det2) return showFaceError('No faces detected in either photo.');
+    if (!det1) return showFaceError('No face detected in Photo 1. Ensure the face is clearly visible.');
+    if (!det2) return showFaceError('No face detected in Photo 2. Ensure the face is clearly visible.');
 
-        function createRoom() {
-            const code = Math.floor(1000 + Math.random() * 9000);
-            document.getElementById('roomCode').value = code;
-            showMessage(`Oda kodu: ${code}`, 'success');
-        }
+    // Euclidean distance → similarity
+    const dist = faceapi.euclideanDistance(det1.descriptor, det2.descriptor);
+    // Convert to percentage: distance 0=identical, 0.6=different person threshold
+    const similarity = Math.max(0, Math.round((1 - dist / 0.8) * 100));
 
-        function joinRoom() {
-            const code = document.getElementById('roomCode').value;
-            if (code.length === 4) {
-                showMessage(`${code} kodlu odaya katılındı!`, 'success');
-            } else {
-                showMessage('Geçerli kod girin!', 'error');
-            }
-        }
+    showMatchResult(similarity, dist, det1, det2);
 
-        // Pencere boyutlandırma
-        window.addEventListener('resize', () => {
-            resizeCanvas();
-            createBalls();
-        });
+  } catch(err) {
+    document.getElementById('faceLoading').classList.remove('show');
+    showFaceError('Analysis failed: ' + err.message);
+  }
 
-        // Oyunu başlat
-        initGame();
-    </script>
+  document.getElementById('compareBtn').disabled = false;
+}
+
+function showMatchResult(pct, dist, det1, det2) {
+  const scoreEl = document.getElementById('matchScore');
+  const barEl = document.getElementById('matchBar');
+  const verdictEl = document.getElementById('matchVerdict');
+  const noteEl = document.getElementById('matchNote');
+  const detailsEl = document.getElementById('faceDetails');
+
+  scoreEl.textContent = pct + '%';
+  verdictEl.style.color = '';
+
+  let cls, verdict, note;
+
+  if (pct >= 75) {
+    cls = 'high';
+    verdict = '✅ HIGH PROBABILITY — SAME PERSON';
+    verdictEl.style.color = 'var(--success)';
+    note = `Euclidean distance: ${dist.toFixed(4)} · Threshold: <0.4 for match`;
+  } else if (pct >= 50) {
+    cls = 'mid';
+    verdict = '⚠️ POSSIBLE MATCH — UNCERTAIN';
+    verdictEl.style.color = 'var(--warn)';
+    note = `Euclidean distance: ${dist.toFixed(4)} · May be same person in different conditions`;
+  } else {
+    cls = 'low';
+    verdict = '❌ LOW SIMILARITY — DIFFERENT PEOPLE';
+    verdictEl.style.color = 'var(--accent2)';
+    note = `Euclidean distance: ${dist.toFixed(4)} · Faces do not match`;
+  }
+
+  scoreEl.className = 'match-score ' + cls;
+  barEl.className = 'match-bar ' + cls;
+  verdictEl.textContent = verdict;
+  noteEl.textContent = note;
+
+  document.getElementById('matchResult').classList.add('show');
+
+  // Animate bar
+  setTimeout(() => { barEl.style.width = Math.min(pct, 100) + '%'; }, 100);
+
+  // Face details
+  const chips = [];
+  if (det1.age) chips.push({ label: 'PHOTO 1 AGE', val: Math.round(det1.age) + ' yrs' });
+  if (det1.gender) chips.push({ label: 'PHOTO 1 GENDER', val: det1.gender });
+  if (det2.age) chips.push({ label: 'PHOTO 2 AGE', val: Math.round(det2.age) + ' yrs' });
+  if (det2.gender) chips.push({ label: 'PHOTO 2 GENDER', val: det2.gender });
+  chips.push({ label: 'DISTANCE', val: dist.toFixed(4) });
+  chips.push({ label: 'SIMILARITY', val: pct + '%' });
+
+  detailsEl.innerHTML = chips.map(c => `
+    <div class="exif-chip">
+      <div class="label">${c.label}</div>
+      <div class="val">${c.val}</div>
+    </div>
+  `).join('');
+}
+
+function showFaceError(msg) {
+  document.getElementById('faceLoading').classList.remove('show');
+  const matchEl = document.getElementById('matchResult');
+  matchEl.classList.add('show');
+  matchEl.innerHTML = `
+    <div class="result-badge badge-err" style="display:inline-block;margin-bottom:16px">ERROR</div>
+    <p style="color:var(--accent2);font-size:15px">${msg}</p>
+    <p style="color:var(--muted);font-size:12px;margin-top:12px;font-family:'JetBrains Mono',monospace">Try: clearer lighting, front-facing photo, higher resolution</p>
+  `;
+}
+</script>
+
 </body>
 </html>
