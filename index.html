@@ -1,480 +1,1087 @@
 <!DOCTYPE html>
 
-<html lang="az">
+<html lang="tr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>IZLƏR — Şəkil Kəşfiyyat Sistemi</title>
-<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600&display=swap" rel="stylesheet">
-<style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-:root {
-  --bg:#020408; --bg2:#050c10; --surface:#071218; --surface2:#0a1a22;
-  --cyan:#00ffe7; --pink:#ff2d78; --yellow:#ffe600; --green:#00ff88;
-  --dim:#1a3a45; --dim2:#2a4a55; --text:#cce8f0; --muted:#3d6a7a;
-}
-html { scroll-behavior:smooth; }
-body { background:var(--bg); color:var(--text); font-family:'Exo 2',sans-serif; min-height:100vh; overflow-x:hidden; cursor:none; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚀 BACKROOMS - Multiplayer Survival</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-/* Cursor */
-#cursor { position:fixed; width:18px; height:18px; border:1.5px solid var(–cyan); border-radius:50%; pointer-events:none; z-index:99999; transform:translate(-50%,-50%); mix-blend-mode:screen; transition:width .15s,height .15s; }
-#cursorDot { position:fixed; width:4px; height:4px; background:var(–cyan); border-radius:50%; pointer-events:none; z-index:99999; transform:translate(-50%,-50%); mix-blend-mode:screen; }
+```
+    :root {
+        --primary: #FF6B6B;
+        --secondary: #4ECDC4;
+        --dark: #1a1a1a;
+        --light: #f5f5f5;
+        --accent: #FFD700;
+    }
 
-/* Scanlines */
-body::after { content:’’; position:fixed; inset:0; background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,255,231,.012) 2px,rgba(0,255,231,.012) 4px); pointer-events:none; z-index:9000; }
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+        color: #fff;
+        overflow: hidden;
+        margin: 0;
+    }
 
-/* Grid */
-.grid-bg { position:fixed; inset:0; background-image:linear-gradient(rgba(0,255,231,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,231,.035) 1px,transparent 1px); background-size:44px 44px; pointer-events:none; z-index:0; }
+    /* ===== MENU SCREEN ===== */
+    #menu-screen {
+        position: fixed;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        animation: fadeIn 0.8s ease;
+    }
 
-/* Corners */
-.corner { position:fixed; width:50px; height:50px; pointer-events:none; z-index:50; }
-.corner::before,.corner::after { content:’’; position:absolute; background:var(–cyan); box-shadow:0 0 6px var(–cyan); }
-.corner::before { width:2px; height:24px; }
-.corner::after { width:24px; height:2px; }
-.corner.tl { top:14px; left:14px; }
-.corner.tl::before,.corner.tl::after { top:0; left:0; }
-.corner.tr { top:14px; right:14px; }
-.corner.tr::before { top:0; right:0; }
-.corner.tr::after { top:0; right:0; }
-.corner.bl { bottom:14px; left:14px; }
-.corner.bl::before { bottom:0; left:0; }
-.corner.bl::after { bottom:0; left:0; }
-.corner.br { bottom:14px; right:14px; }
-.corner.br::before { bottom:0; right:0; }
-.corner.br::after { bottom:0; right:0; }
+    #menu-screen.hidden {
+        display: none;
+    }
 
-/* Header */
-header { position:sticky; top:0; z-index:100; display:flex; align-items:center; justify-content:space-between; padding:14px 36px; border-bottom:1px solid rgba(0,255,231,.1); background:rgba(2,4,8,.92); backdrop-filter:blur(24px); animation:flicker 7s infinite; }
-@keyframes flicker { 0%,100%{opacity:1} 93%{opacity:.5} 94%{opacity:1} 97%{opacity:.7} 98%{opacity:1} }
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
 
-.logo { font-family:‘Orbitron’,monospace; font-size:24px; font-weight:900; letter-spacing:8px; color:var(–cyan); text-shadow:0 0 16px var(–cyan),0 0 48px rgba(0,255,231,.25); position:relative; }
-.logo::after { content:‘IZLƏR’; position:absolute; left:2px; top:2px; color:var(–pink); opacity:0; clip-path:polygon(0 30%,100% 30%,100% 55%,0 55%); animation:glitch 5s infinite; }
-@keyframes glitch { 0%,100%{opacity:0} 10%{opacity:.45;transform:translate(-2px,1px)} 11%{opacity:0} 55%{opacity:.3;transform:translate(2px,-1px)} 56%{opacity:0} }
-.logo-sub { font-family:‘Share Tech Mono’,monospace; font-size:9px; letter-spacing:3px; color:var(–muted); display:block; margin-top:2px; }
+    .menu-title {
+        font-size: 4rem;
+        font-weight: 900;
+        color: var(--primary);
+        text-shadow: 0 0 30px rgba(255, 107, 107, 0.7);
+        margin-bottom: 10px;
+        animation: slideDown 0.8s ease;
+    }
 
-.sys-status { font-family:‘Share Tech Mono’,monospace; font-size:10px; color:var(–green); text-shadow:0 0 8px var(–green); display:flex; align-items:center; gap:7px; }
-.sys-dot { width:6px; height:6px; border-radius:50%; background:var(–green); box-shadow:0 0 10px var(–green); animation:blink 2s infinite; }
-@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
+    .menu-subtitle {
+        font-size: 1.2rem;
+        color: var(--secondary);
+        margin-bottom: 50px;
+        animation: slideUp 0.8s ease;
+    }
 
-/* Main */
-main { position:relative; z-index:5; max-width:920px; margin:0 auto; padding:48px 22px 90px; }
+    @keyframes slideDown {
+        from { transform: translateY(-50px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
 
-/* Hero */
-.hero { text-align:center; margin-bottom:52px; animation:fadeUp .8s ease both; }
-@keyframes fadeUp { from{opacity:0;transform:translateY(28px)} to{opacity:1;transform:translateY(0)} }
-.hero-eyebrow { font-family:‘Share Tech Mono’,monospace; font-size:10px; letter-spacing:4px; color:rgba(0,255,231,.5); text-transform:uppercase; margin-bottom:20px; }
-h1 { font-family:‘Orbitron’,monospace; font-size:clamp(32px,6.5vw,68px); font-weight:900; line-height:1.05; margin-bottom:18px; }
-h1 .l1 { display:block; color:var(–text); }
-h1 .l2 { display:block; color:var(–cyan); text-shadow:0 0 18px var(–cyan),0 0 50px rgba(0,255,231,.18); }
-h1 .l3 { display:block; color:var(–pink); text-shadow:0 0 14px var(–pink); font-size:.55em; letter-spacing:5px; margin-top:6px; }
-.hero-desc { font-family:‘Share Tech Mono’,monospace; font-size:12px; color:var(–muted); line-height:1.9; max-width:460px; margin:0 auto; }
+    @keyframes slideUp {
+        from { transform: translateY(50px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
 
-/* Tabs */
-.tabs { display:flex; margin-bottom:36px; border:1px solid var(–dim); border-radius:3px; overflow:hidden; animation:fadeUp .8s .12s ease both; }
-.tab-btn { flex:1; padding:17px 20px; background:var(–surface); border:none; color:var(–muted); font-family:‘Orbitron’,monospace; font-size:11px; font-weight:700; letter-spacing:2px; text-transform:uppercase; cursor:pointer; transition:all .3s; border-right:1px solid var(–dim); display:flex; align-items:center; justify-content:center; gap:9px; position:relative; overflow:hidden; }
-.tab-btn:last-child { border-right:none; }
-.tab-btn::after { content:’’; position:absolute; bottom:0; left:0; right:0; height:2px; transform:scaleX(0); transition:transform .3s; }
-.tab-btn.tc::after { background:var(–cyan); }
-.tab-btn.tp::after { background:var(–pink); }
-.tab-btn.active { background:var(–surface2); }
-.tab-btn.active.tc { color:var(–cyan); text-shadow:0 0 8px var(–cyan); }
-.tab-btn.active.tp { color:var(–pink); text-shadow:0 0 8px var(–pink); }
-.tab-btn.active::after { transform:scaleX(1); }
-.tab-sub { font-size:9px; opacity:.45; letter-spacing:1px; display:block; margin-top:2px; font-family:‘Share Tech Mono’,monospace; font-weight:400; }
+    .menu-buttons {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+        justify-content: center;
+        animation: fadeIn 1.2s ease;
+    }
 
-/* Panel */
-.panel { display:none; animation:panelIn .35s ease; }
-.panel.active { display:block; }
-@keyframes panelIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+    .menu-btn {
+        padding: 15px 40px;
+        font-size: 1.1rem;
+        font-weight: bold;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        min-width: 200px;
+    }
 
-/* Card */
-.card { background:var(–surface); border:1px solid var(–dim); border-radius:3px; padding:32px; position:relative; overflow:hidden; }
-.card::before { content:’’; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,var(–cyan),transparent); opacity:.5; }
-.card.pk::before { background:linear-gradient(90deg,transparent,var(–pink),transparent); }
+    .menu-btn.primary {
+        background: linear-gradient(135deg, var(--primary), #FF5252);
+        color: white;
+        box-shadow: 0 10px 30px rgba(255, 107, 107, 0.4);
+    }
 
-/* Section label */
-.slabel { font-family:‘Share Tech Mono’,monospace; font-size:10px; letter-spacing:3px; text-transform:uppercase; color:var(–cyan); margin-bottom:18px; display:flex; align-items:center; gap:8px; }
-.slabel.pk { color:var(–pink); }
-.slabel::after { content:’’; flex:1; height:1px; background:linear-gradient(90deg,var(–cyan),transparent); }
-.slabel.pk::after { background:linear-gradient(90deg,var(–pink),transparent); }
+    .menu-btn.primary:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 15px 40px rgba(255, 107, 107, 0.6);
+    }
 
-/* Warn strip */
-.wstrip { background:rgba(255,230,0,.04); border:1px solid rgba(255,230,0,.18); border-radius:3px; padding:13px 17px; font-family:‘Share Tech Mono’,monospace; font-size:11px; color:rgba(255,230,0,.65); margin-bottom:22px; line-height:1.7; display:flex; gap:9px; }
-.wstrip.pk { background:rgba(255,45,120,.04); border-color:rgba(255,45,120,.18); color:rgba(255,45,120,.7); }
+    .menu-btn.secondary {
+        background: linear-gradient(135deg, var(--secondary), #3BB8AA);
+        color: white;
+        box-shadow: 0 10px 30px rgba(78, 205, 196, 0.4);
+    }
 
-/* Upload zone */
-.uzone { border:1.5px dashed var(–dim2); border-radius:3px; padding:52px 36px; text-align:center; cursor:pointer; transition:all .3s; background:var(–bg2); position:relative; overflow:hidden; }
-.uzone::before { content:’’; position:absolute; inset:0; background:radial-gradient(circle at 50% 60%,rgba(0,255,231,.04),transparent 65%); opacity:0; transition:opacity .3s; }
-.uzone:hover,.uzone.drag { border-color:var(–cyan); }
-.uzone:hover::before,.uzone.drag::before { opacity:1; }
-.uzone.pk:hover,.uzone.pk.drag { border-color:var(–pink); }
-.uzone.pk::before { background:radial-gradient(circle at 50% 60%,rgba(255,45,120,.04),transparent 65%); }
+    .menu-btn.secondary:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 15px 40px rgba(78, 205, 196, 0.6);
+    }
 
-.uico { width:52px; height:52px; margin:0 auto 18px; position:relative; }
-.uico svg { width:52px; height:52px; stroke:var(–dim2); transition:stroke .3s; }
-.uzone:hover .uico svg { stroke:var(–cyan); filter:drop-shadow(0 0 6px var(–cyan)); }
-.uzone.pk:hover .uico svg { stroke:var(–pink); filter:drop-shadow(0 0 6px var(–pink)); }
-.uico::after { content:’’; position:absolute; inset:-10px; border-radius:50%; border:1px solid var(–dim); border-top-color:var(–cyan); animation:spin 6s linear infinite; }
-.uzone.pk .uico::after { border-top-color:var(–pink); }
-@keyframes spin { to{transform:rotate(360deg)} }
+    /* ===== ROOMS LIST ===== */
+    #rooms-screen {
+        position: fixed;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
+        display: flex;
+        flex-direction: column;
+        z-index: 999;
+    }
 
-.uzone h3 { font-family:‘Orbitron’,monospace; font-size:14px; font-weight:700; letter-spacing:2px; color:var(–text); margin-bottom:8px; text-transform:uppercase; }
-.uzone p { font-family:‘Share Tech Mono’,monospace; font-size:11px; color:var(–muted); line-height:1.6; }
-.uzone input { display:none; }
+    #rooms-screen.hidden {
+        display: none;
+    }
 
-/* Preview */
-.prev-state { display:none; margin-top:22px; }
-.prev-state.show { display:block; }
-.prev-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
-.prev-grid { display:grid; grid-template-columns:180px 1fr; gap:20px; align-items:start; }
-@media(max-width:560px){.prev-grid{grid-template-columns:1fr}}
-.prev-img { width:100%; aspect-ratio:1; object-fit:cover; border-radius:3px; border:1px solid var(–dim); }
+    .rooms-header {
+        padding: 20px;
+        border-bottom: 2px solid var(--primary);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
 
-.chip-list { display:flex; flex-direction:column; gap:8px; }
-.chip { background:var(–bg2); border:1px solid var(–dim); border-radius:3px; padding:10px 14px; display:flex; gap:8px; align-items:center; }
-.chip .cl { font-family:‘Share Tech Mono’,monospace; font-size:9px; letter-spacing:2px; color:var(–muted); text-transform:uppercase; min-width:72px; }
-.chip .cv { font-family:‘Share Tech Mono’,monospace; font-size:12px; color:var(–cyan); }
-.chip.pk .cv { color:var(–pink); }
+    .rooms-header h1 {
+        font-size: 2rem;
+        color: var(--primary);
+    }
 
-/* Buttons */
-.actions { display:flex; flex-direction:column; gap:10px; margin-top:24px; }
-.btn { width:100%; padding:16px 22px; border-radius:3px; border:1px solid; font-family:‘Orbitron’,monospace; font-size:12px; font-weight:700; letter-spacing:3px; text-transform:uppercase; cursor:pointer; transition:all .3s; display:flex; align-items:center; justify-content:center; gap:10px; position:relative; overflow:hidden; background:transparent; }
-.btn::before { content:’’; position:absolute; inset:0; opacity:0; transition:opacity .3s; }
-.btn:hover::before { opacity:1; }
-.btn:hover { transform:translateY(-2px); }
-.btn-c { border-color:var(–cyan); color:var(–cyan); }
-.btn-c::before { background:rgba(0,255,231,.06); }
-.btn-c:hover { box-shadow:0 0 18px rgba(0,255,231,.28),inset 0 0 14px rgba(0,255,231,.04); }
-.btn-y { border-color:var(–yellow); color:var(–yellow); }
-.btn-y::before { background:rgba(255,230,0,.04); }
-.btn-y:hover { box-shadow:0 0 18px rgba(255,230,0,.22); }
-.btn-p { border-color:var(–pink); color:var(–pink); }
-.btn-p::before { background:rgba(255,45,120,.06); }
-.btn-p:hover { box-shadow:0 0 18px rgba(255,45,120,.28),inset 0 0 14px rgba(255,45,120,.04); }
-.btn-b { border-color:#00aaff; color:#00aaff; }
-.btn-b::before { background:rgba(0,170,255,.04); }
-.btn-b:hover { box-shadow:0 0 18px rgba(0,170,255,.22); }
+    .rooms-header button {
+        padding: 10px 20px;
+        background: var(--secondary);
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: all 0.3s;
+    }
 
-.btn-reset { background:transparent; border:1px solid var(–dim); color:var(–muted); padding:7px 13px; border-radius:3px; font-family:‘Share Tech Mono’,monospace; font-size:10px; letter-spacing:1px; cursor:pointer; transition:all .2s; }
-.btn-reset:hover { border-color:var(–pink); color:var(–pink); }
+    .rooms-header button:hover {
+        background: #3BB8AA;
+        transform: scale(1.05);
+    }
 
-/* Tip box */
-.tipbox { margin-top:22px; border:1px solid rgba(0,255,231,.12); border-radius:3px; padding:15px 18px; background:rgba(0,255,231,.025); font-family:‘Share Tech Mono’,monospace; font-size:11px; color:var(–muted); line-height:1.75; }
-.tipbox.pk { border-color:rgba(255,45,120,.12); background:rgba(255,45,120,.025); }
-.tipbox strong { color:var(–cyan); }
-.tipbox.pk strong { color:var(–pink); }
+    .rooms-container {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+    }
 
-/* How it works */
-.hiw { margin-top:40px; border:1px solid var(–dim); border-radius:3px; overflow:hidden; }
-.hiw-head { background:var(–surface2); padding:12px 22px; font-family:‘Share Tech Mono’,monospace; font-size:10px; letter-spacing:3px; color:var(–muted); text-transform:uppercase; border-bottom:1px solid var(–dim); }
-.hiw-steps { display:grid; grid-template-columns:repeat(3,1fr); }
-@media(max-width:560px){.hiw-steps{grid-template-columns:1fr}}
-.hiw-step { padding:22px; border-right:1px solid var(–dim); }
-.hiw-step:last-child { border-right:none; }
-.step-n { font-family:‘Orbitron’,monospace; font-size:28px; font-weight:900; color:var(–dim2); line-height:1; margin-bottom:10px; }
-.step-t { font-family:‘Orbitron’,monospace; font-size:10px; font-weight:700; letter-spacing:1px; color:var(–cyan); margin-bottom:7px; text-transform:uppercase; }
-.step-d { font-family:‘Share Tech Mono’,monospace; font-size:10px; color:var(–muted); line-height:1.65; }
+    .room-card {
+        background: linear-gradient(135deg, #2a2a2a, #1f1f1f);
+        border: 2px solid var(--secondary);
+        border-radius: 10px;
+        padding: 20px;
+        cursor: pointer;
+        transition: all 0.3s;
+        position: relative;
+        overflow: hidden;
+    }
 
-/* Helper msg */
-.helper { margin-top:11px; border:1px solid rgba(0,255,231,.14); border-radius:3px; padding:15px 18px; font-family:‘Share Tech Mono’,monospace; font-size:11px; color:var(–muted); line-height:1.8; background:rgba(0,255,231,.025); animation:fadeUp .4s ease; }
-.helper.pk { border-color:rgba(255,45,120,.14); background:rgba(255,45,120,.025); }
-.helper .hl { font-size:11px; letter-spacing:2px; margin-bottom:9px; color:var(–cyan); }
-.helper.pk .hl { color:var(–pink); }
-.helper span.hi { color:var(–cyan); }
-.helper.pk span.hi { color:var(–pink); }
+    .room-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, transparent, rgba(78, 205, 196, 0.1));
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
 
-/* Footer */
-footer { position:relative; z-index:5; text-align:center; padding:28px; border-top:1px solid rgba(0,255,231,.07); font-family:‘Share Tech Mono’,monospace; font-size:10px; color:var(–muted); letter-spacing:2px; }
+    .room-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 40px rgba(78, 205, 196, 0.3);
+        border-color: var(--primary);
+    }
+
+    .room-card:hover::before {
+        opacity: 1;
+    }
+
+    .room-card h3 {
+        color: var(--primary);
+        margin-bottom: 10px;
+        font-size: 1.3rem;
+    }
+
+    .room-card p {
+        color: var(--secondary);
+        margin: 8px 0;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .room-card button {
+        width: 100%;
+        padding: 12px;
+        margin-top: 15px;
+        background: var(--primary);
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: all 0.3s;
+    }
+
+    .room-card button:hover {
+        background: #FF5252;
+        transform: scale(1.02);
+    }
+
+    .room-card button:disabled {
+        background: #666;
+        cursor: not-allowed;
+        opacity: 0.5;
+    }
+
+    /* ===== GAME CANVAS ===== */
+    #game-screen {
+        position: fixed;
+        width: 100%;
+        height: 100%;
+        z-index: 500;
+    }
+
+    #game-screen.hidden {
+        display: none;
+    }
+
+    #gameCanvas {
+        width: 100%;
+        height: 100%;
+        display: block;
+    }
+
+    /* ===== MOBILE CONTROLS - LANDSCAPE PUBG STYLE ===== */
+    #mobile-controls {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        display: none;
+        z-index: 100;
+    }
+
+    #mobile-controls.landscape {
+        display: flex;
+        gap: 40px;
+        align-items: flex-end;
+    }
+
+    /* Left Joystick */
+    #joystick-area {
+        width: 150px;
+        height: 150px;
+        background: rgba(0, 0, 0, 0.4);
+        border: 3px solid var(--secondary);
+        border-radius: 50%;
+        position: relative;
+        touch-action: none;
+        cursor: grab;
+        transition: background 0.2s;
+    }
+
+    #joystick-area:active {
+        background: rgba(78, 205, 196, 0.2);
+        cursor: grabbing;
+    }
+
+    #joystick-stick {
+        width: 70px;
+        height: 70px;
+        background: linear-gradient(135deg, var(--secondary), #3BB8AA);
+        border: 3px solid white;
+        border-radius: 50%;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        box-shadow: 0 0 20px rgba(78, 205, 196, 0.6), inset 0 0 10px rgba(255, 255, 255, 0.3);
+        transition: all 0.08s;
+    }
+
+    #joystick-stick.active {
+        box-shadow: 0 0 35px rgba(78, 205, 196, 1), inset 0 0 15px rgba(255, 255, 255, 0.5);
+    }
+
+    /* Right Action Buttons */
+    #action-buttons {
+        display: grid;
+        grid-template-columns: repeat(2, 75px);
+        gap: 15px;
+        align-content: start;
+    }
+
+    .action-btn {
+        width: 75px;
+        height: 75px;
+        border-radius: 50%;
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        background: linear-gradient(135deg, rgba(255, 107, 107, 0.7), rgba(255, 107, 107, 0.5));
+        font-weight: bold;
+        font-size: 1.2rem;
+        color: white;
+        cursor: pointer;
+        user-select: none;
+        transition: all 0.15s;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        padding: 5px;
+        box-shadow: 0 5px 20px rgba(255, 107, 107, 0.4);
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    .action-btn:active {
+        background: linear-gradient(135deg, rgba(255, 107, 107, 1), rgba(255, 107, 107, 0.8));
+        transform: scale(0.92);
+        box-shadow: 0 8px 25px rgba(255, 107, 107, 0.7);
+    }
+
+    #btn-jump {
+        background: linear-gradient(135deg, rgba(78, 205, 196, 0.7), rgba(78, 205, 196, 0.5));
+        border-color: var(--secondary);
+        grid-column: 1 / 3;
+        font-size: 1.1rem;
+    }
+
+    #btn-jump:active {
+        background: linear-gradient(135deg, var(--secondary), #3BB8AA);
+        box-shadow: 0 8px 25px rgba(78, 205, 196, 0.7);
+    }
+
+    /* HUD Controls - Sağ üst */
+    #hud-controls {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        display: none;
+        flex-direction: column;
+        gap: 10px;
+        z-index: 100;
+    }
+
+    #hud-controls.landscape {
+        display: flex;
+    }
+
+    .hud-btn {
+        padding: 10px 20px;
+        background: rgba(78, 205, 196, 0.7);
+        border: 2px solid var(--secondary);
+        border-radius: 8px;
+        color: white;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.2s;
+        min-width: 150px;
+        text-align: center;
+        font-size: 0.9rem;
+        box-shadow: 0 4px 15px rgba(78, 205, 196, 0.3);
+    }
+
+    .hud-btn:active {
+        background: var(--secondary);
+        transform: scale(0.98);
+        box-shadow: 0 6px 20px rgba(78, 205, 196, 0.6);
+    }
+
+    .hud-btn.info {
+        background: rgba(0, 0, 0, 0.6);
+        border-color: rgba(255, 255, 255, 0.3);
+        cursor: default;
+        pointer-events: none;
+        padding: 8px 15px;
+        font-size: 0.85rem;
+        box-shadow: none;
+    }
+
+    /* Landscape specific */
+    @media (orientation: landscape) {
+        #mobile-controls {
+            display: flex !important;
+        }
+        
+        #hud-controls {
+            display: flex !important;
+        }
+
+        #gameCanvas {
+            width: 100vw;
+            height: 100vh;
+        }
+    }
+
+    @media (orientation: portrait) {
+        #mobile-controls {
+            display: none !important;
+        }
+        
+        #hud-controls {
+            display: none !important;
+        }
+    }
+
+    /* ===== PLAYER INFO ===== */
+    #player-info {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: rgba(0, 0, 0, 0.7);
+        padding: 15px;
+        border-radius: 10px;
+        border: 2px solid var(--secondary);
+        z-index: 100;
+        min-width: 250px;
+    }
+
+    #player-info input {
+        width: 100%;
+        padding: 10px;
+        margin: 10px 0;
+        border: 1px solid var(--primary);
+        border-radius: 5px;
+        background: #2a2a2a;
+        color: white;
+    }
+
+    #player-info button {
+        width: 100%;
+        padding: 10px;
+        background: var(--primary);
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: all 0.3s;
+    }
+
+    #player-info button:hover {
+        background: #FF5252;
+    }
+
+    /* ===== SCROLLBAR ===== */
+    ::-webkit-scrollbar {
+        width: 10px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: #1a1a1a;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: var(--primary);
+        border-radius: 5px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: #FF5252;
+    }
+
+    /* ===== GAME OVER SCREEN ===== */
+    #game-over-screen {
+        position: fixed;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.9);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 2000;
+        animation: fadeIn 0.5s ease;
+    }
+
+    .game-over-content {
+        background: linear-gradient(135deg, #FF6B6B, #FF5252);
+        padding: 40px;
+        border-radius: 15px;
+        text-align: center;
+        color: white;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+        animation: slideDown 0.5s ease;
+    }
+
+    .game-over-content h1 {
+        font-size: 3rem;
+        margin-bottom: 20px;
+        text-transform: uppercase;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .game-over-content ul {
+        list-style: none;
+        margin: 20px 0;
+    }
+
+    .game-over-content li {
+        padding: 10px;
+        background: rgba(0, 0, 0, 0.3);
+        margin: 8px 0;
+        border-radius: 5px;
+        font-weight: bold;
+    }
+
+    .game-over-content button {
+        margin-top: 20px;
+        padding: 15px 40px;
+        background: white;
+        color: var(--primary);
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 1.1rem;
+        transition: all 0.3s;
+    }
+
+    .game-over-content button:hover {
+        transform: scale(1.05);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    /* ===== LOADING ===== */
+    .loading {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: var(--primary);
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
 </style>
+```
 
 </head>
 <body>
-
-<div id="cursor"></div>
-<div id="cursorDot"></div>
-<div class="grid-bg"></div>
-<div class="corner tl"></div><div class="corner tr"></div>
-<div class="corner bl"></div><div class="corner br"></div>
-
-<header>
-  <div>
-    <div class="logo">IZLƏR</div>
-    <span class="logo-sub">Şəkil Kəşfiyyat Sistemi · v2.0</span>
-  </div>
-  <div class="sys-status"><div class="sys-dot"></div>SİSTEM AKTİVDİR</div>
-</header>
-
-<main>
-
-  <div class="hero">
-    <div class="hero-eyebrow">// AÇIQ MƏNBƏ KƏŞFİYYAT ALƏTİ //</div>
-    <h1>
-      <span class="l1">BİR ŞƏKİL</span>
-      <span class="l2">HƏR ŞEYİ AÇIR</span>
-      <span class="l3">Şəxsiyyət · Mənbə · Tarix</span>
-    </h1>
-    <p class="hero-desc">
-      Şəkil yüklə → Yandex ilə şəxsi tap<br>
-      və ya şəklin harada paylaşıldığını yoxla
-    </p>
-  </div>
-
-  <!-- Tabs -->
-
-  <div class="tabs">
-    <button class="tab-btn tc active" onclick="switchTab('s')">
-      <span style="font-size:17px">🔍</span>
-      <span>ŞƏXSİ TAP<span class="tab-sub">Yandex · Google Lens</span></span>
-    </button>
-    <button class="tab-btn tp" onclick="switchTab('f')">
-      <span style="font-size:17px">🕵️</span>
-      <span>FAKE YOXLA<span class="tab-sub">TinEye · 4 Motor</span></span>
-    </button>
-  </div>
-
-  <!-- ===== ŞƏXS TAP ===== -->
-
-  <div id="panelS" class="panel active">
-    <div class="card">
-      <div class="slabel">// Şəxs Axtarışı</div>
+    <!-- MENU SCREEN -->
+    <div id="menu-screen">
+        <h1 class="menu-title">🔴 BACKROOMS</h1>
+        <p class="menu-subtitle">Çıkış Yok... Sadece Kaçış</p>
 
 ```
-  <div class="wstrip">
-    <span>⚡</span>
-    <span>Şəkillər <strong style="color:#ffe600">Yandex</strong> və <strong style="color:#ffe600">Google Lens</strong>-ə göndərilir. Heç bir məlumat serverimizə yüklənmir.</span>
-  </div>
+    <div id="player-info">
+        <h3 style="margin-bottom: 10px; color: var(--secondary);">👤 Profil</h3>
+        <input type="text" id="username-input" placeholder="İsmin..." maxlength="20">
+        <small style="color: var(--secondary);">Telegram'dan otomatik alınacak</small>
+    </div>
 
-  <div class="uzone" id="sDrop" onclick="document.getElementById('sInput').click()">
-    <div class="uico">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-      </svg>
+    <div class="menu-buttons">
+        <button class="menu-btn primary" id="find-game-btn">
+            🎮 OYUN BUL
+        </button>
+        <button class="menu-btn secondary" id="create-room-btn">
+            🚀 ODA OLUŞTUR
+        </button>
     </div>
-    <h3>Üz Şəkli Yüklə</h3>
-    <p>Selfie, profil foto, skan şəkli<br>JPG · PNG · WEBP · Klikla və ya sürüklə</p>
-    <input type="file" id="sInput" accept="image/*">
-  </div>
-
-  <div class="prev-state" id="sPrev">
-    <div class="prev-header">
-      <div class="slabel" style="margin:0">// Yükləndi</div>
-      <button class="btn-reset" onclick="resetS()">↺ YENİ ŞƏKİL</button>
-    </div>
-    <div class="prev-grid">
-      <img class="prev-img" id="sImg" alt="">
-      <div class="chip-list">
-        <div class="chip"><span class="cl">Fayl</span><span class="cv" id="sFn">—</span></div>
-        <div class="chip"><span class="cl">Ölçü</span><span class="cv" id="sSz">—</span></div>
-        <div class="chip"><span class="cl">Növ</span><span class="cv" id="sTp">—</span></div>
-        <div class="chip"><span class="cl">Status</span><span class="cv" style="color:var(--green)">✓ HAZIRDIR</span></div>
-      </div>
-    </div>
-    <div class="actions">
-      <button class="btn btn-c" onclick="doYandex('s')">🔍 &nbsp;YANDEX İLƏ AXTAR — ÜZ TANIMA</button>
-      <button class="btn btn-y" onclick="doGoogle('s')">🌐 &nbsp;GOOGLE LENS İLƏ AXTAR</button>
-    </div>
-    <div id="sHelpers"></div>
-  </div>
-
-  <div class="tipbox">
-    <strong>// YANDEX ÜSTÜNLÜYÜ:</strong> Yandex üz tanımada ən güclü pulsuz motorudur. VK, OK.ru, Instagram, rus forumları və digər saytları tarayır. Bir üz şəkli ilə sosial media profilləri tapıla bilər.
-  </div>
 </div>
 
-<div class="hiw">
-  <div class="hiw-head">// Necə İşləyir</div>
-  <div class="hiw-steps">
-    <div class="hiw-step">
-      <div class="step-n">01</div>
-      <div class="step-t">Şəkli Yüklə</div>
-      <div class="step-d">Üz görsənən istənilən şəkil: selfie, profil foto, skan</div>
+<!-- ROOMS SCREEN -->
+<div id="rooms-screen" class="hidden">
+    <div class="rooms-header">
+        <h1>📍 Aktif Odalar</h1>
+        <button onclick="goBackToMenu()">← GERİ</button>
     </div>
-    <div class="hiw-step">
-      <div class="step-n">02</div>
-      <div class="step-t">Motor Seç</div>
-      <div class="step-d">Yandex (üz tanıma) və ya Google Lens (ümumi axtarış)</div>
+    <div class="rooms-container" id="rooms-list">
+        <div class="loading" style="grid-column: 1/-1; justify-self: center;"></div>
     </div>
-    <div class="hiw-step">
-      <div class="step-n">03</div>
-      <div class="step-t">Nəticəyə Bax</div>
-      <div class="step-d">Profillər, saytlar, sosial media hesabları tapılır</div>
-    </div>
-  </div>
-</div>
-```
-
-  </div>
-
-  <!-- ===== FAKE YOXLA ===== -->
-
-  <div id="panelF" class="panel">
-    <div class="card pk">
-      <div class="slabel pk">// Fake Yoxlama · Mənbə Axtarışı</div>
-
-```
-  <div class="wstrip pk">
-    <span>🕵️</span>
-    <span>Şəkil <strong style="color:var(--pink)">harada paylaşıldı</strong>, <strong style="color:var(--pink)">nə vaxt ilk dəfə göründü</strong> — 4 motor ilə tam yoxlama.</span>
-  </div>
-
-  <div class="uzone pk" id="fDrop" onclick="document.getElementById('fInput').click()">
-    <div class="uico">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-      </svg>
-    </div>
-    <h3>Şəkil Yüklə</h3>
-    <p>Fake profil şəkli, iddia edilən foto<br>Harada paylaşıldığını və nə vaxt göründüyünü tap</p>
-    <input type="file" id="fInput" accept="image/*">
-  </div>
-
-  <div class="prev-state" id="fPrev">
-    <div class="prev-header">
-      <div class="slabel pk" style="margin:0">// Yükləndi</div>
-      <button class="btn-reset" onclick="resetF()">↺ YENİ ŞƏKİL</button>
-    </div>
-    <div class="prev-grid">
-      <img class="prev-img" id="fImg" alt="">
-      <div class="chip-list">
-        <div class="chip pk"><span class="cl">Fayl</span><span class="cv" id="fFn">—</span></div>
-        <div class="chip pk"><span class="cl">Ölçü</span><span class="cv" id="fSz">—</span></div>
-        <div class="chip pk"><span class="cl">Növ</span><span class="cv" id="fTp">—</span></div>
-        <div class="chip pk"><span class="cl">Status</span><span class="cv" style="color:var(--green)">✓ HAZIRDIR</span></div>
-      </div>
-    </div>
-    <div class="actions">
-      <button class="btn btn-p" onclick="doTineye()">🔴 &nbsp;TİNEYE — İLK PAYLAŞIM TARİXİNİ TAP</button>
-      <button class="btn btn-c" onclick="doYandex('f')">🔍 &nbsp;YANDEX İLƏ YOXLA</button>
-      <button class="btn btn-y" onclick="doGoogle('f')">🌐 &nbsp;GOOGLE İLƏ YOXLA</button>
-      <button class="btn btn-b" onclick="doBing()">🔵 &nbsp;BING VİSUAL SEARCH</button>
-    </div>
-    <div id="fHelpers"></div>
-  </div>
-
-  <div class="tipbox pk">
-    <strong>// TİNEYE:</strong> Şəklin internetdə ilk nə vaxt göründüyünü bildirir. Köhnə hesabdan oğurlanmış şəkillər dərhal aydın olur. <strong>Yandex</strong> isə VK/OK.ru-da fərqli adlarla istifadəni tapır.
-  </div>
 </div>
 
-<div class="hiw">
-  <div class="hiw-head">// Fake Necə Müəyyən Edilir?</div>
-  <div class="hiw-steps">
-    <div class="hiw-step">
-      <div class="step-n">01</div>
-      <div class="step-t" style="color:var(--pink)">TinEye</div>
-      <div class="step-d">Şəklin ilk görünmə tarixin bildirir. 5 il əvvəl başqa adla görünürsə — fakedir.</div>
+<!-- GAME SCREEN -->
+<div id="game-screen" class="hidden">
+    <canvas id="gameCanvas"></canvas>
+    
+    <!-- Mobile Controls - Landscape Mode -->
+    <div id="mobile-controls">
+        <!-- Left Joystick -->
+        <div id="joystick-area">
+            <div id="joystick-stick"></div>
+        </div>
+
+        <!-- Right Action Buttons -->
+        <div id="action-buttons">
+            <button class="action-btn" id="btn-sprint">🏃</button>
+            <button class="action-btn" id="btn-shoot">🎯</button>
+            <button class="action-btn" id="btn-jump">JUMP</button>
+        </div>
     </div>
-    <div class="hiw-step">
-      <div class="step-n">02</div>
-      <div class="step-t" style="color:var(--pink)">Yandex</div>
-      <div class="step-d">VK, OK.ru, rus forumlarında həmin şəkli tapır. Fərqli adlarla görünürsə — fakedir.</div>
+
+    <!-- HUD Controls - Right Top -->
+    <div id="hud-controls">
+        <div class="hud-btn info" id="hud-status">📍 Player</div>
+        <button class="hud-btn" id="btn-menu">☰ Menu</button>
     </div>
-    <div class="hiw-step">
-      <div class="step-n">03</div>
-      <div class="step-t" style="color:var(--pink)">Google / Bing</div>
-      <div class="step-d">Qlobal axtarış. Haber saytlarında, Instagram-da görünürsə — orijinalı tapılır.</div>
-    </div>
-  </div>
 </div>
-```
-
-  </div>
-
-</main>
-
-<footer>IZLƏR · Bütün emal brauzerinizdə baş verir · Məlumatlar serverə göndərilmir · GitHub Pages Uyğundur</footer>
 
 <script>
-// Cursor
-const cur=document.getElementById('cursor'),dot=document.getElementById('cursorDot');
-let mx=0,my=0,cx=0,cy=0;
-document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;dot.style.left=mx+'px';dot.style.top=my+'px';});
-(function anim(){cx+=(mx-cx)*.15;cy+=(my-cy)*.15;cur.style.left=cx+'px';cur.style.top=cy+'px';requestAnimationFrame(anim);})();
+    // ===== CONFIG & STATE =====
+    const CONFIG = {
+        SERVER_URL: 'wss://saskioyunu-1-2d6i.onrender.com',
+        CANVAS_WIDTH: window.innerWidth,
+        CANVAS_HEIGHT: window.innerHeight
+    };
 
-// Tabs
-function switchTab(t){
-  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-  if(t==='s'){document.querySelector('.tc').classList.add('active');document.getElementById('panelS').classList.add('active');}
-  else{document.querySelector('.tp').classList.add('active');document.getElementById('panelF').classList.add('active');}
-}
+    let gameState = {
+        playerId: null,
+        username: 'Player_' + Math.random().toString(36).substr(2, 9),
+        currentRoomId: null,
+        isConnected: false,
+        gameManager: null,
+        keys: {}
+    };
 
-// ===== SEARCH =====
-let sFile=null,sUrl=null,fFile=null,fUrl=null;
+    let gameSocket = null;
 
-function handleFile(file,prefix){
-  if(!file)return;
-  const r=new FileReader();
-  r.onload=e=>{
-    const url=e.target.result;
-    if(prefix==='s'){sFile=file;sUrl=url;document.getElementById('sImg').src=url;document.getElementById('sFn').textContent=file.name.length>22?file.name.slice(0,22)+'...':file.name;document.getElementById('sSz').textContent=(file.size/1024/1024).toFixed(2)+' MB';document.getElementById('sTp').textContent=file.type||'bilinmir';document.getElementById('sPrev').classList.add('show');}
-    else{fFile=file;fUrl=url;document.getElementById('fImg').src=url;document.getElementById('fFn').textContent=file.name.length>22?file.name.slice(0,22)+'...':file.name;document.getElementById('fSz').textContent=(file.size/1024/1024).toFixed(2)+' MB';document.getElementById('fTp').textContent=file.type||'bilinmir';document.getElementById('fPrev').classList.add('show');}
-  };
-  r.readAsDataURL(file);
-}
+    // ===== TELEGRAM WEB APP INTEGRATION =====
+    window.addEventListener('load', () => {
+        if (window.Telegram?.WebApp) {
+            const tg = window.Telegram.WebApp;
+            tg.ready();
 
-document.getElementById('sInput').addEventListener('change',e=>handleFile(e.target.files[0],'s'));
-document.getElementById('fInput').addEventListener('change',e=>handleFile(e.target.files[0],'f'));
+            if (tg.initDataUnsafe?.user) {
+                const user = tg.initDataUnsafe.user;
+                gameState.username = user.first_name || user.username || 'Player';
+                document.getElementById('username-input').value = gameState.username;
+            }
+        } else {
+            console.log('Telegram WebApp yüklenmedi. Demo modunda çalışıyor.');
+        }
 
-// Drag
-['sDrop','fDrop'].forEach((id,i)=>{
-  const el=document.getElementById(id),prefix=i===0?'s':'f';
-  el.addEventListener('dragover',e=>{e.preventDefault();el.classList.add('drag');});
-  el.addEventListener('dragleave',()=>el.classList.remove('drag'));
-  el.addEventListener('drop',e=>{e.preventDefault();el.classList.remove('drag');handleFile(e.dataTransfer.files[0],prefix);});
-});
+        connectToServer();
+        setupEventListeners();
+    });
 
-function doYandex(prefix){
-  window.open('https://yandex.com/images/','_blank');
-  addHelper(prefix==='s'?'sHelpers':'fHelpers','cyan',`
-    <div class="hl">// YANDEX AÇILDI — NƏ ETMƏLİSİN:</div>
-    <div>1. Saytda yuxarıda <span class="hi">kamera ikonasına</span> klikla</div>
-    <div>2. <span class="hi">"Şəkil seç"</span> düyməsini bas</div>
-    <div>3. Yüklənmiş şəklini seç (sol tərəfdə görünür)</div>
-    <div>4. Yandex <span class="hi">üz tanıma</span> ilə profillər göstərəcək</div>
-    <div style="margin-top:9px;color:rgba(255,230,0,.65)">💡 VK, OK.ru, Instagram profilləri tapılır</div>
-  `);
-}
+    // ===== SERVER CONNECTION =====
+    function connectToServer() {
+        gameSocket = new WebSocket(CONFIG.SERVER_URL);
 
-function doGoogle(prefix){
-  window.open('https://lens.google.com/upload','_blank');
-  addHelper(prefix==='s'?'sHelpers':'fHelpers','yellow',`
-    <div class="hl" style="color:#ffe600">// GOOGLE LENS AÇILDI:</div>
-    <div>Şəkli yüklə bölümünə fotoğrafı sürüklə və ya seç → Nəticə avtomatik gəlir</div>
-  `);
-}
+        gameSocket.onopen = () => {
+            gameState.isConnected = true;
+            gameState.playerId = 'player_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 
-function doTineye(){
-  window.open('https://tineye.com/','_blank');
-  addHelper('fHelpers','pink',`
-    <div class="hl">// TİNEYE AÇILDI — NECƏ İSTİFADƏ ET:</div>
-    <div>1. Saytda <span class="hi">şəkli yüklə</span> bölümünə bas</div>
-    <div>2. Fotoğrafı seç → Axtarış avtomatik başlayır</div>
-    <div>3. Nəticələrdə <span class="hi">"Oldest first"</span> seç</div>
-    <div>4. Şəklin <span class="hi">ilk nə vaxt paylaşıldığı</span> görünür</div>
-    <div style="margin-top:9px;color:rgba(255,230,0,.65)">💡 Fərqli adlarla neçə saytda var — hamısı sıralanır</div>
-  `);
-}
+            gameSocket.send(JSON.stringify({
+                type: 'INIT',
+                clientId: gameState.playerId,
+                userData: {
+                    username: gameState.username
+                }
+            }));
 
-function doBing(){
-  window.open('https://www.bing.com/visualsearch','_blank');
-  addHelper('fHelpers','blue',`
-    <div class="hl" style="color:#00aaff">// BING VISUAL SEARCH AÇILDI:</div>
-    <div>Şəkli yüklə → Bing-in visual axtarış nəticələrini gör</div>
-  `);
-}
+            console.log('✅ Sunucuya bağlandı');
+        };
 
-function addHelper(containerId, color, html){
-  const container=document.getElementById(containerId);
-  const div=document.createElement('div');
-  div.className='helper'+(color==='pink'?' pk':'');
-  div.innerHTML=html;
-  container.appendChild(div);
-}
+        gameSocket.onmessage = handleMessage;
 
-function resetS(){sFile=null;sUrl=null;document.getElementById('sPrev').classList.remove('show');document.getElementById('sInput').value='';document.getElementById('sHelpers').innerHTML='';}
-function resetF(){fFile=null;fUrl=null;document.getElementById('fPrev').classList.remove('show');document.getElementById('fInput').value='';document.getElementById('fHelpers').innerHTML='';}
+        gameSocket.onerror = (error) => {
+            console.error('❌ WebSocket hata:', error);
+            alert('Sunucuya bağlanılamadı. Lütfen sayfayı yenileyin.');
+        };
+
+        gameSocket.onclose = () => {
+            console.log('⚠️ Bağlantı kesildi');
+            gameState.isConnected = false;
+            setTimeout(connectToServer, 3000);
+        };
+
+        window.gameSocket = gameSocket;
+    }
+
+    function handleMessage(event) {
+        try {
+            const message = JSON.parse(event.data);
+
+            switch (message.type) {
+                case 'INIT_SUCCESS':
+                    gameState.playerId = message.clientId;
+                    break;
+
+                case 'ROOMS_LIST':
+                    displayRooms(message.rooms);
+                    break;
+
+                case 'ROOM_CREATED':
+                    startGame(
+                        message.room.id,
+                        message.roomData,
+                        message.players,
+                        true,
+                        message.room.monsterType === 'Bot'
+                    );
+                    break;
+
+                case 'PLAYER_JOINED':
+                    if (gameState.gameManager) {
+                        gameState.gameManager.players.set(message.player.id, {
+                            ...message.player,
+                            animation: 'idle',
+                            animationFrame: 0,
+                            canJump: false,
+                            hasKey: false,
+                            isMonster: false
+                        });
+                    }
+                    break;
+
+                case 'PLAYER_UPDATED':
+                    if (gameState.gameManager) {
+                        const player = gameState.gameManager.players.get(message.player.id);
+                        if (player) {
+                            player.x = message.player.x;
+                            player.y = message.player.y;
+                            player.vx = message.player.vx;
+                            player.vy = message.player.vy;
+                            player.animation = message.player.animation;
+                            player.username = message.player.username;
+                            player.avatar = message.player.avatar;
+                        }
+                    }
+                    break;
+
+                case 'MONSTER_UPDATED':
+                    if (gameState.gameManager && gameState.gameManager.monster) {
+                        gameState.gameManager.monster.x = message.x;
+                        gameState.gameManager.monster.y = message.y;
+                        gameState.gameManager.monster.animation = message.animation;
+                    }
+                    break;
+
+                case 'KEY_COLLECTED':
+                    if (gameState.gameManager) {
+                        const collector = gameState.gameManager.players.get(message.collectingPlayerId);
+                        if (collector) {
+                            collector.hasKey = true;
+                        }
+                    }
+                    break;
+
+                case 'PLAYER_CAUGHT':
+                    if (gameState.gameManager) {
+                        const caughtPlayer = gameState.gameManager.players.get(message.playerId);
+                        if (caughtPlayer) {
+                            caughtPlayer.alive = false;
+                            console.log(`⚠️ ${caughtPlayer.username} yakalandı!`);
+                        }
+                    }
+                    break;
+
+                case 'PLAYERS_ESCAPED':
+                    if (gameState.gameManager) {
+                        gameState.gameManager.handleGameOver(message.escapedPlayers);
+                    }
+                    break;
+
+                case 'GAME_OVER':
+                    if (gameState.gameManager) {
+                        gameState.gameManager.handleGameOver(message.survivors);
+                    }
+                    break;
+
+                case 'GAME_STARTED':
+                    break;
+
+                case 'NEW_ROOM_CREATED':
+                    refreshRoomsList();
+                    break;
+
+                case 'PLAYER_LEFT':
+                    if (gameState.gameManager) {
+                        gameState.gameManager.players.delete(message.playerId);
+                    }
+                    break;
+            }
+        } catch (err) {
+            console.error('Message parse hatası:', err);
+        }
+    }
+
+    // ===== UI FUNCTIONS =====
+    function setupEventListeners() {
+        document.getElementById('find-game-btn').addEventListener('click', showRoomsList);
+        document.getElementById('create-room-btn').addEventListener('click', createNewRoom);
+        document.getElementById('username-input').addEventListener('change', (e) => {
+            gameState.username = e.target.value || 'Player';
+        });
+    }
+
+    function showRoomsList() {
+        document.getElementById('menu-screen').classList.add('hidden');
+        document.getElementById('rooms-screen').classList.remove('hidden');
+        refreshRoomsList();
+    }
+
+    function refreshRoomsList() {
+        if (!gameState.isConnected) return;
+
+        gameSocket.send(JSON.stringify({
+            type: 'GET_ROOMS'
+        }));
+    }
+
+    function displayRooms(rooms) {
+        const container = document.getElementById('rooms-list');
+
+        if (rooms.length === 0) {
+            container.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--secondary);">Hiç oda yok. Oluşturun! 🎮</p>';
+            return;
+        }
+
+        container.innerHTML = rooms.map(room => `
+            <div class="room-card">
+                <h3>Oda #${room.id}</h3>
+                <p><span>👤 Yaratıcı:</span> <strong>${room.creatorName}</strong></p>
+                <p><span>👥 Oyuncular:</span> <strong>${room.playerCount}/${room.maxPlayers}</strong></p>
+                <p><span>🤖 Canavar:</span> <strong>${room.monsterType}</strong></p>
+                <p><span>⏱️ Durum:</span> <strong>${room.gameStarted ? '🎮 Oynanıyor' : '⏸️ Hazırlanıyor'}</strong></p>
+                <button onclick="joinRoom(${room.id})" ${room.isFull ? 'disabled' : ''}>
+                    ${room.isFull ? 'ODA DOLU ❌' : 'KATIL ✅'}
+                </button>
+            </div>
+        `).join('');
+    }
+
+    function createNewRoom() {
+        gameState.username = document.getElementById('username-input').value || gameState.username;
+
+        if (!gameState.isConnected) {
+            alert('Sunucuya bağlanılamadı. Lütfen bekleyin...');
+            return;
+        }
+
+        document.getElementById('menu-screen').classList.add('hidden');
+
+        gameSocket.send(JSON.stringify({
+            type: 'CREATE_ROOM',
+            username: gameState.username,
+            avatar: '👤'
+        }));
+    }
+
+    function joinRoom(roomId) {
+        gameState.username = document.getElementById('username-input').value || gameState.username;
+
+        if (!gameState.isConnected) {
+            alert('Sunucuya bağlanılamadı. Lütfen bekleyin...');
+            return;
+        }
+
+        document.getElementById('rooms-screen').classList.add('hidden');
+
+        gameSocket.send(JSON.stringify({
+            type: 'JOIN_ROOM',
+            roomId: roomId,
+            username: gameState.username,
+            avatar: '👤'
+        }));
+    }
+
+    function goBackToMenu() {
+        document.getElementById('rooms-screen').classList.add('hidden');
+        document.getElementById('menu-screen').classList.remove('hidden');
+    }
+
+    function startGame(roomId, roomData, players, isCreator, isAIMonster) {
+        gameState.currentRoomId = roomId;
+
+        document.getElementById('menu-screen').classList.add('hidden');
+        document.getElementById('rooms-screen').classList.add('hidden');
+        document.getElementById('game-screen').classList.remove('hidden');
+
+        const canvas = document.getElementById('gameCanvas');
+        canvas.width = CONFIG.CANVAS_WIDTH;
+        canvas.height = CONFIG.CANVAS_HEIGHT;
+
+        gameState.gameManager = new GameManager(canvas);
+        gameState.gameManager.initializeGame(
+            roomId,
+            roomData,
+            players,
+            gameState.playerId,
+            isAIMonster
+        );
+
+        // Mobil kontroller ayarla
+        setupMobileControls();
+
+        if (isCreator) {
+            showStartGamePrompt(roomId, isAIMonster);
+        }
+    }
+
+    function showStartGamePrompt(roomId, isAIMonster = true) {
+        const choice = confirm(`
+```
+
+🎮 ODA HAZIR!
+
+Canavar Türü:
+
+- OK = Bot (Yapay Zeka)
+- İPTAL = Random Oyuncu
+
+Oyunu başlat?
+`);
+
+```
+        gameSocket.send(JSON.stringify({
+            type: 'START_GAME',
+            roomId: roomId,
+            monsterType: choice ? 'ai' : 'player'
+        }));
+    }
+
+    // ===== MOBILE CONTROLS - PUBG STYLE JOYSTICK =====
+    function setupMobileControls() {
+        const mobileControls = document.getElementById('mobile-controls');
+        const hudControls = document.getElementById('hud-controls');
+        
+        // Landscape modu kontrol
+        const checkOrientation = () => {
+            if (window.innerWidth > window.innerHeight) {
+                mobileControls.classList.add('landscape');
+                hudControls.classList.add('landscape');
+            } else {
+                mobileControls.classList.remove('landscape');
+                hudControls.classList.remove('landscape');
+            }
+        };
+
+        window.addEventListener('orientationchange', checkOrientation);
+        window.addEventListener('resize', checkOrientation);
+        checkOrientation();
+
+        // ===== LEFT JOYSTICK =====
+        const joystickArea = document.getElementById('joystick-area');
+        const joystickStick = document.getElementById('joystick-stick');
+        
+        let isJoystickActive = false;
+        const joystickRadius = 65;
+
+        const updateJoystickPosition = (e) => {
+            if (!isJoystickActive) return;
+
+            const touch = e.touches[0];
+            const rect = joystickArea.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+
+            let x = touch.clientX - centerX;
+            let y = touch.clientY - centerY;
+
+            const distance = Math.hypot(x, y);
+            if (distance > joystickRadius) {
+                x = (x / distance) * joystickRadius;
+                y = (y / distance) * joystickRadius;
+            }
+
+            joystickStick.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
+
+            // Hareket yönü hesapla
+            const normalizedX = x / joystickRadius;
+            const normalizedY = y / joystickRadius;
+
+            // WASD tuşlarına çevir
+            gameState.keys['w'] = normalizedY < -0.3;
+            gameState.keys['a'] = normalizedX < -0.3;
+            gameState.keys['s'] = normalizedY > 0.3;
+            gameState.keys['d'] = normalizedX > 0.3;
+        };
+
+        joystickArea.addEventListener('touchstart', (e) => {
+            isJoystickActive = true;
+            joystickStick.classList.add('active');
+            updateJoystickPosition(e);
+        });
+
+        joystickArea.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            updateJoystickPosition(e);
+        });
+
+        joystickArea.addEventListener('touchend', () => {
+            isJoystickActive = false;
+            joystickStick.classList.remove('active');
+            joystickStick.style.transform = 'translate(-50%, -50%)';
+            gameState.keys['w'] = false;
+            gameState.keys['a'] = false;
+            gameState.keys['s'] = false;
+            gameState.keys['d'] = false;
+        });
+
+        // ===== ACTION BUTTONS =====
+        const jumpBtn = document.getElementById('btn-jump');
+        const sprintBtn = document.getElementById('btn-sprint');
+        const shootBtn = document.getElementById('btn-shoot');
+        const menuBtn = document.getElementById('btn-menu');
+
+        jumpBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            gameState.keys['space'] = true;
+        });
+        jumpBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            gameState.keys['space'] = false;
+        });
+
+        sprintBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            gameState.keys['shift'] = true;
+        });
+        sprintBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            gameState.keys['shift'] = false;
+        });
+
+        shootBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            // Future action
+        });
+
+        menuBtn.addEventListener('click', () => {
+            if (confirm('Oyunu bırakmak istediğinize emin misiniz?')) {
+                location.reload();
+            }
+        });
+
+        // HUD Status güncellemesi
+        setInterval(() => {
+            const hudStatus = document.getElementById('hud-status');
+            if (gameState.gameManager && gameState.gameManager.players.get(gameState.playerId)) {
+                const player = gameState.gameManager.players.get(gameState.playerId);
+                hudStatus.textContent = `👤 ${player.username.substring(0, 12)} | ${player.alive ? '✅ Alive' : '❌ Dead'}`;
+            }
+        }, 500);
+    }
+
+    // ===== RESPONSIVE =====
+    window.addEventListener('resize', () => {
+        CONFIG.CANVAS_WIDTH = window.innerWidth;
+        CONFIG.CANVAS_HEIGHT = window.innerHeight;
+
+        const canvas = document.getElementById('gameCanvas');
+        if (canvas) {
+            canvas.width = CONFIG.CANVAS_WIDTH;
+            canvas.height = CONFIG.CANVAS_HEIGHT;
+        }
+    });
 </script>
+
+<script src="game.js"></script>
+```
 
 </body>
 </html>
