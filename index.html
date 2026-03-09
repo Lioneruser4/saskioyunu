@@ -3,16 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bilardo Pro | Online 8 Ball Pool</title>
+    <title>8 Ball Pool Pro | Profesyonel Bilardo</title>
     
-    <!-- Telegram Web App -->
+    <!-- Telegram -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <style>
         * {
@@ -21,447 +18,207 @@
             box-sizing: border-box;
             user-select: none;
             -webkit-tap-highlight-color: transparent;
-            font-family: 'Inter', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
         }
 
         :root {
-            --bg-dark: #0a0f1e;
-            --bg-card: #1a1f30;
-            --bg-hover: #252b3d;
-            --accent: #4f9aff;
-            --accent-glow: rgba(79, 154, 255, 0.3);
-            --text: #ffffff;
-            --text-secondary: #8f9bb3;
-            --success: #2ecc71;
-            --warning: #f1c40f;
-            --danger: #e74c3c;
-            --border: #2f3545;
+            --bg-primary: #0B1A2F;
+            --bg-secondary: #152A3A;
+            --bg-card: #1E3A4A;
+            --accent: #2E8B57;
+            --accent-glow: #3CB371;
+            --text: #FFFFFF;
+            --text-secondary: #A0B8CC;
+            --border: #2C4A5A;
+            --success: #27AE60;
+            --warning: #F39C12;
+            --danger: #E74C3C;
         }
 
         body {
             min-height: 100vh;
-            background: linear-gradient(135deg, #0a0f1e, #141b2b);
+            background: var(--bg-primary);
             color: var(--text);
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Yükleme Ekranı */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--bg-primary);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.5s;
+        }
+
+        .loading-content {
+            text-align: center;
+        }
+
+        .loading-logo {
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-glow));
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 30px;
+            font-size: 60px;
+            color: white;
+            box-shadow: 0 20px 40px rgba(46, 139, 87, 0.3);
+            animation: float 3s infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .loading-bar {
+            width: 300px;
+            height: 8px;
+            background: var(--bg-card);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 20px auto;
+        }
+
+        .loading-progress {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--accent), var(--accent-glow));
+            transition: width 0.3s;
+        }
+
+        .loading-text {
+            color: var(--text-secondary);
+            font-size: 16px;
+            margin-top: 20px;
         }
 
         /* Ana Oyun Container */
-        .game-wrapper {
-            max-width: 1400px;
+        .game-container {
             width: 100%;
-            background: rgba(26, 31, 48, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 40px;
-            padding: 20px;
+            max-width: 1400px;
+            height: 95vh;
+            background: var(--bg-secondary);
+            border-radius: 50px;
+            overflow: hidden;
             box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
-            border: 1px solid rgba(79, 154, 255, 0.2);
+            display: flex;
+            opacity: 0;
+            transform: scale(0.95);
+            transition: opacity 0.5s, transform 0.5s;
         }
 
-        /* ==================== LOBBY EKRANI ==================== */
-        .lobby-screen {
-            display: block;
+        .game-container.visible {
+            opacity: 1;
+            transform: scale(1);
         }
 
-        .game-screen {
-            display: none;
+        /* Sol Panel - Oyun Alanı */
+        .game-area {
+            flex: 2;
+            background: linear-gradient(135deg, #1E3A4A, #152A3A);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
         }
 
-        /* Header */
-        .lobby-header {
+        /* Üst Skor Bar */
+        .score-bar {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border-radius: 30px;
+            padding: 15px 25px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 15px 25px;
-            background: linear-gradient(135deg, #1e2538, #1a1f30);
-            border-radius: 30px;
-            margin-bottom: 25px;
-            border: 1px solid var(--border);
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        .player-profile {
+        .player-score {
             display: flex;
             align-items: center;
             gap: 15px;
         }
 
         .player-avatar {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #4f9aff, #9b59b6);
+            width: 50px;
+            height: 50px;
+            border-radius: 15px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-glow));
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 24px;
+            font-size: 20px;
             font-weight: 700;
-            border: 3px solid var(--accent);
             position: relative;
         }
 
-        .avatar-img {
+        .player-avatar img {
             width: 100%;
             height: 100%;
-            border-radius: 50%;
+            border-radius: 15px;
             object-fit: cover;
         }
 
-        .platform-badge {
+        .telegram-badge {
             position: absolute;
             bottom: -5px;
             right: -5px;
-            width: 22px;
-            height: 22px;
+            width: 20px;
+            height: 20px;
+            background: #0088cc;
             border-radius: 50%;
-            background: var(--accent);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 12px;
-            border: 2px solid var(--bg-card);
+            font-size: 10px;
+            border: 2px solid var(--bg-secondary);
         }
 
-        .player-info h3 {
-            font-size: 20px;
-            font-weight: 700;
+        .player-info h4 {
+            font-size: 16px;
             margin-bottom: 5px;
         }
 
-        .player-stats {
-            display: flex;
-            gap: 20px;
+        .potted-count {
             font-size: 14px;
             color: var(--text-secondary);
         }
 
-        .rating-badge {
-            background: linear-gradient(135deg, #f1c40f, #e67e22);
-            padding: 8px 20px;
-            border-radius: 30px;
-            color: #0a0f1e;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        /* Oyun Modları */
-        .game-modes {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .mode-card {
-            background: var(--bg-card);
-            border-radius: 30px;
-            padding: 30px 20px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-            border: 2px solid transparent;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .mode-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-            transition: 0.5s;
-        }
-
-        .mode-card:hover::before {
-            left: 100%;
-        }
-
-        .mode-card:hover {
-            transform: translateY(-5px);
-            border-color: var(--accent);
-            box-shadow: 0 10px 30px var(--accent-glow);
-        }
-
-        .mode-icon {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #2a3147, #1e2538);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 40px;
-            margin: 0 auto 20px;
-            border: 2px solid var(--accent);
-        }
-
-        .mode-title {
-            font-size: 24px;
-            font-weight: 800;
-            margin-bottom: 10px;
-        }
-
-        .mode-desc {
-            color: var(--text-secondary);
-            font-size: 14px;
-            margin-bottom: 20px;
-        }
-
-        .mode-badge {
-            background: var(--accent);
-            color: white;
-            padding: 5px 15px;
-            border-radius: 30px;
-            font-size: 12px;
-            font-weight: 600;
-            display: inline-block;
-        }
-
-        /* Oda Kodu Giriş */
-        .room-code-section {
-            background: var(--bg-card);
-            border-radius: 30px;
-            padding: 25px;
-            margin-bottom: 30px;
-            border: 2px dashed var(--accent);
-        }
-
-        .room-code-title {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .code-input-group {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .code-input {
-            flex: 1;
-            background: #0f1423;
-            border: 2px solid var(--border);
-            border-radius: 20px;
-            padding: 18px 25px;
-            font-size: 24px;
-            font-weight: 700;
-            color: white;
-            text-align: center;
-            letter-spacing: 10px;
-            outline: none;
-        }
-
-        .code-input:focus {
-            border-color: var(--accent);
-        }
-
-        .join-btn {
-            background: var(--accent);
-            border: none;
-            border-radius: 20px;
-            padding: 18px 35px;
-            color: white;
+        .potted-count span {
+            color: var(--accent);
             font-weight: 700;
             font-size: 18px;
-            cursor: pointer;
-            transition: 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .join-btn:hover {
-            background: #3b7fd9;
-            transform: scale(1.02);
-        }
-
-        /* Bot Zorluk Seçenekleri */
-        .difficulty-selector {
-            display: none;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .difficulty-card {
-            background: #0f1423;
-            border-radius: 20px;
-            padding: 15px;
-            text-align: center;
-            cursor: pointer;
-            border: 2px solid transparent;
-            transition: 0.2s;
-        }
-
-        .difficulty-card:hover {
-            border-color: var(--accent);
-        }
-
-        .difficulty-card.selected {
-            border-color: var(--accent);
-            background: linear-gradient(135deg, #1a1f30, #0f1423);
-        }
-
-        .difficulty-icon {
-            font-size: 30px;
-            margin-bottom: 10px;
-        }
-
-        .difficulty-name {
-            font-weight: 700;
-            margin-bottom: 5px;
-        }
-
-        .difficulty-desc {
-            font-size: 12px;
-            color: var(--text-secondary);
-        }
-
-        /* Lobi */
-        .lobby-section {
-            background: var(--bg-card);
-            border-radius: 30px;
-            padding: 25px;
-        }
-
-        .lobby-tabs {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .tab-btn {
-            background: #0f1423;
-            border: none;
-            padding: 12px 25px;
-            border-radius: 15px;
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .tab-btn.active {
-            background: var(--accent);
-        }
-
-        .players-list {
-            max-height: 300px;
-            overflow-y: auto;
-        }
-
-        .player-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 15px;
-            background: #0f1423;
-            border-radius: 15px;
-            margin-bottom: 10px;
-            transition: 0.2s;
-        }
-
-        .player-row:hover {
-            background: #1a1f30;
-        }
-
-        .player-row-info {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .row-avatar {
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            background: var(--accent);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-        }
-
-        .status-badge {
-            padding: 5px 12px;
-            border-radius: 30px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .status-online {
-            background: rgba(46, 204, 113, 0.2);
-            color: #2ecc71;
-        }
-
-        .status-ingame {
-            background: rgba(241, 196, 15, 0.2);
-            color: #f1c40f;
-        }
-
-        /* ==================== OYUN EKRANI ==================== */
-        .game-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 15px 25px;
-            background: linear-gradient(135deg, #1e2538, #1a1f30);
-            border-radius: 30px;
-            margin-bottom: 20px;
-        }
-
-        .players-score {
-            display: flex;
-            align-items: center;
-            gap: 40px;
-        }
-
-        .score-card {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .score-avatar {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: var(--accent);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            position: relative;
-        }
-
-        .potted-badge {
-            position: absolute;
-            bottom: -5px;
-            right: -5px;
-            background: var(--danger);
-            border-radius: 20px;
-            padding: 3px 8px;
-            font-size: 11px;
-            font-weight: 700;
+            margin-left: 5px;
         }
 
         .vs-divider {
-            font-size: 24px;
+            font-size: 20px;
             font-weight: 800;
             color: var(--accent);
+            background: rgba(255, 255, 255, 0.1);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .turn-indicator {
@@ -469,23 +226,19 @@
             padding: 10px 25px;
             border-radius: 30px;
             font-weight: 700;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.8; }
-            100% { opacity: 1; }
+            font-size: 14px;
+            letter-spacing: 1px;
+            box-shadow: 0 0 20px var(--accent-glow);
         }
 
         /* Bilardo Masası */
-        .table-container {
-            aspect-ratio: 2/1;
-            background: #1e4d2b;
+        .table-wrapper {
+            flex: 1;
+            background: #0D5C2E;
             border-radius: 100px 100px 50px 50px;
-            padding: 20px;
-            border: 15px solid #8b5a2b;
+            padding: 25px;
             box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.6);
+            border: 15px solid #8B5A2B;
             margin-bottom: 20px;
             position: relative;
         }
@@ -493,24 +246,26 @@
         #gameCanvas {
             width: 100%;
             height: 100%;
-            background: #1e4d2b;
+            background: #0D5C2E;
             border-radius: 80px 80px 40px 40px;
             box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.6);
             touch-action: none;
+            cursor: none;
         }
 
-        /* Vuruş Kontrolleri */
-        .shot-controls {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            padding: 20px;
-            background: var(--bg-card);
+        /* Vuruş Gücü Çubuğu */
+        .power-meter-container {
+            position: absolute;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 400px;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
             border-radius: 30px;
-        }
-
-        .power-meter {
-            flex: 1;
+            padding: 15px 25px;
+            border: 1px solid var(--accent);
+            display: none;
         }
 
         .power-label {
@@ -520,79 +275,274 @@
             font-size: 14px;
         }
 
-        .power-bar {
+        .power-bar-bg {
             height: 20px;
-            background: #0f1423;
+            background: rgba(255, 255, 255, 0.1);
             border-radius: 30px;
             overflow: hidden;
-            border: 2px solid var(--border);
         }
 
-        .power-fill {
+        .power-bar-fill {
             height: 100%;
-            width: 50%;
-            background: linear-gradient(90deg, #2ecc71, #f1c40f, #e74c3c);
-            transition: width 0.1s;
+            width: 0%;
+            background: linear-gradient(90deg, #27AE60, #F39C12, #E74C3C);
+            transition: width 0.05s;
         }
 
-        .angle-indicator {
+        /* Sağ Panel - Kontroller */
+        .control-panel {
+            flex: 0.8;
+            background: var(--bg-primary);
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            border-left: 2px solid var(--accent);
+        }
+
+        /* Profil Kartı */
+        .profile-card {
+            background: var(--bg-card);
+            border-radius: 30px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        .profile-avatar-large {
+            width: 100px;
+            height: 100px;
+            border-radius: 30px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-glow));
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            font-weight: 700;
+            position: relative;
+        }
+
+        .profile-avatar-large img {
+            width: 100%;
+            height: 100%;
+            border-radius: 30px;
+            object-fit: cover;
+        }
+
+        .profile-name {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .rating-badge {
+            background: var(--accent);
+            padding: 8px 20px;
+            border-radius: 30px;
+            display: inline-block;
+            font-weight: 700;
+            margin-top: 10px;
+        }
+
+        /* Oyun Modları */
+        .mode-selector {
+            background: var(--bg-card);
+            border-radius: 30px;
+            padding: 20px;
+        }
+
+        .mode-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--text-secondary);
+        }
+
+        .mode-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .mode-btn {
+            background: var(--bg-secondary);
+            border: 2px solid transparent;
+            border-radius: 20px;
+            padding: 15px;
+            color: white;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
             display: flex;
             align-items: center;
             gap: 15px;
         }
 
-        .angle-circle {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background: #0f1423;
-            border: 3px solid var(--accent);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
+        .mode-btn i {
+            width: 30px;
+            font-size: 20px;
         }
 
-        .game-btn {
+        .mode-btn:hover {
+            background: var(--bg-primary);
+            border-color: var(--accent);
+            transform: translateX(5px);
+        }
+
+        .mode-btn.active {
             background: var(--accent);
-            border: none;
-            padding: 15px 30px;
+            border-color: var(--accent-glow);
+        }
+
+        /* Zorluk Seviyesi */
+        .difficulty-selector {
+            background: var(--bg-card);
             border-radius: 30px;
+            padding: 20px;
+        }
+
+        .difficulty-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .difficulty-btn {
+            background: var(--bg-secondary);
+            border: none;
+            border-radius: 15px;
+            padding: 15px 5px;
             color: white;
-            font-weight: 700;
-            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            text-align: center;
+        }
+
+        .difficulty-btn.selected {
+            background: var(--accent);
+            transform: scale(1.05);
+        }
+
+        .difficulty-btn.easy { border-bottom: 4px solid #27AE60; }
+        .difficulty-btn.medium { border-bottom: 4px solid #F39C12; }
+        .difficulty-btn.hard { border-bottom: 4px solid #E74C3C; }
+
+        /* Oyun Kontrolleri */
+        .game-controls {
+            background: var(--bg-card);
+            border-radius: 30px;
+            padding: 20px;
+        }
+
+        .angle-indicator {
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            padding: 15px;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .angle-value {
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--accent);
+        }
+
+        .control-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .control-btn {
+            background: var(--bg-secondary);
+            border: none;
+            border-radius: 20px;
+            padding: 15px;
+            color: white;
+            font-weight: 600;
             cursor: pointer;
             transition: 0.2s;
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 10px;
         }
 
-        .game-btn:hover {
-            background: #3b7fd9;
-            transform: scale(1.05);
+        .control-btn.primary {
+            background: var(--accent);
         }
 
-        .game-btn.secondary {
-            background: #2f3545;
+        .control-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Top Listesi */
+        .balls-list {
+            background: var(--bg-card);
+            border-radius: 30px;
+            padding: 20px;
+            flex: 1;
+        }
+
+        .balls-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .ball-item {
+            aspect-ratio: 1;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 16px;
+            position: relative;
+            background: #f1c40f;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .ball-item.potted {
+            opacity: 0.3;
+            filter: grayscale(1);
+        }
+
+        .ball-item::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            right: 2px;
+            bottom: 2px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.8), transparent 70%);
         }
 
         /* Mesajlar */
-        .message-box {
+        .message-center {
             position: fixed;
             top: 20px;
             right: 20px;
             z-index: 9999;
         }
 
-        .message {
+        .toast {
             background: var(--bg-card);
             border-left: 5px solid var(--accent);
             padding: 15px 25px;
             border-radius: 15px;
             margin-bottom: 10px;
             animation: slideIn 0.3s;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            backdrop-filter: blur(10px);
         }
 
         @keyframes slideIn {
@@ -600,245 +550,186 @@
             to { transform: translateX(0); opacity: 1; }
         }
 
-        /* Loading */
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.8);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 10000;
-        }
-
-        .loading-spinner {
-            width: 60px;
-            height: 60px;
-            border: 5px solid var(--bg-card);
-            border-top-color: var(--accent);
-            border-radius: 50%;
-            animation: spin 1s infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* Mobil Responsive */
-        @media (max-width: 768px) {
-            .game-modes {
-                grid-template-columns: 1fr;
-            }
-            
-            .game-header {
+        /* Responsive */
+        @media (max-width: 1000px) {
+            .game-container {
                 flex-direction: column;
-                gap: 15px;
+                height: auto;
+                border-radius: 30px;
             }
             
-            .players-score {
-                flex-direction: column;
-                gap: 15px;
-            }
-            
-            .code-input-group {
-                flex-direction: column;
-            }
-            
-            .join-btn {
-                width: 100%;
+            .power-meter-container {
+                width: 300px;
+                bottom: 20px;
             }
         }
     </style>
 </head>
 <body>
-    <!-- Loading -->
-    <div class="loading-overlay" id="loadingOverlay">
-        <div class="loading-spinner"></div>
+    <!-- Yükleme Ekranı -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-content">
+            <div class="loading-logo">
+                <i class="fas fa-billiard"></i>
+            </div>
+            <div class="loading-bar">
+                <div class="loading-progress" id="loadingProgress"></div>
+            </div>
+            <div class="loading-text" id="loadingText">Oyun yükleniyor...</div>
+        </div>
     </div>
 
-    <!-- Mesajlar -->
-    <div class="message-box" id="messageBox"></div>
-
-    <div class="game-wrapper">
-        <!-- LOBBY EKRANI -->
-        <div class="lobby-screen" id="lobbyScreen">
-            <!-- Header -->
-            <div class="lobby-header">
-                <div class="player-profile">
-                    <div class="player-avatar" id="playerAvatar">
-                        <span id="avatarText">G</span>
-                        <img id="avatarImg" class="avatar-img" style="display: none;">
-                        <div class="platform-badge" id="platformBadge">
-                            <i class="fas fa-globe"></i>
+    <!-- Ana Oyun Container -->
+    <div class="game-container" id="gameContainer">
+        <!-- Sol Oyun Alanı -->
+        <div class="game-area">
+            <!-- Skor Bar -->
+            <div class="score-bar">
+                <div class="player-score">
+                    <div class="player-avatar" id="player1Avatar">
+                        <span id="player1AvatarText">S</span>
+                        <img id="player1AvatarImg" style="display: none;">
+                        <div class="telegram-badge" id="player1Badge" style="display: none;">
+                            <i class="fab fa-telegram"></i>
                         </div>
                     </div>
                     <div class="player-info">
-                        <h3 id="playerName">Misafir Oyuncu</h3>
-                        <div class="player-stats">
-                            <span><i class="fas fa-trophy"></i> <span id="playerWins">0</span></span>
-                            <span><i class="fas fa-gamepad"></i> <span id="playerGames">0</span></span>
+                        <h4 id="player1Name">Sen</h4>
+                        <div class="potted-count">
+                            <i class="fas fa-circle"></i> <span id="player1Potted">0</span>
                         </div>
                     </div>
                 </div>
-                <div class="rating-badge">
-                    <i class="fas fa-star"></i>
-                    <span id="playerRating">1000</span>
+                <div class="vs-divider">VS</div>
+                <div class="player-score">
+                    <div class="player-avatar" id="player2Avatar">
+                        <span id="player2AvatarText">B</span>
+                    </div>
+                    <div class="player-info">
+                        <h4 id="player2Name">Bot Kolay</h4>
+                        <div class="potted-count">
+                            <i class="fas fa-circle"></i> <span id="player2Potted">0</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="turn-indicator" id="turnIndicator">SENİN SIRAN</div>
+            </div>
+
+            <!-- Bilardo Masası -->
+            <div class="table-wrapper">
+                <canvas id="gameCanvas"></canvas>
+                
+                <!-- Vuruş Gücü Çubuğu -->
+                <div class="power-meter-container" id="powerMeter">
+                    <div class="power-label">
+                        <span>Vuruş Gücü</span>
+                        <span id="powerPercent">0%</span>
+                    </div>
+                    <div class="power-bar-bg">
+                        <div class="power-bar-fill" id="powerBarFill" style="width: 0%;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sağ Kontrol Paneli -->
+        <div class="control-panel">
+            <!-- Profil Kartı -->
+            <div class="profile-card">
+                <div class="profile-avatar-large" id="profileAvatar">
+                    <span id="profileAvatarText">G</span>
+                    <img id="profileAvatarImg" style="display: none;">
+                </div>
+                <div class="profile-name" id="profileName">Misafir Oyuncu</div>
+                <div class="rating-badge" id="profileRating">
+                    <i class="fas fa-star"></i> 1200
                 </div>
             </div>
 
             <!-- Oyun Modları -->
-            <div class="game-modes">
-                <div class="mode-card" onclick="selectMode('online')">
-                    <div class="mode-icon">
-                        <i class="fas fa-globe"></i>
-                    </div>
-                    <div class="mode-title">ONLINE</div>
-                    <div class="mode-desc">Gerçek oyuncularla eşleş</div>
-                    <div class="mode-badge" id="onlineCount">0 çevrimiçi</div>
-                </div>
-
-                <div class="mode-card" onclick="showPrivateRoom()">
-                    <div class="mode-icon">
-                        <i class="fas fa-lock"></i>
-                    </div>
-                    <div class="mode-title">ÖZEL ODA</div>
-                    <div class="mode-desc">Arkadaşlarınla oyna</div>
-                    <div class="mode-badge">Kod ile katıl</div>
-                </div>
-
-                <div class="mode-card" onclick="showBotOptions()">
-                    <div class="mode-icon">
-                        <i class="fas fa-robot"></i>
-                    </div>
-                    <div class="mode-title">BOT</div>
-                    <div class="mode-desc">Yapay zekaya karşı</div>
-                    <div class="mode-badge">3 zorluk</div>
-                </div>
-            </div>
-
-            <!-- Oda Kodu Giriş -->
-            <div class="room-code-section" id="roomCodeSection">
-                <div class="room-code-title">
-                    <i class="fas fa-key"></i>
-                    <span>Oda Kodunu Gir</span>
-                </div>
-                <div class="code-input-group">
-                    <input type="text" class="code-input" id="roomCodeInput" maxlength="4" placeholder="0000">
-                    <button class="join-btn" onclick="joinPrivateRoom()">
-                        <i class="fas fa-sign-in-alt"></i> Katıl
+            <div class="mode-selector">
+                <div class="mode-title">OYUN MODU</div>
+                <div class="mode-buttons">
+                    <button class="mode-btn active" onclick="setGameMode('bot')">
+                        <i class="fas fa-robot"></i> Bot ile Oyna
+                    </button>
+                    <button class="mode-btn" onclick="setGameMode('private')">
+                        <i class="fas fa-lock"></i> Özel Oda
+                    </button>
+                    <button class="mode-btn" onclick="setGameMode('online')">
+                        <i class="fas fa-globe"></i> Online
                     </button>
                 </div>
             </div>
 
-            <!-- Bot Zorluk Seçenekleri -->
-            <div class="difficulty-selector" id="botDifficulty">
-                <div class="difficulty-card" onclick="selectDifficulty('easy')">
-                    <div class="difficulty-icon">🐣</div>
-                    <div class="difficulty-name">Kolay</div>
-                    <div class="difficulty-desc">Yeni başlayan</div>
-                </div>
-                <div class="difficulty-card selected" onclick="selectDifficulty('medium')">
-                    <div class="difficulty-icon">⚡</div>
-                    <div class="difficulty-name">Orta</div>
-                    <div class="difficulty-desc">Deneyimli</div>
-                </div>
-                <div class="difficulty-card" onclick="selectDifficulty('hard')">
-                    <div class="difficulty-icon">👑</div>
-                    <div class="difficulty-name">Zor</div>
-                    <div class="difficulty-desc">Uzman</div>
-                </div>
-            </div>
-
-            <!-- Lobi -->
-            <div class="lobby-section">
-                <div class="lobby-tabs">
-                    <button class="tab-btn active" onclick="switchTab('players')">
-                        <i class="fas fa-users"></i> Oyuncular
+            <!-- Zorluk Seviyesi (Bot Modu) -->
+            <div class="difficulty-selector" id="difficultySelector">
+                <div class="mode-title">ZORLUK SEVİYESİ</div>
+                <div class="difficulty-buttons">
+                    <button class="difficulty-btn easy" onclick="setDifficulty('easy')">
+                        🐣 Kolay
                     </button>
-                    <button class="tab-btn" onclick="switchTab('rooms')">
-                        <i class="fas fa-door-open"></i> Odalar
+                    <button class="difficulty-btn medium selected" onclick="setDifficulty('medium')">
+                        ⚡ Orta
+                    </button>
+                    <button class="difficulty-btn hard" onclick="setDifficulty('hard')">
+                        👑 Zor
                     </button>
                 </div>
-                <div class="players-list" id="playersList">
-                    <!-- Dinamik doldurulacak -->
-                </div>
-            </div>
-        </div>
-
-        <!-- OYUN EKRANI -->
-        <div class="game-screen" id="gameScreen">
-            <!-- Oyun Header -->
-            <div class="game-header">
-                <div class="players-score">
-                    <div class="score-card">
-                        <div class="score-avatar">
-                            <span id="gamePlayer1Avatar">S</span>
-                            <span class="potted-badge" id="player1Potted">0</span>
-                        </div>
-                        <div>
-                            <div id="gamePlayer1Name">Sen</div>
-                            <div style="font-size: 12px; color: #8f9bb3;" id="player1Type">Düz</div>
-                        </div>
-                    </div>
-                    <div class="vs-divider">VS</div>
-                    <div class="score-card">
-                        <div class="score-avatar">
-                            <span id="gamePlayer2Avatar">B</span>
-                            <span class="potted-badge" id="player2Potted">0</span>
-                        </div>
-                        <div>
-                            <div id="gamePlayer2Name">Rakip</div>
-                            <div style="font-size: 12px; color: #8f9bb3;" id="player2Type">Çizgili</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="turn-indicator" id="turnIndicator">Senin Sıran</div>
             </div>
 
-            <!-- Bilardo Masası -->
-            <div class="table-container">
-                <canvas id="gameCanvas"></canvas>
+            <!-- Oda Kodu (Özel Oda Modu) -->
+            <div class="difficulty-selector" id="roomSelector" style="display: none;">
+                <div class="mode-title">ODA KODU</div>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" class="room-input" id="roomCode" maxlength="4" placeholder="0000" style="flex:1; background: var(--bg-secondary); border: none; border-radius: 15px; padding: 15px; color: white; text-align: center; font-size: 24px; letter-spacing: 5px;">
+                    <button class="control-btn primary" onclick="joinRoom()" style="padding: 15px;">
+                        <i class="fas fa-sign-in-alt"></i>
+                    </button>
+                </div>
+                <button class="control-btn" onclick="createRoom()" style="margin-top: 10px; width: 100%;">
+                    <i class="fas fa-plus"></i> Oda Oluştur
+                </button>
             </div>
 
-            <!-- Vuruş Kontrolleri -->
-            <div class="shot-controls">
-                <div class="power-meter">
-                    <div class="power-label">
-                        <span>Vuruş Gücü</span>
-                        <span id="powerValue">50%</span>
-                    </div>
-                    <div class="power-bar">
-                        <div class="power-fill" id="powerFill" style="width: 50%;"></div>
-                    </div>
-                </div>
+            <!-- Oyun Kontrolleri -->
+            <div class="game-controls">
                 <div class="angle-indicator">
-                    <div class="angle-circle" id="angleValue">0°</div>
-                    <i class="fas fa-arrow-right"></i>
+                    <div class="angle-value" id="angleDisplay">0°</div>
+                    <div style="font-size: 12px; color: var(--text-secondary);">Vuruş Açısı</div>
                 </div>
-                <button class="game-btn" onclick="takeShot()" id="shotBtn">
-                    <i class="fas fa-bullseye"></i> VUR
-                </button>
-                <button class="game-btn secondary" onclick="exitGame()">
-                    <i class="fas fa-sign-out-alt"></i>
-                </button>
+                <div class="control-buttons">
+                    <button class="control-btn" onclick="resetWhiteBall()" id="resetBtn">
+                        <i class="fas fa-undo-alt"></i> Sıfırla
+                    </button>
+                    <button class="control-btn primary" onclick="takeShot()" id="shotBtn" disabled>
+                        <i class="fas fa-bullseye"></i> VUR
+                    </button>
+                </div>
+            </div>
+
+            <!-- Top Listesi -->
+            <div class="balls-list">
+                <div class="mode-title">TOPLAR</div>
+                <div class="balls-grid" id="ballsGrid">
+                    <!-- JavaScript ile doldurulacak -->
+                </div>
             </div>
         </div>
     </div>
 
+    <!-- Mesaj Merkezi -->
+    <div class="message-center" id="messageCenter"></div>
+
     <script>
         // ==================== TELEGRAM ENTEGRASYONU ====================
-        let tg = window.Telegram?.WebApp;
-        let playerData = {
+        const tg = window.Telegram?.WebApp;
+        const playerData = {
             id: null,
-            username: 'Guest',
+            username: 'Misafir Oyuncu',
             photo: null,
             platform: 'web',
-            rating: 1000,
-            wins: 0,
-            games: 0
+            rating: 1200
         };
 
         // Telegram kontrolü
@@ -846,238 +737,98 @@
             tg.ready();
             tg.expand();
             
-            const initData = tg.initDataUnsafe?.user;
-            if (initData) {
-                playerData.username = initData.first_name + (initData.last_name ? ' ' + initData.last_name : '');
-                playerData.photo = initData.photo_url;
+            const user = tg.initDataUnsafe?.user;
+            if (user) {
+                playerData.username = user.first_name + (user.last_name ? ' ' + user.last_name : '');
+                playerData.photo = user.photo_url;
                 playerData.platform = 'telegram';
-                playerData.id = initData.id;
+                playerData.id = user.id;
                 
-                document.getElementById('platformBadge').innerHTML = '<i class="fab fa-telegram"></i>';
+                document.getElementById('player1Badge').style.display = 'flex';
+                document.getElementById('profileName').textContent = playerData.username;
+                
                 if (playerData.photo) {
-                    document.getElementById('avatarImg').src = playerData.photo;
-                    document.getElementById('avatarImg').style.display = 'block';
-                    document.getElementById('avatarText').style.display = 'none';
-                } else {
-                    document.getElementById('avatarText').textContent = playerData.username.charAt(0);
+                    document.getElementById('player1AvatarImg').src = playerData.photo;
+                    document.getElementById('player1AvatarImg').style.display = 'block';
+                    document.getElementById('player1AvatarText').style.display = 'none';
+                    
+                    document.getElementById('profileAvatarImg').src = playerData.photo;
+                    document.getElementById('profileAvatarImg').style.display = 'block';
+                    document.getElementById('profileAvatarText').style.display = 'none';
                 }
             }
-        } else {
-            document.getElementById('avatarText').textContent = 'G';
         }
 
-        document.getElementById('playerName').textContent = playerData.username;
-        document.getElementById('playerRating').textContent = playerData.rating;
-
-        // ==================== WEB SOCKET BAĞLANTISI ====================
-        const ws = new WebSocket('wss://saskioyunu-1-2d6i.onrender.com');
-        let currentRoom = null;
-        let gameMode = null;
-        let botDifficulty = 'medium';
-
-        ws.onopen = () => {
-            showMessage('Sunucuya bağlandı', 'success');
-            
-            // Oyuncu kaydı
-            ws.send(JSON.stringify({
-                type: 'REGISTER',
-                data: playerData
-            }));
-        };
-
-        ws.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            console.log('Sunucu:', data);
-
-            switch(data.type) {
-                case 'REGISTER_SUCCESS':
-                    playerData.id = data.data.playerId;
-                    break;
-
-                case 'LOBBY_UPDATE':
-                    updateLobby(data.data);
-                    break;
-
-                case 'MATCH_FOUND':
-                    showMessage('Rakip bulundu! Oyun başlıyor...', 'success');
-                    currentRoom = data.data.roomCode;
-                    setTimeout(() => {
-                        startGame('online', data.data.opponent);
-                    }, 2000);
-                    break;
-
-                case 'ROOM_CREATED':
-                    currentRoom = data.data.roomCode;
-                    showMessage(`Oda oluşturuldu: ${data.data.roomCode}`, 'success');
-                    document.getElementById('roomCodeInput').value = data.data.roomCode;
-                    break;
-
-                case 'PLAYER_JOINED':
-                    updateRoomPlayers(data.data.players);
-                    break;
-
-                case 'GAME_START':
-                    startGame(data.data.isBotGame ? 'bot' : 'online', null, data.data);
-                    break;
-
-                case 'GAME_UPDATE':
-                    updateGame(data.data);
-                    break;
-
-                case 'GAME_OVER':
-                    gameOver(data.data);
-                    break;
-
-                case 'PLAYER_LEFT':
-                    showMessage('Rakip oyundan ayrıldı', 'warning');
-                    exitGame();
-                    break;
-
-                case 'PONG':
-                    console.log('Pong');
-                    break;
-            }
-        };
-
-        ws.onclose = () => {
-            showMessage('Sunucu bağlantısı koptu. Yeniden bağlanılıyor...', 'error');
-            setTimeout(() => window.location.reload(), 3000);
-        };
-
-        // ==================== LOBBY FONKSİYONLARI ====================
-        function selectMode(mode) {
-            gameMode = mode;
-            
-            switch(mode) {
-                case 'online':
-                    document.getElementById('loadingOverlay').style.display = 'flex';
-                    showMessage('Rakip aranıyor...', 'info');
-                    
-                    ws.send(JSON.stringify({
-                        type: 'JOIN_MATCHMAKING',
-                        mode: '8ball'
-                    }));
-                    break;
-                    
-                case 'private':
-                    document.getElementById('roomCodeSection').style.display = 'block';
-                    break;
-            }
-        }
-
-        function showPrivateRoom() {
-            document.getElementById('loadingOverlay').style.display = 'flex';
-            
-            ws.send(JSON.stringify({
-                type: 'CREATE_PRIVATE_ROOM',
-                difficulty: botDifficulty
-            }));
-        }
-
-        function joinPrivateRoom() {
-            const code = document.getElementById('roomCodeInput').value;
-            if (code.length === 4) {
-                document.getElementById('loadingOverlay').style.display = 'flex';
+        // ==================== YÜKLEME EKRANI ====================
+        let loadingProgress = 0;
+        const loadingInterval = setInterval(() => {
+            loadingProgress += Math.random() * 30;
+            if (loadingProgress >= 100) {
+                loadingProgress = 100;
+                clearInterval(loadingInterval);
                 
-                ws.send(JSON.stringify({
-                    type: 'JOIN_PRIVATE_ROOM',
-                    roomCode: code
-                }));
-            } else {
-                showMessage('Geçerli bir oda kodu girin', 'error');
+                setTimeout(() => {
+                    document.getElementById('loadingScreen').style.opacity = '0';
+                    setTimeout(() => {
+                        document.getElementById('loadingScreen').style.display = 'none';
+                        document.getElementById('gameContainer').classList.add('visible');
+                    }, 500);
+                }, 500);
             }
-        }
-
-        function showBotOptions() {
-            document.getElementById('botDifficulty').style.display = 'grid';
-        }
-
-        function selectDifficulty(level) {
-            botDifficulty = level;
-            document.querySelectorAll('.difficulty-card').forEach(c => c.classList.remove('selected'));
-            event.currentTarget.classList.add('selected');
             
-            document.getElementById('loadingOverlay').style.display = 'flex';
+            document.getElementById('loadingProgress').style.width = loadingProgress + '%';
             
-            ws.send(JSON.stringify({
-                type: 'JOIN_BOT_GAME',
-                difficulty: level
-            }));
-        }
-
-        function switchTab(tab) {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            event.currentTarget.classList.add('active');
-            
-            if (tab === 'players') {
-                // Oyuncu listesini göster
+            if (loadingProgress < 30) {
+                document.getElementById('loadingText').textContent = 'Bilardo masası hazırlanıyor...';
+            } else if (loadingProgress < 60) {
+                document.getElementById('loadingText').textContent = 'Toplar diziliyor...';
+            } else if (loadingProgress < 90) {
+                document.getElementById('loadingText').textContent = 'Bot yapay zeka yükleniyor...';
             } else {
-                // Oda listesini göster
+                document.getElementById('loadingText').textContent = 'Oyuna hazır!';
             }
-        }
+        }, 100);
 
-        function updateLobby(data) {
-            document.getElementById('onlineCount').textContent = data.onlinePlayers.length + ' çevrimiçi';
-            
-            const playersList = document.getElementById('playersList');
-            playersList.innerHTML = '';
-            
-            data.onlinePlayers.forEach(player => {
-                const row = document.createElement('div');
-                row.className = 'player-row';
-                row.innerHTML = `
-                    <div class="player-row-info">
-                        <div class="row-avatar">${player.username.charAt(0)}</div>
-                        <div>
-                            <div style="font-weight: 600;">${player.username}</div>
-                            <div style="font-size: 12px; color: #8f9bb3;">${player.rating} rating</div>
-                        </div>
-                    </div>
-                    <div>
-                        <span class="status-badge status-${player.status}">
-                            ${player.status === 'online' ? '🟢 Çevrimiçi' : '🎮 Oyunda'}
-                        </span>
-                    </div>
-                `;
-                playersList.appendChild(row);
-            });
-            
-            document.getElementById('loadingOverlay').style.display = 'none';
-        }
-
-        // ==================== OYUN FONKSİYONLARI ====================
+        // ==================== OYUN DEĞİŞKENLERİ ====================
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         
-        let gameData = null;
-        let isMyTurn = false;
-        let shotPower = 50;
-        let shotAngle = 0;
+        // Oyun durumu
+        let gameMode = 'bot';
+        let botDifficulty = 'medium';
+        let currentPlayer = 'player';
+        let gameState = 'aiming'; // aiming, shooting, moving, gameOver
+        let gameOver = false;
+        
+        // Fizik değişkenleri
+        let balls = [];
+        let whiteBall = null;
+        let playerPotted = [];
+        let opponentPotted = [];
+        
+        // Vuruş değişkenleri
         let isDragging = false;
+        let dragStart = { x: 0, y: 0 };
+        let dragEnd = { x: 0, y: 0 };
+        let shotPower = 0;
+        let shotAngle = 0;
+        let isAiming = true;
+        
+        // Masa boyutları
+        let tableWidth, tableHeight;
+        const pocketRadius = 30;
+        const ballRadius = 15;
+        const friction = 0.98;
+        const minSpeed = 0.5;
 
-        function startGame(type, opponent, data) {
-            document.getElementById('lobbyScreen').style.display = 'none';
-            document.getElementById('gameScreen').style.display = 'block';
-            
-            if (data) {
-                gameData = data;
-            }
-            
-            if (opponent) {
-                document.getElementById('gamePlayer2Name').textContent = opponent.username;
-            }
-            
-            resizeCanvas();
-            initGame();
-        }
-
-        function resizeCanvas() {
-            const container = document.querySelector('.table-container');
-            canvas.width = container.clientWidth;
-            canvas.height = container.clientHeight;
-        }
-
+        // ==================== OYUNU BAŞLAT ====================
         function initGame() {
+            resizeCanvas();
+            createBalls();
+            updateBallsGrid();
+            draw();
+            requestAnimationFrame(gameLoop);
+            
             // Canvas olayları
             canvas.addEventListener('mousedown', startDrag);
             canvas.addEventListener('mousemove', onDrag);
@@ -1086,24 +837,379 @@
             canvas.addEventListener('touchmove', onDrag);
             canvas.addEventListener('touchend', endDrag);
             
-            draw();
+            showMessage('Bot ile oyuna başla!', 'info');
         }
 
+        // Canvas boyutlandır
+        function resizeCanvas() {
+            const container = document.querySelector('.table-wrapper');
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            tableWidth = canvas.width;
+            tableHeight = canvas.height;
+        }
+
+        // Topları oluştur
+        function createBalls() {
+            balls = [];
+            
+            // Beyaz top
+            whiteBall = {
+                id: 0,
+                x: tableWidth * 0.25,
+                y: tableHeight / 2,
+                vx: 0,
+                vy: 0,
+                radius: ballRadius,
+                color: '#FFFFFF',
+                number: 0,
+                type: 'white',
+                potted: false
+            };
+            balls.push(whiteBall);
+
+            // Düz toplar (1-7)
+            const solidColors = ['#F1C40F', '#3498DB', '#E74C3C', '#9B59B6', '#E67E22', '#2ECC71', '#8B4513'];
+            for (let i = 0; i < 7; i++) {
+                balls.push({
+                    id: i + 1,
+                    x: tableWidth * 0.7 + Math.cos(i * 0.8) * ballRadius * 3,
+                    y: tableHeight * 0.4 + Math.sin(i * 0.8) * ballRadius * 2,
+                    vx: 0,
+                    vy: 0,
+                    radius: ballRadius,
+                    color: solidColors[i],
+                    number: i + 1,
+                    type: 'solid',
+                    potted: false
+                });
+            }
+
+            // Çizgili toplar (9-15)
+            const stripedColors = ['#F1C40F', '#3498DB', '#E74C3C', '#9B59B6', '#E67E22', '#2ECC71', '#8B4513'];
+            for (let i = 0; i < 7; i++) {
+                balls.push({
+                    id: i + 9,
+                    x: tableWidth * 0.7 + Math.cos(i * 0.8 + 0.4) * ballRadius * 4,
+                    y: tableHeight * 0.6 + Math.sin(i * 0.8 + 0.4) * ballRadius * 2,
+                    vx: 0,
+                    vy: 0,
+                    radius: ballRadius,
+                    color: stripedColors[i],
+                    number: i + 9,
+                    type: 'striped',
+                    potted: false,
+                    striped: true
+                });
+            }
+
+            // 8 top
+            balls.push({
+                id: 8,
+                x: tableWidth * 0.7,
+                y: tableHeight * 0.5,
+                vx: 0,
+                vy: 0,
+                radius: ballRadius,
+                color: '#000000',
+                number: 8,
+                type: 'black',
+                potted: false
+            });
+        }
+
+        // ==================== OYUN DÖNGÜSÜ ====================
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        function update() {
+            if (gameOver) return;
+
+            let anyMoving = false;
+            
+            // Top hareketleri
+            balls.forEach(ball => {
+                if (ball.potted) return;
+                
+                if (Math.abs(ball.vx) > minSpeed || Math.abs(ball.vy) > minSpeed) {
+                    anyMoving = true;
+                    
+                    // Sürtünme
+                    ball.vx *= friction;
+                    ball.vy *= friction;
+                    
+                    // Pozisyon güncelle
+                    ball.x += ball.vx;
+                    ball.y += ball.vy;
+                    
+                    // Kenar çarpışmaları
+                    if (ball.x - ball.radius < 0) {
+                        ball.x = ball.radius;
+                        ball.vx *= -0.8;
+                    }
+                    if (ball.x + ball.radius > tableWidth) {
+                        ball.x = tableWidth - ball.radius;
+                        ball.vx *= -0.8;
+                    }
+                    if (ball.y - ball.radius < 0) {
+                        ball.y = ball.radius;
+                        ball.vy *= -0.8;
+                    }
+                    if (ball.y + ball.radius > tableHeight) {
+                        ball.y = tableHeight - ball.radius;
+                        ball.vy *= -0.8;
+                    }
+                }
+            });
+
+            // Top çarpışmaları
+            for (let i = 0; i < balls.length; i++) {
+                for (let j = i + 1; j < balls.length; j++) {
+                    if (balls[i].potted || balls[j].potted) continue;
+                    
+                    const dx = balls[j].x - balls[i].x;
+                    const dy = balls[j].y - balls[i].y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < ballRadius * 2) {
+                        // Çarpışma açısı
+                        const angle = Math.atan2(dy, dx);
+                        const sin = Math.sin(angle);
+                        const cos = Math.cos(angle);
+                        
+                        // Hız vektörlerini döndür
+                        const vx1 = balls[i].vx * cos + balls[i].vy * sin;
+                        const vy1 = balls[i].vy * cos - balls[i].vx * sin;
+                        const vx2 = balls[j].vx * cos + balls[j].vy * sin;
+                        const vy2 = balls[j].vy * cos - balls[j].vx * sin;
+                        
+                        // Çarpışma sonrası hızlar
+                        const vx1Final = vx2;
+                        const vx2Final = vx1;
+                        
+                        // Geri döndür
+                        balls[i].vx = vx1Final * cos - vy1 * sin;
+                        balls[i].vy = vy1 * cos + vx1Final * sin;
+                        balls[j].vx = vx2Final * cos - vy2 * sin;
+                        balls[j].vy = vy2 * cos + vx2Final * sin;
+                        
+                        // Topları ayır
+                        const overlap = (ballRadius * 2) - distance;
+                        const moveX = Math.cos(angle) * overlap / 2;
+                        const moveY = Math.sin(angle) * overlap / 2;
+                        
+                        balls[i].x -= moveX;
+                        balls[i].y -= moveY;
+                        balls[j].x += moveX;
+                        balls[j].y += moveY;
+                    }
+                }
+            }
+
+            // Cep kontrolü
+            checkPockets();
+
+            // Hareket bittiğinde
+            if (!anyMoving && gameState === 'moving') {
+                endTurn();
+            }
+
+            // Bot sırası
+            if (currentPlayer === 'bot' && gameMode === 'bot' && !anyMoving && gameState !== 'gameOver') {
+                setTimeout(botTakeShot, 500);
+            }
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Cepleri çiz
+            drawPockets();
+            
+            // Topları çiz
+            balls.forEach(ball => {
+                if (!ball.potted) {
+                    drawBall(ball);
+                }
+            });
+            
+            // Nişan çizgisi
+            if (currentPlayer === 'player' && isDragging && gameState === 'aiming') {
+                drawAimLine();
+            }
+        }
+
+        function drawBall(ball) {
+            ctx.beginPath();
+            ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+            
+            // Top rengi
+            ctx.fillStyle = ball.color;
+            ctx.fill();
+            
+            // Gölge
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+            ctx.shadowBlur = 10;
+            
+            // Parlaklık
+            ctx.shadowColor = 'rgba(255, 255, 255, 0.3)';
+            
+            // Numara
+            if (ball.number > 0 && ball.number !== 8) {
+                ctx.fillStyle = ball.striped ? 'black' : 'white';
+                ctx.font = 'bold 14px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(ball.number, ball.x, ball.y);
+            } else if (ball.number === 8) {
+                ctx.fillStyle = 'white';
+                ctx.font = 'bold 14px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('8', ball.x, ball.y);
+            }
+            
+            ctx.shadowBlur = 0;
+        }
+
+        function drawPockets() {
+            const pockets = [
+                [pocketRadius, pocketRadius],
+                [tableWidth/2, pocketRadius],
+                [tableWidth - pocketRadius, pocketRadius],
+                [pocketRadius, tableHeight - pocketRadius],
+                [tableWidth/2, tableHeight - pocketRadius],
+                [tableWidth - pocketRadius, tableHeight - pocketRadius]
+            ];
+            
+            ctx.fillStyle = '#000000';
+            ctx.shadowColor = 'rgba(0,0,0,0.5)';
+            ctx.shadowBlur = 15;
+            
+            pockets.forEach(([x, y]) => {
+                ctx.beginPath();
+                ctx.arc(x, y, pocketRadius, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            
+            ctx.shadowBlur = 0;
+        }
+
+        function drawAimLine() {
+            if (!dragStart || !dragEnd) return;
+            
+            // Ana çizgi
+            ctx.beginPath();
+            ctx.strokeStyle = '#FFFFFF';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([10, 10]);
+            ctx.moveTo(dragStart.x, dragStart.y);
+            ctx.lineTo(dragEnd.x, dragEnd.y);
+            ctx.stroke();
+            
+            // Hedef noktası
+            ctx.beginPath();
+            ctx.arc(dragEnd.x, dragEnd.y, 10, 0, Math.PI * 2);
+            ctx.strokeStyle = '#FFFFFF';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([]);
+            ctx.stroke();
+            
+            // Beyaz top çevresi
+            ctx.beginPath();
+            ctx.arc(dragStart.x, dragStart.y, 40, 0, Math.PI * 2);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.stroke();
+        }
+
+        // ==================== CEP KONTROLÜ ====================
+        function checkPockets() {
+            const pockets = [
+                [pocketRadius, pocketRadius],
+                [tableWidth/2, pocketRadius],
+                [tableWidth - pocketRadius, pocketRadius],
+                [pocketRadius, tableHeight - pocketRadius],
+                [tableWidth/2, tableHeight - pocketRadius],
+                [tableWidth - pocketRadius, tableHeight - pocketRadius]
+            ];
+            
+            balls.forEach(ball => {
+                if (ball.potted) return;
+                
+                pockets.forEach(([px, py]) => {
+                    const dx = ball.x - px;
+                    const dy = ball.y - py;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (dist < pocketRadius) {
+                        ball.potted = true;
+                        
+                        if (ball.id === 0) {
+                            // Beyaz top düştü
+                            showMessage('Beyaz top düştü! Rakip sırada', 'warning');
+                            currentPlayer = 'bot';
+                            document.getElementById('turnIndicator').textContent = 'BOT SIRASI';
+                            resetWhiteBall();
+                        } else {
+                            // Skor güncelle
+                            if (ball.type === 'solid') {
+                                playerPotted.push(ball);
+                                document.getElementById('player1Potted').textContent = playerPotted.length;
+                                showMessage('Top pot ettin!', 'success');
+                            } else {
+                                opponentPotted.push(ball);
+                                document.getElementById('player2Potted').textContent = opponentPotted.length;
+                            }
+                            
+                            // 8 top kontrolü
+                            if (ball.id === 8) {
+                                gameOver = true;
+                                gameState = 'gameOver';
+                                
+                                if (playerPotted.length === 7) {
+                                    showMessage('🎉 TEBRİKLER! KAZANDIN!', 'success');
+                                } else {
+                                    showMessage('😢 Kaybettin! Tekrar dene!', 'error');
+                                }
+                            }
+                        }
+                        
+                        updateBallsGrid();
+                    }
+                });
+            });
+        }
+
+        // ==================== VURUŞ MEKANİĞİ ====================
         function startDrag(e) {
             e.preventDefault();
-            if (!isMyTurn) return;
+            if (currentPlayer !== 'player' || gameState !== 'aiming') return;
             
-            isDragging = true;
             const pos = getMousePos(e);
-            dragStart = pos;
+            
+            // Beyaz topa tıklandı mı?
+            const dx = pos.x - whiteBall.x;
+            const dy = pos.y - whiteBall.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            
+            if (dist < ballRadius * 2) {
+                isDragging = true;
+                dragStart = { x: whiteBall.x, y: whiteBall.y };
+                dragEnd = pos;
+                
+                document.getElementById('powerMeter').style.display = 'block';
+                document.getElementById('shotBtn').disabled = false;
+            }
         }
 
         function onDrag(e) {
             e.preventDefault();
-            if (!isDragging || !isMyTurn) return;
+            if (!isDragging) return;
             
-            const pos = getMousePos(e);
-            dragEnd = pos;
+            dragEnd = getMousePos(e);
             
             // Açı hesapla
             const dx = dragEnd.x - dragStart.x;
@@ -1111,22 +1217,27 @@
             shotAngle = Math.atan2(dy, dx);
             
             // Güç hesapla
-            const distance = Math.sqrt(dx*dx + dy*dy);
+            const distance = Math.sqrt(dx * dx + dy * dy);
             shotPower = Math.min(100, distance / 5);
             
-            document.getElementById('powerFill').style.width = shotPower + '%';
-            document.getElementById('powerValue').textContent = Math.round(shotPower) + '%';
-            document.getElementById('angleValue').textContent = Math.round(shotAngle * 180 / Math.PI) + '°';
-            
-            draw();
+            // UI güncelle
+            document.getElementById('powerBarFill').style.width = shotPower + '%';
+            document.getElementById('powerPercent').textContent = Math.round(shotPower) + '%';
+            document.getElementById('angleDisplay').textContent = Math.round(shotAngle * 180 / Math.PI) + '°';
         }
 
         function endDrag(e) {
             e.preventDefault();
-            if (!isDragging || !isMyTurn) return;
+            if (!isDragging) return;
             
             isDragging = false;
-            takeShot();
+            
+            if (shotPower > 10) {
+                takeShot();
+            } else {
+                document.getElementById('powerMeter').style.display = 'none';
+                document.getElementById('shotBtn').disabled = true;
+            }
         }
 
         function getMousePos(e) {
@@ -1151,200 +1262,194 @@
         }
 
         function takeShot() {
-            if (!isMyTurn) return;
+            if (currentPlayer !== 'player' || gameState !== 'aiming') return;
             
-            ws.send(JSON.stringify({
-                type: 'PLAYER_ACTION',
-                action: {
-                    ballId: 0,
-                    power: shotPower / 100,
-                    angle: shotAngle,
-                    cueX: dragStart?.x,
-                    cueY: dragStart?.y
-                }
-            }));
+            // Beyaz topa vuruş
+            whiteBall.vx = Math.cos(shotAngle) * shotPower * 0.5;
+            whiteBall.vy = Math.sin(shotAngle) * shotPower * 0.5;
             
-            isMyTurn = false;
-            document.getElementById('turnIndicator').textContent = 'Rakibin Sırası';
+            gameState = 'moving';
+            currentPlayer = 'bot';
+            document.getElementById('turnIndicator').textContent = 'BOT SIRASI';
+            document.getElementById('powerMeter').style.display = 'none';
+            document.getElementById('shotBtn').disabled = true;
+            
+            showMessage('Vuruş yapıldı!', 'info');
         }
 
-        function updateGame(data) {
-            gameData = data;
+        // ==================== BOT YAPAY ZEKA ====================
+        function botTakeShot() {
+            if (currentPlayer !== 'bot' || gameMode !== 'bot') return;
             
-            // Sıra kontrolü
-            if (data.currentPlayer === playerData.id) {
-                isMyTurn = true;
-                document.getElementById('turnIndicator').textContent = 'Senin Sıran';
-            } else {
-                isMyTurn = false;
-                document.getElementById('turnIndicator').textContent = 'Rakibin Sırası';
-            }
+            gameState = 'thinking';
+            document.getElementById('turnIndicator').textContent = 'BOT DÜŞÜNÜYOR...';
             
-            // Skorları güncelle
-            updateScores(data);
-            
-            draw();
-        }
-
-        function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            if (!gameData?.balls) return;
-            
-            // Cepleri çiz
-            drawPockets();
-            
-            // Topları çiz
-            gameData.balls.forEach(ball => {
-                if (!ball.potted) {
-                    drawBall(ball);
-                }
-            });
-            
-            // Nişan çizgisi
-            if (isMyTurn && isDragging && dragStart) {
-                drawAimLine();
-            }
-        }
-
-        function drawBall(ball) {
-            ctx.beginPath();
-            ctx.arc(ball.x, ball.y, ball.radius || 15, 0, Math.PI * 2);
-            
-            // Top rengi
-            if (ball.type === 'white') {
-                ctx.fillStyle = '#ffffff';
-            } else if (ball.type === 'black') {
-                ctx.fillStyle = '#000000';
-            } else {
-                ctx.fillStyle = ball.color || '#ffff00';
-            }
-            
-            ctx.fill();
-            
-            // Parlaklık efekti
-            ctx.shadowColor = 'rgba(255, 255, 255, 0.5)';
-            ctx.shadowBlur = 10;
-            
-            // Top numarası
-            if (ball.number && ball.number !== 0) {
-                ctx.fillStyle = ball.type === 'striped' ? '#ffffff' : '#000000';
-                ctx.font = 'bold 12px Arial';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(ball.number, ball.x, ball.y);
-            }
-            
-            ctx.shadowBlur = 0;
-        }
-
-        function drawPockets() {
-            const pockets = [
-                [50, 50], [canvas.width/2, 50], [canvas.width-50, 50],
-                [50, canvas.height-50], [canvas.width/2, canvas.height-50], [canvas.width-50, canvas.height-50]
-            ];
-            
-            ctx.fillStyle = '#000000';
-            pockets.forEach(([x, y]) => {
-                ctx.beginPath();
-                ctx.arc(x, y, 25, 0, Math.PI * 2);
-                ctx.fill();
+            setTimeout(() => {
+                // Bot zorluğuna göre vuruş
+                let accuracy = 0.7; // medium
+                if (botDifficulty === 'easy') accuracy = 0.4;
+                if (botDifficulty === 'hard') accuracy = 0.9;
                 
-                ctx.shadowColor = 'rgba(0,0,0,0.5)';
-                ctx.shadowBlur = 15;
-                ctx.fill();
-                ctx.shadowBlur = 0;
-            });
+                // Hedef top bul
+                const targetBalls = balls.filter(b => !b.potted && b.type !== 'white');
+                if (targetBalls.length === 0) return;
+                
+                // Rastgele hedef
+                const target = targetBalls[Math.floor(Math.random() * targetBalls.length)];
+                
+                // Açı hesapla (biraz hata payı ile)
+                const dx = target.x - whiteBall.x;
+                const dy = target.y - whiteBall.y;
+                let angle = Math.atan2(dy, dx);
+                
+                // Hata payı ekle
+                angle += (Math.random() - 0.5) * (1 - accuracy) * 0.5;
+                
+                // Güç hesapla
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                let power = Math.min(80, distance * 0.3);
+                power *= accuracy + Math.random() * 0.2;
+                
+                // Vuruş
+                whiteBall.vx = Math.cos(angle) * power * 0.3;
+                whiteBall.vy = Math.sin(angle) * power * 0.3;
+                
+                gameState = 'moving';
+                currentPlayer = 'player';
+                document.getElementById('turnIndicator').textContent = 'SENİN SIRAN';
+                
+                showMessage('Bot vuruş yaptı!', 'info');
+            }, 1000);
         }
 
-        function drawAimLine() {
-            if (!dragStart || !dragEnd) return;
+        function endTurn() {
+            gameState = 'aiming';
             
-            ctx.beginPath();
-            ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 2;
-            ctx.setLineDash([10, 10]);
-            ctx.moveTo(dragStart.x, dragStart.y);
-            ctx.lineTo(dragEnd.x, dragEnd.y);
-            ctx.stroke();
-            
-            // Beyaz topun etrafında daire
-            ctx.beginPath();
-            ctx.arc(dragStart.x, dragStart.y, 30, 0, Math.PI * 2);
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
-            ctx.lineWidth = 2;
-            ctx.setLineDash([]);
-            ctx.stroke();
-        }
-
-        function updateScores(data) {
-            // Oyuncu topları
-            const playerBalls = data.balls.filter(b => 
-                (playerData.id === data.players[0] && b.type === 'solid') ||
-                (playerData.id === data.players[1] && b.type === 'striped')
-            );
-            
-            const pottedCount = playerBalls.filter(b => b.potted).length;
-            document.getElementById('player1Potted').textContent = pottedCount;
-        }
-
-        function gameOver(data) {
-            if (data.winner === playerData.id) {
-                showMessage('Tebrikler! Kazandın! 🏆', 'success');
-            } else {
-                showMessage('Kaybettin! Tekrar dene!', 'error');
+            // Beyaz top hareket etmiyorsa
+            if (Math.abs(whiteBall.vx) < minSpeed && Math.abs(whiteBall.vy) < minSpeed) {
+                whiteBall.vx = 0;
+                whiteBall.vy = 0;
             }
-            
-            setTimeout(exitGame, 3000);
-        }
-
-        function exitGame() {
-            if (currentRoom) {
-                ws.send(JSON.stringify({
-                    type: 'LEAVE_ROOM'
-                }));
-            }
-            
-            document.getElementById('lobbyScreen').style.display = 'block';
-            document.getElementById('gameScreen').style.display = 'none';
-            currentRoom = null;
         }
 
         // ==================== YARDIMCI FONKSİYONLAR ====================
-        function showMessage(text, type) {
-            const box = document.getElementById('messageBox');
-            const msg = document.createElement('div');
-            msg.className = `message ${type}`;
-            msg.innerHTML = `
-                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'times-circle' : 'info-circle'}"></i>
-                ${text}
-            `;
-            box.appendChild(msg);
+        function resetWhiteBall() {
+            if (currentPlayer !== 'player') return;
             
-            setTimeout(() => msg.remove(), 3000);
+            whiteBall.x = tableWidth * 0.25;
+            whiteBall.y = tableHeight / 2;
+            whiteBall.vx = 0;
+            whiteBall.vy = 0;
+            whiteBall.potted = false;
         }
 
-        function updateRoomPlayers(players) {
-            showMessage(`${players.length}/2 oyuncu katıldı`, 'info');
+        function updateBallsGrid() {
+            const grid = document.getElementById('ballsGrid');
+            grid.innerHTML = '';
+            
+            const solidBalls = balls.filter(b => b.type === 'solid' && b.number !== 8);
+            const stripedBalls = balls.filter(b => b.type === 'striped');
+            const blackBall = balls.find(b => b.id === 8);
+            
+            [...solidBalls, blackBall, ...stripedBalls].forEach(ball => {
+                const div = document.createElement('div');
+                div.className = `ball-item ${ball.potted ? 'potted' : ''}`;
+                div.style.background = ball.color;
+                div.textContent = ball.number || '';
+                grid.appendChild(div);
+            });
         }
 
-        // Pencere yeniden boyutlandığında
-        window.addEventListener('resize', () => {
-            if (gameData) {
-                resizeCanvas();
-                draw();
+        function showMessage(text, type) {
+            const center = document.getElementById('messageCenter');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            let icon = 'info-circle';
+            if (type === 'success') icon = 'check-circle';
+            if (type === 'error') icon = 'times-circle';
+            if (type === 'warning') icon = 'exclamation-triangle';
+            
+            toast.innerHTML = `<i class="fas fa-${icon}"></i> ${text}`;
+            center.appendChild(toast);
+            
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // ==================== MOD DEĞİŞTİRME ====================
+        function setGameMode(mode) {
+            gameMode = mode;
+            
+            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            
+            if (mode === 'bot') {
+                document.getElementById('difficultySelector').style.display = 'block';
+                document.getElementById('roomSelector').style.display = 'none';
+            } else if (mode === 'private') {
+                document.getElementById('difficultySelector').style.display = 'none';
+                document.getElementById('roomSelector').style.display = 'block';
+            } else {
+                document.getElementById('difficultySelector').style.display = 'none';
+                document.getElementById('roomSelector').style.display = 'none';
+                showMessage('Online mod yakında!', 'info');
             }
+        }
+
+        function setDifficulty(level) {
+            botDifficulty = level;
+            
+            document.querySelectorAll('.difficulty-btn').forEach(btn => btn.classList.remove('selected'));
+            event.currentTarget.classList.add('selected');
+            
+            let botName = 'Bot ';
+            if (level === 'easy') botName += 'Kolay 🐣';
+            if (level === 'medium') botName += 'Orta ⚡';
+            if (level === 'hard') botName += 'Zor 👑';
+            
+            document.getElementById('player2Name').textContent = botName;
+            
+            resetGame();
+        }
+
+        function resetGame() {
+            createBalls();
+            playerPotted = [];
+            opponentPotted = [];
+            currentPlayer = 'player';
+            gameState = 'aiming';
+            gameOver = false;
+            
+            document.getElementById('player1Potted').textContent = '0';
+            document.getElementById('player2Potted').textContent = '0';
+            document.getElementById('turnIndicator').textContent = 'SENİN SIRAN';
+            
+            updateBallsGrid();
+        }
+
+        function createRoom() {
+            const code = Math.floor(1000 + Math.random() * 9000);
+            document.getElementById('roomCode').value = code;
+            showMessage(`Oda kodu: ${code}`, 'success');
+        }
+
+        function joinRoom() {
+            const code = document.getElementById('roomCode').value;
+            if (code.length === 4) {
+                showMessage(`${code} kodlu odaya katılındı!`, 'success');
+            } else {
+                showMessage('Geçerli kod girin!', 'error');
+            }
+        }
+
+        // Pencere boyutlandırma
+        window.addEventListener('resize', () => {
+            resizeCanvas();
+            createBalls();
         });
 
-        // Sayfa yüklendiğinde
-        window.onload = () => {
-            // Ping gönder
-            setInterval(() => {
-                if (ws.readyState === WebSocket.OPEN) {
-                    ws.send(JSON.stringify({ type: 'PING' }));
-                }
-            }, 30000);
-        };
+        // Oyunu başlat
+        initGame();
     </script>
 </body>
 </html>
