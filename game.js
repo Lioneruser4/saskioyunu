@@ -1,627 +1,617 @@
-// Game variables
-let socket;
-let scene, camera, renderer;
-let player, controls;
-let players = {};
-let bullets = [];
-let rooms = [];
-let currentRoom = null;
-let team = null; // 'blue' or 'red'
-let health = 100;
-let playerGltf;
-let walls = [];
-let direction = new THREE.Vector3();
+class GameManager {
+constructor(gameCanvas) {
+this.canvas = gameCanvas;
+this.ctx = gameCanvas.getContext(‘2d’);
+this.width = gameCanvas.width;
+this.height = gameCanvas.height;
 
-// Mobile controls
-const mobileControls = document.getElementById('mobileControls');
-const shootBtn = document.getElementById('shootBtn');
-const jumpBtn = document.getElementById('jumpBtn');
-const joystick = document.getElementById('joystick');
-const isMobile = 'ontouchstart' in window;
-const healthDiv = document.getElementById('health');
-const crosshair = document.getElementById('crosshair');
+```
+this.currentRoomId = null;
+this.players = new Map();
+this.walls = [];
+this.keyPosition = null;
+this.keyCollected = false;
+this.localPlayerId = null;
 
-// Telegram Web App
-const tg = window.Telegram.WebApp;
-tg.expand();
+this.monster = null;
+this.isAIMonster = true;
 
-// Connect to server
-socket = io('https://saskioyunu-1-2d6i.onrender.com');
+this.cameraX = 0;
+this.cameraY = 0;
 
-// Get user info from Telegram
-const user = tg.initDataUnsafe?.user;
-if (user) {
-    socket.emit('join', { name: user.first_name, id: user.id });
+this.gameRunning = false;
+this.gameOver = false;
+this.escapedPlayers = [];
+
+this.keys = {};
+this.setupControls();
+
+this.particleEffects = [];
+
+this.gameState = 'menu'; // menu, playing, ended
+```
+
+}
+
+setupControls() {
+const onKey = (e, pressed) => {
+this.keys[e.key.toLowerCase()] = pressed;
+if (pressed && [‘w’, ‘a’, ‘s’, ‘d’, ’ ’].includes(e.key.toLowerCase())) {
+e.preventDefault();
+}
+};
+
+```
+window.addEventListener('keydown', (e) => onKey(e, true));
+window.addEventListener('keyup', (e) => onKey(e, false));
+
+// Mobil kontroller
+this.setupMobileControls();
+```
+
+}
+
+setupMobileControls() {
+const controlpad = document.getElementById(‘mobile-controls’);
+if (!controlpad) return;
+
+```
+const createButton = (id, label) => {
+  const btn = document.createElement('div');
+  btn.id = id;
+  btn.className = 'control-btn';
+  btn.innerHTML = label;
+  
+  btn.addEventListener('touchstart', () => {
+    this.keys[id] = true;
+  });
+  btn.addEventListener('touchend', () => {
+    this.keys[id] = false;
+  });
+  
+  controlpad.appendChild(btn);
+};
+
+createButton('w', '↑');
+createButton('a', '←');
+createButton('s', '↓');
+createButton('d', '→');
+createButton('space', 'Jump');
+```
+
+}
+
+initializeGame(roomId, roomData, players, localPlayerId, isAIMonster) {
+this.currentRoomId = roomId;
+this.localPlayerId = localPlayerId;
+this.walls = roomData.layout;
+this.keyPosition = { …roomData.keyPosition };
+this.gameRunning = true;
+this.gameOver = false;
+this.escapedPlayers = [];
+this.isAIMonster = isAIMonster;
+
+```
+// Oyuncuları başlat
+players.forEach(playerData => {
+  this.players.set(playerData.id, {
+    id: playerData.id,
+    username: playerData.username,
+    avatar: playerData.avatar || '👤',
+    x: playerData.x,
+    y: playerData.y,
+    vx: 0,
+    vy: 0,
+    alive: true,
+    isMonster: false,
+    animation: 'idle',
+    animationFrame: 0,
+    canJump: false,
+    hasKey: false
+  });
+});
+
+// Canavar
+if (this.isAIMonster) {
+  this.monster = {
+    x: this.keyPosition.x - 500,
+    y: this.keyPosition.y - 500,
+    vx: 0,
+    vy: 0,
+    targetX: this.keyPosition.x,
+    targetY: this.keyPosition.y,
+    speed: 2.5,
+    touchedPlayerId: null,
+    touchStartTime: 0,
+    animation: 'idle',
+    animationFrame: 0
+  };
+}
+
+this.gameState = 'playing';
+this.animate();
+```
+
+}
+
+update() {
+if (!this.gameRunning || this.gameOver) return;
+
+```
+const localPlayer = this.players.get(this.localPlayerId);
+if (!localPlayer || !localPlayer.alive) return;
+
+// Kontrolleri işle
+const moveVector = { x: 0, y: 0 };
+const gravity = 0.5;
+const moveSpeed = 3;
+const jumpPower = 12;
+
+// Keyboard kontrolleri
+if (this.keys['w']) moveVector.y -= moveSpeed;
+if (this.keys['s']) moveVector.y += moveSpeed;
+if (this.keys['a']) moveVector.x -= moveSpeed;
+if (this.keys['d']) moveVector.x += moveSpeed;
+
+// Joystick kontrolleri (Mobil)
+if (this.keys['joystick_x'] !== undefined && this.keys['joystick_x'] !== 0) {
+  moveVector.x += this.keys['joystick_x'] * moveSpeed;
+}
+if (this.keys['joystick_y'] !== undefined && this.keys['joystick_y'] !== 0) {
+  moveVector.y += this.keys['joystick_y'] * moveSpeed;
+}
+
+// Sıçrama
+if (this.keys['space'] && localPlayer.canJump) {
+  localPlayer.vy = -jumpPower;
+  localPlayer.canJump = false;
+}
+
+// Hız uygula
+localPlayer.vx = moveVector.x;
+localPlayer.vy += gravity;
+localPlayer.vy = Math.max(-jumpPower, Math.min(jumpPower, localPlayer.vy));
+
+// Konum güncelle
+localPlayer.x += localPlayer.vx;
+localPlayer.y += localPlayer.vy;
+
+// Duvar çarpışması
+localPlayer.canJump = false;
+this.walls.forEach(wall => {
+  if (this.checkCollision(localPlayer, wall)) {
+    // Yukarıdan
+    if (localPlayer.vy > 0 && localPlayer.y - 20 < wall.y) {
+      localPlayer.y = wall.y - 20;
+      localPlayer.vy = 0;
+      localPlayer.canJump = true;
+    }
+    // Aşağıdan
+    else if (localPlayer.vy < 0 && localPlayer.y + 20 > wall.y + wall.height) {
+      localPlayer.y = wall.y + wall.height + 20;
+      localPlayer.vy = 0;
+    }
+    // Sağdan
+    else if (localPlayer.vx < 0 && localPlayer.x + 20 > wall.x + wall.width) {
+      localPlayer.x = wall.x + wall.width + 20;
+      localPlayer.vx = 0;
+    }
+    // Soldan
+    else if (localPlayer.vx > 0 && localPlayer.x - 20 < wall.x) {
+      localPlayer.x = wall.x - 20;
+      localPlayer.vx = 0;
+    }
+  }
+});
+
+// Animasyon
+if (Math.abs(moveVector.x) > 0 || Math.abs(moveVector.y) > 0) {
+  localPlayer.animation = 'walking';
 } else {
-    socket.emit('join', { name: 'Guest', id: Date.now() });
+  localPlayer.animation = 'idle';
 }
 
-// Menu elements
-const menu = document.getElementById('menu');
-const roomsDiv = document.getElementById('rooms');
-const createRoomDiv = document.getElementById('createRoom');
-const gameCanvas = document.getElementById('gameCanvas');
-const sidePanel = document.getElementById('sidePanel');
-const findGameBtn = document.getElementById('findGame');
-const showRoomsBtn = document.getElementById('showRooms');
-const createRoomBtn = document.getElementById('createRoomBtn');
-const backToMenuBtn = document.getElementById('backToMenu');
-const backToMenuBtn2 = document.getElementById('backToMenu2');
-const createBtn = document.getElementById('create');
-const roomList = document.getElementById('roomList');
-const playersDiv = document.getElementById('players');
-const startGameBtn = document.getElementById('startGame');
-
-// Menu events
-findGameBtn.addEventListener('click', () => {
-    socket.emit('findGame');
-});
-
-showRoomsBtn.addEventListener('click', () => {
-    socket.emit('getRooms');
-    menu.style.display = 'none';
-    roomsDiv.style.display = 'block';
-});
-
-createRoomBtn.addEventListener('click', () => {
-    menu.style.display = 'none';
-    createRoomDiv.style.display = 'block';
-});
-
-backToMenuBtn.addEventListener('click', () => {
-    roomsDiv.style.display = 'none';
-    menu.style.display = 'flex';
-});
-
-backToMenuBtn2.addEventListener('click', () => {
-    createRoomDiv.style.display = 'none';
-    menu.style.display = 'flex';
-});
-
-createBtn.addEventListener('click', () => {
-    const aiType = document.getElementById('aiType').value;
-    socket.emit('createRoom', { aiType });
-});
-
-startGameBtn.addEventListener('click', () => {
-    socket.emit('startGame');
-});
-
-// Socket events
-socket.on('rooms', (data) => {
-    roomList.innerHTML = '';
-    data.forEach(room => {
-        const div = document.createElement('div');
-        div.textContent = `Room ${room.id}: ${room.players}/20`;
-        div.addEventListener('click', () => {
-            socket.emit('joinRoom', room.id);
-        });
-        roomList.appendChild(div);
-    });
-});
-
-socket.on('joinedRoom', (data) => {
-    currentRoom = data.roomId;
-    team = data.team;
-    roomsDiv.style.display = 'none';
-    sidePanel.style.display = 'block';
-    updatePlayers(data.players);
-});
-
-socket.on('playersUpdate', (data) => {
-    updatePlayers(data);
-    // Update meshes
-    data.forEach(p => {
-        if (p.id !== socket.id) {
-            if (!players[p.id]) {
-                if (playerGltf) {
-                    // Create mesh for new player
-                    const mesh = playerGltf.scene.clone();
-                    mesh.position.set(p.position.x, p.position.y, p.position.z);
-                    mesh.scale.set(0.5, 0.5, 0.5);
-                    mesh.mixer = new THREE.AnimationMixer(mesh);
-                    mesh.userId = p.id;
-                    mesh.traverse((child) => {
-                        if (child.isMesh) {
-                            child.material.color.set(p.team === 'blue' ? 0x0000ff : 0xff0000);
-                        }
-                    });
-                    scene.add(mesh);
-                    players[p.id] = mesh;
-                }
-            } else {
-                // Update position
-                players[p.id].position.set(p.position.x, p.position.y, p.position.z);
-            }
-        }
-    });
-    // Remove disconnected players
-    Object.keys(players).forEach(id => {
-        if (!data.find(p => p.id === id)) {
-            scene.remove(players[id]);
-            delete players[id];
-        }
-    });
-});
-
-socket.on('playerUpdate', (data) => {
-    if (players[data.id]) {
-        players[data.id].position.set(data.position.x, data.position.y, data.position.z);
-        players[data.id].rotation.y = data.rotation;
-    }
-});
-
-socket.on('playerHit', (data) => {
-    if (data.id === socket.id) {
-        health -= data.damage;
-        healthDiv.textContent = `HP: ${health}`;
-        if (health <= 0) {
-            health = 100;
-            player.position.set(0, 0.9, 0);
-        }
-    }
-});
-
-socket.on('gameStarted', () => {
-    initGame();
-});
-
-socket.on('bulletFired', (data) => {
-    createBullet(data);
-});
-
-// Update players list
-function updatePlayers(playerList) {
-    playersDiv.innerHTML = '';
-    playerList.forEach(p => {
-        const div = document.createElement('div');
-        div.textContent = `${p.name} (${p.team}) - HP: ${p.health}`;
-        playersDiv.appendChild(div);
-    });
-    if (playerList.length >= 2) {
-        startGameBtn.style.display = 'block';
-    }
+if (localPlayer.vy !== 0) {
+  localPlayer.animation = 'jumping';
 }
 
-// Initialize Three.js game
-function initGame() {
-    menu.style.display = 'none';
-    sidePanel.style.display = 'none';
-    gameCanvas.style.display = 'block';
-    healthDiv.style.display = 'block';
-    crosshair.style.display = 'block';
+// Anahtar kontrolü
+if (!this.keyCollected && this.isNear(localPlayer, this.keyPosition, 30)) {
+  this.keyCollected = true;
+  localPlayer.hasKey = true;
+  window.gameSocket.send(JSON.stringify({
+    type: 'KEY_COLLECTED',
+    roomId: this.currentRoomId
+  }));
+}
 
-    if (isMobile) {
-        mobileControls.style.display = 'block';
-        shootBtn.style.display = 'block';
-        jumpBtn.style.display = 'block';
+// Kaçış
+if (localPlayer.hasKey && this.isNear(localPlayer, { x: 50, y: 50 }, 100)) {
+  this.playerEscaped();
+}
+
+// Canavar AI
+if (this.isAIMonster && this.monster) {
+  this.updateMonsterAI(localPlayer);
+}
+
+// Kamera takip
+this.cameraX = localPlayer.x - this.width / 2;
+this.cameraY = localPlayer.y - this.height / 2;
+
+// Harita sınırları
+this.cameraX = Math.max(0, Math.min(this.cameraX, 3000 - this.width));
+this.cameraY = Math.max(0, Math.min(this.cameraY, 3000 - this.height));
+
+// Sunucuya gönder
+window.gameSocket.send(JSON.stringify({
+  type: 'PLAYER_MOVE',
+  roomId: this.currentRoomId,
+  x: localPlayer.x,
+  y: localPlayer.y,
+  vx: localPlayer.vx,
+  vy: localPlayer.vy,
+  animation: localPlayer.animation
+}));
+```
+
+}
+
+updateMonsterAI(targetPlayer) {
+const monster = this.monster;
+const dist = Math.hypot(
+targetPlayer.x - monster.x,
+targetPlayer.y - monster.y
+);
+
+```
+// En yakın canlı oyuncuyu bul
+let nearestPlayer = targetPlayer;
+let nearestDist = dist;
+
+this.players.forEach(player => {
+  if (player.alive && player.id !== this.localPlayerId) {
+    const d = Math.hypot(player.x - monster.x, player.y - monster.y);
+    if (d < nearestDist) {
+      nearestDist = d;
+      nearestPlayer = player;
     }
+  }
+});
 
-    // Scene
-    scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x888888); // Backrooms yellow-ish
+// Hedefe doğru hareket et
+const dx = nearestPlayer.x - monster.x;
+const dy = nearestPlayer.y - monster.y;
+const angle = Math.atan2(dy, dx);
 
-    // Camera
-    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 1.6, 0); // Eye level
+monster.vx = Math.cos(angle) * monster.speed;
+monster.vy = Math.sin(angle) * monster.speed;
 
-    // Renderer
-    renderer = new THREE.WebGLRenderer({ canvas: gameCanvas });
-    renderer.setSize(window.innerWidth, window.innerHeight);
+// Sıçrama hareketi
+if (Math.random() < 0.02) {
+  monster.vy = -8;
+}
 
-    // Resize
-    window.addEventListener('resize', () => {
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-    });
+// Yerçekimi
+monster.vy += 0.3;
 
-    // Lights
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
-    scene.add(ambientLight);
-    // Add fluorescent lights
-    for (let i = -10; i <= 10; i += 5) {
-        for (let j = -10; j <= 10; j += 5) {
-            const light = new THREE.PointLight(0xffffff, 0.5, 10);
-            light.position.set(i, 3, j);
-            scene.add(light);
-        }
+// Pozisyon güncelle
+monster.x += monster.vx;
+monster.y += monster.vy;
+
+// Duvar çarpışması
+this.walls.forEach(wall => {
+  if (this.checkCollision(monster, wall)) {
+    if (monster.vy > 0) {
+      monster.y = wall.y - 20;
+      monster.vy = 0;
+    } else if (monster.vy < 0) {
+      monster.y = wall.y + wall.height + 20;
+      monster.vy = 0;
     }
-
-    // Floor
-    const floorGeometry = new THREE.PlaneGeometry(100, 100);
-    const floorMaterial = new THREE.MeshLambertMaterial({ color: 0xcccccc });
-    const floor = new THREE.Mesh(floorGeometry, floorMaterial);
-    floor.rotation.x = -Math.PI / 2;
-    scene.add(floor);
-
-    // Walls
-    const wallMaterial = new THREE.MeshLambertMaterial({ color: 0xffff00 }); // Yellow walls
-    // North wall
-    const northWall = new THREE.Mesh(new THREE.PlaneGeometry(100, 4), wallMaterial);
-    northWall.position.set(0, 2, -50);
-    scene.add(northWall);
-    // South
-    const southWall = new THREE.Mesh(new THREE.PlaneGeometry(100, 4), wallMaterial);
-    southWall.position.set(0, 2, 50);
-    southWall.rotation.y = Math.PI;
-    scene.add(southWall);
-    // East
-    const eastWall = new THREE.Mesh(new THREE.PlaneGeometry(100, 4), wallMaterial);
-    eastWall.position.set(50, 2, 0);
-    eastWall.rotation.y = -Math.PI / 2;
-    scene.add(eastWall);
-    // West
-    const westWall = new THREE.Mesh(new THREE.PlaneGeometry(100, 4), wallMaterial);
-    westWall.position.set(-50, 2, 0);
-    westWall.rotation.y = Math.PI / 2;
-    scene.add(westWall);
-
-    walls = [northWall, southWall, eastWall, westWall];
-
-    // Load GLTF
-
-    const loader = new THREE.GLTFLoader();
-
-    loader.load('https://threejs.org/examples/models/gltf/Soldier.glb', (gltf) => {
-
-        playerGltf = gltf;
-
-        player = gltf.scene.clone();
-
-        player.position.set(0, 0, 0);
-
-        player.scale.set(0.5, 0.5, 0.5);
-
-        player.mixer = new THREE.AnimationMixer(player);
-
-        player.animations = gltf.animations;
-
-        player.velocity = new THREE.Vector3();
-
-        player.traverse((child) => {
-
-            if (child.isMesh) {
-
-                child.material.color.set(team === 'blue' ? 0x0000ff : 0xff0000);
-
-            }
-
-        });
-
-        scene.add(player);
-
-    }, undefined, (error) => console.error('Error loading model:', error));
-
-    // Other players
-
-    players = {};
-
-    // Controls
-
-    if (!isMobile) {
-
-        controls = new THREE.PointerLockControls(camera, document.body);
-
-        gameCanvas.addEventListener('click', () => {
-
-            controls.lock();
-
-        });
-
-        document.addEventListener('mousedown', (e) => {
-
-            if (e.button === 0) shoot();
-
-        });
-
+    if (monster.vx < 0) {
+      monster.x = wall.x + wall.width + 20;
     } else {
-
-        // Mobile look
-
-        let lastTouchX = 0;
-
-        let lastTouchY = 0;
-
-        gameCanvas.addEventListener('touchstart', (e) => {
-
-            const touch = e.touches[0];
-
-            lastTouchX = touch.clientX;
-
-            lastTouchY = touch.clientY;
-
-        });
-
-        gameCanvas.addEventListener('touchmove', (e) => {
-
-            const touch = e.touches[0];
-
-            const deltaX = touch.clientX - lastTouchX;
-
-            const deltaY = touch.clientY - lastTouchY;
-
-            camera.rotation.y -= deltaX * 0.01;
-
-            camera.rotation.x -= deltaY * 0.01;
-
-            camera.rotation.x = Math.max(-Math.PI/2, Math.min(Math.PI/2, camera.rotation.x));
-
-            lastTouchX = touch.clientX;
-
-            lastTouchY = touch.clientY;
-
-        });
-
-        shootBtn.addEventListener('touchstart', () => {
-
-            shoot();
-
-        });
-
-        jumpBtn.addEventListener('touchstart', () => {
-
-            if (player && player.position.y <= 0.9) {
-
-                player.velocity.y = 0.2;
-
-            }
-
-        });
-
-        // Joystick
-
-        let joystickCenter = {x: 75, y: 75};
-
-        let touchId = null;
-
-        mobileControls.addEventListener('touchstart', (e) => {
-
-            const touch = e.touches[0];
-
-            touchId = touch.identifier;
-
-            joystickCenter.x = touch.clientX - mobileControls.getBoundingClientRect().left;
-
-            joystickCenter.y = touch.clientY - mobileControls.getBoundingClientRect().top;
-
-        });
-
-        mobileControls.addEventListener('touchmove', (e) => {
-
-            const touch = Array.from(e.touches).find(t => t.identifier === touchId);
-
-            if (touch) {
-
-                const rect = mobileControls.getBoundingClientRect();
-
-                const x = touch.clientX - rect.left;
-
-                const y = touch.clientY - rect.top;
-
-                const dx = x - joystickCenter.x;
-
-                const dy = y - joystickCenter.y;
-
-                const dist = Math.sqrt(dx*dx + dy*dy);
-
-                const maxDist = 50;
-
-                const clampedDist = Math.min(dist, maxDist);
-
-                const angle = Math.atan2(dy, dx);
-
-                direction.x = Math.cos(angle) * (clampedDist / maxDist);
-
-                direction.z = Math.sin(angle) * (clampedDist / maxDist);
-
-                joystick.style.transform = `translate(${joystickCenter.x + Math.cos(angle) * clampedDist - 25}px, ${joystickCenter.y + Math.sin(angle) * clampedDist - 25}px)`;
-
-            }
-
-        });
-
-        mobileControls.addEventListener('touchend', (e) => {
-
-            if (!Array.from(e.touches).find(t => t.identifier === touchId)) {
-
-                touchId = null;
-
-                direction.set(0,0,0);
-
-                joystick.style.transform = 'translate(50%, 50%)';
-
-            }
-
-        });
-
+      monster.x = wall.x - 20;
     }
+  }
+});
 
-    const moveSpeed = 0.1;
-
-    const jumpSpeed = 0.2;
-
-    const gravity = -0.01;
-
-    const keys = {};
-
-    if (!isMobile) {
-
-        document.addEventListener('keydown', (e) => keys[e.code] = true);
-
-        document.addEventListener('keyup', (e) => keys[e.code] = false);
-
+// Oyuncu dokunması kontrolü
+this.players.forEach(player => {
+  if (player.alive && player.id !== this.localPlayerId) {
+    if (Math.hypot(player.x - monster.x, player.y - monster.y) < 40) {
+      if (!monster.touchedPlayerId || monster.touchedPlayerId !== player.id) {
+        monster.touchedPlayerId = player.id;
+        monster.touchStartTime = Date.now();
+      } else {
+        const touchDuration = Date.now() - monster.touchStartTime;
+        if (touchDuration > 2000) {
+          window.gameSocket.send(JSON.stringify({
+            type: 'PLAYER_CAUGHT',
+            roomId: this.currentRoomId,
+            targetId: player.id
+          }));
+          player.alive = false;
+          monster.touchedPlayerId = null;
+        }
+      }
+    } else {
+      if (monster.touchedPlayerId === player.id) {
+        monster.touchedPlayerId = null;
+      }
     }
+  }
+});
 
-    // Game loop
+// Animasyon
+monster.animationFrame = (monster.animationFrame + 1) % 10;
+monster.animation = dist < 200 ? 'chasing' : 'searching';
 
-    function animate() {
-
-        requestAnimationFrame(animate);
-
-        if (!player) return;
-
-        // Update mixer
-
-        if (player.mixer) {
-
-            player.mixer.update(0.016);
-
-        }
-
-        // Movement
-
-        const moveDirection = new THREE.Vector3();
-
-        if (isMobile) {
-
-            moveDirection.copy(direction).multiplyScalar(moveSpeed);
-
-        } else {
-
-            if (keys['KeyW']) moveDirection.z -= 1;
-
-            if (keys['KeyS']) moveDirection.z += 1;
-
-            if (keys['KeyA']) moveDirection.x -= 1;
-
-            if (keys['KeyD']) moveDirection.x += 1;
-
-            moveDirection.normalize().multiplyScalar(moveSpeed);
-
-        }
-
-        moveDirection.applyEuler(camera.rotation);
-
-        const newPos = player.position.clone().add(moveDirection);
-
-        if (!checkCollision(newPos)) {
-
-            player.position.add(moveDirection);
-
-        }
-
-        // Jumping
-
-        if (!isMobile && keys['Space'] && player.position.y <= 0.9) {
-
-            player.velocity.y = jumpSpeed;
-
-        }
-
-        player.velocity.y += gravity;
-
-        player.position.y += player.velocity.y;
-
-        if (player.position.y < 0.9) {
-
-player.position.y = 0.9;
-
-            player.velocity.y = 0;
-
-        }
-
-        // Camera follow
-
-        camera.position.set(player.position.x, player.position.y + 1.6, player.position.z);
-
-        // Animations
-
-        const speed = moveDirection.length();
-
-        if (player.mixer) {
-
-            if (player.velocity.y > 0) {
-
-                const jumpAction = player.mixer.clipAction('TPose');
-
-                jumpAction.play();
-
-            } else if (speed > 0.05) {
-
-                if (speed > 0.15) {
-
-                    const runAction = player.mixer.clipAction('Run');
-
-                    runAction.play();
-
-                } else {
-
-                    const walkAction = player.mixer.clipAction('Walk');
-
-                    walkAction.play();
-
-                }
-
-            } else {
-
-                const idleAction = player.mixer.clipAction('Idle');
-
-                idleAction.play();
-
-            }
-
-        }
-
-        // Send position to server
-
-        socket.emit('updatePosition', {
-
-            position: player.position,
-
-            rotation: camera.rotation.y
-
-        });
-
-        renderer.render(scene, camera);
-
-    }
-
-    animate();
+window.gameSocket.send(JSON.stringify({
+  type: 'MONSTER_MOVE',
+  roomId: this.currentRoomId,
+  x: monster.x,
+  y: monster.y,
+  animation: monster.animation
+}));
+```
 
 }
 
-// Check collision with walls
-function checkCollision(pos) {
-    const playerBox = new THREE.Box3().setFromCenterAndSize(pos, new THREE.Vector3(0.5, 1.8, 0.5));
-    for (let wall of walls) {
-        const wallBox = new THREE.Box3().setFromObject(wall);
-        if (wallBox.intersectsBox(playerBox)) return true;
-    }
-    return false;
+checkCollision(obj, wall) {
+return (
+obj.x + 20 > wall.x &&
+obj.x - 20 < wall.x + wall.width &&
+obj.y + 20 > wall.y &&
+obj.y - 20 < wall.y + wall.height
+);
 }
 
-// Shoot function
-function shoot() {
-    const raycaster = new THREE.Raycaster();
-    raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
-    const intersects = raycaster.intersectObjects(Object.values(players).concat(walls));
-    if (intersects.length > 0) {
-        const hit = intersects[0];
-        if (hit.object.userId && !walls.includes(hit.object)) {
-            let damage = 35;
-            const hitY = hit.point.y;
-            const objY = hit.object.position.y;
-            if (hitY > objY + 1.2) damage = 100;
-            else if (hitY < objY + 0.6) damage = 20;
-            socket.emit('hit', { targetId: hit.object.userId, damage });
-        }
-    }
-    // Muzzle flash
-    const flash = new THREE.PointLight(0xffffff, 10, 10);
-    flash.position.copy(camera.position);
-    scene.add(flash);
-    setTimeout(() => scene.remove(flash), 100);
-    // Shooting animation
-    if (player.mixer) {
-        const shootAction = player.mixer.clipAction('TPose');
-        if (shootAction) {
-            shootAction.reset().play();
-        }
-    }
+isNear(obj1, obj2, distance) {
+return Math.hypot(obj1.x - obj2.x, obj1.y - obj2.y) < distance;
 }
 
-// Create bullet (if needed)
-function createBullet(data) {
-    // Not used in instant hit, but kept for compatibility
+playerEscaped() {
+const localPlayer = this.players.get(this.localPlayerId);
+this.escapedPlayers.push({
+id: localPlayer.id,
+username: localPlayer.username
+});
+
+```
+window.gameSocket.send(JSON.stringify({
+  type: 'GAME_WON',
+  roomId: this.currentRoomId,
+  players: this.escapedPlayers
+}));
+
+this.gameRunning = false;
+this.gameState = 'ended';
+```
+
+}
+
+handleGameOver(survivors) {
+this.gameRunning = false;
+this.gameOver = true;
+this.gameState = ‘ended’;
+this.showGameOverScreen(survivors);
+}
+
+showGameOverScreen(survivors) {
+const gameOverDiv = document.createElement(‘div’);
+gameOverDiv.id = ‘game-over-screen’;
+gameOverDiv.innerHTML = `<div class="game-over-content"> <h1>OYUN BİTTİ</h1> <p>Kurtulmuş oyuncular: ${survivors.length}</p> <ul> ${survivors.map(s =>`<li>${s.username}</li>`).join('')} </ul> <button onclick="location.reload()">Ana Menüye Dön</button> </div> `;
+document.body.appendChild(gameOverDiv);
+}
+
+draw() {
+// Arka plan (backrooms efekti)
+this.ctx.fillStyle = ‘#D4A574’;
+this.ctx.fillRect(0, 0, this.width, this.height);
+
+```
+// Duvarlar
+this.ctx.fillStyle = '#8B7355';
+this.walls.forEach(wall => {
+  this.drawRect(wall.x, wall.y, wall.width, wall.height);
+});
+
+// Grid efekti
+this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
+this.ctx.lineWidth = 1;
+for (let i = 0; i < this.width; i += 200) {
+  this.ctx.beginPath();
+  this.ctx.moveTo(i - this.cameraX, -this.cameraY);
+  this.ctx.lineTo(i - this.cameraX, this.height - this.cameraY);
+  this.ctx.stroke();
+}
+for (let i = 0; i < this.height; i += 200) {
+  this.ctx.beginPath();
+  this.ctx.moveTo(-this.cameraX, i - this.cameraY);
+  this.ctx.lineTo(this.width - this.cameraX, i - this.cameraY);
+  this.ctx.stroke();
+}
+
+// Anahtar
+if (!this.keyCollected) {
+  this.drawKey(this.keyPosition.x, this.keyPosition.y);
+}
+
+// Oyuncular
+this.players.forEach(player => {
+  if (player.alive) {
+    this.drawPlayer(player);
+  }
+});
+
+// Canavar
+if (this.isAIMonster && this.monster) {
+  this.drawMonster(this.monster);
+}
+
+// HUD
+this.drawHUD();
+
+// Particle efektleri
+this.particleEffects = this.particleEffects.filter(p => {
+  p.life -= 1;
+  this.ctx.globalAlpha = p.life / p.maxLife;
+  this.ctx.fillStyle = p.color;
+  this.ctx.fillRect(p.x - this.cameraX, p.y - this.cameraY, 4, 4);
+  return p.life > 0;
+});
+this.ctx.globalAlpha = 1;
+```
+
+}
+
+drawPlayer(player) {
+const screenX = player.x - this.cameraX;
+const screenY = player.y - this.cameraY;
+
+```
+// Gölge
+this.ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+this.ctx.beginPath();
+this.ctx.ellipse(screenX, screenY + 25, 20, 8, 0, 0, Math.PI * 2);
+this.ctx.fill();
+
+// Oyuncu gövdesi
+this.ctx.fillStyle = player.id === this.localPlayerId ? '#FF6B6B' : '#4ECDC4';
+this.ctx.beginPath();
+this.ctx.arc(screenX, screenY, 15, 0, Math.PI * 2);
+this.ctx.fill();
+
+// Anahtar göstergesi
+if (player.hasKey) {
+  this.ctx.fillStyle = '#FFD700';
+  this.ctx.font = 'bold 20px Arial';
+  this.ctx.textAlign = 'center';
+  this.ctx.fillText('🔑', screenX, screenY - 25);
+}
+
+// İsim
+this.ctx.fillStyle = '#000';
+this.ctx.font = 'bold 12px Arial';
+this.ctx.textAlign = 'center';
+this.ctx.fillText(player.username, screenX, screenY + 35);
+```
+
+}
+
+drawMonster(monster) {
+const screenX = monster.x - this.cameraX;
+const screenY = monster.y - this.cameraY;
+
+```
+// Canavar gövdesi
+this.ctx.fillStyle = '#8B0000';
+this.ctx.beginPath();
+
+// Sıçrama animasyonu
+const bounce = Math.sin(monster.animationFrame / 5) * 5;
+this.ctx.arc(screenX, screenY + bounce, 20, 0, Math.PI * 2);
+this.ctx.fill();
+
+// Gözler
+this.ctx.fillStyle = '#FFD700';
+this.ctx.beginPath();
+this.ctx.arc(screenX - 8, screenY - 5, 4, 0, Math.PI * 2);
+this.ctx.fill();
+this.ctx.beginPath();
+this.ctx.arc(screenX + 8, screenY - 5, 4, 0, Math.PI * 2);
+this.ctx.fill();
+
+// Ağız
+this.ctx.strokeStyle = '#FFD700';
+this.ctx.lineWidth = 2;
+this.ctx.beginPath();
+this.ctx.arc(screenX, screenY + 5, 8, 0, Math.PI);
+this.ctx.stroke();
+```
+
+}
+
+drawKey(x, y) {
+const screenX = x - this.cameraX;
+const screenY = y - this.cameraY;
+
+```
+// Pulsing efekti
+const scale = 1 + Math.sin(Date.now() / 500) * 0.2;
+
+this.ctx.save();
+this.ctx.translate(screenX, screenY);
+this.ctx.scale(scale, scale);
+
+this.ctx.fillStyle = '#FFD700';
+this.ctx.font = 'bold 40px Arial';
+this.ctx.textAlign = 'center';
+this.ctx.textBaseline = 'middle';
+this.ctx.fillText('🔑', 0, 0);
+
+// Glow
+this.ctx.strokeStyle = 'rgba(255, 215, 0, 0.5)';
+this.ctx.lineWidth = 3;
+this.ctx.beginPath();
+this.ctx.arc(0, 0, 30, 0, Math.PI * 2);
+this.ctx.stroke();
+
+this.ctx.restore();
+```
+
+}
+
+drawRect(x, y, width, height) {
+const screenX = x - this.cameraX;
+const screenY = y - this.cameraY;
+this.ctx.fillRect(screenX, screenY, width, height);
+}
+
+drawHUD() {
+const localPlayer = this.players.get(this.localPlayerId);
+if (!localPlayer) return;
+
+```
+// Arka plan
+this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+this.ctx.fillRect(10, 10, 300, 100);
+
+// Text
+this.ctx.fillStyle = '#FFF';
+this.ctx.font = 'bold 16px Arial';
+this.ctx.textAlign = 'left';
+this.ctx.fillText(`📍 ${localPlayer.username}`, 20, 35);
+this.ctx.fillText(`🔑 Anahtar: ${this.keyCollected ? '✓ Toplandı' : '✗ Bulunmadı'}`, 20, 60);
+this.ctx.fillText(`👥 Oyuncular: ${Array.from(this.players.values()).filter(p => p.alive).length}`, 20, 85);
+
+// Anahtar bulma mesafesi
+if (!this.keyCollected) {
+  const dist = Math.hypot(
+    localPlayer.x - this.keyPosition.x,
+    localPlayer.y - this.keyPosition.y
+  );
+  this.ctx.fillStyle = dist < 100 ? '#FFD700' : '#FFF';
+  this.ctx.font = 'bold 14px Arial';
+  this.ctx.fillText(`Mesafe: ${Math.round(dist)}px`, 20, 110);
+}
+```
+
+}
+
+animate() {
+if (!this.gameRunning) {
+requestAnimationFrame(() => this.animate());
+return;
+}
+
+```
+this.update();
+this.draw();
+requestAnimationFrame(() => this.animate());
+```
+
+}
 }
