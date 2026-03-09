@@ -1,617 +1,401 @@
-class GameManager {
-constructor(gameCanvas) {
-this.canvas = gameCanvas;
-this.ctx = gameCanvas.getContext(‘2d’);
-this.width = gameCanvas.width;
-this.height = gameCanvas.height;
+class GameEngine {
+constructor(canvas, playerId, layout) {
+this.canvas = canvas;
+this.ctx = canvas.getContext(‘2d’);
+this.playerId = playerId;
+this.layout = layout;
 
 ```
-this.currentRoomId = null;
-this.players = new Map();
-this.walls = [];
-this.keyPosition = null;
-this.keyCollected = false;
-this.localPlayerId = null;
+    this.width = layout.width;
+    this.height = layout.height;
+    this.walls = layout.walls;
+    this.keyPos = layout.keyPos;
+    this.spawns = layout.spawns;
 
-this.monster = null;
-this.isAIMonster = true;
+    this.players = new Map();
+    layout.players.forEach(p => {
+        this.players.set(p.id, {
+            id: p.id,
+            username: p.username,
+            x: p.x, y: p.y,
+            vx: 0, vy: 0,
+            alive: true,
+            hasKey: false,
+            anim: 'idle'
+        });
+    });
 
-this.cameraX = 0;
-this.cameraY = 0;
+    this.localPlayer = this.players.get(playerId);
+    this.monster = null;
+    this.monsterId = null;
+    this.monsterSpeed = 2.5;
+    this.gameStarted = false;
 
-this.gameRunning = false;
-this.gameOver = false;
-this.escapedPlayers = [];
+    this.cameraX = this.localPlayer.x - canvas.width / 2;
+    this.cameraY = this.localPlayer.y - canvas.height / 2;
 
-this.keys = {};
-this.setupControls();
+    this.gravity = 0.6;
+    this.moveSpeed = 3;
+    this.jumpForce = 12;
+    this.keys = {};
 
-this.particleEffects = [];
+    this.frameCount = 0;
+    this.running = true;
 
-this.gameState = 'menu'; // menu, playing, ended
-```
-
+    // Telefon kontrolü
+    if (window.innerWidth < window.innerHeight) {
+        document.getElementById('controls').classList.add('show');
+    }
 }
 
-setupControls() {
-const onKey = (e, pressed) => {
-this.keys[e.key.toLowerCase()] = pressed;
-if (pressed && [‘w’, ‘a’, ‘s’, ‘d’, ’ ’].includes(e.key.toLowerCase())) {
-e.preventDefault();
-}
-};
-
-```
-window.addEventListener('keydown', (e) => onKey(e, true));
-window.addEventListener('keyup', (e) => onKey(e, false));
-
-// Mobil kontroller
-this.setupMobileControls();
-```
-
+start() {
+    this.gameLoop();
 }
 
-setupMobileControls() {
-const controlpad = document.getElementById(‘mobile-controls’);
-if (!controlpad) return;
-
-```
-const createButton = (id, label) => {
-  const btn = document.createElement('div');
-  btn.id = id;
-  btn.className = 'control-btn';
-  btn.innerHTML = label;
-  
-  btn.addEventListener('touchstart', () => {
-    this.keys[id] = true;
-  });
-  btn.addEventListener('touchend', () => {
-    this.keys[id] = false;
-  });
-  
-  controlpad.appendChild(btn);
-};
-
-createButton('w', '↑');
-createButton('a', '←');
-createButton('s', '↓');
-createButton('d', '→');
-createButton('space', 'Jump');
-```
-
+destroy() {
+    this.running = false;
 }
 
-initializeGame(roomId, roomData, players, localPlayerId, isAIMonster) {
-this.currentRoomId = roomId;
-this.localPlayerId = localPlayerId;
-this.walls = roomData.layout;
-this.keyPosition = { …roomData.keyPosition };
-this.gameRunning = true;
-this.gameOver = false;
-this.escapedPlayers = [];
-this.isAIMonster = isAIMonster;
+gameLoop = () => {
+    if (!this.running) return;
 
-```
-// Oyuncuları başlat
-players.forEach(playerData => {
-  this.players.set(playerData.id, {
-    id: playerData.id,
-    username: playerData.username,
-    avatar: playerData.avatar || '👤',
-    x: playerData.x,
-    y: playerData.y,
-    vx: 0,
-    vy: 0,
-    alive: true,
-    isMonster: false,
-    animation: 'idle',
-    animationFrame: 0,
-    canJump: false,
-    hasKey: false
-  });
-});
-
-// Canavar
-if (this.isAIMonster) {
-  this.monster = {
-    x: this.keyPosition.x - 500,
-    y: this.keyPosition.y - 500,
-    vx: 0,
-    vy: 0,
-    targetX: this.keyPosition.x,
-    targetY: this.keyPosition.y,
-    speed: 2.5,
-    touchedPlayerId: null,
-    touchStartTime: 0,
-    animation: 'idle',
-    animationFrame: 0
-  };
-}
-
-this.gameState = 'playing';
-this.animate();
-```
-
+    this.update();
+    this.render();
+    requestAnimationFrame(this.gameLoop);
 }
 
 update() {
-if (!this.gameRunning || this.gameOver) return;
+    if (!this.localPlayer) return;
 
-```
-const localPlayer = this.players.get(this.localPlayerId);
-if (!localPlayer || !localPlayer.alive) return;
+    // Keyboard + Joystick input
+    let moveX = 0, moveY = 0;
+    if (gameState.keys['w'] || gameState.keys['arrowup']) moveY -= this.moveSpeed;
+    if (gameState.keys['s'] || gameState.keys['arrowdown']) moveY += this.moveSpeed;
+    if (gameState.keys['a'] || gameState.keys['arrowleft']) moveX -= this.moveSpeed;
+    if (gameState.keys['d'] || gameState.keys['arrowright']) moveX += this.moveSpeed;
 
-// Kontrolleri işle
-const moveVector = { x: 0, y: 0 };
-const gravity = 0.5;
-const moveSpeed = 3;
-const jumpPower = 12;
+    // Joystick from mobile
+    if (gameState.keys['joystick_x']) moveX += gameState.keys['joystick_x'] * this.moveSpeed;
+    if (gameState.keys['joystick_y']) moveY += gameState.keys['joystick_y'] * this.moveSpeed;
 
-// Keyboard kontrolleri
-if (this.keys['w']) moveVector.y -= moveSpeed;
-if (this.keys['s']) moveVector.y += moveSpeed;
-if (this.keys['a']) moveVector.x -= moveSpeed;
-if (this.keys['d']) moveVector.x += moveSpeed;
+    this.localPlayer.vx = moveX;
+    this.localPlayer.vy += this.gravity;
+    this.localPlayer.vy = Math.max(-this.jumpForce, Math.min(this.jumpForce, this.localPlayer.vy));
 
-// Joystick kontrolleri (Mobil)
-if (this.keys['joystick_x'] !== undefined && this.keys['joystick_x'] !== 0) {
-  moveVector.x += this.keys['joystick_x'] * moveSpeed;
-}
-if (this.keys['joystick_y'] !== undefined && this.keys['joystick_y'] !== 0) {
-  moveVector.y += this.keys['joystick_y'] * moveSpeed;
-}
+    this.localPlayer.x += this.localPlayer.vx;
+    this.localPlayer.y += this.localPlayer.vy;
 
-// Sıçrama
-if (this.keys['space'] && localPlayer.canJump) {
-  localPlayer.vy = -jumpPower;
-  localPlayer.canJump = false;
-}
-
-// Hız uygula
-localPlayer.vx = moveVector.x;
-localPlayer.vy += gravity;
-localPlayer.vy = Math.max(-jumpPower, Math.min(jumpPower, localPlayer.vy));
-
-// Konum güncelle
-localPlayer.x += localPlayer.vx;
-localPlayer.y += localPlayer.vy;
-
-// Duvar çarpışması
-localPlayer.canJump = false;
-this.walls.forEach(wall => {
-  if (this.checkCollision(localPlayer, wall)) {
-    // Yukarıdan
-    if (localPlayer.vy > 0 && localPlayer.y - 20 < wall.y) {
-      localPlayer.y = wall.y - 20;
-      localPlayer.vy = 0;
-      localPlayer.canJump = true;
-    }
-    // Aşağıdan
-    else if (localPlayer.vy < 0 && localPlayer.y + 20 > wall.y + wall.height) {
-      localPlayer.y = wall.y + wall.height + 20;
-      localPlayer.vy = 0;
-    }
-    // Sağdan
-    else if (localPlayer.vx < 0 && localPlayer.x + 20 > wall.x + wall.width) {
-      localPlayer.x = wall.x + wall.width + 20;
-      localPlayer.vx = 0;
-    }
-    // Soldan
-    else if (localPlayer.vx > 0 && localPlayer.x - 20 < wall.x) {
-      localPlayer.x = wall.x - 20;
-      localPlayer.vx = 0;
-    }
-  }
-});
-
-// Animasyon
-if (Math.abs(moveVector.x) > 0 || Math.abs(moveVector.y) > 0) {
-  localPlayer.animation = 'walking';
-} else {
-  localPlayer.animation = 'idle';
-}
-
-if (localPlayer.vy !== 0) {
-  localPlayer.animation = 'jumping';
-}
-
-// Anahtar kontrolü
-if (!this.keyCollected && this.isNear(localPlayer, this.keyPosition, 30)) {
-  this.keyCollected = true;
-  localPlayer.hasKey = true;
-  window.gameSocket.send(JSON.stringify({
-    type: 'KEY_COLLECTED',
-    roomId: this.currentRoomId
-  }));
-}
-
-// Kaçış
-if (localPlayer.hasKey && this.isNear(localPlayer, { x: 50, y: 50 }, 100)) {
-  this.playerEscaped();
-}
-
-// Canavar AI
-if (this.isAIMonster && this.monster) {
-  this.updateMonsterAI(localPlayer);
-}
-
-// Kamera takip
-this.cameraX = localPlayer.x - this.width / 2;
-this.cameraY = localPlayer.y - this.height / 2;
-
-// Harita sınırları
-this.cameraX = Math.max(0, Math.min(this.cameraX, 3000 - this.width));
-this.cameraY = Math.max(0, Math.min(this.cameraY, 3000 - this.height));
-
-// Sunucuya gönder
-window.gameSocket.send(JSON.stringify({
-  type: 'PLAYER_MOVE',
-  roomId: this.currentRoomId,
-  x: localPlayer.x,
-  y: localPlayer.y,
-  vx: localPlayer.vx,
-  vy: localPlayer.vy,
-  animation: localPlayer.animation
-}));
-```
-
-}
-
-updateMonsterAI(targetPlayer) {
-const monster = this.monster;
-const dist = Math.hypot(
-targetPlayer.x - monster.x,
-targetPlayer.y - monster.y
-);
-
-```
-// En yakın canlı oyuncuyu bul
-let nearestPlayer = targetPlayer;
-let nearestDist = dist;
-
-this.players.forEach(player => {
-  if (player.alive && player.id !== this.localPlayerId) {
-    const d = Math.hypot(player.x - monster.x, player.y - monster.y);
-    if (d < nearestDist) {
-      nearestDist = d;
-      nearestPlayer = player;
-    }
-  }
-});
-
-// Hedefe doğru hareket et
-const dx = nearestPlayer.x - monster.x;
-const dy = nearestPlayer.y - monster.y;
-const angle = Math.atan2(dy, dx);
-
-monster.vx = Math.cos(angle) * monster.speed;
-monster.vy = Math.sin(angle) * monster.speed;
-
-// Sıçrama hareketi
-if (Math.random() < 0.02) {
-  monster.vy = -8;
-}
-
-// Yerçekimi
-monster.vy += 0.3;
-
-// Pozisyon güncelle
-monster.x += monster.vx;
-monster.y += monster.vy;
-
-// Duvar çarpışması
-this.walls.forEach(wall => {
-  if (this.checkCollision(monster, wall)) {
-    if (monster.vy > 0) {
-      monster.y = wall.y - 20;
-      monster.vy = 0;
-    } else if (monster.vy < 0) {
-      monster.y = wall.y + wall.height + 20;
-      monster.vy = 0;
-    }
-    if (monster.vx < 0) {
-      monster.x = wall.x + wall.width + 20;
-    } else {
-      monster.x = wall.x - 20;
-    }
-  }
-});
-
-// Oyuncu dokunması kontrolü
-this.players.forEach(player => {
-  if (player.alive && player.id !== this.localPlayerId) {
-    if (Math.hypot(player.x - monster.x, player.y - monster.y) < 40) {
-      if (!monster.touchedPlayerId || monster.touchedPlayerId !== player.id) {
-        monster.touchedPlayerId = player.id;
-        monster.touchStartTime = Date.now();
-      } else {
-        const touchDuration = Date.now() - monster.touchStartTime;
-        if (touchDuration > 2000) {
-          window.gameSocket.send(JSON.stringify({
-            type: 'PLAYER_CAUGHT',
-            roomId: this.currentRoomId,
-            targetId: player.id
-          }));
-          player.alive = false;
-          monster.touchedPlayerId = null;
+    // Collision detection
+    let onGround = false;
+    this.walls.forEach(wall => {
+        if (this.checkCollision(this.localPlayer, wall)) {
+            if (this.localPlayer.vy > 0 && this.localPlayer.y - 20 < wall.y) {
+                this.localPlayer.y = wall.y - 20;
+                this.localPlayer.vy = 0;
+                onGround = true;
+            }
+            if (this.localPlayer.vy < 0 && this.localPlayer.y + 20 > wall.y + wall.h) {
+                this.localPlayer.y = wall.y + wall.h + 20;
+                this.localPlayer.vy = 0;
+            }
+            if (this.localPlayer.vx < 0) this.localPlayer.x = wall.x + wall.w + 20;
+            if (this.localPlayer.vx > 0) this.localPlayer.x = wall.x - 20;
         }
-      }
-    } else {
-      if (monster.touchedPlayerId === player.id) {
-        monster.touchedPlayerId = null;
-      }
+    });
+
+    // Jump
+    if (gameState.keys[' '] && onGround) {
+        this.localPlayer.vy = -this.jumpForce;
     }
-  }
-});
 
-// Animasyon
-monster.animationFrame = (monster.animationFrame + 1) % 10;
-monster.animation = dist < 200 ? 'chasing' : 'searching';
+    // Bounds
+    this.localPlayer.x = Math.max(20, Math.min(this.width - 20, this.localPlayer.x));
+    this.localPlayer.y = Math.max(20, Math.min(this.height - 20, this.localPlayer.y));
 
-window.gameSocket.send(JSON.stringify({
-  type: 'MONSTER_MOVE',
-  roomId: this.currentRoomId,
-  x: monster.x,
-  y: monster.y,
-  animation: monster.animation
-}));
-```
+    // Animation
+    this.localPlayer.anim = (moveX !== 0 || moveY !== 0) ? 'walk' : 'idle';
 
+    // Check key
+    const keyDist = Math.hypot(this.localPlayer.x - this.keyPos.x, this.localPlayer.y - this.keyPos.y);
+    if (keyDist < 40) {
+        this.localPlayer.hasKey = true;
+        ws.send(JSON.stringify({
+            type: 'KEY_COLLECTED',
+            roomId: gameState.roomId
+        }));
+    }
+
+    // Check escape
+    if (this.localPlayer.hasKey && this.localPlayer.x < 100 && this.localPlayer.y < 100) {
+        ws.send(JSON.stringify({
+            type: 'ESCAPE',
+            roomId: gameState.roomId,
+            username: gameState.username
+        }));
+    }
+
+    // Monster AI
+    if (this.gameStarted && this.monster) {
+        this.updateMonsterAI();
+    }
+
+    // Camera follow
+    this.cameraX = this.localPlayer.x - this.canvas.width / 2;
+    this.cameraY = this.localPlayer.y - this.canvas.height / 2;
+    this.cameraX = Math.max(0, Math.min(this.width - this.canvas.width, this.cameraX));
+    this.cameraY = Math.max(0, Math.min(this.height - this.canvas.height, this.cameraY));
+
+    // Update server
+    if (this.frameCount++ % 2 === 0) {
+        ws.send(JSON.stringify({
+            type: 'PLAYER_MOVE',
+            roomId: gameState.roomId,
+            x: this.localPlayer.x,
+            y: this.localPlayer.y,
+            vx: this.localPlayer.vx,
+            vy: this.localPlayer.vy,
+            anim: this.localPlayer.anim
+        }));
+    }
+
+    // Update HUD
+    document.getElementById('hud-key').textContent = this.localPlayer.hasKey ? 'YES' : 'NO';
+    document.getElementById('hud-players').textContent = this.players.size + '/10';
+}
+
+updateMonsterAI() {
+    const m = this.monster;
+    let closest = null;
+    let closestDist = Infinity;
+
+    this.players.forEach(p => {
+        if (p.alive && p.id !== this.playerId) {
+            const d = Math.hypot(p.x - m.x, p.y - m.y);
+            if (d < closestDist) {
+                closestDist = d;
+                closest = p;
+            }
+        }
+    });
+
+    if (!closest) closest = this.localPlayer;
+
+    const angle = Math.atan2(closest.y - m.y, closest.x - m.x);
+    m.vx = Math.cos(angle) * this.monsterSpeed;
+    m.vy = Math.sin(angle) * this.monsterSpeed;
+    m.vy += this.gravity * 0.5;
+
+    m.x += m.vx;
+    m.y += m.vy;
+
+    // Monster collision
+    this.walls.forEach(wall => {
+        if (this.checkCollision(m, wall)) {
+            if (m.vy > 0) {
+                m.y = wall.y - 20;
+                m.vy = 0;
+            }
+            if (m.vx < 0) m.x = wall.x + wall.w + 20;
+            if (m.vx > 0) m.x = wall.x - 20;
+        }
+    });
+
+    // Check catches
+    this.players.forEach(p => {
+        if (p.alive && p.id !== this.playerId) {
+            if (Math.hypot(p.x - m.x, p.y - m.y) < 40) {
+                if (!m.touchedId) {
+                    m.touchedId = p.id;
+                    m.touchTime = Date.now();
+                } else if (m.touchedId === p.id) {
+                    if (Date.now() - m.touchTime > 2000) {
+                        ws.send(JSON.stringify({
+                            type: 'PLAYER_CAUGHT',
+                            roomId: gameState.roomId,
+                            targetId: p.id
+                        }));
+                        p.alive = false;
+                        m.touchedId = null;
+                    }
+                }
+            } else {
+                if (m.touchedId === p.id) m.touchedId = null;
+            }
+        }
+    });
+
+    ws.send(JSON.stringify({
+        type: 'MONSTER_MOVE',
+        roomId: gameState.roomId,
+        x: m.x,
+        y: m.y,
+        anim: 'walk'
+    }));
 }
 
 checkCollision(obj, wall) {
-return (
-obj.x + 20 > wall.x &&
-obj.x - 20 < wall.x + wall.width &&
-obj.y + 20 > wall.y &&
-obj.y - 20 < wall.y + wall.height
-);
+    return obj.x + 20 > wall.x && obj.x - 20 < wall.x + wall.w &&
+           obj.y + 20 > wall.y && obj.y - 20 < wall.y + wall.h;
 }
 
-isNear(obj1, obj2, distance) {
-return Math.hypot(obj1.x - obj2.x, obj1.y - obj2.y) < distance;
+render() {
+    const ctx = this.ctx;
+    const w = this.canvas.width;
+    const h = this.canvas.height;
+
+    // Background (Backrooms yellow)
+    ctx.fillStyle = '#d4a574';
+    ctx.fillRect(0, 0, w, h);
+
+    // Walls
+    ctx.fillStyle = '#8b7355';
+    this.walls.forEach(wall => {
+        const x = wall.x - this.cameraX;
+        const y = wall.y - this.cameraY;
+        ctx.fillRect(x, y, wall.w, wall.h);
+    });
+
+    // Grid effect
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < w; i += 200) {
+        ctx.beginPath();
+        ctx.moveTo(i, 0);
+        ctx.lineTo(i, h);
+        ctx.stroke();
+    }
+    for (let i = 0; i < h; i += 200) {
+        ctx.beginPath();
+        ctx.moveTo(0, i);
+        ctx.lineTo(w, i);
+        ctx.stroke();
+    }
+
+    // Key
+    if (!this.localPlayer.hasKey) {
+        const kx = this.keyPos.x - this.cameraX;
+        const ky = this.keyPos.y - this.cameraY;
+        ctx.font = 'bold 40px Arial';
+        ctx.fillText('🔑', kx - 20, ky + 20);
+        ctx.strokeStyle = 'rgba(255, 200, 0, 0.5)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(kx, ky, 40, 0, Math.PI * 2);
+        ctx.stroke();
+    }
+
+    // Players
+    this.players.forEach(p => {
+        if (!p.alive) return;
+        const px = p.x - this.cameraX;
+        const py = p.y - this.cameraY;
+
+        // Shadow
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.beginPath();
+        ctx.ellipse(px, py + 25, 20, 8, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Body
+        ctx.fillStyle = p.id === this.playerId ? '#ff6b6b' : '#4ecdc4';
+        ctx.beginPath();
+        ctx.arc(px, py, 15, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Name
+        ctx.fillStyle = '#000';
+        ctx.font = 'bold 12px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(p.username, px, py + 35);
+
+        // Key indicator
+        if (p.hasKey) {
+            ctx.font = 'bold 16px Arial';
+            ctx.fillText('🔑', px, py - 25);
+        }
+    });
+
+    // Monster
+    if (this.monster) {
+        const mx = this.monster.x - this.cameraX;
+        const my = this.monster.y - this.cameraY;
+
+        ctx.fillStyle = '#8b0000';
+        ctx.beginPath();
+        ctx.arc(mx, my + Math.sin(Date.now() / 200) * 3, 20, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Eyes
+        ctx.fillStyle = '#ffd700';
+        ctx.beginPath();
+        ctx.arc(mx - 8, my - 5, 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(mx + 8, my - 5, 4, 0, Math.PI * 2);
+        ctx.fill();
+    }
 }
 
-playerEscaped() {
-const localPlayer = this.players.get(this.localPlayerId);
-this.escapedPlayers.push({
-id: localPlayer.id,
-username: localPlayer.username
-});
-
-```
-window.gameSocket.send(JSON.stringify({
-  type: 'GAME_WON',
-  roomId: this.currentRoomId,
-  players: this.escapedPlayers
-}));
-
-this.gameRunning = false;
-this.gameState = 'ended';
-```
-
+addPlayer(p) {
+    this.players.set(p.id, {
+        id: p.id,
+        username: p.username,
+        x: p.x, y: p.y,
+        vx: 0, vy: 0,
+        alive: true,
+        hasKey: false,
+        anim: 'idle'
+    });
 }
 
-handleGameOver(survivors) {
-this.gameRunning = false;
-this.gameOver = true;
-this.gameState = ‘ended’;
-this.showGameOverScreen(survivors);
+updatePlayer(id, data) {
+    if (this.players.has(id) && id !== this.playerId) {
+        const p = this.players.get(id);
+        p.x = data.x;
+        p.y = data.y;
+        p.vx = data.vx;
+        p.vy = data.vy;
+        p.anim = data.anim;
+    }
 }
 
-showGameOverScreen(survivors) {
-const gameOverDiv = document.createElement(‘div’);
-gameOverDiv.id = ‘game-over-screen’;
-gameOverDiv.innerHTML = `<div class="game-over-content"> <h1>OYUN BİTTİ</h1> <p>Kurtulmuş oyuncular: ${survivors.length}</p> <ul> ${survivors.map(s =>`<li>${s.username}</li>`).join('')} </ul> <button onclick="location.reload()">Ana Menüye Dön</button> </div> `;
-document.body.appendChild(gameOverDiv);
+updateMonster(x, y, anim) {
+    if (this.monster) {
+        this.monster.x = x;
+        this.monster.y = y;
+    }
 }
 
-draw() {
-// Arka plan (backrooms efekti)
-this.ctx.fillStyle = ‘#D4A574’;
-this.ctx.fillRect(0, 0, this.width, this.height);
-
-```
-// Duvarlar
-this.ctx.fillStyle = '#8B7355';
-this.walls.forEach(wall => {
-  this.drawRect(wall.x, wall.y, wall.width, wall.height);
-});
-
-// Grid efekti
-this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
-this.ctx.lineWidth = 1;
-for (let i = 0; i < this.width; i += 200) {
-  this.ctx.beginPath();
-  this.ctx.moveTo(i - this.cameraX, -this.cameraY);
-  this.ctx.lineTo(i - this.cameraX, this.height - this.cameraY);
-  this.ctx.stroke();
-}
-for (let i = 0; i < this.height; i += 200) {
-  this.ctx.beginPath();
-  this.ctx.moveTo(-this.cameraX, i - this.cameraY);
-  this.ctx.lineTo(this.width - this.cameraX, i - this.cameraY);
-  this.ctx.stroke();
+startGame(monsterId, isAI) {
+    this.gameStarted = true;
+    this.monsterId = monsterId;
+    if (isAI) {
+        this.monster = {
+            id: monsterId,
+            x: this.keyPos.x - 300,
+            y: this.keyPos.y - 300,
+            vx: 0, vy: 0,
+            touchedId: null,
+            touchTime: 0
+        };
+    }
 }
 
-// Anahtar
-if (!this.keyCollected) {
-  this.drawKey(this.keyPosition.x, this.keyPosition.y);
+playerCaught(id) {
+    if (this.players.has(id)) {
+        this.players.get(id).alive = false;
+    }
 }
 
-// Oyuncular
-this.players.forEach(player => {
-  if (player.alive) {
-    this.drawPlayer(player);
-  }
-});
-
-// Canavar
-if (this.isAIMonster && this.monster) {
-  this.drawMonster(this.monster);
+keyCollected(id) {
+    if (this.players.has(id)) {
+        this.players.get(id).hasKey = true;
+    }
 }
 
-// HUD
-this.drawHUD();
-
-// Particle efektleri
-this.particleEffects = this.particleEffects.filter(p => {
-  p.life -= 1;
-  this.ctx.globalAlpha = p.life / p.maxLife;
-  this.ctx.fillStyle = p.color;
-  this.ctx.fillRect(p.x - this.cameraX, p.y - this.cameraY, 4, 4);
-  return p.life > 0;
-});
-this.ctx.globalAlpha = 1;
-```
-
-}
-
-drawPlayer(player) {
-const screenX = player.x - this.cameraX;
-const screenY = player.y - this.cameraY;
-
-```
-// Gölge
-this.ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-this.ctx.beginPath();
-this.ctx.ellipse(screenX, screenY + 25, 20, 8, 0, 0, Math.PI * 2);
-this.ctx.fill();
-
-// Oyuncu gövdesi
-this.ctx.fillStyle = player.id === this.localPlayerId ? '#FF6B6B' : '#4ECDC4';
-this.ctx.beginPath();
-this.ctx.arc(screenX, screenY, 15, 0, Math.PI * 2);
-this.ctx.fill();
-
-// Anahtar göstergesi
-if (player.hasKey) {
-  this.ctx.fillStyle = '#FFD700';
-  this.ctx.font = 'bold 20px Arial';
-  this.ctx.textAlign = 'center';
-  this.ctx.fillText('🔑', screenX, screenY - 25);
-}
-
-// İsim
-this.ctx.fillStyle = '#000';
-this.ctx.font = 'bold 12px Arial';
-this.ctx.textAlign = 'center';
-this.ctx.fillText(player.username, screenX, screenY + 35);
-```
-
-}
-
-drawMonster(monster) {
-const screenX = monster.x - this.cameraX;
-const screenY = monster.y - this.cameraY;
-
-```
-// Canavar gövdesi
-this.ctx.fillStyle = '#8B0000';
-this.ctx.beginPath();
-
-// Sıçrama animasyonu
-const bounce = Math.sin(monster.animationFrame / 5) * 5;
-this.ctx.arc(screenX, screenY + bounce, 20, 0, Math.PI * 2);
-this.ctx.fill();
-
-// Gözler
-this.ctx.fillStyle = '#FFD700';
-this.ctx.beginPath();
-this.ctx.arc(screenX - 8, screenY - 5, 4, 0, Math.PI * 2);
-this.ctx.fill();
-this.ctx.beginPath();
-this.ctx.arc(screenX + 8, screenY - 5, 4, 0, Math.PI * 2);
-this.ctx.fill();
-
-// Ağız
-this.ctx.strokeStyle = '#FFD700';
-this.ctx.lineWidth = 2;
-this.ctx.beginPath();
-this.ctx.arc(screenX, screenY + 5, 8, 0, Math.PI);
-this.ctx.stroke();
-```
-
-}
-
-drawKey(x, y) {
-const screenX = x - this.cameraX;
-const screenY = y - this.cameraY;
-
-```
-// Pulsing efekti
-const scale = 1 + Math.sin(Date.now() / 500) * 0.2;
-
-this.ctx.save();
-this.ctx.translate(screenX, screenY);
-this.ctx.scale(scale, scale);
-
-this.ctx.fillStyle = '#FFD700';
-this.ctx.font = 'bold 40px Arial';
-this.ctx.textAlign = 'center';
-this.ctx.textBaseline = 'middle';
-this.ctx.fillText('🔑', 0, 0);
-
-// Glow
-this.ctx.strokeStyle = 'rgba(255, 215, 0, 0.5)';
-this.ctx.lineWidth = 3;
-this.ctx.beginPath();
-this.ctx.arc(0, 0, 30, 0, Math.PI * 2);
-this.ctx.stroke();
-
-this.ctx.restore();
-```
-
-}
-
-drawRect(x, y, width, height) {
-const screenX = x - this.cameraX;
-const screenY = y - this.cameraY;
-this.ctx.fillRect(screenX, screenY, width, height);
-}
-
-drawHUD() {
-const localPlayer = this.players.get(this.localPlayerId);
-if (!localPlayer) return;
-
-```
-// Arka plan
-this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-this.ctx.fillRect(10, 10, 300, 100);
-
-// Text
-this.ctx.fillStyle = '#FFF';
-this.ctx.font = 'bold 16px Arial';
-this.ctx.textAlign = 'left';
-this.ctx.fillText(`📍 ${localPlayer.username}`, 20, 35);
-this.ctx.fillText(`🔑 Anahtar: ${this.keyCollected ? '✓ Toplandı' : '✗ Bulunmadı'}`, 20, 60);
-this.ctx.fillText(`👥 Oyuncular: ${Array.from(this.players.values()).filter(p => p.alive).length}`, 20, 85);
-
-// Anahtar bulma mesafesi
-if (!this.keyCollected) {
-  const dist = Math.hypot(
-    localPlayer.x - this.keyPosition.x,
-    localPlayer.y - this.keyPosition.y
-  );
-  this.ctx.fillStyle = dist < 100 ? '#FFD700' : '#FFF';
-  this.ctx.font = 'bold 14px Arial';
-  this.ctx.fillText(`Mesafe: ${Math.round(dist)}px`, 20, 110);
+playerEscaped(id, username) {
+    alert(`${username} escaped!`);
 }
 ```
 
-}
-
-animate() {
-if (!this.gameRunning) {
-requestAnimationFrame(() => this.animate());
-return;
-}
-
-```
-this.update();
-this.draw();
-requestAnimationFrame(() => this.animate());
-```
-
-}
 }
