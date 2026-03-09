@@ -10,79 +10,67 @@ const wss = new WebSocket.Server({ server });
 app.use(express.static(__dirname));
 app.get(’/’, (req, res) => res.sendFile(path.join(__dirname, ‘index.html’)));
 
-// Oyun State
+// Game State Management
 const gameState = {
-rooms: {},
-players: {},
+rooms: new Map(),
+players: new Map(),
 nextRoomId: 1
 };
 
-// Oda Yönetimi
 class GameRoom {
 constructor(id) {
 this.id = id;
 this.players = new Map();
 this.maxPlayers = 10;
-this.monsterType = ‘ai’; // ‘ai’ veya random player seçimi
-this.monsterId = null;
 this.gameStarted = false;
-this.keyPosition = { x: 0, y: 0 };
+this.creatorId = null;
+this.creatorName = ‘Unknown’;
+this.monsterType = ‘ai’;
+this.monsterId = null;
+this.keyPosition = { x: Math.random() * 2800 + 100, y: Math.random() * 2800 + 100 };
 this.keyCollected = false;
 this.keyCollectorId = null;
-this.activeSince = Date.now();
-this.generateLayout();
-this.spawnPositions = this.generateSpawnPositions();
-}
-
-generateLayout() {
 this.width = 3000;
 this.height = 3000;
-this.walls = [];
-
-```
-// Duvarlar
-this.walls.push({ x: 0, y: 0, width: this.width, height: 50 }); // Üst
-this.walls.push({ x: 0, y: this.height - 50, width: this.width, height: 50 }); // Alt
-this.walls.push({ x: 0, y: 0, width: 50, height: this.height }); // Sol
-this.walls.push({ x: this.width - 50, y: 0, width: 50, height: this.height }); // Sağ
-
-// İç duvarlar (backrooms efekti)
-for (let i = 1; i < 4; i++) {
-  this.walls.push({ x: i * 600, y: 0, width: 50, height: this.height });
-  this.walls.push({ x: 0, y: i * 600, width: this.width, height: 50 });
+this.walls = this.generateWalls();
+this.spawnPoints = this.generateSpawns();
+this.createdAt = Date.now();
 }
 
-// Anahtar konumu
-this.keyPosition = {
-  x: Math.random() * (this.width - 100) + 50,
-  y: Math.random() * (this.height - 100) + 50
-};
+generateWalls() {
+const walls = [];
+walls.push({ x: 0, y: 0, w: this.width, h: 50 });
+walls.push({ x: 0, y: this.height - 50, w: this.width, h: 50 });
+walls.push({ x: 0, y: 0, w: 50, h: this.height });
+walls.push({ x: this.width - 50, y: 0, w: 50, h: this.height });
+
+```
+for (let i = 1; i < 5; i++) {
+  walls.push({ x: i * 600, y: 0, w: 50, h: this.height });
+  walls.push({ x: 0, y: i * 600, w: this.width, h: 50 });
+}
+return walls;
 ```
 
 }
 
-generateSpawnPositions() {
-const positions = [];
-const gridSize = 10;
+generateSpawns() {
+const spawns = [];
 for (let i = 0; i < this.maxPlayers; i++) {
-positions.push({
-x: Math.random() * 500 + 100,
-y: Math.random() * 500 + 100
+spawns.push({
+x: Math.random() * 400 + 100,
+y: Math.random() * 400 + 100
 });
 }
-return positions;
+return spawns;
 }
 
-isSpaceFull() {
-return this.players.size >= this.maxPlayers;
+addPlayer(id, data) {
+this.players.set(id, data);
+if (this.players.size === 1) {
+this.creatorId = id;
+this.creatorName = data.username;
 }
-
-canJoin() {
-return !this.isSpaceFull() && !this.gameStarted;
-}
-
-addPlayer(id, playerData) {
-this.players.set(id, playerData);
 }
 
 removePlayer(id) {
@@ -93,24 +81,25 @@ this.gameStarted = false;
 }
 }
 
-getPlayerCount() {
-return this.players.size;
+isFull() {
+return this.players.size >= this.maxPlayers;
+}
+
+canJoin() {
+return !this.isFull() && !this.gameStarted;
 }
 
 startGame() {
-if (this.players.size < 2) return false;
-
-```
+if (this.players.size < 1) return false;
 this.gameStarted = true;
 
-// Monster seçimi
-const playerIds = Array.from(this.players.keys());
+```
 if (this.monsterType === 'ai') {
-  this.monsterId = 'ai_monster_' + this.id;
+  this.monsterId = 'monster_' + this.id;
 } else {
-  this.monsterId = playerIds[Math.floor(Math.random() * playerIds.length)];
+  const ids = Array.from(this.players.keys());
+  this.monsterId = ids[Math.floor(Math.random() * ids.length)];
 }
-
 return true;
 ```
 
@@ -121,282 +110,267 @@ return {
 id: this.id,
 playerCount: this.players.size,
 maxPlayers: this.maxPlayers,
-isFull: this.isSpaceFull(),
+isFull: this.isFull(),
 gameStarted: this.gameStarted,
-creatorName: Array.from(this.players.values())[0]?.username || ‘Unknown’,
+creatorName: this.creatorName,
 monsterType: this.monsterType === ‘ai’ ? ‘Bot’ : ‘Player’
 };
 }
 }
 
-// WebSocket Bağlantıları
+// WebSocket Connection Handler
 const clients = new Map();
 
 wss.on(‘connection’, (ws) => {
 let clientId = null;
-let currentRoomId = null;
+let roomId = null;
+let clientData = null;
 
 ws.on(‘message’, (data) => {
 try {
-const message = JSON.parse(data);
+const msg = JSON.parse(data);
 
 ```
-  switch (message.type) {
-    case 'INIT':
-      clientId = message.clientId;
-      clients.set(clientId, {
-        ws,
-        userData: message.userData,
-        roomId: null
-      });
-      ws.send(JSON.stringify({ type: 'INIT_SUCCESS', clientId }));
-      break;
+  if (msg.type === 'INIT') {
+    clientId = msg.id;
+    clientData = {
+      id: clientId,
+      username: msg.username,
+      avatar: '👤',
+      ws: ws
+    };
+    clients.set(clientId, clientData);
+    ws.send(JSON.stringify({ type: 'INIT_SUCCESS', id: clientId }));
+  }
 
-    case 'GET_ROOMS':
-      const roomsList = Array.from(gameState.rooms.values()).map(r => r.getRoomInfo());
-      ws.send(JSON.stringify({ type: 'ROOMS_LIST', rooms: roomsList }));
-      break;
+  else if (msg.type === 'GET_ROOMS') {
+    const rooms = Array.from(gameState.rooms.values()).map(r => r.getRoomInfo());
+    ws.send(JSON.stringify({ type: 'ROOMS_LIST', rooms }));
+  }
 
-    case 'CREATE_ROOM':
-      const newRoomId = gameState.nextRoomId++;
-      const newRoom = new GameRoom(newRoomId);
-      gameState.rooms.set(newRoomId, newRoom);
-      currentRoomId = newRoomId;
+  else if (msg.type === 'CREATE_ROOM') {
+    const newId = gameState.nextRoomId++;
+    const room = new GameRoom(newId);
+    gameState.rooms.set(newId, room);
+    roomId = newId;
+
+    const spawn = room.spawnPoints[0];
+    room.addPlayer(clientId, {
+      id: clientId,
+      username: msg.username,
+      x: spawn.x,
+      y: spawn.y,
+      vx: 0,
+      vy: 0,
+      alive: true,
+      hasKey: false
+    });
+
+    ws.send(JSON.stringify({
+      type: 'ROOM_CREATED',
+      roomId: newId,
+      room: room.getRoomInfo(),
+      layout: {
+        width: room.width,
+        height: room.height,
+        walls: room.walls,
+        keyPos: room.keyPosition,
+        spawns: room.spawnPoints,
+        players: Array.from(room.players.values())
+      }
+    }));
+
+    broadcast({ type: 'ROOM_UPDATED', rooms: Array.from(gameState.rooms.values()).map(r => r.getRoomInfo()) });
+  }
+
+  else if (msg.type === 'JOIN_ROOM') {
+    const room = gameState.rooms.get(msg.roomId);
+    if (room && room.canJoin()) {
+      roomId = msg.roomId;
+      const spawn = room.spawnPoints[room.players.size] || room.spawnPoints[0];
       
-      const clientData = clients.get(clientId);
-      const spawnPos = newRoom.spawnPositions[0];
-      
-      newRoom.addPlayer(clientId, {
+      room.addPlayer(clientId, {
         id: clientId,
-        username: message.username || clientData?.userData?.username || 'Player',
-        x: spawnPos.x,
-        y: spawnPos.y,
+        username: msg.username,
+        x: spawn.x,
+        y: spawn.y,
         vx: 0,
         vy: 0,
         alive: true,
-        isMonster: false,
-        avatar: message.avatar || '👤'
+        hasKey: false
       });
 
-      broadcastToRoom(newRoomId, {
-        type: 'ROOM_CREATED',
-        room: newRoom.getRoomInfo(),
-        roomData: {
-          layout: newRoom.walls,
-          keyPosition: newRoom.keyPosition,
-          width: newRoom.width,
-          height: newRoom.height
-        },
-        players: Array.from(newRoom.players.values())
+      ws.send(JSON.stringify({
+        type: 'ROOM_JOINED',
+        roomId: msg.roomId,
+        layout: {
+          width: room.width,
+          height: room.height,
+          walls: room.walls,
+          keyPos: room.keyPosition,
+          spawns: room.spawnPoints,
+          players: Array.from(room.players.values())
+        }
+      }));
+
+      broadcastRoom(msg.roomId, {
+        type: 'PLAYER_JOINED',
+        player: room.players.get(clientId),
+        count: room.players.size
       });
-      break;
 
-    case 'JOIN_ROOM':
-      const room = gameState.rooms.get(message.roomId);
-      if (room && room.canJoin()) {
-        currentRoomId = message.roomId;
-        const spawnPos = room.spawnPositions[room.players.size];
-        
-        const newPlayer = {
-          id: clientId,
-          username: message.username || clients.get(clientId)?.userData?.username || 'Player',
-          x: spawnPos?.x || 200,
-          y: spawnPos?.y || 200,
-          vx: 0,
-          vy: 0,
-          alive: true,
-          isMonster: false,
-          avatar: message.avatar || '👤'
-        };
-        
-        room.addPlayer(clientId, newPlayer);
-        broadcastToRoom(message.roomId, {
-          type: 'PLAYER_JOINED',
-          player: newPlayer,
-          totalPlayers: room.players.size,
-          roomInfo: room.getRoomInfo()
-        });
-
-        // Eğer oda dolu ise yeni oda oluştur
-        if (room.isSpaceFull()) {
-          const nextRoom = new GameRoom(gameState.nextRoomId++);
-          gameState.rooms.set(nextRoom.id, nextRoom);
-          broadcastToAll({
-            type: 'NEW_ROOM_CREATED',
-            room: nextRoom.getRoomInfo()
-          });
-        }
+      if (room.isFull()) {
+        broadcast({ type: 'ROOM_FULL', roomId: msg.roomId });
       }
-      break;
-
-    case 'START_GAME':
-      const gameRoom = gameState.rooms.get(message.roomId);
-      if (gameRoom && !gameRoom.gameStarted) {
-        gameRoom.monsterType = message.monsterType || 'ai';
-        if (gameRoom.startGame()) {
-          broadcastToRoom(message.roomId, {
-            type: 'GAME_STARTED',
-            monsterId: gameRoom.monsterId,
-            isAI: gameRoom.monsterType === 'ai',
-            keyPosition: gameRoom.keyPosition
-          });
-        }
-      }
-      break;
-
-    case 'PLAYER_MOVE':
-      const moveRoom = gameState.rooms.get(message.roomId);
-      if (moveRoom && moveRoom.players.has(clientId)) {
-        const player = moveRoom.players.get(clientId);
-        player.x = Math.max(40, Math.min(moveRoom.width - 40, message.x));
-        player.y = Math.max(40, Math.min(moveRoom.height - 40, message.y));
-        player.vx = message.vx;
-        player.vy = message.vy;
-        player.animation = message.animation;
-
-        broadcastToRoom(message.roomId, {
-          type: 'PLAYER_UPDATED',
-          player: {
-            id: clientId,
-            x: player.x,
-            y: player.y,
-            vx: player.vx,
-            vy: player.vy,
-            animation: player.animation,
-            username: player.username,
-            avatar: player.avatar
-          }
-        });
-      }
-      break;
-
-    case 'MONSTER_MOVE':
-      const monsterRoom = gameState.rooms.get(message.roomId);
-      if (monsterRoom && monsterRoom.gameStarted) {
-        broadcastToRoom(message.roomId, {
-          type: 'MONSTER_UPDATED',
-          x: message.x,
-          y: message.y,
-          animation: message.animation
-        });
-      }
-      break;
-
-    case 'KEY_COLLECTED':
-      const keyRoom = gameState.rooms.get(message.roomId);
-      if (keyRoom) {
-        keyRoom.keyCollected = true;
-        keyRoom.keyCollectorId = clientId;
-        broadcastToRoom(message.roomId, {
-          type: 'KEY_COLLECTED',
-          collectingPlayerId: clientId
-        });
-      }
-      break;
-
-    case 'PLAYER_CAUGHT':
-      const caughtRoom = gameState.rooms.get(message.roomId);
-      if (caughtRoom && caughtRoom.players.has(message.targetId)) {
-        const caughtPlayer = caughtRoom.players.get(message.targetId);
-        caughtPlayer.alive = false;
-
-        broadcastToRoom(message.roomId, {
-          type: 'PLAYER_CAUGHT',
-          playerId: message.targetId,
-          by: clientId
-        });
-
-        // Tüm oyuncular öldüyse
-        const alivePlayers = Array.from(caughtRoom.players.values()).filter(p => p.alive);
-        if (alivePlayers.length <= 1) {
-          broadcastToRoom(message.roomId, {
-            type: 'GAME_OVER',
-            survivors: alivePlayers.map(p => ({ id: p.id, username: p.username }))
-          });
-          caughtRoom.gameStarted = false;
-        }
-      }
-      break;
-
-    case 'GAME_WON':
-      broadcastToRoom(message.roomId, {
-        type: 'PLAYERS_ESCAPED',
-        escapedPlayers: message.players
-      });
-      const winRoom = gameState.rooms.get(message.roomId);
-      if (winRoom) {
-        winRoom.gameStarted = false;
-      }
-      break;
-
-    case 'LEAVE_ROOM':
-      if (currentRoomId) {
-        const leftRoom = gameState.rooms.get(currentRoomId);
-        if (leftRoom) {
-          leftRoom.removePlayer(clientId);
-          broadcastToRoom(currentRoomId, {
-            type: 'PLAYER_LEFT',
-            playerId: clientId,
-            remainingPlayers: leftRoom.players.size
-          });
-
-          // Oda boşsa sil
-          if (leftRoom.players.size === 0) {
-            gameState.rooms.delete(currentRoomId);
-          }
-        }
-      }
-      currentRoomId = null;
-      break;
+    }
   }
-} catch (err) {
-  console.error('Message error:', err);
+
+  else if (msg.type === 'START_GAME') {
+    const room = gameState.rooms.get(msg.roomId);
+    if (room) {
+      room.monsterType = msg.monsterType || 'ai';
+      if (room.startGame()) {
+        broadcastRoom(msg.roomId, {
+          type: 'GAME_START',
+          monsterId: room.monsterId,
+          isAI: room.monsterType === 'ai'
+        });
+      }
+    }
+  }
+
+  else if (msg.type === 'PLAYER_MOVE') {
+    const room = gameState.rooms.get(msg.roomId);
+    if (room && room.players.has(clientId)) {
+      const p = room.players.get(clientId);
+      p.x = msg.x;
+      p.y = msg.y;
+      p.vx = msg.vx;
+      p.vy = msg.vy;
+      p.anim = msg.anim;
+
+      broadcastRoom(msg.roomId, {
+        type: 'PLAYER_MOVE',
+        playerId: clientId,
+        x: p.x,
+        y: p.y,
+        vx: p.vx,
+        vy: p.vy,
+        anim: p.anim
+      });
+    }
+  }
+
+  else if (msg.type === 'MONSTER_MOVE') {
+    broadcastRoom(msg.roomId, {
+      type: 'MONSTER_MOVE',
+      x: msg.x,
+      y: msg.y,
+      anim: msg.anim
+    });
+  }
+
+  else if (msg.type === 'KEY_COLLECTED') {
+    const room = gameState.rooms.get(msg.roomId);
+    if (room) {
+      room.keyCollected = true;
+      room.keyCollectorId = clientId;
+      broadcastRoom(msg.roomId, {
+        type: 'KEY_COLLECTED',
+        playerId: clientId
+      });
+    }
+  }
+
+  else if (msg.type === 'PLAYER_CAUGHT') {
+    const room = gameState.rooms.get(msg.roomId);
+    if (room && room.players.has(msg.targetId)) {
+      const p = room.players.get(msg.targetId);
+      p.alive = false;
+      broadcastRoom(msg.roomId, {
+        type: 'PLAYER_CAUGHT',
+        playerId: msg.targetId
+      });
+    }
+  }
+
+  else if (msg.type === 'ESCAPE') {
+    const room = gameState.rooms.get(msg.roomId);
+    if (room) {
+      broadcastRoom(msg.roomId, {
+        type: 'PLAYER_ESCAPED',
+        playerId: clientId,
+        username: msg.username
+      });
+      room.gameStarted = false;
+    }
+  }
+
+  else if (msg.type === 'LEAVE_ROOM') {
+    if (roomId) {
+      const room = gameState.rooms.get(roomId);
+      if (room) {
+        room.removePlayer(clientId);
+        broadcastRoom(roomId, {
+          type: 'PLAYER_LEFT',
+          playerId: clientId,
+          count: room.players.size
+        });
+
+        if (room.players.size === 0) {
+          gameState.rooms.delete(roomId);
+        }
+      }
+      roomId = null;
+    }
+  }
+} catch (e) {
+  console.error('Message error:', e);
 }
 ```
 
 });
 
 ws.on(‘close’, () => {
-if (clientId && currentRoomId) {
-const room = gameState.rooms.get(currentRoomId);
+if (roomId) {
+const room = gameState.rooms.get(roomId);
 if (room) {
 room.removePlayer(clientId);
-broadcastToRoom(currentRoomId, {
+broadcastRoom(roomId, {
 type: ‘PLAYER_LEFT’,
-playerId: clientId
+playerId: clientId,
+count: room.players.size
 });
-
-```
-    if (room.players.size === 0) {
-      gameState.rooms.delete(currentRoomId);
-    }
-  }
+if (room.players.size === 0) {
+gameState.rooms.delete(roomId);
+}
+}
 }
 clients.delete(clientId);
-```
-
+});
 });
 
-ws.on(‘error’, (err) => console.error(‘WebSocket error:’, err));
-});
-
-function broadcastToRoom(roomId, message) {
-clients.forEach((client) => {
-if (client.roomId === roomId && client.ws.readyState === WebSocket.OPEN) {
-client.ws.send(JSON.stringify(message));
-}
-});
-}
-
-function broadcastToAll(message) {
+function broadcastRoom(roomId, msg) {
 clients.forEach((client) => {
 if (client.ws.readyState === WebSocket.OPEN) {
-client.ws.send(JSON.stringify(message));
+try {
+client.ws.send(JSON.stringify(msg));
+} catch (e) {}
+}
+});
+}
+
+function broadcast(msg) {
+clients.forEach((client) => {
+if (client.ws.readyState === WebSocket.OPEN) {
+try {
+client.ws.send(JSON.stringify(msg));
+} catch (e) {}
 }
 });
 }
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-console.log(`🎮 Backrooms Server çalışıyor: http://localhost:${PORT}`);
+console.log(`🎮 THE BACKROOMS Server running on port ${PORT}`);
 });
