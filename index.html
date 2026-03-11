@@ -1,823 +1,416 @@
 <!DOCTYPE html>
-
-<html lang="en">
+<html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
-    <title>THE BACKROOMS - Multiplayer Edition</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discord Lite</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-user-select: none;
-            user-select: none;
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: #1a1a1a;
+            height: 100vh;
+            overflow: hidden;
         }
 
-```
-    body {
-        font-family: 'Arial', sans-serif;
-        background: #0a0a0a;
-        color: #fff;
-        overflow: hidden;
-        width: 100vw;
-        height: 100vh;
-    }
-
-    /* LOADING SCREEN */
-    #loading {
-        position: fixed;
-        width: 100%;
-        height: 100%;
-        background: #000;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        z-index: 10000;
-    }
-
-    #loading.hidden {
-        display: none;
-    }
-
-    .loading-text {
-        font-size: 32px;
-        margin-bottom: 40px;
-        text-align: center;
-        animation: flicker 1.5s infinite;
-    }
-
-    .loading-spinner {
-        width: 60px;
-        height: 60px;
-        border: 4px solid rgba(255, 200, 0, 0.2);
-        border-top: 4px solid #ffc800;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-    }
-
-    .loading-status {
-        margin-top: 30px;
-        font-size: 14px;
-        color: #888;
-    }
-
-    @keyframes flicker {
-        0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% { opacity: 1; }
-        20%, 24%, 55% { opacity: 0.5; }
-    }
-
-    @keyframes spin {
-        to { transform: rotate(360deg); }
-    }
-
-    /* MENU SCREEN */
-    #menu {
-        position: fixed;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(135deg, #0a0a0a 0%, #1a1515 100%);
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        z-index: 100;
-    }
-
-    #menu.hidden {
-        display: none;
-    }
-
-    .menu-title {
-        font-size: 72px;
-        font-weight: bold;
-        color: #ffc800;
-        text-shadow: 0 0 30px rgba(255, 200, 0, 0.8), 0 0 60px rgba(255, 200, 0, 0.4);
-        margin-bottom: 20px;
-        letter-spacing: 8px;
-    }
-
-    .menu-subtitle {
-        font-size: 18px;
-        color: #888;
-        margin-bottom: 60px;
-        text-transform: uppercase;
-        letter-spacing: 4px;
-    }
-
-    .menu-buttons {
-        display: flex;
-        gap: 30px;
-        flex-direction: column;
-        width: 300px;
-    }
-
-    .menu-btn {
-        padding: 16px 40px;
-        font-size: 16px;
-        font-weight: bold;
-        border: 2px solid #ffc800;
-        background: transparent;
-        color: #ffc800;
-        cursor: pointer;
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        transition: all 0.3s;
-        border-radius: 2px;
-    }
-
-    .menu-btn:hover {
-        background: #ffc800;
-        color: #000;
-        box-shadow: 0 0 20px #ffc800;
-    }
-
-    .menu-btn:active {
-        transform: scale(0.98);
-    }
-
-    .player-name-input {
-        padding: 12px;
-        background: #1a1a1a;
-        border: 2px solid #ffc800;
-        color: #ffc800;
-        font-size: 14px;
-        margin-bottom: 20px;
-        width: 300px;
-        text-align: center;
-    }
-
-    .player-name-input::placeholder {
-        color: #666;
-    }
-
-    /* ROOMS LIST */
-    #rooms {
-        position: fixed;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(135deg, #0a0a0a 0%, #1a1515 100%);
-        display: flex;
-        flex-direction: column;
-        z-index: 100;
-    }
-
-    #rooms.hidden {
-        display: none;
-    }
-
-    .rooms-header {
-        padding: 30px;
-        border-bottom: 2px solid #ffc800;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .rooms-header h1 {
-        font-size: 40px;
-        color: #ffc800;
-        text-shadow: 0 0 20px #ffc800;
-    }
-
-    .rooms-header button {
-        padding: 10px 20px;
-        background: #ffc800;
-        border: none;
-        color: #000;
-        cursor: pointer;
-        font-weight: bold;
-        border-radius: 2px;
-    }
-
-    .rooms-list {
-        flex: 1;
-        overflow-y: auto;
-        padding: 30px;
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-        gap: 20px;
-    }
-
-    .room-card {
-        background: #1a1a1a;
-        border: 2px solid #ffc800;
-        padding: 20px;
-        cursor: pointer;
-        transition: all 0.3s;
-    }
-
-    .room-card:hover {
-        background: #2a2a2a;
-        box-shadow: 0 0 20px rgba(255, 200, 0, 0.5);
-        transform: translateY(-5px);
-    }
-
-    .room-card h3 {
-        color: #ffc800;
-        margin-bottom: 15px;
-        font-size: 20px;
-    }
-
-    .room-info {
-        color: #888;
-        font-size: 14px;
-        margin: 8px 0;
-    }
-
-    .room-info span {
-        color: #ffc800;
-        font-weight: bold;
-    }
-
-    .room-join-btn {
-        width: 100%;
-        padding: 10px;
-        margin-top: 15px;
-        background: #ffc800;
-        border: none;
-        color: #000;
-        font-weight: bold;
-        cursor: pointer;
-        transition: all 0.3s;
-    }
-
-    .room-join-btn:hover:not(:disabled) {
-        background: #ffe000;
-    }
-
-    .room-join-btn:disabled {
-        background: #666;
-        cursor: not-allowed;
-        opacity: 0.5;
-    }
-
-    /* GAME SCREEN */
-    #game {
-        position: fixed;
-        width: 100%;
-        height: 100%;
-        background: #0a0a0a;
-        display: flex;
-        z-index: 50;
-    }
-
-    #game.hidden {
-        display: none;
-    }
-
-    canvas {
-        flex: 1;
-        background: #2a2a2a;
-    }
-
-    /* HUD */
-    #hud {
-        position: fixed;
-        top: 20px;
-        left: 20px;
-        background: rgba(0, 0, 0, 0.8);
-        border: 2px solid #ffc800;
-        padding: 15px;
-        font-size: 14px;
-        max-width: 300px;
-        z-index: 200;
-        line-height: 1.6;
-    }
-
-    .hud-line {
-        color: #ffc800;
-        margin-bottom: 8px;
-    }
-
-    #escape-menu {
-        position: fixed;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.9);
-        display: none;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        z-index: 300;
-    }
-
-    #escape-menu.show {
-        display: flex;
-    }
-
-    .escape-menu-content {
-        background: #1a1a1a;
-        border: 2px solid #ffc800;
-        padding: 40px;
-        text-align: center;
-        max-width: 400px;
-    }
-
-    .escape-menu-content h2 {
-        color: #ffc800;
-        margin-bottom: 30px;
-        font-size: 32px;
-    }
-
-    .escape-buttons {
-        display: flex;
-        gap: 20px;
-        flex-direction: column;
-    }
-
-    .escape-btn {
-        padding: 12px;
-        background: #ffc800;
-        border: none;
-        color: #000;
-        font-weight: bold;
-        cursor: pointer;
-        border-radius: 2px;
-    }
-
-    .escape-btn:hover {
-        background: #ffe000;
-    }
-
-    /* MOBILE CONTROLS */
-    #controls {
-        position: fixed;
-        bottom: 20px;
-        left: 20px;
-        display: none;
-        gap: 50px;
-        z-index: 200;
-    }
-
-    #controls.show {
-        display: flex;
-    }
-
-    .joystick-container {
-        width: 140px;
-        height: 140px;
-        background: rgba(255, 200, 0, 0.1);
-        border: 2px solid #ffc800;
-        border-radius: 50%;
-        position: relative;
-        cursor: grab;
-    }
-
-    .joystick-stick {
-        width: 60px;
-        height: 60px;
-        background: #ffc800;
-        border-radius: 50%;
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        cursor: grabbing;
-    }
-
-    .action-buttons {
-        display: grid;
-        grid-template-columns: repeat(2, 60px);
-        gap: 15px;
-    }
-
-    .action-btn {
-        width: 60px;
-        height: 60px;
-        background: rgba(255, 200, 0, 0.2);
-        border: 2px solid #ffc800;
-        border-radius: 50%;
-        color: #ffc800;
-        font-weight: bold;
-        cursor: pointer;
-        font-size: 24px;
-        transition: all 0.1s;
-    }
-
-    .action-btn:active {
-        background: #ffc800;
-        color: #000;
-    }
-
-    .jump-btn {
-        grid-column: 1 / 3;
-        height: 60px;
-    }
-
-    /* SCROLLBAR */
-    ::-webkit-scrollbar {
-        width: 10px;
-    }
-
-    ::-webkit-scrollbar-track {
-        background: #1a1a1a;
-    }
-
-    ::-webkit-scrollbar-thumb {
-        background: #ffc800;
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-        background: #ffe000;
-    }
-
-    /* RESPONSIVE */
-    @media (orientation: landscape) and (max-width: 1024px) {
-        #controls {
-            display: flex !important;
-        }
-    }
-
-    @media (max-width: 600px) {
-        .menu-title {
-            font-size: 40px;
+        /* Ana uygulama */
+        #app {
+            height: 100vh;
+            display: flex;
         }
 
-        .menu-subtitle {
+        /* Grup listesi */
+        .groups {
+            width: 240px;
+            background: #1e1f22;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #2b2d31;
+        }
+
+        .groups h3 {
+            padding: 16px;
+            color: #949ba4;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .group-item {
+            padding: 10px 16px;
+            margin: 2px 8px;
+            border-radius: 6px;
+            color: #949ba4;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: 0.2s;
+        }
+
+        .group-item:hover {
+            background: #2b2d31;
+            color: #dbdee1;
+        }
+
+        .group-item.active {
+            background: #404249;
+            color: white;
+        }
+
+        .group-icon {
+            width: 32px;
+            height: 32px;
+            background: #2b2d31;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .lock-icon {
+            margin-left: auto;
             font-size: 12px;
         }
 
-        .rooms-list {
-            grid-template-columns: 1fr;
+        /* Ana içerik */
+        .main {
+            flex: 1;
+            background: #313338;
+            display: flex;
+            flex-direction: column;
         }
-    }
-</style>
-```
 
+        /* Sohbet başlığı */
+        .chat-header {
+            padding: 12px 20px;
+            background: #313338;
+            border-bottom: 1px solid #2b2d31;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .chat-info h2 {
+            color: white;
+            font-size: 18px;
+            margin-bottom: 2px;
+        }
+
+        .user-count {
+            color: #949ba4;
+            font-size: 13px;
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            background: #2b2d31;
+            border-radius: 20px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        .connected { background: #23a55a; }
+        .connecting { background: #f0b232; }
+        .disconnected { background: #da373c; }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        /* Mesajlar */
+        .messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .message {
+            margin-bottom: 16px;
+            display: flex;
+            gap: 12px;
+            animation: slideIn 0.3s;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            background: #2b2d31;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #dbdee1;
+            flex-shrink: 0;
+        }
+
+        .message-content {
+            flex: 1;
+        }
+
+        .message-header {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+            margin-bottom: 4px;
+        }
+
+        .message-author {
+            color: white;
+            font-weight: 500;
+            font-size: 15px;
+        }
+
+        .message-time {
+            color: #949ba4;
+            font-size: 11px;
+        }
+
+        .message-text {
+            color: #dbdee1;
+            font-size: 14px;
+            line-height: 1.4;
+            word-break: break-word;
+        }
+
+        /* Mesaj girişi */
+        .message-input {
+            padding: 20px;
+            background: #313338;
+            border-top: 1px solid #2b2d31;
+        }
+
+        .input-wrapper {
+            background: #2b2d31;
+            border-radius: 8px;
+            padding: 10px 16px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-wrapper input {
+            flex: 1;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .input-wrapper input::placeholder {
+            color: #5e6778;
+        }
+
+        .send-btn {
+            background: #5865f2;
+            color: white;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .send-btn:hover {
+            background: #4752c4;
+        }
+
+        /* Ses kontrolleri */
+        .voice-controls {
+            padding: 16px 20px;
+            background: #2b2d31;
+            display: flex;
+            gap: 8px;
+            border-top: 1px solid #1e1f22;
+        }
+
+        .control-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #1e1f22;
+            border: none;
+            color: #dbdee1;
+            font-size: 18px;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .control-btn:hover {
+            background: #404249;
+        }
+
+        .control-btn.active {
+            background: #da373c;
+            color: white;
+        }
+
+        .join-btn {
+            background: #23a55a;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-left: auto;
+        }
+
+        .join-btn:hover {
+            background: #1e8b4c;
+        }
+
+        .leave-btn {
+            background: #da373c;
+        }
+
+        /* Şifre modalı */
+        .modal {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: #2b2d31;
+            padding: 24px;
+            border-radius: 8px;
+            width: 300px;
+        }
+
+        .modal-content h3 {
+            color: white;
+            margin-bottom: 16px;
+            font-size: 18px;
+        }
+
+        .modal-content input {
+            width: 100%;
+            padding: 10px;
+            background: #1e1f22;
+            border: 1px solid #404249;
+            border-radius: 4px;
+            color: white;
+            margin-bottom: 16px;
+            outline: none;
+        }
+
+        .modal-content input:focus {
+            border-color: #5865f2;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 4px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .modal-btn.primary {
+            background: #5865f2;
+            color: white;
+        }
+
+        .modal-btn.secondary {
+            background: #404249;
+            color: #dbdee1;
+        }
+
+        .modal-btn:hover {
+            opacity: 0.9;
+        }
+
+        /* Mobil uyum */
+        @media (max-width: 768px) {
+            .groups {
+                position: fixed;
+                left: -240px;
+                height: 100%;
+                transition: 0.3s;
+                z-index: 100;
+            }
+
+            .groups.show {
+                left: 0;
+            }
+        }
+
+        /* Tema butonu */
+        .theme-btn {
+            background: none;
+            border: none;
+            color: #949ba4;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 4px 8px;
+            transition: 0.2s;
+        }
+
+        .theme-btn:hover {
+            color: white;
+        }
+
+        /* Bağlı kullanıcılar */
+        .users-list {
+            display: flex;
+            gap: 4px;
+            margin-left: 10px;
+        }
+
+        .user-badge {
+            width: 28px;
+            height: 28px;
+            background: #2b2d31;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: #dbdee1;
+            border: 2px solid #313338;
+        }
+    </style>
 </head>
 <body>
-    <!-- LOADING SCREEN -->
-    <div id="loading">
-        <div class="loading-text">THE BACKROOMS</div>
-        <div class="loading-spinner"></div>
-        <div class="loading-status" id="loading-status">Connecting to server...</div>
-    </div>
-
-```
-<!-- MENU SCREEN -->
-<div id="menu">
-    <div class="menu-title">THE BACKROOMS</div>
-    <div class="menu-subtitle">Multiplayer Edition</div>
-    
-    <input type="text" id="player-name" class="player-name-input" placeholder="Enter your name..." maxlength="20">
-    
-    <div class="menu-buttons">
-        <button class="menu-btn" id="btn-play">FIND GAME</button>
-        <button class="menu-btn" id="btn-create">CREATE ROOM</button>
-        <button class="menu-btn" id="btn-settings">SETTINGS</button>
-    </div>
-</div>
-
-<!-- ROOMS LIST SCREEN -->
-<div id="rooms" class="hidden">
-    <div class="rooms-header">
-        <h1>AVAILABLE ROOMS</h1>
-        <button onclick="backToMenu()">BACK</button>
-    </div>
-    <div class="rooms-list" id="rooms-list">
-        <div style="text-align: center; grid-column: 1/-1; color: #888;">Loading rooms...</div>
-    </div>
-</div>
-
-<!-- GAME SCREEN -->
-<div id="game" class="hidden">
-    <canvas id="gameCanvas"></canvas>
-    
-    <div id="hud">
-        <div class="hud-line">Name: <span id="hud-name">---</span></div>
-        <div class="hud-line">Health: <span id="hud-health">100%</span></div>
-        <div class="hud-line">Key: <span id="hud-key">NO</span></div>
-        <div class="hud-line">Players: <span id="hud-players">1/10</span></div>
-        <div class="hud-line" style="margin-top: 15px; border-top: 1px solid #ffc800; padding-top: 10px;">
-            <span style="font-size: 12px;">Press ESC for menu</span>
-        </div>
-    </div>
-
-    <!-- Mobile Controls -->
-    <div id="controls">
-        <div class="joystick-container" id="joystick">
-            <div class="joystick-stick"></div>
-        </div>
-        <div class="action-buttons">
-            <button class="action-btn" id="btn-sprint">🏃</button>
-            <button class="action-btn" id="btn-look">👁️</button>
-            <button class="action-btn jump-btn" id="btn-jump">JUMP</button>
-        </div>
-    </div>
-</div>
-
-<!-- ESCAPE MENU -->
-<div id="escape-menu">
-    <div class="escape-menu-content">
-        <h2>GAME MENU</h2>
-        <div class="escape-buttons">
-            <button class="escape-btn" onclick="resumeGame()">RESUME</button>
-            <button class="escape-btn" onclick="leaveGame()">LEAVE GAME</button>
-        </div>
-    </div>
-</div>
-
-<script>
-    const CONFIG = {
-        SERVER: 'wss://saskioyunu-1-2d6i.onrender.com',
-        CANVAS_WIDTH: window.innerWidth,
-        CANVAS_HEIGHT: window.innerHeight
-    };
-
-    let gameState = {
-        playerId: null,
-        username: 'Player',
-        roomId: null,
-        connected: false,
-        gameRunning: false,
-        gameManager: null,
-        keys: {}
-    };
-
-    let ws = null;
-
-    // ============ LOAD & INIT ============
-    window.addEventListener('load', () => {
-        initTelegram();
-        connectServer();
-        setupEvents();
-        loadingStatus('Initializing...');
-    });
-
-    function initTelegram() {
-        if (window.Telegram?.WebApp) {
-            const tg = window.Telegram.WebApp;
-            tg.ready();
-            if (tg.initDataUnsafe?.user?.first_name) {
-                const name = tg.initDataUnsafe.user.first_name;
-                document.getElementById('player-name').value = name;
-                gameState.username = name;
-            }
-        }
-    }
-
-    function connectServer() {
-        ws = new WebSocket(CONFIG.SERVER);
-
-        ws.onopen = () => {
-            gameState.connected = true;
-            gameState.playerId = 'p_' + Date.now();
-            loadingStatus('Connected to server');
-            setTimeout(() => {
-                ws.send(JSON.stringify({
-                    type: 'INIT',
-                    id: gameState.playerId,
-                    username: gameState.username
-                }));
-            }, 500);
-        };
-
-        ws.onmessage = (e) => {
-            const msg = JSON.parse(e.data);
-            handleMessage(msg);
-        };
-
-        ws.onerror = () => {
-            loadingStatus('Connection error! Retrying...');
-        };
-
-        ws.onclose = () => {
-            gameState.connected = false;
-            setTimeout(connectServer, 3000);
-        };
-
-        window.ws = ws;
-    }
-
-    function handleMessage(msg) {
-        if (msg.type === 'INIT_SUCCESS') {
-            setTimeout(() => {
-                hideLoading();
-            }, 800);
-        } else if (msg.type === 'ROOMS_LIST') {
-            displayRooms(msg.rooms);
-        } else if (msg.type === 'ROOM_CREATED') {
-            startGame(msg.roomId, msg.layout, msg.room.monsterType === 'Bot', true);
-        } else if (msg.type === 'ROOM_JOINED') {
-            startGame(msg.roomId, msg.layout, true, false);
-        } else if (msg.type === 'PLAYER_JOINED') {
-            if (gameState.gameManager) {
-                gameState.gameManager.addPlayer(msg.player);
-            }
-        } else if (msg.type === 'PLAYER_MOVE') {
-            if (gameState.gameManager) {
-                gameState.gameManager.updatePlayer(msg.playerId, msg);
-            }
-        } else if (msg.type === 'MONSTER_MOVE') {
-            if (gameState.gameManager) {
-                gameState.gameManager.updateMonster(msg.x, msg.y, msg.anim);
-            }
-        } else if (msg.type === 'GAME_START') {
-            if (gameState.gameManager) {
-                gameState.gameManager.startGame(msg.monsterId, msg.isAI);
-            }
-        } else if (msg.type === 'PLAYER_CAUGHT') {
-            if (gameState.gameManager) {
-                gameState.gameManager.playerCaught(msg.playerId);
-            }
-        } else if (msg.type === 'KEY_COLLECTED') {
-            if (gameState.gameManager) {
-                gameState.gameManager.keyCollected(msg.playerId);
-            }
-        } else if (msg.type === 'PLAYER_ESCAPED') {
-            if (gameState.gameManager) {
-                gameState.gameManager.playerEscaped(msg.playerId, msg.username);
-            }
-        }
-    }
-
-    function loadingStatus(text) {
-        document.getElementById('loading-status').textContent = text;
-    }
-
-    function hideLoading() {
-        document.getElementById('loading').classList.add('hidden');
-    }
-
-    // ============ MENU ============
-    function setupEvents() {
-        document.getElementById('btn-play').addEventListener('click', () => {
-            gameState.username = document.getElementById('player-name').value || 'Player';
-            showRooms();
-        });
-
-        document.getElementById('btn-create').addEventListener('click', () => {
-            gameState.username = document.getElementById('player-name').value || 'Player';
-            createRoom();
-        });
-
-        document.getElementById('btn-settings').addEventListener('click', () => {
-            alert('Settings coming soon!');
-        });
-
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && gameState.gameRunning) {
-                showEscapeMenu();
-            }
-            gameState.keys[e.key.toLowerCase()] = true;
-        });
-
-        document.addEventListener('keyup', (e) => {
-            gameState.keys[e.key.toLowerCase()] = false;
-        });
-
-        setupMobileControls();
-    }
-
-    function showRooms() {
-        document.getElementById('menu').classList.add('hidden');
-        document.getElementById('rooms').classList.remove('hidden');
-        ws.send(JSON.stringify({ type: 'GET_ROOMS' }));
-    }
-
-    function backToMenu() {
-        document.getElementById('rooms').classList.add('hidden');
-        document.getElementById('menu').classList.remove('hidden');
-    }
-
-    function displayRooms(rooms) {
-        const list = document.getElementById('rooms-list');
-        if (rooms.length === 0) {
-            list.innerHTML = '<div style="text-align: center; grid-column: 1/-1; color: #888; padding: 40px;">No rooms available. Create one!</div>';
-            return;
-        }
-
-        list.innerHTML = rooms.map(r => `
-            <div class="room-card">
-                <h3>Room #${r.id}</h3>
-                <div class="room-info">Creator: <span>${r.creatorName}</span></div>
-                <div class="room-info">Players: <span>${r.playerCount}/${r.maxPlayers}</span></div>
-                <div class="room-info">Status: <span>${r.gameStarted ? 'IN PROGRESS' : 'WAITING'}</span></div>
-                <div class="room-info">Monster: <span>${r.monsterType}</span></div>
-                <button class="room-join-btn" onclick="joinRoom(${r.id})" ${r.isFull ? 'disabled' : ''}>
-                    ${r.isFull ? 'ROOM FULL' : 'JOIN'}
-                </button>
-            </div>
-        `).join('');
-    }
-
-    function createRoom() {
-        document.getElementById('menu').classList.add('hidden');
-        ws.send(JSON.stringify({
-            type: 'CREATE_ROOM',
-            username: gameState.username
-        }));
-    }
-
-    function joinRoom(roomId) {
-        document.getElementById('rooms').classList.add('hidden');
-        ws.send(JSON.stringify({
-            type: 'JOIN_ROOM',
-            roomId: roomId,
-            username: gameState.username
-        }));
-    }
-
-    // ============ GAME ============
-    function startGame(roomId, layout, isAI, isCreator) {
-        gameState.roomId = roomId;
-        gameState.gameRunning = true;
-        document.getElementById('game').classList.remove('hidden');
-
-        const canvas = document.getElementById('gameCanvas');
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-
-        gameState.gameManager = new GameEngine(canvas, gameState.playerId, layout);
-        gameState.gameManager.start();
-
-        // Update HUD
-        document.getElementById('hud-name').textContent = gameState.username;
-
-        if (isCreator) {
-            const monsterType = confirm('AI Monster?\n\nOK = AI (Bot)\nCancel = Random Player') ? 'ai' : 'player';
-            setTimeout(() => {
-                ws.send(JSON.stringify({
-                    type: 'START_GAME',
-                    roomId: roomId,
-                    monsterType: monsterType
-                }));
-            }, 500);
-        }
-    }
-
-    function showEscapeMenu() {
-        document.getElementById('escape-menu').classList.add('show');
-        gameState.gameRunning = false;
-    }
-
-    function resumeGame() {
-        document.getElementById('escape-menu').classList.remove('show');
-        gameState.gameRunning = true;
-    }
-
-    function leaveGame() {
-        ws.send(JSON.stringify({
-            type: 'LEAVE_ROOM'
-        }));
-        document.getElementById('game').classList.add('hidden');
-        document.getElementById('escape-menu').classList.remove('show');
-        document.getElementById('menu').classList.remove('hidden');
-        gameState.gameRunning = false;
-        if (gameState.gameManager) {
-            gameState.gameManager.destroy();
-        }
-    }
-
-    // ============ MOBILE CONTROLS ============
-    function setupMobileControls() {
-        const joystick = document.getElementById('joystick');
-        const stick = joystick.querySelector('.joystick-stick');
-        let isDragging = false;
-
-        joystick.addEventListener('touchstart', () => { isDragging = true; });
-        joystick.addEventListener('touchmove', (e) => {
-            if (!isDragging) return;
-            const touch = e.touches[0];
-            const rect = joystick.getBoundingClientRect();
-            const x = touch.clientX - (rect.left + rect.width / 2);
-            const y = touch.clientY - (rect.top + rect.height / 2);
-            const dist = Math.hypot(x, y);
-            const maxDist = 50;
-            const dx = dist > maxDist ? (x / dist) * maxDist : x;
-            const dy = dist > maxDist ? (y / dist) * maxDist : y;
-            stick.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
-            gameState.keys['joystick_x'] = dx / maxDist;
-            gameState.keys['joystick_y'] = dy / maxDist;
-        });
-        joystick.addEventListener('touchend', () => {
-            isDragging = false;
-            stick.style.transform = 'translate(-50%, -50%)';
-            gameState.keys['joystick_x'] = 0;
-            gameState.keys['joystick_y'] = 0;
-        });
-
-        document.getElementById('btn-jump').addEventListener('touchstart', () => { gameState.keys[' '] = true; });
-        document.getElementById('btn-jump').addEventListener('touchend', () => { gameState.keys[' '] = false; });
-        document.getElementById('btn-sprint').addEventListener('touchstart', () => { gameState.keys['shift'] = true; });
-        document.getElementById('btn-sprint').addEventListener('touchend', () => { gameState.keys['shift'] = false; });
-    }
-
-    window.addEventListener('resize', () => {
-        CONFIG.CANVAS_WIDTH = window.innerWidth;
-        CONFIG.CANVAS_HEIGHT = window.innerHeight;
-        const canvas = document.getElementById('gameCanvas');
-        if (canvas && !canvas.classList.contains('hidden')) {
-            canvas.width = CONFIG.CANVAS_WIDTH;
-            canvas.height = CONFIG.CANVAS_HEIGHT;
-        }
-    });
-</script>
-
-<script src="engine.js"></script>
-```
-
+    <div id="app"></div>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/simple-peer@9.11.1/simple-peer.min.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
