@@ -4,9 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Discord-like P2P Voice & Text Chat - Zero Server Storage">
-    <meta name="theme-color" content="#7289DA">
-    <title>🎧 VoiceChat - P2P Sohbet</title>
+    <meta name="description" content="Discord-like P2P Voice & Text Chat - Professional Edition">
+    <meta name="theme-color" content="#5865F2">
+    <title>VoiceChat - Discord Clone</title>
     <style>
         * {
             margin: 0;
@@ -16,198 +16,220 @@
 
 ```
     :root {
-        --primary: #7289DA;
+        --discord-purple: #5865F2;
+        --discord-dark: #36393F;
+        --discord-darker: #2C2F33;
+        --discord-text: #FFFFFF;
+        --discord-muted: #72767D;
+        --discord-border: #202225;
         --success: #43B581;
         --warning: #FAA61A;
         --danger: #F04747;
-        --bg: #36393F;
-        --bg2: #2F3136;
-        --bg3: #202225;
-        --text: #DBDEE1;
-        --muted: #72767D;
-        --border: #202225;
     }
 
     html, body {
         height: 100%;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-        background: var(--bg);
-        color: var(--text);
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: var(--discord-darker);
+        color: var(--discord-text);
         overflow: hidden;
     }
 
-    body {
+    /* LOADING SCREEN */
+    .loading-screen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, #2C2F33 0%, #36393F 100%);
         display: flex;
         flex-direction: column;
-    }
-
-    .container {
-        display: flex;
-        height: 100vh;
-        gap: 0;
-    }
-
-    /* Sidebar */
-    .sidebar {
-        width: 280px;
-        background: var(--bg2);
-        border-right: 1px solid var(--border);
-        display: flex;
-        flex-direction: column;
-        overflow-y: auto;
-        overflow-x: hidden;
-    }
-
-    .sidebar-header {
-        padding: 16px;
-        border-bottom: 1px solid var(--border);
-        display: flex;
         align-items: center;
-        gap: 12px;
-        min-height: 70px;
+        justify-content: center;
+        z-index: 9999;
     }
 
-    .user-avatar {
-        width: 40px;
-        height: 40px;
+    .loading-screen.hidden {
+        display: none;
+    }
+
+    .loading-container {
+        text-align: center;
+        animation: fadeInUp 0.6s ease-out;
+    }
+
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .loading-logo {
+        width: 80px;
+        height: 80px;
+        background: var(--discord-purple);
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-weight: bold;
-        color: white;
-        font-size: 18px;
-        flex-shrink: 0;
+        font-size: 40px;
+        margin-bottom: 30px;
+        animation: pulse 2s ease-in-out infinite;
+        box-shadow: 0 0 30px rgba(88, 101, 242, 0.3);
     }
 
-    .user-info {
-        flex: 1;
-        min-width: 0;
+    @keyframes pulse {
+        0%, 100% { box-shadow: 0 0 30px rgba(88, 101, 242, 0.3); transform: scale(1); }
+        50% { box-shadow: 0 0 50px rgba(88, 101, 242, 0.6); transform: scale(1.05); }
     }
 
-    .user-info-name {
-        font-size: 14px;
-        font-weight: 600;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .user-info-status {
-        font-size: 12px;
-        color: var(--muted);
-    }
-
-    .groups-label {
-        padding: 12px 16px 8px;
-        font-size: 12px;
+    .loading-title {
+        font-size: 28px;
         font-weight: 700;
-        color: var(--muted);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
+        margin-bottom: 10px;
     }
 
-    .groups-list {
+    .loading-status {
+        font-size: 14px;
+        color: var(--discord-muted);
+        margin-bottom: 30px;
+        min-height: 20px;
+    }
+
+    .loading-spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid rgba(88, 101, 242, 0.2);
+        border-top-color: var(--discord-purple);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* MAIN LAYOUT */
+    .app {
+        display: flex;
+        height: 100vh;
+    }
+
+    .sidebar-servers {
+        width: 72px;
+        background: var(--discord-dark);
+        border-right: 1px solid var(--discord-border);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 8px 0;
+        overflow-y: auto;
+    }
+
+    .server-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: var(--discord-purple);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        cursor: pointer;
+        margin: 8px 0;
+        transition: all 0.2s;
+        font-size: 20px;
+    }
+
+    .server-icon:hover {
+        border-radius: 30%;
+        transform: scale(1.1);
+    }
+
+    .sidebar-channels {
+        width: 240px;
+        background: var(--discord-dark);
+        border-right: 1px solid var(--discord-border);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .channel-header {
+        padding: 16px;
+        border-bottom: 1px solid var(--discord-border);
+        font-weight: 600;
+        font-size: 14px;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .channels-list {
         flex: 1;
         overflow-y: auto;
-        padding: 0 8px 8px;
+        padding: 8px 0;
     }
 
-    .group-item {
-        padding: 8px;
-        margin: 4px 0;
+    .channel-item {
+        padding: 8px 16px;
+        margin: 0 8px;
         border-radius: 4px;
-        background: transparent;
-        border: none;
-        color: var(--text);
         cursor: pointer;
-        text-align: left;
-        font-size: 14px;
-        transition: all 0.2s ease;
-        padding-left: 16px;
-        position: relative;
-    }
-
-    .group-item:hover {
-        background: var(--bg3);
-        color: white;
-    }
-
-    .group-item.active {
-        background: var(--primary);
-        color: white;
-    }
-
-    .group-item.locked::before {
-        content: "🔒 ";
-    }
-
-    .sidebar-footer {
-        padding: 12px;
-        border-top: 1px solid var(--border);
+        font-size: 15px;
+        color: var(--discord-muted);
+        transition: all 0.2s;
         display: flex;
+        align-items: center;
         gap: 8px;
     }
 
-    .btn-small {
-        flex: 1;
-        padding: 8px 12px;
-        background: var(--bg3);
-        border: 1px solid var(--border);
-        color: var(--text);
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 12px;
-        font-weight: 600;
-        transition: all 0.2s ease;
+    .channel-item:hover {
+        background: rgba(88, 101, 242, 0.1);
+        color: var(--discord-text);
     }
 
-    .btn-small:hover {
-        background: var(--primary);
-        border-color: var(--primary);
+    .channel-item.active {
+        background: var(--discord-purple);
         color: white;
     }
 
-    /* Main Content */
-    .main {
+    .main-content {
         flex: 1;
         display: flex;
         flex-direction: column;
-        overflow: hidden;
     }
 
-    .header {
-        padding: 16px;
-        background: var(--bg2);
-        border-bottom: 1px solid var(--border);
+    .channel-header-bar {
+        padding: 16px 24px;
+        background: var(--discord-dark);
+        border-bottom: 1px solid var(--discord-border);
         display: flex;
-        align-items: center;
         justify-content: space-between;
-        min-height: 70px;
+        align-items: center;
+        height: 60px;
     }
 
-    .header-title {
-        flex: 1;
-    }
-
-    .header-title h2 {
-        font-size: 18px;
-        font-weight: 600;
+    .channel-info h2 {
+        font-size: 16px;
+        font-weight: 700;
         margin-bottom: 4px;
     }
 
-    .header-title p {
+    .channel-info p {
         font-size: 12px;
-        color: var(--muted);
+        color: var(--discord-muted);
     }
 
-    .connection-status {
+    .header-controls {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+    }
+
+    .status-badge {
         display: flex;
         align-items: center;
         gap: 8px;
-        padding: 8px 12px;
-        background: var(--bg3);
-        border-radius: 4px;
+        padding: 6px 12px;
+        background: rgba(88, 101, 242, 0.1);
+        border-radius: 20px;
         font-size: 12px;
     }
 
@@ -215,108 +237,71 @@
         width: 8px;
         height: 8px;
         border-radius: 50%;
-        animation: pulse 1.5s infinite;
-    }
-
-    .status-dot.connected {
         background: var(--success);
-        animation: none;
-    }
-
-    .status-dot.connecting {
-        background: var(--warning);
-    }
-
-    .status-dot.disconnected {
-        background: var(--danger);
-        animation: none;
-    }
-
-    @keyframes pulse {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.5; }
-    }
-
-    /* Content Area */
-    .content {
-        flex: 1;
-        display: grid;
-        grid-template-columns: 1fr 280px;
-        gap: 0;
-        overflow: hidden;
     }
 
     .messages-area {
+        flex: 1;
         display: flex;
         flex-direction: column;
-        background: var(--bg);
-        border-right: 1px solid var(--border);
+        overflow: hidden;
     }
 
     .messages-list {
         flex: 1;
         overflow-y: auto;
-        padding: 16px;
+        padding: 24px;
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 16px;
     }
 
-    .message {
-        padding: 8px 0;
+    .message-group {
         display: flex;
         gap: 12px;
-        animation: slideUp 0.3s ease;
+        animation: slideIn 0.3s ease-out;
     }
 
-    @keyframes slideUp {
-        from {
-            opacity: 0;
-            transform: translateY(10px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
+    @keyframes slideIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
     }
 
-    .message-avatar {
-        width: 32px;
-        height: 32px;
+    .avatar {
+        width: 40px;
+        height: 40px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         color: white;
-        font-size: 14px;
         font-weight: bold;
         flex-shrink: 0;
+        font-size: 14px;
     }
 
     .message-content {
         flex: 1;
-        min-width: 0;
     }
 
     .message-header {
         display: flex;
         gap: 8px;
         margin-bottom: 4px;
-        align-items: baseline;
     }
 
-    .message-author {
+    .username {
         font-weight: 600;
         font-size: 14px;
     }
 
-    .message-time {
+    .timestamp {
         font-size: 12px;
-        color: var(--muted);
+        color: var(--discord-muted);
     }
 
     .message-text {
-        font-size: 14px;
+        font-size: 15px;
         line-height: 1.4;
         word-break: break-word;
     }
@@ -327,178 +312,195 @@
         align-items: center;
         justify-content: center;
         height: 100%;
-        color: var(--muted);
+        color: var(--discord-muted);
         text-align: center;
-        gap: 12px;
     }
 
     .empty-icon {
-        font-size: 48px;
+        font-size: 60px;
+        margin-bottom: 16px;
         opacity: 0.3;
     }
 
-    /* Input Area */
-    .input-area {
-        padding: 16px;
-        background: var(--bg2);
-        border-top: 1px solid var(--border);
+    .message-input-area {
+        padding: 20px 24px;
+        border-top: 1px solid var(--discord-border);
+    }
+
+    .input-wrapper {
         display: flex;
-        gap: 8px;
+        gap: 12px;
     }
 
-    input[type="text"] {
+    .input-field {
         flex: 1;
-        padding: 10px 12px;
-        background: var(--bg3);
-        border: 1px solid var(--border);
-        color: var(--text);
-        border-radius: 4px;
-        font-size: 14px;
-        transition: all 0.2s ease;
+        padding: 12px 16px;
+        background: var(--discord-dark);
+        border: 1px solid var(--discord-border);
+        border-radius: 8px;
+        color: var(--discord-text);
+        font-size: 15px;
+        font-family: inherit;
+        resize: none;
+        max-height: 120px;
     }
 
-    input[type="text"]:focus {
+    .input-field:focus {
         outline: none;
-        border-color: var(--primary);
-        box-shadow: 0 0 0 2px rgba(114, 137, 218, 0.1);
+        border-color: var(--discord-purple);
+        background: var(--discord-darker);
     }
 
-    input[type="text"]::placeholder {
-        color: var(--muted);
-    }
-
-    .btn-send {
-        padding: 10px 16px;
-        background: var(--primary);
+    .send-button {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--discord-purple);
         border: none;
         color: white;
-        border-radius: 4px;
         cursor: pointer;
-        font-weight: 600;
-        font-size: 14px;
-        transition: all 0.2s ease;
-    }
-
-    .btn-send:hover:not(:disabled) {
-        background: #5b73c6;
-    }
-
-    .btn-send:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
-
-    /* Voice Panel */
-    .voice-panel {
-        background: var(--bg2);
-        border-left: 1px solid var(--border);
-        padding: 16px;
         display: flex;
-        flex-direction: column;
-        overflow-y: auto;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+        font-size: 18px;
     }
 
-    .voice-section {
-        margin-bottom: 16px;
+    .send-button:hover:not(:disabled) {
+        background: #4752C4;
+        transform: scale(1.1);
     }
 
-    .voice-section-title {
-        font-size: 12px;
-        font-weight: 700;
-        color: var(--muted);
-        text-transform: uppercase;
-        margin-bottom: 8px;
-        letter-spacing: 0.5px;
+    .send-button:disabled {
+        opacity: 0.5;
+    }
+
+    .voice-panel {
+        padding: 16px 24px;
+        background: var(--discord-dark);
+        border-top: 1px solid var(--discord-border);
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        height: 60px;
     }
 
     .voice-controls {
         display: flex;
         gap: 8px;
-        margin-bottom: 16px;
     }
 
-    .btn-voice {
-        flex: 1;
-        padding: 12px;
+    .voice-btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
         border: none;
-        border-radius: 4px;
+        background: var(--discord-dark);
+        color: var(--discord-text);
         cursor: pointer;
-        font-size: 12px;
-        font-weight: 600;
-        transition: all 0.2s ease;
         display: flex;
-        flex-direction: column;
         align-items: center;
-        gap: 4px;
+        justify-content: center;
+        font-size: 16px;
+        transition: all 0.2s;
     }
 
-    .btn-voice.muted {
-        background: var(--danger);
-        color: white;
+    .voice-btn:hover {
+        background: rgba(88, 101, 242, 0.1);
     }
 
-    .btn-voice.unmuted {
+    .voice-btn.active {
         background: var(--success);
-        color: white;
     }
 
-    .btn-voice:hover {
-        transform: scale(1.05);
+    .voice-btn.muted {
+        background: var(--danger);
     }
 
-    .members-list {
-        flex: 1;
-        overflow-y: auto;
-    }
-
-    .member-item {
-        padding: 8px;
-        margin: 4px 0;
-        background: var(--bg3);
-        border-radius: 4px;
-        font-size: 12px;
+    .users-online {
         display: flex;
         align-items: center;
         gap: 8px;
+        font-size: 12px;
+        color: var(--discord-muted);
+        margin-left: auto;
     }
 
-    .member-avatar {
-        width: 24px;
-        height: 24px;
+    .user-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--success);
+    }
+
+    .user-profile {
+        padding: 12px;
+        background: var(--discord-dark);
+        border: 1px solid var(--discord-border);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .profile-avatar {
+        width: 32px;
+        height: 32px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         color: white;
-        font-size: 11px;
         font-weight: bold;
-        flex-shrink: 0;
+        font-size: 12px;
     }
 
-    .member-name {
+    .profile-info {
         flex: 1;
+    }
+
+    .profile-name {
+        font-size: 13px;
+        font-weight: 600;
+        white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        white-space: nowrap;
     }
 
-    /* Modals */
+    .profile-status {
+        font-size: 11px;
+        color: var(--discord-muted);
+    }
+
+    ::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: rgba(88, 101, 242, 0.3);
+        border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: rgba(88, 101, 242, 0.5);
+    }
+
     .modal {
-        display: none;
         position: fixed;
         top: 0;
         left: 0;
         right: 0;
         bottom: 0;
-        background: rgba(0, 0, 0, 0.8);
-        z-index: 1000;
+        background: rgba(0, 0, 0, 0.7);
+        display: none;
         align-items: center;
         justify-content: center;
-        animation: fadeIn 0.2s ease;
+        z-index: 1000;
     }
 
     .modal.show {
         display: flex;
+        animation: fadeIn 0.3s ease-out;
     }
 
     @keyframes fadeIn {
@@ -507,46 +509,45 @@
     }
 
     .modal-content {
-        background: var(--bg2);
-        border: 1px solid var(--border);
-        border-radius: 8px;
+        background: var(--discord-dark);
+        border-radius: 12px;
         padding: 24px;
         width: 90%;
         max-width: 400px;
-        animation: slideUpModal 0.3s ease;
+        animation: slideUp 0.3s ease-out;
     }
 
-    @keyframes slideUpModal {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
     }
 
     .modal-title {
-        font-size: 18px;
-        font-weight: 600;
+        font-size: 20px;
+        font-weight: 700;
         margin-bottom: 16px;
     }
 
     .modal-input {
         width: 100%;
-        padding: 10px 12px;
-        background: var(--bg3);
-        border: 1px solid var(--border);
-        color: var(--text);
+        padding: 12px;
+        background: var(--discord-darker);
+        border: 1px solid var(--discord-border);
         border-radius: 4px;
+        color: var(--discord-text);
         font-size: 14px;
         margin-bottom: 16px;
+        font-family: inherit;
+    }
+
+    .modal-input:focus {
+        outline: none;
+        border-color: var(--discord-purple);
     }
 
     .modal-buttons {
         display: flex;
-        gap: 8px;
+        gap: 12px;
     }
 
     .modal-btn {
@@ -554,315 +555,136 @@
         padding: 10px;
         border: none;
         border-radius: 4px;
-        cursor: pointer;
         font-weight: 600;
-        font-size: 14px;
-        transition: all 0.2s ease;
+        cursor: pointer;
+        transition: all 0.2s;
     }
 
     .modal-btn.primary {
-        background: var(--primary);
+        background: var(--discord-purple);
         color: white;
     }
 
     .modal-btn.primary:hover {
-        background: #5b73c6;
+        background: #4752C4;
     }
 
     .modal-btn.secondary {
-        background: var(--bg3);
-        color: var(--text);
-        border: 1px solid var(--border);
+        background: var(--discord-darker);
+        color: var(--discord-text);
+        border: 1px solid var(--discord-border);
     }
 
     .modal-btn.secondary:hover {
-        background: var(--bg);
+        background: rgba(88, 101, 242, 0.1);
     }
 
-    /* Responsive */
-    @media (max-width: 768px) {
-        .sidebar {
-            position: fixed;
-            left: 0;
-            top: 0;
-            height: 100vh;
-            z-index: 100;
-            transform: translateX(-100%);
-            transition: transform 0.3s ease;
-        }
-
-        .sidebar.show {
-            transform: translateX(0);
-        }
-
-        .content {
-            grid-template-columns: 1fr;
-        }
-
-        .voice-panel {
-            position: fixed;
-            right: 0;
-            bottom: 0;
-            width: 100%;
-            max-height: 200px;
-            border-left: none;
-            border-top: 1px solid var(--border);
-            z-index: 50;
-        }
-
-        .messages-area {
-            border-right: none;
-        }
-
-        .messages-list {
-            padding-bottom: 220px;
-        }
-
-        .hamburger {
-            display: block;
-            background: none;
-            border: none;
-            color: var(--text);
-            cursor: pointer;
-            font-size: 20px;
-        }
+    /* Performance */
+    .message-group {
+        will-change: opacity, transform;
     }
 
-    @media (max-width: 480px) {
-        .header {
-            padding: 12px;
+    @media (prefers-reduced-motion: reduce) {
+        * {
+            animation-duration: 0.01ms !important;
+            transition-duration: 0.01ms !important;
         }
-
-        .header-title h2 {
-            font-size: 16px;
-        }
-
-        .sidebar {
-            width: 100%;
-        }
-
-        .message {
-            gap: 8px;
-        }
-
-        .message-avatar {
-            width: 28px;
-            height: 28px;
-            font-size: 12px;
-        }
-
-        .input-area {
-            padding: 12px;
-            flex-direction: column;
-        }
-
-        .btn-send {
-            width: 100%;
-        }
-    }
-
-    .hamburger {
-        display: none;
-    }
-
-    /* Scrollbar */
-    ::-webkit-scrollbar {
-        width: 8px;
-    }
-
-    ::-webkit-scrollbar-track {
-        background: var(--bg2);
-    }
-
-    ::-webkit-scrollbar-thumb {
-        background: var(--bg3);
-        border-radius: 4px;
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-        background: var(--muted);
     }
 </style>
 ```
 
 </head>
 <body>
-    <div class="container">
-        <!-- Sidebar -->
-        <div class="sidebar" id="sidebar">
-            <div class="sidebar-header">
-                <div class="user-avatar" id="userAvatar">U</div>
-                <div class="user-info">
-                    <div class="user-info-name" id="userName">Kullanıcı</div>
-                    <div class="user-info-status">Çevrimiçi</div>
-                </div>
-            </div>
-
-```
-        <div class="groups-label">Gruplar</div>
-        <div class="groups-list" id="groupsList"></div>
-
-                <div class="sidebar-footer">
-            <button class="btn-small" id="createGroupBtn">➕ Grup Ekle</button>
-            <button class="btn-small" id="settingsBtn">⚙️ Ayarlar</button>
-            <button class="btn-small" id="logoutBtn">Çıkış</button>
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-container">
+            <div class="loading-logo">🎧</div>
+            <h1 class="loading-title">VoiceChat</h1>
+            <p class="loading-status" id="loadingStatus">Sunucuya bağlanıyor...</p>
+            <div class="loading-spinner"></div>
         </div>
     </div>
 
+```
+<!-- Main App -->
+<div class="app" id="app" style="display: none;">
+    <!-- Servers -->
+    <div class="sidebar-servers" id="serversSidebar"></div>
+
+    <!-- Channels -->
+    <div class="sidebar-channels">
+        <div class="channel-header">
+            <span id="serverName">VoiceChat</span>
+            <button style="background: none; border: none; color: #72767D; cursor: pointer; font-size: 18px; padding: 0;">⚙️</button>
+        </div>
+        <div class="channels-list" id="channelsList"></div>
+    </div>
+
     <!-- Main Content -->
-    <div class="main">
-        <div class="header">
-            <div class="header-title">
-                <h2 id="groupTitle">Hoşgeldiniz</h2>
-                <p id="groupDesc">Bir grup seçin</p>
+    <div class="main-content">
+        <div class="channel-header-bar">
+            <div class="channel-info">
+                <h2 id="channelName">Seçilecek kanal yok</h2>
+                <p id="channelDesc">Bir kanal seçin</p>
             </div>
-            <div class="connection-status">
-                <div class="status-dot connecting" id="statusDot"></div>
-                <span id="statusText">Bağlanıyor...</span>
+            <div class="header-controls">
+                <div class="user-profile" id="userProfile"></div>
+                <div class="status-badge">
+                    <div class="status-dot"></div>
+                    <span id="statusText">Bağlandı</span>
+                </div>
             </div>
         </div>
 
-        <div class="content">
-            <!-- Messages -->
-            <div class="messages-area">
-                <div class="messages-list" id="messagesList">
-                    <div class="empty-state">
-                        <div class="empty-icon">💬</div>
-                        <div>Bir grup seçerek başlayın</div>
-                    </div>
-                </div>
-                <div class="input-area">
-                    <input type="text" id="messageInput" placeholder="Mesaj yazın..." disabled>
-                    <button class="btn-send" id="sendBtn" disabled>Gönder</button>
+        <div class="messages-area">
+            <div class="messages-list" id="messagesList">
+                <div class="empty-state">
+                    <div class="empty-icon">💬</div>
+                    <div>Bir kanal seçerek başlayın</div>
                 </div>
             </div>
 
-            <!-- Voice Panel -->
-            <div class="voice-panel">
-                <div class="voice-section">
-                    <div class="voice-section-title">Ses Kontrolleri</div>
-                    <div class="voice-controls">
-                        <button class="btn-voice unmuted" id="muteBtn" title="Sesi Kapat">
-                            🎤 <span>Mic</span>
-                        </button>
-                        <button class="btn-voice unmuted" id="speakerBtn" title="Hoparlörü Kapat">
-                            🔊 <span>Ses</span>
-                        </button>
-                    </div>
+            <div class="message-input-area">
+                <div class="input-wrapper">
+                    <textarea class="input-field" id="messageInput" placeholder="Bir mesaj yazın..." rows="1"></textarea>
+                    <button class="send-button" id="sendBtn">📤</button>
                 </div>
+            </div>
+        </div>
 
-                <div class="voice-section">
-                    <div class="voice-section-title">Katılımcılar</div>
-                    <div class="members-list" id="membersList">
-                        <div style="color: var(--muted); font-size: 12px; text-align: center; padding: 20px;">
-                            Henüz kimse yoksa
-                        </div>
-                    </div>
-                </div>
+        <div class="voice-panel">
+            <div class="voice-controls">
+                <button class="voice-btn" id="muteBtn">🎤</button>
+                <button class="voice-btn" id="deafenBtn">🔊</button>
+            </div>
+            <div class="users-online">
+                <div class="user-dot"></div>
+                <span id="onlineCount">1 online</span>
             </div>
         </div>
     </div>
 </div>
 
 <!-- Login Modal -->
-<div class="modal" id="loginModal">
+<div class="modal" id="loginModal" class="show">
     <div class="modal-content">
-        <div class="modal-title">🎧 VoiceChat'e Hoş Geldiniz</div>
-        <p style="color: var(--muted); margin-bottom: 16px; font-size: 14px;">
-            Bir kullanıcı adı seçin (3-32 karakter)
-        </p>
+        <div class="modal-title">🎧 Hoş Geldiniz</div>
         <input type="text" class="modal-input" id="usernameInput" placeholder="Kullanıcı adı..." maxlength="32">
         <div class="modal-buttons">
-            <button class="modal-btn primary" id="loginBtn">Gir</button>
+            <button class="modal-btn primary" id="loginBtn">Giriş</button>
         </div>
     </div>
 </div>
 
-<!-- Password Modal -->
-<div class="modal" id="passwordModal">
+<!-- Create Channel Modal -->
+<div class="modal" id="createChannelModal">
     <div class="modal-content">
-        <div class="modal-title" id="passwordTitle">Grup Şifresi</div>
-        <p style="color: var(--muted); margin-bottom: 16px; font-size: 14px;">
-            Bu grup şifre korumalı
-        </p>
-        <input type="password" class="modal-input" id="passwordInput" placeholder="Şifre...">
+        <div class="modal-title">Yeni Kanal</div>
+        <input type="text" class="modal-input" id="channelNameInput" placeholder="Kanal adı..." maxlength="50">
+        <input type="password" class="modal-input" id="channelPasswordInput" placeholder="Şifre (opsiyonel)..." maxlength="50">
         <div class="modal-buttons">
-            <button class="modal-btn primary" id="passwordBtn">Gir</button>
-            <button class="modal-btn secondary" id="passwordCancel">İptal</button>
-        </div>
-    </div>
-</div>
-
-<!-- Settings Modal -->
-<div class="modal" id="settingsModal">
-    <div class="modal-content">
-        <div class="modal-title">⚙️ Ayarlar</div>
-        
-        <div style="margin-bottom: 16px;">
-            <label style="font-size: 12px; color: var(--muted); display: block; margin-bottom: 8px;">
-                👤 Kullanıcı Adı (3-32 karakter)
-            </label>
-            <input type="text" id="settingsUsername" class="modal-input" placeholder="Yeni isim..." maxlength="32">
-        </div>
-        
-        <div style="margin-bottom: 16px;">
-            <label style="font-size: 12px; color: var(--muted); display: block; margin-bottom: 8px;">
-                🎤 Mikrofon Cihazı
-            </label>
-            <select id="inputDevice" class="modal-input" style="padding: 8px; width: 100%;">
-                <option value="default">Varsayılan Cihaz</option>
-            </select>
-        </div>
-
-        <div style="margin-bottom: 16px;">
-            <label style="font-size: 12px; color: var(--muted); display: block; margin-bottom: 8px;">
-                🔊 Hoparlör Cihazı
-            </label>
-            <select id="outputDevice" class="modal-input" style="padding: 8px; width: 100%;">
-                <option value="default">Varsayılan Cihaz</option>
-            </select>
-        </div>
-
-        <div class="modal-buttons">
-            <button class="modal-btn primary" id="saveSettings">Kaydet</button>
-            <button class="modal-btn secondary" id="closeSettings">Kapat</button>
-        </div>
-    </div>
-</div>
-
-<!-- Create Group Modal -->
-<div class="modal" id="createGroupModal">
-    <div class="modal-content">
-        <div class="modal-title">➕ Yeni Grup Oluştur</div>
-        
-        <div style="margin-bottom: 12px;">
-            <label style="font-size: 12px; color: var(--muted); display: block; margin-bottom: 6px;">
-                Grup Adı (en az 3 karakter)
-            </label>
-            <input type="text" id="newGroupName" class="modal-input" placeholder="Grup adı..." maxlength="50">
-        </div>
-
-        <div style="margin-bottom: 12px;">
-            <label style="font-size: 12px; color: var(--muted); display: block; margin-bottom: 6px;">
-                Açıklama (opsiyonel)
-            </label>
-            <input type="text" id="newGroupDesc" class="modal-input" placeholder="Grup açıklaması..." maxlength="100">
-        </div>
-
-        <div style="margin-bottom: 16px;">
-            <label style="font-size: 12px; color: var(--muted); display: block; margin-bottom: 6px;">
-                Şifre (opsiyonel - boş bırakın: şifresiz)
-            </label>
-            <input type="password" id="newGroupPassword" class="modal-input" placeholder="Grup şifresi..." maxlength="50">
-        </div>
-
-        <div style="margin-bottom: 16px; padding: 12px; background: var(--bg3); border-radius: 4px; font-size: 12px; color: var(--muted);">
-            💡 Şifreyi unutmayın! Başka kimse gruba giremez.
-        </div>
-
-        <div class="modal-buttons">
-            <button class="modal-btn primary" id="createGroupBtn2">Oluştur</button>
-            <button class="modal-btn secondary" id="closeCreateGroup">İptal</button>
+            <button class="modal-btn primary" id="createChannelBtn">Oluştur</button>
+            <button class="modal-btn secondary" id="cancelCreateBtn">İptal</button>
         </div>
     </div>
 </div>
