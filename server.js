@@ -232,7 +232,7 @@ app.get('/health', (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`🚀 REAL OSINT API işləyir: http://localhost:${PORT}`);
+    console.log(`🚀 REAL OSINT API işləyir: https://saskioyunu-2rxd.onrender.com/lo`);
     console.log('📡 Mənbələr: GDELT, ACLED, OREF, Telegram');
     console.log('⚠️ QEYD: API açarlarını .env faylına əlavə edin');
 });
