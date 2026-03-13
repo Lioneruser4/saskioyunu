@@ -1,696 +1,555 @@
 <!DOCTYPE html>
-
-<html lang="tr">
+<html lang="az">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Discord-like P2P Voice & Text Chat - Professional Edition">
-    <meta name="theme-color" content="#5865F2">
-    <title>VoiceChat - Discord Clone</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Durak Online ♠️</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="styles.css">
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
         }
 
-```
-    :root {
-        --discord-purple: #5865F2;
-        --discord-dark: #36393F;
-        --discord-darker: #2C2F33;
-        --discord-text: #FFFFFF;
-        --discord-muted: #72767D;
-        --discord-border: #202225;
-        --success: #43B581;
-        --warning: #FAA61A;
-        --danger: #F04747;
-    }
-
-    html, body {
-        height: 100%;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        background: var(--discord-darker);
-        color: var(--discord-text);
-        overflow: hidden;
-    }
-
-    /* LOADING SCREEN */
-    .loading-screen {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: linear-gradient(135deg, #2C2F33 0%, #36393F 100%);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        z-index: 9999;
-    }
-
-    .loading-screen.hidden {
-        display: none;
-    }
-
-    .loading-container {
-        text-align: center;
-        animation: fadeInUp 0.6s ease-out;
-    }
-
-    @keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    .loading-logo {
-        width: 80px;
-        height: 80px;
-        background: var(--discord-purple);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 40px;
-        margin-bottom: 30px;
-        animation: pulse 2s ease-in-out infinite;
-        box-shadow: 0 0 30px rgba(88, 101, 242, 0.3);
-    }
-
-    @keyframes pulse {
-        0%, 100% { box-shadow: 0 0 30px rgba(88, 101, 242, 0.3); transform: scale(1); }
-        50% { box-shadow: 0 0 50px rgba(88, 101, 242, 0.6); transform: scale(1.05); }
-    }
-
-    .loading-title {
-        font-size: 28px;
-        font-weight: 700;
-        margin-bottom: 10px;
-    }
-
-    .loading-status {
-        font-size: 14px;
-        color: var(--discord-muted);
-        margin-bottom: 30px;
-        min-height: 20px;
-    }
-
-    .loading-spinner {
-        width: 40px;
-        height: 40px;
-        border: 4px solid rgba(88, 101, 242, 0.2);
-        border-top-color: var(--discord-purple);
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* MAIN LAYOUT */
-    .app {
-        display: flex;
-        height: 100vh;
-    }
-
-    .sidebar-servers {
-        width: 72px;
-        background: var(--discord-dark);
-        border-right: 1px solid var(--discord-border);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        padding: 8px 0;
-        overflow-y: auto;
-    }
-
-    .server-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: 50%;
-        background: var(--discord-purple);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        cursor: pointer;
-        margin: 8px 0;
-        transition: all 0.2s;
-        font-size: 20px;
-    }
-
-    .server-icon:hover {
-        border-radius: 30%;
-        transform: scale(1.1);
-    }
-
-    .sidebar-channels {
-        width: 240px;
-        background: var(--discord-dark);
-        border-right: 1px solid var(--discord-border);
-        display: flex;
-        flex-direction: column;
-    }
-
-    .channel-header {
-        padding: 16px;
-        border-bottom: 1px solid var(--discord-border);
-        font-weight: 600;
-        font-size: 14px;
-        display: flex;
-        justify-content: space-between;
-    }
-
-    .channels-list {
-        flex: 1;
-        overflow-y: auto;
-        padding: 8px 0;
-    }
-
-    .channel-item {
-        padding: 8px 16px;
-        margin: 0 8px;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 15px;
-        color: var(--discord-muted);
-        transition: all 0.2s;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .channel-item:hover {
-        background: rgba(88, 101, 242, 0.1);
-        color: var(--discord-text);
-    }
-
-    .channel-item.active {
-        background: var(--discord-purple);
-        color: white;
-    }
-
-    .main-content {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .channel-header-bar {
-        padding: 16px 24px;
-        background: var(--discord-dark);
-        border-bottom: 1px solid var(--discord-border);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        height: 60px;
-    }
-
-    .channel-info h2 {
-        font-size: 16px;
-        font-weight: 700;
-        margin-bottom: 4px;
-    }
-
-    .channel-info p {
-        font-size: 12px;
-        color: var(--discord-muted);
-    }
-
-    .header-controls {
-        display: flex;
-        gap: 16px;
-        align-items: center;
-    }
-
-    .status-badge {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 6px 12px;
-        background: rgba(88, 101, 242, 0.1);
-        border-radius: 20px;
-        font-size: 12px;
-    }
-
-    .status-dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: var(--success);
-    }
-
-    .messages-area {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-    }
-
-    .messages-list {
-        flex: 1;
-        overflow-y: auto;
-        padding: 24px;
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-    }
-
-    .message-group {
-        display: flex;
-        gap: 12px;
-        animation: slideIn 0.3s ease-out;
-    }
-
-    @keyframes slideIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    .avatar {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-weight: bold;
-        flex-shrink: 0;
-        font-size: 14px;
-    }
-
-    .message-content {
-        flex: 1;
-    }
-
-    .message-header {
-        display: flex;
-        gap: 8px;
-        margin-bottom: 4px;
-    }
-
-    .username {
-        font-weight: 600;
-        font-size: 14px;
-    }
-
-    .timestamp {
-        font-size: 12px;
-        color: var(--discord-muted);
-    }
-
-    .message-text {
-        font-size: 15px;
-        line-height: 1.4;
-        word-break: break-word;
-    }
-
-    .empty-state {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        height: 100%;
-        color: var(--discord-muted);
-        text-align: center;
-    }
-
-    .empty-icon {
-        font-size: 60px;
-        margin-bottom: 16px;
-        opacity: 0.3;
-    }
-
-    .message-input-area {
-        padding: 20px 24px;
-        border-top: 1px solid var(--discord-border);
-    }
-
-    .input-wrapper {
-        display: flex;
-        gap: 12px;
-    }
-
-    .input-field {
-        flex: 1;
-        padding: 12px 16px;
-        background: var(--discord-dark);
-        border: 1px solid var(--discord-border);
-        border-radius: 8px;
-        color: var(--discord-text);
-        font-size: 15px;
-        font-family: inherit;
-        resize: none;
-        max-height: 120px;
-    }
-
-    .input-field:focus {
-        outline: none;
-        border-color: var(--discord-purple);
-        background: var(--discord-darker);
-    }
-
-    .send-button {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        background: var(--discord-purple);
-        border: none;
-        color: white;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.2s;
-        font-size: 18px;
-    }
-
-    .send-button:hover:not(:disabled) {
-        background: #4752C4;
-        transform: scale(1.1);
-    }
-
-    .send-button:disabled {
-        opacity: 0.5;
-    }
-
-    .voice-panel {
-        padding: 16px 24px;
-        background: var(--discord-dark);
-        border-top: 1px solid var(--discord-border);
-        display: flex;
-        align-items: center;
-        gap: 16px;
-        height: 60px;
-    }
-
-    .voice-controls {
-        display: flex;
-        gap: 8px;
-    }
-
-    .voice-btn {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        border: none;
-        background: var(--discord-dark);
-        color: var(--discord-text);
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 16px;
-        transition: all 0.2s;
-    }
-
-    .voice-btn:hover {
-        background: rgba(88, 101, 242, 0.1);
-    }
-
-    .voice-btn.active {
-        background: var(--success);
-    }
-
-    .voice-btn.muted {
-        background: var(--danger);
-    }
-
-    .users-online {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 12px;
-        color: var(--discord-muted);
-        margin-left: auto;
-    }
-
-    .user-dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: var(--success);
-    }
-
-    .user-profile {
-        padding: 12px;
-        background: var(--discord-dark);
-        border: 1px solid var(--discord-border);
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
-
-    .profile-avatar {
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-weight: bold;
-        font-size: 12px;
-    }
-
-    .profile-info {
-        flex: 1;
-    }
-
-    .profile-name {
-        font-size: 13px;
-        font-weight: 600;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .profile-status {
-        font-size: 11px;
-        color: var(--discord-muted);
-    }
-
-    ::-webkit-scrollbar {
-        width: 8px;
-    }
-
-    ::-webkit-scrollbar-thumb {
-        background: rgba(88, 101, 242, 0.3);
-        border-radius: 4px;
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-        background: rgba(88, 101, 242, 0.5);
-    }
-
-    .modal {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.7);
-        display: none;
-        align-items: center;
-        justify-content: center;
-        z-index: 1000;
-    }
-
-    .modal.show {
-        display: flex;
-        animation: fadeIn 0.3s ease-out;
-    }
-
-    @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-    }
-
-    .modal-content {
-        background: var(--discord-dark);
-        border-radius: 12px;
-        padding: 24px;
-        width: 90%;
-        max-width: 400px;
-        animation: slideUp 0.3s ease-out;
-    }
-
-    @keyframes slideUp {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    .modal-title {
-        font-size: 20px;
-        font-weight: 700;
-        margin-bottom: 16px;
-    }
-
-    .modal-input {
-        width: 100%;
-        padding: 12px;
-        background: var(--discord-darker);
-        border: 1px solid var(--discord-border);
-        border-radius: 4px;
-        color: var(--discord-text);
-        font-size: 14px;
-        margin-bottom: 16px;
-        font-family: inherit;
-    }
-
-    .modal-input:focus {
-        outline: none;
-        border-color: var(--discord-purple);
-    }
-
-    .modal-buttons {
-        display: flex;
-        gap: 12px;
-    }
-
-    .modal-btn {
-        flex: 1;
-        padding: 10px;
-        border: none;
-        border-radius: 4px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s;
-    }
-
-    .modal-btn.primary {
-        background: var(--discord-purple);
-        color: white;
-    }
-
-    .modal-btn.primary:hover {
-        background: #4752C4;
-    }
-
-    .modal-btn.secondary {
-        background: var(--discord-darker);
-        color: var(--discord-text);
-        border: 1px solid var(--discord-border);
-    }
-
-    .modal-btn.secondary:hover {
-        background: rgba(88, 101, 242, 0.1);
-    }
-
-    /* Performance */
-    .message-group {
-        will-change: opacity, transform;
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-        * {
-            animation-duration: 0.01ms !important;
-            transition-duration: 0.01ms !important;
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(165deg, #0a4d2a 0%, #1a5a3a 30%, #0f3a22 100%);
+            color: white;
+            position: fixed;
         }
-    }
-</style>
-```
 
+        #game-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 16px;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-bottom: 2px solid rgba(255, 215, 0, 0.3);
+            height: 65px;
+            z-index: 100;
+        }
+
+        .lang-selector {
+            display: flex;
+            gap: 12px;
+            background: rgba(0,0,0,0.3);
+            padding: 6px 12px;
+            border-radius: 40px;
+        }
+
+        .lang-btn {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            opacity: 0.5;
+            transition: all 0.2s ease;
+            padding: 0;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            filter: grayscale(0.5);
+        }
+
+        .lang-btn.active {
+            opacity: 1;
+            transform: scale(1.2);
+            filter: grayscale(0);
+            background: rgba(255, 215, 0, 0.2);
+            box-shadow: 0 0 15px gold;
+        }
+
+        .player-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 6px 18px 6px 10px;
+            border-radius: 40px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255,215,0,0.3);
+        }
+
+        .player-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid gold;
+            object-fit: cover;
+            background: #2a5a3a;
+        }
+
+        .player-name {
+            font-weight: 600;
+            font-size: 16px;
+            max-width: 120px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        /* Ekranlar */
+        .screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            padding: 20px;
+            gap: 16px;
+            width: 100%;
+            height: calc(100% - 65px);
+            overflow-y: auto;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        /* Menu Butonları */
+        .menu-btn {
+            width: 300px;
+            max-width: 90%;
+            padding: 20px 30px;
+            border: none;
+            border-radius: 60px;
+            background: linear-gradient(145deg, #ffd700, #ffb347);
+            color: #1a3a1a;
+            font-weight: 800;
+            font-size: 22px;
+            letter-spacing: 1.5px;
+            box-shadow: 0 12px 0 #b8860b, 0 10px 25px rgba(0,0,0,0.5);
+            transition: all 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            margin: 8px 0;
+            cursor: pointer;
+            touch-action: manipulation;
+            border: 2px solid rgba(255,255,255,0.3);
+            text-transform: uppercase;
+        }
+
+        .menu-btn:active {
+            transform: translateY(8px);
+            box-shadow: 0 4px 0 #b8860b, 0 10px 20px rgba(0,0,0,0.5);
+        }
+
+        .menu-btn.secondary {
+            background: linear-gradient(145deg, #4a90e2, #2c3e50);
+            box-shadow: 0 12px 0 #1a2634;
+            color: white;
+        }
+
+        .menu-btn.bot {
+            background: linear-gradient(145deg, #9b59b6, #8e44ad);
+            box-shadow: 0 12px 0 #6c3483;
+        }
+
+        /* Lobi Listesi */
+        .lobby-container {
+            width: 100%;
+            max-width: 400px;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            border-radius: 30px;
+            padding: 20px;
+            border: 1px solid gold;
+        }
+
+        .lobby-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            font-size: 20px;
+            font-weight: bold;
+            color: gold;
+        }
+
+        .refresh-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 50%;
+            background: rgba(255,215,0,0.2);
+        }
+
+        .lobby-list {
+            max-height: 350px;
+            overflow-y: auto;
+            border-radius: 20px;
+        }
+
+        .room-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            background: rgba(255,255,255,0.1);
+            margin-bottom: 10px;
+            border-radius: 20px;
+            border: 1px solid rgba(255,215,0,0.3);
+        }
+
+        .room-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .room-name {
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .room-creator {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        .join-btn {
+            background: gold;
+            border: none;
+            border-radius: 30px;
+            padding: 12px 24px;
+            font-weight: bold;
+            font-size: 16px;
+            color: #1a3a1a;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #b8860b;
+            transition: all 0.1s;
+        }
+
+        .join-btn:active {
+            transform: translateY(4px);
+            box-shadow: none;
+        }
+
+        /* Oyun Tahtası */
+        #game-board {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+            width: 100%;
+            height: 100%;
+        }
+
+        .opponent-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            padding-bottom: 20px;
+        }
+
+        .player-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding-top: 20px;
+        }
+
+        .opponent-info, .player-info-game {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+            background: rgba(0,0,0,0.3);
+            padding: 8px 20px;
+            border-radius: 40px;
+            backdrop-filter: blur(5px);
+        }
+
+        .cards-row {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            padding: 10px;
+            min-height: 120px;
+        }
+
+        .card {
+            width: 65px;
+            height: 95px;
+            background: white;
+            border-radius: 12px;
+            border: 2px solid #333;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-weight: 800;
+            font-size: 24px;
+            color: #1a1a1a;
+            box-shadow: 0 8px 0 #666, 0 10px 20px rgba(0,0,0,0.4);
+            transition: transform 0.2s ease;
+            position: relative;
+            touch-action: pan-y;
+            cursor: pointer;
+        }
+
+        .card.red {
+            color: #e74c3c;
+        }
+
+        .card.face-down {
+            background: repeating-linear-gradient(45deg, #2c3e50, #2c3e50 10px, #34495e 10px, #34495e 20px);
+            color: transparent;
+            border-color: #7f8c8d;
+            box-shadow: 0 8px 0 #2c3e50;
+        }
+
+        .card:active {
+            transform: translateY(-10px) scale(1.05);
+        }
+
+        .card.small {
+            width: 45px;
+            height: 70px;
+            font-size: 18px;
+        }
+
+        .center-area {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            padding: 20px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 40px;
+            margin: 10px 0;
+        }
+
+        .pile {
+            width: 70px;
+            height: 100px;
+            border: 3px dashed gold;
+            border-radius: 16px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0,0,0,0.4);
+            font-size: 24px;
+            color: gold;
+        }
+
+        .trump-card {
+            width: 70px;
+            height: 100px;
+            background: white;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 24px;
+            border: 3px solid gold;
+        }
+
+        /* Toast Mesajları */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 16px 32px;
+            border-radius: 50px;
+            font-weight: bold;
+            font-size: 18px;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            border: 1px solid gold;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            animation: slideUp 0.3s ease;
+            white-space: nowrap;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateX(-50%) translateY(100px); opacity: 0; }
+            to { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
+
+        /* Loading */
+        .loading {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255,215,0,0.3);
+            border-radius: 50%;
+            border-top-color: gold;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: linear-gradient(145deg, #1a5a3a, #0f3a22);
+            padding: 30px;
+            border-radius: 40px;
+            border: 2px solid gold;
+            max-width: 300px;
+            text-align: center;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 30px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .modal-btn.yes {
+            background: gold;
+            color: #1a3a1a;
+        }
+
+        .modal-btn.no {
+            background: #e74c3c;
+            color: white;
+        }
+    </style>
 </head>
 <body>
-    <!-- Loading Screen -->
-    <div class="loading-screen" id="loadingScreen">
-        <div class="loading-container">
-            <div class="loading-logo">🎧</div>
-            <h1 class="loading-title">VoiceChat</h1>
-            <p class="loading-status" id="loadingStatus">Sunucuya bağlanıyor...</p>
-            <div class="loading-spinner"></div>
-        </div>
-    </div>
-
-```
-<!-- Main App -->
-<div class="app" id="app" style="display: none;">
-    <!-- Servers -->
-    <div class="sidebar-servers" id="serversSidebar"></div>
-
-    <!-- Channels -->
-    <div class="sidebar-channels">
-        <div class="channel-header">
-            <span id="serverName">VoiceChat</span>
-            <button style="background: none; border: none; color: #72767D; cursor: pointer; font-size: 18px; padding: 0;">⚙️</button>
-        </div>
-        <div class="channels-list" id="channelsList"></div>
-    </div>
-
-    <!-- Main Content -->
-    <div class="main-content">
-        <div class="channel-header-bar">
-            <div class="channel-info">
-                <h2 id="channelName">Seçilecek kanal yok</h2>
-                <p id="channelDesc">Bir kanal seçin</p>
+    <div id="game-container">
+        <!-- Header -->
+        <div class="header">
+            <div class="lang-selector">
+                <button class="lang-btn" data-lang="az" onclick="setLanguage('az')">🇦🇿</button>
+                <button class="lang-btn" data-lang="ru" onclick="setLanguage('ru')">🇷🇺</button>
+                <button class="lang-btn" data-lang="en" onclick="setLanguage('en')">🇬🇧</button>
+                <button class="lang-btn" data-lang="tr" onclick="setLanguage('tr')">🇹🇷</button>
             </div>
-            <div class="header-controls">
-                <div class="user-profile" id="userProfile"></div>
-                <div class="status-badge">
-                    <div class="status-dot"></div>
-                    <span id="statusText">Bağlandı</span>
+            <div class="player-info" id="playerInfo">
+                <img class="player-avatar" id="playerAvatar" src="" alt="avatar">
+                <span class="player-name" id="playerName">Yükleniyor...</span>
+            </div>
+        </div>
+
+        <!-- Ana Menü -->
+        <div id="mainMenu" class="screen active">
+            <button class="menu-btn" data-i18n="menu.find" onclick="findMatch()">Eşleşme bul</button>
+            <button class="menu-btn secondary" data-i18n="menu.create" onclick="showCreateRoom()">Oda kur</button>
+            <button class="menu-btn secondary" data-i18n="menu.join" onclick="showLobby()">Odaya bağlan</button>
+            <button class="menu-btn bot" data-i18n="menu.bot" onclick="playWithBot()">Bot ile alıştırma</button>
+        </div>
+
+        <!-- Lobi Ekranı -->
+        <div id="lobbyScreen" class="screen">
+            <div class="lobby-container">
+                <div class="lobby-header">
+                    <span data-i18n="menu.join">Odalar</span>
+                    <button class="refresh-btn" onclick="listRooms()">🔄</button>
+                </div>
+                <div id="roomsList" class="lobby-list">
+                    <div style="text-align: center; padding: 20px;">Yükleniyor...</div>
+                </div>
+                <button class="menu-btn secondary" style="margin-top: 20px;" onclick="showMainMenu()" data-i18n="menu.back">Geri</button>
+            </div>
+        </div>
+
+        <!-- Oda Kurma Ekranı -->
+        <div id="createRoomScreen" class="screen">
+            <div class="lobby-container">
+                <h2 style="color: gold; margin-bottom: 20px;" data-i18n="menu.create">Oda Kur</h2>
+                <input type="text" id="roomNameInput" placeholder="Oda adı..." style="width: 100%; padding: 15px; border-radius: 30px; border: none; margin-bottom: 20px; font-size: 16px;">
+                <button class="menu-btn" onclick="createRoom()" data-i18n="menu.create">Oda Kur</button>
+                <button class="menu-btn secondary" style="margin-top: 10px;" onclick="showMainMenu()" data-i18n="menu.back">Geri</button>
+            </div>
+        </div>
+
+        <!-- Oyun Ekranı -->
+        <div id="gameScreen" class="screen">
+            <div id="game-board">
+                <!-- Rakip Alanı -->
+                <div class="opponent-area">
+                    <div class="opponent-info">
+                        <img class="player-avatar" id="opponentAvatar" src="" alt="">
+                        <span class="player-name" id="opponentName">Rakip bekleniyor...</span>
+                    </div>
+                    <div class="cards-row" id="opponentCards"></div>
+                </div>
+
+                <!-- Orta Alan -->
+                <div class="center-area">
+                    <div class="pile" id="deckPile">🎴</div>
+                    <div class="pile" id="tablePile"></div>
+                    <div class="trump-card" id="trumpCard"></div>
+                </div>
+
+                <!-- Oyuncu Alanı -->
+                <div class="player-area">
+                    <div class="player-info-game">
+                        <img class="player-avatar" id="myAvatar" src="" alt="">
+                        <span class="player-name" id="myName"></span>
+                    </div>
+                    <div class="cards-row" id="myCards"></div>
                 </div>
             </div>
         </div>
-
-        <div class="messages-area">
-            <div class="messages-list" id="messagesList">
-                <div class="empty-state">
-                    <div class="empty-icon">💬</div>
-                    <div>Bir kanal seçerek başlayın</div>
-                </div>
-            </div>
-
-            <div class="message-input-area">
-                <div class="input-wrapper">
-                    <textarea class="input-field" id="messageInput" placeholder="Bir mesaj yazın..." rows="1"></textarea>
-                    <button class="send-button" id="sendBtn">📤</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="voice-panel">
-            <div class="voice-controls">
-                <button class="voice-btn" id="muteBtn">🎤</button>
-                <button class="voice-btn" id="deafenBtn">🔊</button>
-            </div>
-            <div class="users-online">
-                <div class="user-dot"></div>
-                <span id="onlineCount">1 online</span>
-            </div>
-        </div>
     </div>
-</div>
 
-<!-- Login Modal -->
-<div class="modal" id="loginModal" class="show">
-    <div class="modal-content">
-        <div class="modal-title">🎧 Hoş Geldiniz</div>
-        <input type="text" class="modal-input" id="usernameInput" placeholder="Kullanıcı adı..." maxlength="32">
-        <div class="modal-buttons">
-            <button class="modal-btn primary" id="loginBtn">Giriş</button>
-        </div>
-    </div>
-</div>
+    <!-- Toast mesajları için -->
+    <div id="toast" class="toast" style="display: none;"></div>
 
-<!-- Create Channel Modal -->
-<div class="modal" id="createChannelModal">
-    <div class="modal-content">
-        <div class="modal-title">Yeni Kanal</div>
-        <input type="text" class="modal-input" id="channelNameInput" placeholder="Kanal adı..." maxlength="50">
-        <input type="password" class="modal-input" id="channelPasswordInput" placeholder="Şifre (opsiyonel)..." maxlength="50">
-        <div class="modal-buttons">
-            <button class="modal-btn primary" id="createChannelBtn">Oluştur</button>
-            <button class="modal-btn secondary" id="cancelCreateBtn">İptal</button>
-        </div>
-    </div>
-</div>
-
-<script src="app.js"></script>
-```
-
+    <script src="lang.js"></script>
+    <script src="game.js"></script>
 </body>
 </html>
