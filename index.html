@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>🔴 CANLI MÜHARİBƏ İZLƏMƏ - REAL OSINT</title>
+    <title>🔴 CANLI MÜHARİBƏ İZLƏMƏ – REAL OSINT</title>
     
     <!-- Leaflet Xəritə -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -57,7 +57,7 @@
 
         #ticker-content {
             display: inline-block;
-            animation: ticker 30s linear infinite;
+            animation: ticker 35s linear infinite;
             font-size: 22px;
             font-weight: bold;
             padding-left: 100%;
@@ -80,7 +80,7 @@
             100% { transform: translateX(-100%); }
         }
 
-        /* ANLIQ XƏBƏR PANELİ */
+        /* ANLIQ XƏBƏR PANELİ (Sağ Üst) */
         #breaking-panel {
             position: absolute;
             top: 20px;
@@ -124,6 +124,7 @@
             font-weight: bold;
             color: #ff0000;
             margin: 10px 0;
+            line-height: 1.3;
         }
 
         .breaking-location {
@@ -138,7 +139,7 @@
             margin-top: 10px;
         }
 
-        /* STATİSTİKA */
+        /* STATİSTİKA PANELİ (Sol Üst) */
         #stats-panel {
             position: absolute;
             top: 20px;
@@ -150,13 +151,15 @@
             border-radius: 15px;
             padding: 15px;
             color: white;
-            min-width: 200px;
+            min-width: 220px;
+            max-width: 300px;
         }
 
         .stat-row {
             display: flex;
             justify-content: space-between;
             margin: 8px 0;
+            font-size: 15px;
         }
 
         .stat-value {
@@ -165,20 +168,26 @@
         }
 
         #country-stats {
-            margin-top: 10px;
-            max-height: 150px;
+            margin-top: 12px;
+            max-height: 180px;
             overflow-y: auto;
+            border-top: 1px solid #333;
+            padding-top: 8px;
         }
 
         .country-stat {
             display: flex;
             justify-content: space-between;
-            padding: 5px;
+            padding: 6px 5px;
             font-size: 14px;
-            border-bottom: 1px solid #333;
+            border-bottom: 1px dashed #333;
+        }
+        
+        .country-stat:last-child {
+            border-bottom: none;
         }
 
-        /* MENU DÜYMƏSİ */
+        /* MENU DÜYMƏSİ (Yenilə) */
         #menu-btn {
             position: absolute;
             bottom: 70px;
@@ -196,27 +205,54 @@
             cursor: pointer;
             box-shadow: 0 0 30px #ff4444;
             border: 2px solid white;
+            transition: transform 0.2s;
+        }
+        #menu-btn:active {
+            transform: scale(0.9);
         }
 
-        /* MOBİL ÜÇÜN */
-        @media (max-width: 768px) {
+        /* MOBİL ÜÇÜN YAN TUTMA DƏSTƏYİ */
+        @media (orientation: landscape) and (max-width: 900px) {
+            #stats-panel {
+                top: 10px;
+                left: 10px;
+                max-width: 250px;
+                font-size: 13px;
+            }
+            #breaking-panel {
+                top: 10px;
+                right: 10px;
+                max-width: 350px;
+                padding: 15px;
+            }
+            .breaking-title {
+                font-size: 18px;
+            }
+        }
+        
+        @media (max-width: 600px) {
             #breaking-panel {
                 top: 10px;
                 right: 10px;
                 left: 10px;
                 max-width: none;
+                padding: 15px;
             }
-            
             #stats-panel {
                 top: 10px;
                 left: 10px;
                 right: 10px;
                 max-width: none;
             }
-            
             #news-ticker {
                 height: 40px;
                 font-size: 16px;
+            }
+            #menu-btn {
+                width: 50px;
+                height: 50px;
+                font-size: 26px;
+                bottom: 60px;
             }
         }
     </style>
@@ -224,9 +260,9 @@
 <body>
     <div id="map"></div>
 
-    <!-- XƏBƏR LENTİ -->
+    <!-- XƏBƏR LENTİ (Qırmızı TV Lenti) -->
     <div id="news-ticker">
-        <div id="ticker-content"></div>
+        <div id="ticker-content">Məlumat yüklənir...</div>
     </div>
 
     <!-- ANLIQ XƏBƏR PANELİ -->
@@ -240,151 +276,230 @@
         <div class="breaking-time" id="breaking-time"></div>
     </div>
 
-    <!-- STATİSTİKA -->
+    <!-- STATİSTİKA PANELİ -->
     <div id="stats-panel">
-        <div style="font-size: 18px; margin-bottom: 10px; color: #ff4444;">📊 CANLI MƏLUMAT</div>
+        <div style="font-size: 18px; margin-bottom: 10px; color: #ff4444; display: flex; align-items: center; gap: 8px;">
+            <span>📊 CANLI MƏLUMAT</span>
+            <span style="font-size: 10px; background:#ff4444; color:white; padding:2px 6px; border-radius:10px;">Hər 30san</span>
+        </div>
         <div class="stat-row">
             <span>Ümumi hadisələr:</span>
             <span class="stat-value" id="total-events">0</span>
-        </div>
-        <div class="stat-row">
-            <span>Aktiv münaqişələr:</span>
-            <span class="stat-value" id="active-conflicts">0</span>
         </div>
         <div class="stat-row">
             <span>Son yenilənmə:</span>
             <span class="stat-value" id="last-update">-</span>
         </div>
         
-        <div id="country-stats"></div>
+        <div id="country-stats">
+            <div style="text-align:center; color:#666; padding:10px;">Məlumat gözlənilir...</div>
+        </div>
     </div>
 
-    <!-- MENU -->
-    <div id="menu-btn" onclick="refreshData()">🔄</div>
+    <!-- YENİLƏ DÜYMƏSİ -->
+    <div id="menu-btn" onclick="forceRefresh()">🔄</div>
 
     <script>
+        // ===========================================
+        // 1. SƏNİN CANLI API-İN (Render)
+        // ===========================================
+        const API_URL = 'https://saskioyunu-2rxd.onrender.com/api/live-war-data';
+        
         let map;
         let markers = [];
-        let currentNews = [];
-        
+        let lastNewsTitles = []; // Təkrarın qarşısını almaq üçün
+
         // Telegram tam ekran
         if (window.Telegram?.WebApp) {
             window.Telegram.WebApp.expand();
+            document.body.classList.add('telegram-view');
         }
 
-        // Xəritəni başlat
+        // ===========================================
+        // 2. XƏRİTƏNİ BAŞLAT
+        // ===========================================
         function initMap() {
             map = L.map('map', {
-                center: [30, 30],
+                center: [30, 35], // Orta Şərq və Ukrayna mərkəzli
                 zoom: 2.5,
                 zoomControl: false,
                 attributionControl: false
             });
 
-            // Qaranlıq xəritə
+            // Qaranlıq xəritə (worldmonitor stilində)
             L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
                 subdomains: 'abcd',
                 maxZoom: 19
             }).addTo(map);
         }
 
-        // Məlumatları yenilə
-        async function refreshData() {
+        // ===========================================
+        // 3. MƏLUMATLARI ÇƏK VƏ GÖSTƏR (ƏSAS FUNKSİYA)
+        // ===========================================
+        async function fetchAndDisplayData() {
             try {
-                // RENDER API-nin ÜNVANI - BURANI DƏYİŞDİRİN!
-                const API_URL = 'https://sizin-api.onrender.com/api/live-war-data';
-                
+                // API-dən məlumatları çək
                 const response = await fetch(API_URL);
+                if (!response.ok) {
+                    throw new Error(`API xətası: ${response.status}`);
+                }
                 const data = await response.json();
                 
-                // Xəritəni təmizlə
-                markers.forEach(m => map.removeLayer(m));
-                markers = [];
-                
-                // Münaqişələri xəritəyə əlavə et
-                data.conflicts?.forEach(event => {
-                    if (event.lat && event.lng) {
-                        const color = event.fatalities > 10 ? '#ff0000' : 
-                                     event.fatalities > 5 ? '#ff6600' : '#ffaa00';
-                        
-                        const marker = L.circleMarker([event.lat, event.lng], {
-                            radius: Math.min(event.fatalities ? event.fatalities * 2 : 8, 20),
-                            color: color,
-                            fillColor: color,
-                            fillOpacity: 0.8,
-                            weight: 2
-                        }).addTo(map);
-                        
-                        marker.bindPopup(`
-                            <b>${event.country}</b><br>
-                            ${event.location || event.region}<br>
-                            Tip: ${event.type}<br>
-                            Ölən: ${event.fatalities || 0}<br>
-                            Mənbə: ${event.source}
-                        `);
-                        
-                        markers.push(marker);
-                    }
-                });
-                
-                // XƏBƏR LENTİNİ YENİLƏ
-                if (data.news && data.news.length > 0) {
-                    const tickerContent = data.news.map(n => 
-                        `<span class="ticker-item">🚨 ${n.title}</span>`
-                    ).join('');
-                    
-                    document.getElementById('ticker-content').innerHTML = tickerContent;
-                    
-                    // Son xəbəri panelə qoy
-                    const latest = data.news[0];
-                    document.getElementById('breaking-title').textContent = latest.title;
-                    document.getElementById('breaking-location').innerHTML = `📍 ${latest.country || 'Bilinmir'}`;
-                    document.getElementById('breaking-time').textContent = 
-                        new Date(latest.date).toLocaleTimeString('az-AZ');
+                // ** ƏGƏR MƏLUMAT GƏLMƏYİBSƏ **
+                if (!data || !data.news || data.news.length === 0) {
+                    document.getElementById('breaking-title').innerText = 'Məlumat tapılmadı (API boş)';
+                    return;
                 }
-                
-                // STATİSTİKANİ YENİLƏ
-                document.getElementById('total-events').textContent = data.conflicts?.length || 0;
-                document.getElementById('last-update').textContent = 
-                    new Date().toLocaleTimeString('az-AZ');
-                
-                // Ölkə statistikası
-                const countries = {};
-                data.conflicts?.forEach(e => {
-                    if (e.country) {
-                        countries[e.country] = (countries[e.country] || 0) + 1;
+
+                // -------------------------------------------------
+                // A. XƏBƏR LENTİNİ YENİLƏ (TV STİLİ)
+                // -------------------------------------------------
+                if (data.news && data.news.length > 0) {
+                    // Təkrarları filterlə
+                    const newNews = data.news.filter(n => !lastNewsTitles.includes(n.title));
+                    if (newNews.length > 0) {
+                        // Son 10 xəbəri yadda saxla
+                        lastNewsTitles = [...newNews.map(n => n.title), ...lastNewsTitles].slice(0, 10);
+                        
+                        // Lent üçün HTML yarat
+                        const tickerContent = newNews.map(n => 
+                            `<span class="ticker-item">🚨 ${n.title}</span>`
+                        ).join('');
+                        
+                        // Mövcud lentin sonuna əlavə et (kəsmədən)
+                        const currentTicker = document.getElementById('ticker-content');
+                        if (currentTicker.innerHTML === 'Məlumat yüklənir...') {
+                            currentTicker.innerHTML = tickerContent;
+                        } else {
+                            currentTicker.innerHTML += tickerContent;
+                        }
+                        
+                        // ** ANLIQ XƏBƏR PANELİNİ YENİLƏ (ilk xəbər) **
+                        const latest = data.news[0]; // API-dən gələn ən təzə xəbər
+                        document.getElementById('breaking-title').innerText = latest.title;
+                        document.getElementById('breaking-location').innerHTML = 
+                            `📍 ${latest.country ? latest.country.toUpperCase() : 'Bilinmir'}`;
+                        document.getElementById('breaking-time').innerText = 
+                            latest.date ? new Date(latest.date).toLocaleString('az-AZ', { hour: '2-digit', minute: '2-digit', hour12: false }) : new Date().toLocaleTimeString('az-AZ');
                     }
-                });
-                
-                const countryHtml = Object.entries(countries)
-                    .sort((a,b) => b[1] - a[1])
-                    .map(([country, count]) => `
-                        <div class="country-stat">
-                            <span>${country}</span>
-                            <span style="color:#ff4444;">${count}</span>
-                        </div>
-                    `).join('');
-                
-                document.getElementById('country-stats').innerHTML = countryHtml;
-                
+                }
+
+                // -------------------------------------------------
+                // B. XƏRİTƏDƏKİ MARKERLARI YENİLƏ (münaqişələr)
+                // -------------------------------------------------
+                if (data.conflicts && data.conflicts.length > 0) {
+                    // Köhnə markerları təmizlə
+                    markers.forEach(m => map.removeLayer(m));
+                    markers = [];
+                    
+                    // Hər bir hadisə üçün marker yarat
+                    data.conflicts.forEach(event => {
+                        if (event.lat && event.lng && !isNaN(event.lat) && !isNaN(event.lng)) {
+                            // Ölüm sayına görə rəng və ölçü
+                            const fatalities = event.fatalities || 0;
+                            let color = '#ffaa00'; // az
+                            if (fatalities > 20) color = '#ff0000'; // çox
+                            else if (fatalities > 5) color = '#ff6600'; // orta
+                            
+                            const radius = Math.min(5 + (fatalities * 0.5), 18);
+                            
+                            const marker = L.circleMarker([event.lat, event.lng], {
+                                radius: radius,
+                                color: color,
+                                weight: 2,
+                                fillColor: color,
+                                fillOpacity: 0.7,
+                                pulse: true
+                            }).addTo(map);
+                            
+                            // Popup məlumatı
+                            marker.bindPopup(`
+                                <b>${event.country || 'Bilinmir'}</b><br>
+                                <b>Yer:</b> ${event.location || event.region || 'Bilinmir'}<br>
+                                <b>Tip:</b> ${event.type || 'Münaqişə'}<br>
+                                <b>Ölən:</b> ${fatalities}<br>
+                                <b>Mənbə:</b> ${event.source || 'API'}<br>
+                                <small>${event.date ? new Date(event.date).toLocaleString('az-AZ') : ''}</small>
+                            `);
+                            
+                            markers.push(marker);
+                        }
+                    });
+                }
+
+                // -------------------------------------------------
+                // C. STATİSTİKANİ YENİLƏ
+                // -------------------------------------------------
+                document.getElementById('total-events').innerText = data.conflicts?.length || 0;
+                document.getElementById('last-update').innerText = 
+                    new Date().toLocaleTimeString('az-AZ', { hour: '2-digit', minute: '2-digit', second:'2-digit' });
+
+                // Ölkə statistikası (hansı ölkədə nə qədər hadisə)
+                if (data.conflicts) {
+                    const countryCount = {};
+                    data.conflicts.forEach(e => {
+                        if (e.country) {
+                            const countryName = e.country.split(',')[0].trim(); // Sadə ad
+                            countryCount[countryName] = (countryCount[countryName] || 0) + 1;
+                        }
+                    });
+
+                    // İrana xüsusi diqqət
+                    const iranCount = data.conflicts.filter(e => 
+                        e.country?.toLowerCase().includes('iran')).length;
+                    if (iranCount > 0) {
+                        console.log(`🇮🇷 İRAN: ${iranCount} hadisə`);
+                    }
+
+                    // Statistikaları HTML-ə çevir
+                    const sortedCountries = Object.entries(countryCount)
+                        .sort((a, b) => b[1] - a[1])
+                        .slice(0, 12); // max 12 ölkə
+
+                    if (sortedCountries.length > 0) {
+                        const countryHtml = sortedCountries.map(([country, count]) => `
+                            <div class="country-stat">
+                                <span>${country}</span>
+                                <span style="color:#ff4444; font-weight:bold;">${count}</span>
+                            </div>
+                        `).join('');
+                        document.getElementById('country-stats').innerHTML = countryHtml;
+                    } else {
+                        document.getElementById('country-stats').innerHTML = '<div style="text-align:center; color:#666;">Məlumat yoxdur</div>';
+                    }
+                }
+
             } catch (error) {
-                console.error('Xəta:', error);
-                document.getElementById('breaking-title').textContent = 
-                    'Məlumat çəkilə bilmədi';
+                console.error('Məlumat çəkilə bilmədi:', error);
+                document.getElementById('breaking-title').innerText = '⚠️ API xətası';
+                document.getElementById('country-stats').innerHTML = `<div style="color:#ff4444; text-align:center;">Bağlantı xətası:<br>${error.message}</div>`;
             }
         }
 
-        // Səhifə yüklənəndə
+        // ===========================================
+        // 4. ƏL İLƏ YENİLƏ (Düyməyə basanda)
+        // ===========================================
+        function forceRefresh() {
+            document.getElementById('breaking-title').innerText = 'Yenilənir...';
+            fetchAndDisplayData();
+        }
+
+        // ===========================================
+        // 5. AVTOMATİK YENİLƏMƏ
+        // ===========================================
         window.onload = () => {
             initMap();
-            refreshData();
+            fetchAndDisplayData(); // İlk dəfə yüklə
             
-            // Hər 30 saniyədə yenilə
-            setInterval(refreshData, 30000);
+            // Hər 30 saniyədə bir yenilə
+            setInterval(fetchAndDisplayData, 30000);
             
-            // Ekran dəyişəndə
+            // Ekran dəyişəndə xəritəni tənzimlə
             window.addEventListener('resize', () => {
                 if (map) map.invalidateSize();
+            });
+            window.addEventListener('orientationchange', () => {
+                setTimeout(() => map.invalidateSize(), 200);
             });
         };
     </script>
