@@ -3,90 +3,397 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Global Checkers Pro</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="/socket.io/socket.io.js"></script>
+    <title>Şaşki Oyunu</title>
     <style>
-        :root { --bg: #121212; --panel: #1e1e1e; --gold: #d4af37; --white: #ffffff; }
-        body { margin: 0; background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
-        
-        #lobby { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; gap: 15px; }
-        .btn { width: 80%; padding: 15px; border: none; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        .btn-match { background: var(--gold); color: black; }
-        .btn-room { background: #333; color: white; }
-        .btn-locked { background: #111; color: #555; cursor: not-allowed; border: 1px solid #222; }
-        
-        #game-area { display: none; padding: 10px; }
-        .status-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .timer-bar { height: 6px; background: #333; width: 100%; border-radius: 3px; overflow: hidden; margin: 10px 0; }
-        .timer-fill { height: 100%; width: 100%; background: linear-gradient(90deg, #00ff00, #ff0000); transition: 1s linear; }
-
-        #board { 
-            display: grid; grid-template-columns: repeat(8, 1fr); 
-            width: 92vw; height: 92vw; background: #333; border: 8px solid #1a1a1a; 
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
         }
-        .cell { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; position: relative; }
-        .dark { background: #2c2c2c; }
-        .light { background: #4a4a4a; }
-        .hint { width: 30%; height: 30%; background: rgba(212, 175, 55, 0.6); border-radius: 50%; box-shadow: 0 0 10px var(--gold); }
 
-        .piece { 
-            width: 85%; height: 85%; border-radius: 50%; cursor: grab;
-            transition: transform 0.2s, box-shadow 0.2s; z-index: 5;
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
+
+        .app {
+            width: 100%;
+            max-width: 500px;
+            height: 100vh;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Loading Screen */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .loader {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Main Menu */
+        .main-menu {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-profile img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid white;
+        }
+
+        .language-selector {
+            display: flex;
+            gap: 5px;
+        }
+
+        .lang-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .lang-btn.active {
+            background: white;
+            color: #764ba2;
+        }
+
+        .menu-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: auto;
+            margin-bottom: auto;
+        }
+
+        .menu-btn {
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+            position: relative;
+        }
+
+        .menu-btn.primary {
+            background: linear-gradient(45deg, #FE6B8B 30%, #FF8E53 90%);
+            color: white;
+        }
+
+        .menu-btn.secondary {
+            background: white;
+            color: #764ba2;
+        }
+
+        .menu-btn.locked {
+            background: #ccc;
+            color: #666;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .lock-icon {
             position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 20px;
         }
-        .piece.white { background: radial-gradient(circle, #fff, #999); box-shadow: 0 4px #666; }
-        .piece.black { background: radial-gradient(circle, #444, #000); box-shadow: 0 4px #111; }
-        .piece.king::after { content: '👑'; font-size: 20px; display: flex; justify-content: center; align-items: center; height: 100%; }
-        
-        #captured-panel { 
-            position: fixed; right: 0; top: 100px; width: 45px; 
-            background: rgba(0,0,0,0.3); padding: 5px; border-radius: 10px 0 0 10px;
-        }
-        .captured-mini { width: 25px; height: 25px; border-radius: 50%; margin: 5px auto; border: 1px solid #555; }
 
-        .win-overlay { 
-            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9);
-            z-index: 100; flex-direction: column; align-items: center; justify-content: center;
-            text-align: center; animation: fadeIn 0.5s;
+        .room-code {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .code-box {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 24px;
+            letter-spacing: 5px;
+            margin: 10px 0;
+        }
+
+        .copy-btn {
+            background: white;
+            color: #764ba2;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        /* Game Board */
+        .game-app {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .game-header, .game-footer {
+            padding: 10px;
+        }
+
+        .game-board-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+            position: relative;
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 2px;
+            background: #8b5a2b;
+            padding: 2px;
+            border-radius: 5px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            width: min(400px, 70vw);
+            height: min(400px, 70vw);
+        }
+
+        .cell {
+            aspect-ratio: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .cell.light {
+            background: #f0d9b5;
+        }
+
+        .cell.dark {
+            background: #b58863;
+        }
+
+        .cell.selected {
+            background: #7ec8e0 !important;
+        }
+
+        .cell.valid-move::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: rgba(0, 255, 0, 0.5);
+            border-radius: 50%;
+            animation: pulse 1s infinite;
+        }
+
+        .cell.capture-move::after {
+            background: rgba(255, 0, 0, 0.5);
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.2); opacity: 0.8; }
+        }
+
+        .piece {
+            width: 80%;
+            height: 80%;
+            border-radius: 50%;
+            position: relative;
+            transition: transform 0.2s;
+            cursor: grab;
+        }
+
+        .piece:active {
+            cursor: grabbing;
+            transform: scale(1.1);
+        }
+
+        .piece.black {
+            background: radial-gradient(circle at 30% 30%, #666, #222);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+        }
+
+        .piece.white {
+            background: radial-gradient(circle at 30% 30%, #fff, #ccc);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .piece.king::after {
+            content: '♔';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 20px;
+            color: gold;
+            text-shadow: 0 0 5px rgba(255,215,0,0.5);
+        }
+
+        /* Captured Pieces */
+        .captured-pieces {
+            width: 50px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            overflow-y: auto;
+            padding: 5px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 5px;
+        }
+
+        .captured-piece {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            animation: slideIn 0.3s;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(30px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Player Info */
+        .player-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+        }
+
+        .player-info img {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+        }
+
+        .timer-bar {
+            flex: 1;
+            height: 25px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+            margin-left: 10px;
+        }
+
+        .timer-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4caf50, #ff4444);
+            transition: width 1s linear;
+        }
+
+        .timer-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        /* Game Overlay */
+        .game-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .winner-animation {
+            text-align: center;
+            animation: popIn 0.5s;
+        }
+
+        .trophy {
+            font-size: 80px;
+            animation: bounce 1s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        @keyframes popIn {
+            from { transform: scale(0); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
         }
     </style>
 </head>
 <body>
+    <div class="app" id="app"></div>
 
-    <div id="lobby">
-        <img id="pfp" style="width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--gold);">
-        <h2 id="welcome-text">Hoş Geldiniz</h2>
-        <button class="btn btn-match" onclick="findMatch()" id="txt-match">Eşleşme Bul</button>
-        <button class="btn btn-room" onclick="createRoom()" id="txt-room">Oda Kur</button>
-        <button class="btn btn-locked" id="txt-ranked">Dərəcəli (Kilitli 🔒)</button>
-        <button class="btn btn-room" onclick="toggleLang()" id="txt-lang">Language: AZ</button>
-    </div>
-
-    <div id="game-area">
-        <div class="status-bar">
-            <span id="opp-name">Rakip Aranıyor...</span>
-            <span id="opp-timer">30s</span>
-        </div>
-        <div class="timer-bar"><div id="t-fill-opp" class="timer-fill"></div></div>
-
-        <div id="board"></div>
-
-        <div class="timer-bar"><div id="t-fill-me" class="timer-fill"></div></div>
-        <div class="status-bar">
-            <span id="my-name">Siz</span>
-            <span id="my-timer">30s</span>
-        </div>
-
-        <div id="captured-panel"></div>
-    </div>
-
-    <div id="win-overlay" class="win-overlay">
-        <h1 id="win-title" style="color: var(--gold); font-size: 40px;">GALİBİYET!</h1>
-        <button class="btn btn-match" onclick="location.reload()">Tekrar Oyna</button>
-    </div>
-
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="game.js"></script>
 </body>
 </html>
