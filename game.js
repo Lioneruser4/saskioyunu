@@ -1,593 +1,278 @@
-// ==================== ANA SINIF ====================
-class ShashkiGame {
-    constructor() {
-        this.socket = null;
-        this.currentScreen = 'loading';
-        this.user = null;
-        this.roomId = null;
-        this.gameState = null;
-        this.playerId = null;
-        this.opponentId = null;
-        this.selectedPiece = null;
-        this.validMoves = [];
-        this.language = 'az';
-        this.timers = {};
-        this.reconnectAttempts = 0;
-        
-        this.translations = {
-            az: {
-                connecting: 'Sunucuya bağlanır...',
-                quickMatch: 'Sürətli oyun',
-                createRoom: 'Otaq yarat',
-                ranked: 'Kilidli Dərəcəli',
-                roomCode: 'Otaq kodu:',
-                copy: 'Kopyala',
-                waiting: 'Rəqib gözlənilir...',
-                yourTurn: 'Sizin növbəniz',
-                opponentTurn: 'Rəqibin növbəsi',
-                youWon: 'Siz qazandınız!',
-                youLost: 'Rəqib qazandı!',
-                backToMenu: 'Menyuya qayıt',
-                reconnect: 'Yenidən bağlanır...'
-            },
-            en: {
-                connecting: 'Connecting to server...',
-                quickMatch: 'Quick Match',
-                createRoom: 'Create Room',
-                ranked: 'Locked Ranked',
-                roomCode: 'Room code:',
-                copy: 'Copy',
-                waiting: 'Waiting for opponent...',
-                yourTurn: 'Your turn',
-                opponentTurn: 'Opponent\'s turn',
-                youWon: 'You won!',
-                youLost: 'You lost!',
-                backToMenu: 'Back to Menu',
-                reconnect: 'Reconnecting...'
-            }
-        };
-        
-        this.init();
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const playersList = document.getElementById('players');
+const playerCountSpan = document.getElementById('player-count');
+const joystickStatus = document.getElementById('joystick-status');
+
+// Joystick elementleri
+const joystickBase = document.getElementById('joystick-base');
+const joystickThumb = document.getElementById('joystick-thumb');
+
+// Socket bağlantısı (Render.com adresiniz)
+const socket = io('https://saskioyunu-1-2d6i.onrender.com');
+
+// Oyun değişkenleri
+let players = {};
+let myId = null;
+let myPosition = { x: 400, y: 300 };
+let joystickActive = false;
+let joystickVector = { x: 0, y: 0 };
+let moveSpeed = 5;
+
+// Harita elementleri (Among Us benzeri)
+const mapWalls = [
+    { x: 100, y: 100, w: 50, h: 150 },  // Sol üst oda
+    { x: 600, y: 100, w: 50, h: 150 },  // Sağ üst oda
+    { x: 100, y: 400, w: 50, h: 150 },  // Sol alt oda
+    { x: 600, y: 400, w: 50, h: 150 },  // Sağ alt oda
+    { x: 300, y: 250, w: 200, h: 20 }   // Koridor
+];
+
+// Socket olayları
+socket.on('currentPlayers', (data) => {
+    myId = data.myId;
+    players = data.players;
+    if (players[myId]) {
+        myPosition.x = players[myId].x;
+        myPosition.y = players[myId].y;
+    }
+    updatePlayersList();
+});
+
+socket.on('newPlayer', (newPlayer) => {
+    players[newPlayer.id] = newPlayer;
+    updatePlayersList();
+});
+
+socket.on('playerMoved', (playerData) => {
+    if (players[playerData.id]) {
+        players[playerData.id].x = playerData.x;
+        players[playerData.id].y = playerData.y;
+    }
+});
+
+socket.on('playerDisconnected', (playerId) => {
+    delete players[playerId];
+    updatePlayersList();
+});
+
+// Joystick olayları (Mouse için)
+joystickThumb.addEventListener('mousedown', startJoystick);
+window.addEventListener('mousemove', moveJoystick);
+window.addEventListener('mouseup', endJoystick);
+
+// Joystick olayları (Touch/Mobil için)
+joystickThumb.addEventListener('touchstart', startJoystick);
+window.addEventListener('touchmove', moveJoystick);
+window.addEventListener('touchend', endJoystick);
+
+function startJoystick(e) {
+    e.preventDefault();
+    joystickActive = true;
+    updateJoystick(e);
+}
+
+function moveJoystick(e) {
+    if (!joystickActive) return;
+    e.preventDefault();
+    updateJoystick(e);
+}
+
+function updateJoystick(e) {
+    const rect = joystickBase.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    
+    let clientX, clientY;
+    
+    if (e.type === 'touchmove' || e.type === 'touchstart') {
+        clientX = e.touches[0].clientX;
+        clientY = e.touches[0].clientY;
+    } else {
+        clientX = e.clientX;
+        clientY = e.clientY;
     }
     
-    t(key) {
-        return this.translations[this.language][key] || key;
+    let deltaX = clientX - centerX;
+    let deltaY = clientY - centerY;
+    
+    // Joystick'i sınırla
+    const maxDist = 45;
+    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+    
+    if (distance > maxDist) {
+        deltaX = (deltaX / distance) * maxDist;
+        deltaY = (deltaY / distance) * maxDist;
     }
     
-    init() {
-        this.showLoading();
-        this.loadTelegramData();
-        this.connectWebSocket();
-    }
+    joystickThumb.style.left = (45 + deltaX) + 'px';
+    joystickThumb.style.top = (45 + deltaY) + 'px';
     
-    loadTelegramData() {
-        if (window.Telegram?.WebApp) {
-            const tg = window.Telegram.WebApp;
-            tg.expand();
-            tg.enableClosingConfirmation();
-            
-            this.user = tg.initDataUnsafe?.user || {
-                id: Date.now(),
-                first_name: 'Player',
-                photo_url: null
-            };
-        } else {
-            this.user = {
-                id: Date.now(),
-                first_name: 'Test Player',
-                photo_url: null
-            };
-        }
-    }
+    // Vektörü normalize et
+    joystickVector.x = deltaX / maxDist;
+    joystickVector.y = deltaY / maxDist;
     
-    connectWebSocket() {
-        // WebSocket sunucusu (gerçek sunucu adresinizi yazın)
-        const wsUrl = 'wss://your-server.com/ws'; // Değiştirin!
+    joystickStatus.innerText = `Durum: Hareket (X:${joystickVector.x.toFixed(2)}, Y:${joystickVector.y.toFixed(2)})`;
+}
+
+function endJoystick() {
+    joystickActive = false;
+    joystickThumb.style.top = '45px';
+    joystickThumb.style.left = '45px';
+    joystickVector = { x: 0, y: 0 };
+    joystickStatus.innerText = 'Durum: Bekliyor...';
+}
+
+// Hareket güncelleme
+function updateMovement() {
+    if (joystickActive && myId && players[myId]) {
+        // Yeni pozisyonu hesapla
+        let newX = players[myId].x + (joystickVector.x * moveSpeed);
+        let newY = players[myId].y + (joystickVector.y * moveSpeed);
         
-        this.socket = new WebSocket(wsUrl);
+        // Harita sınırları (duvarlara çarpma)
+        newX = Math.max(20, Math.min(780, newX));
+        newY = Math.max(20, Math.min(580, newY));
         
-        this.socket.onopen = () => {
-            console.log('WebSocket bağlandı');
-            this.reconnectAttempts = 0;
-            this.send({
-                type: 'user:info',
-                data: {
-                    id: this.user.id,
-                    name: this.user.first_name,
-                    photo: this.user.photo_url,
-                    lang: this.language
-                }
-            });
-            
-            // Yeniden bağlanma varsa
-            if (this.roomId) {
-                this.send({
-                    type: 'reconnect:request',
-                    data: { roomId: this.roomId, playerId: this.user.id }
-                });
-            } else {
-                this.showMainMenu();
-            }
-        };
-        
-        this.socket.onmessage = (event) => {
-            const message = JSON.parse(event.data);
-            this.handleMessage(message);
-        };
-        
-        this.socket.onclose = () => {
-            console.log('WebSocket kapandı');
-            this.handleDisconnect();
-        };
-        
-        this.socket.onerror = (error) => {
-            console.error('WebSocket hatası:', error);
-        };
-    }
-    
-    handleMessage(message) {
-        switch(message.type) {
-            case 'room:created':
-                this.roomId = message.data.roomId;
-                this.showRoomCode();
-                break;
-                
-            case 'game:start':
-                this.gameState = message.data.game;
-                this.opponentId = message.data.players.find(p => p.id !== this.user.id);
-                this.playerId = this.user.id;
-                this.showGameScreen();
-                break;
-                
-            case 'move:made':
-                this.gameState = message.data.game;
-                this.updateBoard();
-                if (message.data.auto) {
-                    this.showMessage('Auto move', 1000);
-                }
-                break;
-                
-            case 'timer:update':
-                this.updateTimer(message.data.player, message.data.timeLeft);
-                break;
-                
-            case 'game:over':
-                this.showWinner(message.data.winner);
-                break;
-                
-            case 'opponent:disconnected':
-                this.showMessage('Rəqib ayrıldı', 3000);
-                setTimeout(() => this.showMainMenu(), 3000);
-                break;
-                
-            case 'reconnect:success':
-                this.gameState = message.data.game;
-                this.opponentId = message.data.players.find(p => p.id !== this.user.id);
-                this.showGameScreen();
-                break;
-        }
-    }
-    
-    send(message) {
-        if (this.socket?.readyState === WebSocket.OPEN) {
-            this.socket.send(JSON.stringify(message));
-        }
-    }
-    
-    handleDisconnect() {
-        this.showLoading(this.t('reconnect'));
-        
-        setTimeout(() => {
-            this.reconnectAttempts++;
-            if (this.reconnectAttempts < 5) {
-                this.connectWebSocket();
-            } else {
-                alert('Bağlantı kurulamadı');
-                this.showMainMenu();
-            }
-        }, 2000);
-    }
-    
-    // ==================== EKRAN YÖNETİMİ ====================
-    
-    showLoading(text) {
-        this.currentScreen = 'loading';
-        const app = document.getElementById('app');
-        app.innerHTML = `
-            <div class="loading-screen">
-                <div class="loader"></div>
-                <div class="loading-text">${text || this.t('connecting')}</div>
-            </div>
-        `;
-    }
-    
-    showMainMenu() {
-        this.currentScreen = 'menu';
-        const app = document.getElementById('app');
-        app.innerHTML = `
-            <div class="main-menu">
-                <div class="header">
-                    <div class="user-profile">
-                        <img src="${this.user.photo_url || 'data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'40\' height=\'40\' viewBox=\'0 0 40 40\'><circle cx=\'20\' cy=\'20\' r=\'20\' fill=\'%23ccc\'/><text x=\'20\' y=\'25\' text-anchor=\'middle\' fill=\'%23333\' font-size=\'20\'>${this.user.first_name[0]}</text></svg>'}" alt="Profile">
-                        <span>${this.user.first_name}</span>
-                    </div>
-                    <div class="language-selector">
-                        <button class="lang-btn ${this.language === 'az' ? 'active' : ''}" data-lang="az">AZ</button>
-                        <button class="lang-btn ${this.language === 'en' ? 'active' : ''}" data-lang="en">EN</button>
-                    </div>
-                </div>
-                
-                <div class="menu-buttons">
-                    <button class="menu-btn primary" id="quickMatchBtn">${this.t('quickMatch')}</button>
-                    <button class="menu-btn secondary" id="createRoomBtn">${this.t('createRoom')}</button>
-                    <button class="menu-btn locked" id="rankedBtn" disabled>
-                        ${this.t('ranked')}
-                        <span class="lock-icon">🔒</span>
-                    </button>
-                </div>
-                
-                <div class="room-code" id="roomCodeContainer" style="display: none;">
-                    <p>${this.t('roomCode')}</p>
-                    <div class="code-box" id="roomCode"></div>
-                    <button class="copy-btn" id="copyRoomCode">${this.t('copy')}</button>
-                </div>
-            </div>
-        `;
-        
-        this.attachMenuEvents();
-    }
-    
-    attachMenuEvents() {
-        document.querySelectorAll('.lang-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                this.language = e.target.dataset.lang;
-                document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
-                e.target.classList.add('active');
-                this.showMainMenu();
-            });
-        });
-        
-        document.getElementById('quickMatchBtn')?.addEventListener('click', () => {
-            this.send({ type: 'match:find', data: {} });
-            this.showLoading(this.t('waiting'));
-        });
-        
-        document.getElementById('createRoomBtn')?.addEventListener('click', () => {
-            this.send({ type: 'room:create', data: {} });
-        });
-        
-        document.getElementById('copyRoomCode')?.addEventListener('click', () => {
-            const code = document.getElementById('roomCode').textContent;
-            navigator.clipboard?.writeText(code);
-            alert('Kod kopyalandı!');
-        });
-    }
-    
-    showRoomCode() {
-        document.getElementById('roomCodeContainer').style.display = 'block';
-        document.getElementById('roomCode').textContent = this.roomId;
-    }
-    
-    showGameScreen() {
-        this.currentScreen = 'game';
-        const app = document.getElementById('app');
-        app.innerHTML = `
-            <div class="game-app">
-                <div class="game-header">
-                    <div class="player-info opponent">
-                        <img src="${this.opponentId?.photo || 'data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'40\' height=\'40\' viewBox=\'0 0 40 40\'><circle cx=\'20\' cy=\'20\' r=\'20\' fill=\'%23ccc\'/><text x=\'20\' y=\'25\' text-anchor=\'middle\' fill=\'%23333\' font-size=\'20\'>R</text></svg>'}" alt="Opponent">
-                        <span>${this.opponentId?.name || 'Opponent'}</span>
-                        <div class="timer-bar" id="opponentTimer">
-                            <div class="timer-fill" style="width: 100%"></div>
-                            <span class="timer-text">30</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="game-board-container">
-                    <div class="captured-pieces right" id="capturedOpponent"></div>
-                    <div class="board" id="chessBoard"></div>
-                    <div class="captured-pieces left" id="capturedPlayer"></div>
-                </div>
-                
-                <div class="game-footer">
-                    <div class="player-info current">
-                        <img src="${this.user.photo_url || 'data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'40\' height=\'40\' viewBox=\'0 0 40 40\'><circle cx=\'20\' cy=\'20\' r=\'20\' fill=\'%23ccc\'/><text x=\'20\' y=\'25\' text-anchor=\'middle\' fill=\'%23333\' font-size=\'20\'>${this.user.first_name[0]}</text></svg>'}" alt="Player">
-                        <span>${this.user.first_name}</span>
-                        <div class="timer-bar" id="playerTimer">
-                            <div class="timer-fill" style="width: 100%"></div>
-                            <span class="timer-text">30</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="game-overlay" id="gameOverlay" style="display: none;">
-                    <div class="winner-animation">
-                        <div class="trophy">🏆</div>
-                        <h2 id="winnerMessage"></h2>
-                        <button class="menu-btn primary" id="backToMenu">${this.t('backToMenu')}</button>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        this.createBoard();
-        this.attachGameEvents();
-    }
-    
-    // ==================== OYUN MANTIĞI ====================
-    
-    createBoard() {
-        const board = document.getElementById('chessBoard');
-        board.innerHTML = '';
-        
-        for (let row = 0; row < 8; row++) {
-            for (let col = 0; col < 8; col++) {
-                const cell = document.createElement('div');
-                cell.className = `cell ${(row + col) % 2 === 0 ? 'light' : 'dark'}`;
-                cell.dataset.row = row;
-                cell.dataset.col = col;
-                
-                const piece = this.gameState?.board[row][col];
-                if (piece) {
-                    const pieceEl = document.createElement('div');
-                    pieceEl.className = `piece ${piece.startsWith('b') ? 'black' : 'white'}`;
-                    pieceEl.draggable = true;
-                    pieceEl.dataset.piece = piece;
-                    
-                    pieceEl.addEventListener('dragstart', (e) => this.handleDragStart(e, row, col));
-                    pieceEl.addEventListener('dragend', (e) => this.handleDragEnd(e));
-                    
-                    cell.appendChild(pieceEl);
-                }
-                
-                cell.addEventListener('click', () => this.handleCellClick(row, col));
-                cell.addEventListener('dragover', (e) => e.preventDefault());
-                cell.addEventListener('drop', (e) => this.handleDrop(e, row, col));
-                
-                board.appendChild(cell);
+        // Basit duvar çarpışması
+        for (let wall of mapWalls) {
+            if (newX > wall.x - 15 && newX < wall.x + wall.w + 15 &&
+                newY > wall.y - 15 && newY < wall.y + wall.h + 15) {
+                // Çarpışma varsa hareket etme
+                return;
             }
         }
         
-        this.updateCapturedPieces();
-    }
-    
-    handleDragStart(e, row, col) {
-        const piece = this.gameState?.board[row][col];
-        const isMyTurn = (this.gameState?.turn === 'b' && piece?.startsWith('b')) ||
-                        (this.gameState?.turn === 'w' && piece?.startsWith('w'));
+        // Pozisyonu güncelle
+        players[myId].x = newX;
+        players[myId].y = newY;
+        myPosition.x = newX;
+        myPosition.y = newY;
         
-        if (!isMyTurn) {
-            e.preventDefault();
-            return;
-        }
-        
-        this.selectedPiece = { row, col, piece };
-        this.showValidMoves(row, col);
-        
-        e.dataTransfer.setData('text/plain', `${row},${col}`);
-    }
-    
-    handleDragEnd(e) {
-        this.clearHighlights();
-    }
-    
-    handleDrop(e, toRow, toCol) {
-        e.preventDefault();
-        
-        if (!this.selectedPiece) return;
-        
-        const fromRow = this.selectedPiece.row;
-        const fromCol = this.selectedPiece.col;
-        
-        this.makeMove([fromRow, fromCol], [toRow, toCol]);
-        this.clearHighlights();
-        this.selectedPiece = null;
-    }
-    
-    handleCellClick(row, col) {
-        const piece = this.gameState?.board[row][col];
-        
-        if (piece) {
-            const isMyTurn = (this.gameState?.turn === 'b' && piece?.startsWith('b')) ||
-                            (this.gameState?.turn === 'w' && piece?.startsWith('w'));
-            
-            if (isMyTurn) {
-                this.selectedPiece = { row, col, piece };
-                this.showValidMoves(row, col);
-            }
-        } else if (this.selectedPiece) {
-            this.makeMove([this.selectedPiece.row, this.selectedPiece.col], [row, col]);
-            this.clearHighlights();
-            this.selectedPiece = null;
-        }
-    }
-    
-    showValidMoves(row, col) {
-        this.validMoves = this.calculateMoves(row, col);
-        
-        this.validMoves.forEach(move => {
-            const cell = document.querySelector(`[data-row="${move.row}"][data-col="${move.col}"]`);
-            cell.classList.add('valid-move');
-            if (move.capture) {
-                cell.classList.add('capture-move');
-            }
-        });
-        
-        document.querySelector(`[data-row="${row}"][data-col="${col}"]`).classList.add('selected');
-    }
-    
-    calculateMoves(row, col) {
-        const moves = [];
-        const piece = this.gameState.board[row][col];
-        const isKing = piece.includes('K');
-        
-        const directions = isKing ? 
-            [[-1,-1], [-1,1], [1,-1], [1,1]] : 
-            (piece.startsWith('b') ? [[1,-1], [1,1]] : [[-1,-1], [-1,1]]);
-        
-        // Normal hareket
-        directions.forEach(([dx, dy]) => {
-            const newRow = row + dx;
-            const newCol = col + dy;
-            
-            if (newRow >= 0 && newRow < 8 && newCol >= 0 && newCol < 8) {
-                if (!this.gameState.board[newRow][newCol]) {
-                    moves.push({ row: newRow, col: newCol, capture: false });
-                }
-            }
-        });
-        
-        // Yeme
-        directions.forEach(([dx, dy]) => {
-            const jumpRow = row + dx * 2;
-            const jumpCol = col + dy * 2;
-            const midRow = row + dx;
-            const midCol = col + dy;
-            
-            if (jumpRow >= 0 && jumpRow < 8 && jumpCol >= 0 && jumpCol < 8) {
-                const midPiece = this.gameState.board[midRow][midCol];
-                const targetPiece = this.gameState.board[jumpRow][jumpCol];
-                
-                if (midPiece && !targetPiece) {
-                    const isOpponent = (piece.startsWith('b') && midPiece.startsWith('w')) ||
-                                      (piece.startsWith('w') && midPiece.startsWith('b'));
-                    
-                    if (isOpponent) {
-                        moves.push({ 
-                            row: jumpRow, 
-                            col: jumpCol, 
-                            capture: true,
-                            capturedRow: midRow,
-                            capturedCol: midCol
-                        });
-                    }
-                }
-            }
-        });
-        
-        return moves;
-    }
-    
-    makeMove(from, to) {
-        const isValid = this.validMoves.some(m => m.row === to[0] && m.col === to[1]);
-        if (!isValid) return;
-        
-        const move = {
-            from: from,
-            to: to,
-            captured: null
-        };
-        
-        const captureMove = this.validMoves.find(m => m.row === to[0] && m.col === to[1] && m.capture);
-        if (captureMove) {
-            move.captured = {
-                row: captureMove.capturedRow,
-                col: captureMove.capturedCol
-            };
-        }
-        
-        this.send({
-            type: 'move:make',
-            data: { roomId: this.roomId, move: move }
-        });
-        
-        this.send({
-            type: 'move:made',
-            data: { roomId: this.roomId }
-        });
-    }
-    
-    clearHighlights() {
-        document.querySelectorAll('.cell').forEach(cell => {
-            cell.classList.remove('selected', 'valid-move', 'capture-move');
-        });
-    }
-    
-    updateBoard() {
-        this.createBoard();
-    }
-    
-    updateCapturedPieces() {
-        const opponentCaptured = document.getElementById('capturedOpponent');
-        const playerCaptured = document.getElementById('capturedPlayer');
-        
-        if (!opponentCaptured || !playerCaptured) return;
-        
-        opponentCaptured.innerHTML = '';
-        playerCaptured.innerHTML = '';
-        
-        if (this.gameState?.captured) {
-            this.gameState.captured.w?.forEach(() => {
-                const piece = document.createElement('div');
-                piece.className = 'captured-piece black';
-                opponentCaptured.appendChild(piece);
-            });
-            
-            this.gameState.captured.b?.forEach(() => {
-                const piece = document.createElement('div');
-                piece.className = 'captured-piece white';
-                playerCaptured.appendChild(piece);
-            });
-        }
-    }
-    
-    updateTimer(playerId, timeLeft) {
-        const isMe = playerId === this.user.id;
-        const timerBar = isMe ? 
-            document.getElementById('playerTimer') : 
-            document.getElementById('opponentTimer');
-        
-        if (!timerBar) return;
-        
-        const fill = timerBar.querySelector('.timer-fill');
-        const text = timerBar.querySelector('.timer-text');
-        
-        const percent = (timeLeft / 30) * 100;
-        fill.style.width = `${percent}%`;
-        text.textContent = timeLeft;
-    }
-    
-    showWinner(winnerId) {
-        const overlay = document.getElementById('gameOverlay');
-        const message = document.getElementById('winnerMessage');
-        
-        if (winnerId === this.user.id) {
-            message.textContent = this.t('youWon');
-        } else {
-            message.textContent = this.t('youLost');
-        }
-        
-        overlay.style.display = 'flex';
-        
-        document.getElementById('backToMenu').addEventListener('click', () => {
-            this.showMainMenu();
-        });
-    }
-    
-    showMessage(text, duration) {
-        const msg = document.createElement('div');
-        msg.style.cssText = `
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0,0,0,0.8);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 5px;
-            z-index: 3000;
-        `;
-        msg.textContent = text;
-        document.body.appendChild(msg);
-        
-        setTimeout(() => msg.remove(), duration);
-    }
-    
-    attachGameEvents() {
-        // Oyun içi eventler
+        // Sunucuya gönder
+        socket.emit('playerMovement', { x: newX, y: newY });
     }
 }
 
-// ==================== BAŞLAT ====================
-window.game = new ShashkiGame();
+// Haritayı çiz
+function drawMap() {
+    // Zemin
+    ctx.fillStyle = '#2a2a2a';
+    ctx.fillRect(0, 0, 800, 600);
+    
+    // Izgara deseni
+    ctx.strokeStyle = '#333';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 800; i += 50) {
+        ctx.beginPath();
+        ctx.strokeStyle = '#3a3a3a';
+        ctx.moveTo(i, 0);
+        ctx.lineTo(i, 600);
+        ctx.stroke();
+    }
+    for (let i = 0; i < 600; i += 50) {
+        ctx.beginPath();
+        ctx.moveTo(0, i);
+        ctx.lineTo(800, i);
+        ctx.stroke();
+    }
+    
+    // Duvarlar (odalar)
+    ctx.fillStyle = '#4a4a4a';
+    for (let wall of mapWalls) {
+        ctx.fillRect(wall.x, wall.y, wall.w, wall.h);
+        // Gölge efekti
+        ctx.fillStyle = '#3a3a3a';
+        ctx.fillRect(wall.x + 5, wall.y + 5, wall.w, wall.h);
+        ctx.fillStyle = '#4a4a4a';
+    }
+    
+    // Görev noktaları (Among Us'taki görev yerleri)
+    ctx.fillStyle = '#ffff00';
+    ctx.shadowColor = '#ffff00';
+    ctx.shadowBlur = 10;
+    ctx.beginPath();
+    ctx.arc(150, 150, 8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(650, 150, 8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(150, 450, 8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(650, 450, 8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+}
+
+// Oyuncuları çiz
+function drawPlayers() {
+    for (let id in players) {
+        const player = players[id];
+        
+        // Oyuncu gövdesi
+        ctx.fillStyle = player.color;
+        ctx.shadowColor = player.color;
+        ctx.shadowBlur = 15;
+        ctx.beginPath();
+        ctx.arc(player.x, player.y, 15, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Vizör (Among Us'taki cam)
+        ctx.fillStyle = '#87CEEB';
+        ctx.shadowBlur = 5;
+        ctx.beginPath();
+        ctx.ellipse(player.x + 8, player.y - 5, 8, 6, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // İsim
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = 'white';
+        ctx.font = '12px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(player.name || `Oyuncu ${id.slice(0, 4)}`, player.x, player.y - 25);
+        
+        // Ben ise etiket
+        if (id === myId) {
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(player.x, player.y, 18, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+    }
+}
+
+// Oyuncu listesini güncelle
+function updatePlayersList() {
+    const playerCount = Object.keys(players).length;
+    playerCountSpan.innerText = playerCount;
+    
+    playersList.innerHTML = '';
+    for (let id in players) {
+        const li = document.createElement('li');
+        li.innerHTML = `<span style="color: ${players[id].color};">●</span> ${players[id].name || `Oyuncu ${id.slice(0, 4)}`} ${id === myId ? '(Sen)' : ''}`;
+        playersList.appendChild(li);
+    }
+}
+
+// Animasyon döngüsü
+function gameLoop() {
+    // Hareketi güncelle
+    updateMovement();
+    
+    // Canvas'ı temizle
+    ctx.clearRect(0, 0, 800, 600);
+    
+    // Haritayı çiz
+    drawMap();
+    
+    // Oyuncuları çiz
+    drawPlayers();
+    
+    requestAnimationFrame(gameLoop);
+}
+
+// Oyunu başlat
+gameLoop();
