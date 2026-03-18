@@ -5,92 +5,70 @@ const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: "*" } });
+const io = new Server(server);
 
-app.use(express.static('public'));
+// Statik dosyaları serve et
+app.use(express.static(path.join(__dirname, '/')));
 
-let games = {}; // Oda verileri
-let waitingPlayer = null; 
+// Ana sayfayı yönlendir
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
 
+// Oyuncuları sakla
+let players = {};
+let playerColors = ['#ff4444', '#44ff44', '#4444ff', '#ffff44', '#ff44ff', '#44ffff', '#ff8844', '#8844ff'];
+
+// Socket.io bağlantıları
 io.on('connection', (socket) => {
-    console.log('Yeni bağlantı:', socket.id);
-
-    socket.on('join', (userData) => {
-        socket.userData = userData;
-
-        if (waitingPlayer && waitingPlayer.id !== socket.id) {
-            const roomId = `room_${Date.now()}`;
-            const gameData = {
-                id: roomId,
-                players: [waitingPlayer.userData, userData],
-                playerIds: [waitingPlayer.id, socket.id],
-                board: setupInitialBoard(),
-                turn: 0, // 0: Beyaz, 1: Siyah
-                captured: { white: [], black: [] },
-                lastActivity: Date.now(),
-                afkCounts: [0, 0]
-            };
+    console.log('Bir oyuncu bağlandı:', socket.id);
+    
+    // Yeni oyuncuya renk ata
+    const color = playerColors[Object.keys(players).length % playerColors.length];
+    
+    // Yeni oyuncuyu ekle
+    players[socket.id] = {
+        id: socket.id,
+        x: Math.random() * 700 + 50,
+        y: Math.random() * 500 + 50,
+        color: color,
+        name: `Oyuncu ${Object.keys(players).length + 1}`
+    };
+    
+    // Yeni oyuncuya kendi ID'sini gönder
+    socket.emit('currentPlayers', { 
+        myId: socket.id, 
+        players: players 
+    });
+    
+    // Diğer oyunculara yeni oyuncuyu bildir
+    socket.broadcast.emit('newPlayer', players[socket.id]);
+    
+    // Oyuncu hareket ettiğinde
+    socket.on('playerMovement', (movementData) => {
+        if (players[socket.id]) {
+            players[socket.id].x = movementData.x;
+            players[socket.id].y = movementData.y;
             
-            games[roomId] = gameData;
-            socket.join(roomId);
-            waitingPlayer.join(roomId);
-            
-            io.to(roomId).emit('gameStart', { ...gameData, yourColor: 1 });
-            waitingPlayer.emit('gameUpdate', { ...gameData, yourColor: 0 });
-            
-            startTurnTimer(roomId);
-            waitingPlayer = null;
-        } else {
-            waitingPlayer = socket;
-            socket.emit('waiting', true);
+            // Tüm oyunculara pozisyon güncellemesi gönder
+            io.emit('playerMoved', {
+                id: socket.id,
+                x: movementData.x,
+                y: movementData.y
+            });
         }
     });
-
-    socket.on('move', (data) => {
-        const { roomId, move } = data;
-        const game = games[roomId];
-        if (!game) return;
-
-        // Burada hamle doğrulama (yeme zorunluluğu vb.) yapılır
-        // Basitleştirilmiş hamle güncelleme:
-        game.board = move.newBoard;
-        game.turn = game.turn === 0 ? 1 : 0;
-        game.captured = move.captured;
-        game.lastActivity = Date.now();
-        
-        io.to(roomId).emit('gameUpdate', game);
-        startTurnTimer(roomId);
-    });
-
+    
+    // Oyuncu ayrıldığında
     socket.on('disconnect', () => {
-        if (waitingPlayer && waitingPlayer.id === socket.id) waitingPlayer = null;
+        console.log('Oyuncu ayrıldı:', socket.id);
+        delete players[socket.id];
+        io.emit('playerDisconnected', socket.id);
     });
 });
 
-function setupInitialBoard() {
-    let board = Array(64).fill(null);
-    for (let i = 0; i < 64; i++) {
-        let row = Math.floor(i / 8);
-        let col = i % 8;
-        if ((row + col) % 2 !== 0) {
-            if (row < 3) board[i] = { color: 'black', isKing: false };
-            if (row > 4) board[i] = { color: 'white', isKing: false };
-        }
-    }
-    return board;
-}
-
-function startTurnTimer(roomId) {
-    if (games[roomId]?.timer) clearInterval(games[roomId].timer);
-    let timeLeft = 30;
-    games[roomId].timer = setInterval(() => {
-        timeLeft--;
-        io.to(roomId).emit('tick', { timeLeft });
-        if (timeLeft <= 0) {
-            clearInterval(games[roomId].timer);
-            // Otomatik hamle veya AFK işlemi
-        }
-    }, 1000);
-}
-
-server.listen(3000, () => console.log('Server running on port 3000'));
+// Sunucuyu başlat
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+    console.log(`Sunucu çalışıyor: http://localhost:${PORT}`);
+});
