@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="az">
+<html lang="tr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Şaşki Oyunu</title>
+    <title>SASKİ OYUNU - Among Us Tarzı</title>
     <style>
         * {
             margin: 0;
@@ -12,388 +12,405 @@
             user-select: none;
             -webkit-tap-highlight-color: transparent;
         }
-
+        
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
+            font-family: 'Arial', sans-serif;
+            background: #0a0a0a;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+        }
+
+        /* Ana oyun container */
+        #game-container {
+            flex: 3;
             display: flex;
             justify-content: center;
             align-items: center;
-            color: white;
-        }
-
-        .app {
-            width: 100%;
-            max-width: 500px;
-            height: 100vh;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            display: flex;
-            flex-direction: column;
+            background: linear-gradient(45deg, #1a1a1a, #0d0d0d);
             position: relative;
             overflow: hidden;
         }
 
-        /* Loading Screen */
-        .loading-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
+        /* Canvas (oyun alanı) */
+        #gameCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            max-width: 100vw;
+            max-height: 100vh;
+            object-fit: contain;
+            border: 2px solid #ff6b6b;
+            box-shadow: 0 0 30px rgba(255, 107, 107, 0.3);
+            background: #1e1e1e;
         }
 
-        .loader {
-            width: 50px;
-            height: 50px;
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 1s ease-in-out infinite;
-            margin-bottom: 20px;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* Main Menu */
-        .main-menu {
+        /* Yan sidebar */
+        #sidebar {
+            flex: 1;
+            background: linear-gradient(135deg, #2b2b4f, #1a1a2f);
+            border-left: 3px solid #ff6b6b;
             padding: 20px;
             display: flex;
             flex-direction: column;
-            height: 100%;
-        }
-
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 40px;
-        }
-
-        .user-profile {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .user-profile img {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            border: 2px solid white;
-        }
-
-        .language-selector {
-            display: flex;
-            gap: 5px;
-        }
-
-        .lang-btn {
-            background: rgba(255, 255, 255, 0.2);
-            border: none;
+            gap: 20px;
+            min-width: 250px;
+            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.5);
             color: white;
-            padding: 5px 10px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.3s;
-        }
-
-        .lang-btn.active {
-            background: white;
-            color: #764ba2;
-        }
-
-        .menu-buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            margin-top: auto;
-            margin-bottom: auto;
-        }
-
-        .menu-btn {
-            padding: 15px;
-            border: none;
-            border-radius: 10px;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: transform 0.2s;
-            position: relative;
-        }
-
-        .menu-btn.primary {
-            background: linear-gradient(45deg, #FE6B8B 30%, #FF8E53 90%);
-            color: white;
-        }
-
-        .menu-btn.secondary {
-            background: white;
-            color: #764ba2;
-        }
-
-        .menu-btn.locked {
-            background: #ccc;
-            color: #666;
-            cursor: not-allowed;
-            opacity: 0.7;
-        }
-
-        .lock-icon {
-            position: absolute;
-            right: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 20px;
-        }
-
-        .room-code {
-            margin-top: 20px;
-            text-align: center;
-        }
-
-        .code-box {
-            background: rgba(255, 255, 255, 0.2);
-            padding: 15px;
-            border-radius: 10px;
-            font-size: 24px;
-            letter-spacing: 5px;
-            margin: 10px 0;
-        }
-
-        .copy-btn {
-            background: white;
-            color: #764ba2;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        /* Game Board */
-        .game-app {
-            width: 100%;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .game-header, .game-footer {
-            padding: 10px;
-        }
-
-        .game-board-container {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 10px;
-            position: relative;
-        }
-
-        .board {
-            display: grid;
-            grid-template-columns: repeat(8, 1fr);
-            gap: 2px;
-            background: #8b5a2b;
-            padding: 2px;
-            border-radius: 5px;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-            width: min(400px, 70vw);
-            height: min(400px, 70vw);
-        }
-
-        .cell {
-            aspect-ratio: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            position: relative;
-            cursor: pointer;
-        }
-
-        .cell.light {
-            background: #f0d9b5;
-        }
-
-        .cell.dark {
-            background: #b58863;
-        }
-
-        .cell.selected {
-            background: #7ec8e0 !important;
-        }
-
-        .cell.valid-move::after {
-            content: '';
-            position: absolute;
-            width: 20px;
-            height: 20px;
-            background: rgba(0, 255, 0, 0.5);
-            border-radius: 50%;
-            animation: pulse 1s infinite;
-        }
-
-        .cell.capture-move::after {
-            background: rgba(255, 0, 0, 0.5);
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 0.5; }
-            50% { transform: scale(1.2); opacity: 0.8; }
-        }
-
-        .piece {
-            width: 80%;
-            height: 80%;
-            border-radius: 50%;
-            position: relative;
-            transition: transform 0.2s;
-            cursor: grab;
-        }
-
-        .piece:active {
-            cursor: grabbing;
-            transform: scale(1.1);
-        }
-
-        .piece.black {
-            background: radial-gradient(circle at 30% 30%, #666, #222);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
-        }
-
-        .piece.white {
-            background: radial-gradient(circle at 30% 30%, #fff, #ccc);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-
-        .piece.king::after {
-            content: '♔';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 20px;
-            color: gold;
-            text-shadow: 0 0 5px rgba(255,215,0,0.5);
-        }
-
-        /* Captured Pieces */
-        .captured-pieces {
-            width: 50px;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            gap: 3px;
             overflow-y: auto;
-            padding: 5px;
-            background: rgba(0,0,0,0.2);
-            border-radius: 5px;
         }
 
-        .captured-piece {
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
-            animation: slideIn 0.3s;
+        /* Başlık */
+        .game-title {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        
+        .game-title h1 {
+            color: #ff6b6b;
+            font-size: 28px;
+            text-shadow: 0 0 10px #ff6b6b;
+            letter-spacing: 2px;
+        }
+        
+        .game-title p {
+            color: #aaa;
+            font-size: 12px;
         }
 
-        @keyframes slideIn {
-            from { transform: translateX(30px); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
+        /* Joystick bölümü */
+        #joystick-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid #ff6b6b30;
         }
 
-        /* Player Info */
-        .player-info {
+        #joystick-section h2 {
+            color: #ff6b6b;
+            font-size: 20px;
+            margin-bottom: 15px;
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 10px;
-            padding: 8px;
-            background: rgba(0,0,0,0.2);
-            border-radius: 8px;
         }
 
-        .player-info img {
-            width: 35px;
-            height: 35px;
+        /* Joystick base */
+        #joystick-base {
+            width: 180px;
+            height: 180px;
+            background: rgba(255, 255, 255, 0.1);
             border-radius: 50%;
-        }
-
-        .timer-bar {
-            flex: 1;
-            height: 25px;
-            background: rgba(255,255,255,0.2);
-            border-radius: 12px;
+            margin: 0 auto;
             position: relative;
-            overflow: hidden;
-            margin-left: 10px;
+            border: 2px solid #ff6b6b;
+            box-shadow: 0 0 20px #ff6b6b50;
+            cursor: pointer;
+            touch-action: none;
         }
 
-        .timer-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #4caf50, #ff4444);
-            transition: width 1s linear;
-        }
-
-        .timer-text {
+        /* Joystick thumb */
+        #joystick-thumb {
+            width: 70px;
+            height: 70px;
+            background: radial-gradient(circle at 30% 30%, #ff6b6b, #ff3d3d);
+            border-radius: 50%;
             position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
+            top: 55px;
+            left: 55px;
+            cursor: pointer;
+            touch-action: none;
+            box-shadow: 0 0 15px #ff6b6b;
+            transition: box-shadow 0.2s;
+        }
+
+        #joystick-thumb:active {
+            box-shadow: 0 0 30px #ff6b6b;
+        }
+
+        /* Joystick durum */
+        #joystick-status {
+            margin-top: 15px;
+            color: #aaa;
+            font-size: 14px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 8px;
+            border-radius: 20px;
+        }
+
+        /* Oyuncu listesi */
+        #players-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid #ff6b6b30;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #players-section h2 {
+            color: #ff6b6b;
+            font-size: 20px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        #player-count {
+            background: #ff6b6b;
             color: white;
-            font-weight: bold;
+            padding: 2px 10px;
+            border-radius: 20px;
             font-size: 14px;
         }
 
-        /* Game Overlay */
-        .game-overlay {
+        /* Oyuncu listesi container */
+        #players-container {
+            flex: 1;
+            overflow-y: auto;
+            max-height: 300px;
+            padding-right: 5px;
+        }
+
+        #players-container::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        #players-container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        #players-container::-webkit-scrollbar-thumb {
+            background: #ff6b6b;
+            border-radius: 10px;
+        }
+
+        /* Oyuncu listesi */
+        #players {
+            list-style: none;
+        }
+
+        #players li {
+            padding: 12px;
+            margin: 8px 0;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 10px;
+            border-left: 3px solid;
+            transition: transform 0.2s;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        #players li:hover {
+            transform: translateX(5px);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .player-color-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .player-name {
+            flex: 1;
+        }
+
+        .player-badge {
+            background: #ff6b6b;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 10px;
+        }
+
+        /* Kontrol bilgileri */
+        #info-section {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 15px;
+            padding: 15px;
+            font-size: 12px;
+            color: #aaa;
+            border: 1px dashed #ff6b6b50;
+        }
+
+        #info-section p {
+            margin: 5px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .info-icon {
+            color: #ff6b6b;
+            font-size: 14px;
+        }
+
+        /* Bağlantı durumu */
+        #connection-status {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: #4caf50;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            z-index: 1000;
+            border: 1px solid #4caf50;
+            pointer-events: none;
+        }
+
+        /* Mobil uyumluluk */
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+            
+            #sidebar {
+                flex-direction: row;
+                min-width: 100%;
+                height: 200px;
+                padding: 10px;
+            }
+            
+            #joystick-section {
+                flex: 1;
+            }
+            
+            #players-section {
+                flex: 1;
+            }
+            
+            #joystick-base {
+                width: 140px;
+                height: 140px;
+            }
+            
+            #joystick-thumb {
+                width: 50px;
+                height: 50px;
+                top: 45px;
+                left: 45px;
+            }
+        }
+
+        /* Yükleniyor animasyonu */
+        .loading {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0,0,0,0.8);
+            background: #0a0a0a;
             display: flex;
             justify-content: center;
             align-items: center;
             z-index: 2000;
+            transition: opacity 0.5s;
         }
-
-        .winner-animation {
-            text-align: center;
-            animation: popIn 0.5s;
+        
+        .loading.hidden {
+            opacity: 0;
+            pointer-events: none;
         }
-
-        .trophy {
-            font-size: 80px;
-            animation: bounce 1s infinite;
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid #ff6b6b30;
+            border-top-color: #ff6b6b;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
         }
-
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-20px); }
-        }
-
-        @keyframes popIn {
-            from { transform: scale(0); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
-    <div class="app" id="app"></div>
-
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- Yükleniyor ekranı -->
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+    </div>
+    
+    <!-- Bağlantı durumu -->
+    <div id="connection-status">🔴 Bağlanıyor...</div>
+    
+    <!-- Ana oyun container -->
+    <div id="game-container">
+        <canvas id="gameCanvas" width="1000" height="700"></canvas>
+    </div>
+    
+    <!-- Yan sidebar -->
+    <div id="sidebar">
+        <div class="game-title">
+            <h1>SASKİ OYUNU</h1>
+            <p>Among Us Tarzı Çok Oyunculu</p>
+        </div>
+        
+        <!-- Joystick bölümü -->
+        <div id="joystick-section">
+            <h2>
+                <span>🎮</span> 
+                Joystick
+                <span>🎮</span>
+            </h2>
+            <div id="joystick-base">
+                <div id="joystick-thumb"></div>
+            </div>
+            <div id="joystick-status">
+                Joystick'i sürükleyin
+            </div>
+        </div>
+        
+        <!-- Oyuncu listesi bölümü -->
+        <div id="players-section">
+            <h2>
+                <span>👥</span>
+                Oyuncular
+                <span id="player-count">0</span>
+            </h2>
+            <div id="players-container">
+                <ul id="players">
+                    <!-- Oyuncular buraya eklenecek -->
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Bilgi bölümü -->
+        <div id="info-section">
+            <p>
+                <span class="info-icon">🖱️</span>
+                Mouse ile joystick'i sürükleyin
+            </p>
+            <p>
+                <span class="info-icon">📱</span>
+                Mobilde parmağınızla sürükleyin
+            </p>
+            <p>
+                <span class="info-icon">🎯</span>
+                Diğer oyuncuları görün
+            </p>
+            <p>
+                <span class="info-icon">🔄</span>
+                Gerçek zamanlı hareket
+            </p>
+        </div>
+    </div>
+    
+    <!-- Socket.io kütüphanesi -->
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <!-- Oyun JavaScript'i -->
     <script src="game.js"></script>
 </body>
 </html>
