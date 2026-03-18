@@ -1,13 +1,13 @@
 {
-  "name": "war-monitor-api",
+  "name": "among-us-tarzi-oyun",
   "version": "1.0.0",
-  "type": "module",
+  "description": "Among Us tarzı çok oyunculu oyun",
+  "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
     "express": "^4.18.2",
-    "cors": "^2.8.5",
-    "node-fetch": "^3.3.2"
+    "socket.io": "^4.5.4"
   }
 }
