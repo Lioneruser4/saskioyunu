@@ -1,74 +1,103 @@
 const express = require('express');
-const http = require('http');
-const { Server } = require('socket.io');
+const TelegramBot = require('node-telegram-bot-api');
+const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
-
 const app = express();
-const server = http.createServer(app);
-const io = new Server(server);
 
-// Statik dosyaları serve et
-app.use(express.static(path.join(__dirname, '/')));
+// Telegram Bot Ayarları
+const TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const bot = new TelegramBot(TOKEN, { polling: true });
+const WEBAPP_URL = process.env.WEBAPP_URL || 'https://localhost:3000';
 
-// Ana sayfayı yönlendir
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+// Veritabanı
+const db = new sqlite3.Database('tracker.db');
+db.run(`CREATE TABLE IF NOT EXISTS users (
+  telegram_id TEXT PRIMARY KEY,
+  username TEXT,
+  first_name TEXT,
+  last_name TEXT,
+  photo_url TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+
+db.run(`CREATE TABLE IF NOT EXISTS tracked_accounts (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  telegram_id TEXT,
+  instagram_username TEXT,
+  initial_followers INTEGER,
+  last_followers INTEGER,
+  added_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY(telegram_id) REFERENCES users(telegram_id)
+)`);
+
+db.run(`CREATE TABLE IF NOT EXISTS follower_changes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  tracked_id INTEGER,
+  change_type TEXT,
+  username TEXT,
+  full_name TEXT,
+  detected_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY(tracked_id) REFERENCES tracked_accounts(id)
+)`);
+
+// Middleware
+app.use(express.json());
+app.use(express.static('public'));
+
+// Telegram Bot Komutları
+bot.onText(/\/start/, (msg) => {
+  const chatId = msg.chat.id;
+  const userId = msg.from.id;
+  const firstName = msg.from.first_name;
+  const username = msg.from.username;
+  const photoUrl = msg.from.photo?.length > 0 ? msg.from.photo[0].file_id : null;
+
+  // Kullanıcıyı kaydet
+  db.run(`INSERT OR REPLACE INTO users (telegram_id, username, first_name, photo_url) VALUES (?, ?, ?, ?)`,
+    [userId, username, firstName, photoUrl]);
+
+  // Web App butonu gönder
+  bot.sendMessage(chatId, `👋 Merhaba ${firstName}!`, {
+    reply_markup: {
+      inline_keyboard: [[{
+        text: "🚀 Takipçi Takip Paneli",
+        web_app: { url: WEBAPP_URL }
+      }]]
+    }
+  });
 });
 
-// Oyuncuları sakla
-let players = {};
-let playerColors = ['#ff4444', '#44ff44', '#4444ff', '#ffff44', '#ff44ff', '#44ffff', '#ff8844', '#8844ff'];
+// Web App'ten gelen verileri al
+app.post('/api/verify-user', (req, res) => {
+  const { telegram_id } = req.body;
+  db.get(`SELECT * FROM users WHERE telegram_id = ?`, [telegram_id], (err, user) => {
+    if (err || !user) return res.status(401).json({ error: 'Unauthorized' });
+    res.json({ success: true, user });
+  });
+});
 
-// Socket.io bağlantıları
-io.on('connection', (socket) => {
-    console.log('Bir oyuncu bağlandı:', socket.id);
-    
-    // Yeni oyuncuya renk ata
-    const color = playerColors[Object.keys(players).length % playerColors.length];
-    
-    // Yeni oyuncuyu ekle
-    players[socket.id] = {
-        id: socket.id,
-        x: Math.random() * 700 + 50,
-        y: Math.random() * 500 + 50,
-        color: color,
-        name: `Oyuncu ${Object.keys(players).length + 1}`
-    };
-    
-    // Yeni oyuncuya kendi ID'sini gönder
-    socket.emit('currentPlayers', { 
-        myId: socket.id, 
-        players: players 
+app.post('/api/add-account', (req, res) => {
+  const { telegram_id, instagram_username } = req.body;
+  // Burada Instagram takipçi sayısı çekme kodu olacak (API sınırlamaları nedeniyle demo)
+  const demoFollowers = Math.floor(Math.random() * 1000);
+  db.run(`INSERT INTO tracked_accounts (telegram_id, instagram_username, initial_followers, last_followers) VALUES (?, ?, ?, ?)`,
+    [telegram_id, instagram_username, demoFollowers, demoFollowers], function(err) {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json({ success: true, id: this.lastID });
     });
-    
-    // Diğer oyunculara yeni oyuncuyu bildir
-    socket.broadcast.emit('newPlayer', players[socket.id]);
-    
-    // Oyuncu hareket ettiğinde
-    socket.on('playerMovement', (movementData) => {
-        if (players[socket.id]) {
-            players[socket.id].x = movementData.x;
-            players[socket.id].y = movementData.y;
-            
-            // Tüm oyunculara pozisyon güncellemesi gönder
-            io.emit('playerMoved', {
-                id: socket.id,
-                x: movementData.x,
-                y: movementData.y
-            });
-        }
-    });
-    
-    // Oyuncu ayrıldığında
-    socket.on('disconnect', () => {
-        console.log('Oyuncu ayrıldı:', socket.id);
-        delete players[socket.id];
-        io.emit('playerDisconnected', socket.id);
+});
+
+app.get('/api/tracked-accounts/:telegram_id', (req, res) => {
+  db.all(`SELECT * FROM tracked_accounts WHERE telegram_id = ? ORDER BY added_at DESC`, 
+    [req.params.telegram_id], (err, rows) => {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json(rows);
     });
 });
 
 // Sunucuyu başlat
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-    console.log(`Sunucu çalışıyor: http://localhost:${PORT}`);
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+  console.log(`Web App URL: ${WEBAPP_URL}`);
 });
