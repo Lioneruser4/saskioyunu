@@ -3,291 +3,457 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Takipçi Takip Sistemi</title>
+    <title>Takipçi Takip</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            padding: 20px;
+            padding: 16px;
         }
-        .container { max-width: 600px; margin: 0 auto; }
+        
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
         .card {
             background: white;
-            border-radius: 20px;
+            border-radius: 24px;
             padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            margin-bottom: 16px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
         }
+        
         .profile {
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 16px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #f0f0f0;
             margin-bottom: 20px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid #eee;
         }
+        
         .profile-img {
-            width: 60px;
-            height: 60px;
+            width: 56px;
+            height: 56px;
             border-radius: 50%;
             object-fit: cover;
+            background: linear-gradient(135deg, #667eea, #764ba2);
         }
-        .profile-info h2 { font-size: 18px; color: #333; }
-        .profile-info p { color: #666; font-size: 14px; }
+        
+        .profile-info h2 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+        
+        .profile-info p {
+            font-size: 13px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+        
         .input-group {
-            margin-bottom: 15px;
+            margin-bottom: 16px;
         }
+        
         input, button {
             width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 10px;
+            padding: 14px 16px;
+            border-radius: 14px;
             font-size: 16px;
+            border: 1px solid #e5e7eb;
+            background: white;
+            font-family: inherit;
         }
+        
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
         button {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
+            font-weight: 600;
             cursor: pointer;
-            font-weight: bold;
-            transition: transform 0.2s;
+            transition: transform 0.1s;
         }
-        button:active { transform: scale(0.98); }
-        .account-card {
-            background: #f8f9fa;
-            border-radius: 12px;
-            padding: 15px;
+        
+        button:active {
+            transform: scale(0.98);
+        }
+        
+        button:disabled {
+            opacity: 0.6;
+            transform: none;
+        }
+        
+        .account-item {
+            background: #f9fafb;
+            border-radius: 16px;
+            padding: 14px;
             margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             border-left: 4px solid #667eea;
         }
-        .account-card h3 { font-size: 16px; margin-bottom: 5px; }
-        .account-card p { font-size: 12px; color: #666; }
-        .badge {
-            display: inline-block;
-            padding: 4px 8px;
-            border-radius: 12px;
+        
+        .account-info h4 {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .account-info p {
             font-size: 11px;
-            font-weight: bold;
-            margin-top: 8px;
+            color: #6b7280;
         }
-        .badge.increase { background: #d4edda; color: #155724; }
-        .badge.decrease { background: #f8d7da; color: #721c24; }
-        .silent-mode {
-            margin-top: 15px;
+        
+        .followers {
+            font-size: 18px;
+            font-weight: 700;
+            color: #667eea;
+        }
+        
+        .delete-btn {
+            background: #fee2e2;
+            color: #ef4444;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            border: none;
+            width: auto;
+        }
+        
+        .silent-row {
             display: flex;
-            align-items: center;
             justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid #f0f0f0;
         }
+        
         .toggle {
-            width: 50px;
-            height: 26px;
-            background: #ccc;
-            border-radius: 13px;
+            width: 52px;
+            height: 28px;
+            background: #d1d5db;
+            border-radius: 40px;
             position: relative;
             cursor: pointer;
-            transition: 0.3s;
+            transition: 0.2s;
         }
-        .toggle.active { background: #667eea; }
+        
+        .toggle.active {
+            background: #667eea;
+        }
+        
         .toggle::after {
             content: '';
-            width: 22px;
-            height: 22px;
+            width: 24px;
+            height: 24px;
             background: white;
             border-radius: 50%;
             position: absolute;
             top: 2px;
             left: 3px;
-            transition: 0.3s;
+            transition: 0.2s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
         }
-        .toggle.active::after { left: 25px; }
-        .notification-list {
-            max-height: 300px;
-            overflow-y: auto;
+        
+        .toggle.active::after {
+            left: 25px;
         }
-        .notification-item {
-            padding: 10px;
-            border-bottom: 1px solid #eee;
+        
+        h3 {
+            font-size: 17px;
+            margin-bottom: 14px;
+            color: #1f2937;
+        }
+        
+        .empty {
+            text-align: center;
+            color: #9ca3af;
+            padding: 32px 20px;
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1f2937;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 40px;
             font-size: 13px;
+            z-index: 1000;
+            animation: fadeOut 3s forwards;
         }
-        .status { color: #28a745; font-weight: bold; }
-        @media (max-width: 480px) {
-            body { padding: 10px; }
-            .card { padding: 15px; }
+        
+        @keyframes fadeOut {
+            0% { opacity: 1; }
+            70% { opacity: 1; }
+            100% { opacity: 0; visibility: hidden; }
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid #fff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 0.6s linear infinite;
+            margin-left: 8px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 500;
+            margin-top: 8px;
+        }
+        
+        .status-online {
+            background: #d4edda;
+            color: #155724;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="card" id="loginCard">
-            <h2 style="text-align: center; margin-bottom: 20px;">🔐 Telegram ile Giriş</h2>
-            <button onclick="loginWithTelegram()">Telegram ile Giriş Yap</button>
-        </div>
-
-        <div id="mainContent" style="display: none;">
-            <div class="card">
-                <div class="profile" id="profileInfo"></div>
-                
-                <div class="input-group">
-                    <input type="text" id="instagramUsername" placeholder="Instagram kullanıcı adı (örn: ornek_hesap)">
-                </div>
-                <button onclick="addAccount()">➕ Takip Etmeye Başla</button>
-                
-                <div class="silent-mode">
-                    <span>🔕 Sessiz Mod (Bildirimleri Kapat)</span>
-                    <div id="silentToggle" class="toggle" onclick="toggleSilentMode()"></div>
-                </div>
-            </div>
-
-            <div class="card">
-                <h3>📊 Takip Edilen Hesaplar</h3>
-                <div id="accountsList"></div>
-            </div>
-
-            <div class="card">
-                <h3>🔔 Son Değişiklikler</h3>
-                <div id="notifications" class="notification-list"></div>
-            </div>
+<div class="container">
+    <div id="loadingCard" class="card" style="text-align:center">
+        <div style="padding: 40px 20px">
+            <div style="width: 40px; height: 40px; border: 3px solid #f0f0f0; border-top-color: #667eea; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px;"></div>
+            <p>Telegram hesabınıza bağlanılıyor...</p>
         </div>
     </div>
 
-    <script>
-        let currentUser = null;
-        let silentMode = localStorage.getItem('silentMode') === 'true';
-        
-        // Telegram Web App entegrasyonu
-        const tg = window.Telegram?.WebApp;
-        
-        function loginWithTelegram() {
-            if (tg) {
-                tg.ready();
-                const initData = tg.initDataUnsafe;
-                if (initData && initData.user) {
-                    verifyUser(initData.user);
-                }
+    <div id="app" style="display:none">
+        <div class="card">
+            <div class="profile" id="profileArea"></div>
+            <div class="input-group">
+                <input type="text" id="instaUser" placeholder="Instagram kullanıcı adı (örn: nike, cristiano)">
+            </div>
+            <button id="addBtn" onclick="addAccount()">➕ Takip Etmeye Başla</button>
+            <div class="silent-row">
+                <span>🔕 Sessiz Mod (Bildirimleri Kapat)</span>
+                <div id="silentToggle" class="toggle" onclick="toggleSilent()"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>📌 Takip Edilen Hesaplar</h3>
+            <div id="accountsList"></div>
+        </div>
+    </div>
+</div>
+
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script>
+    let currentUser = null;
+    let silentMode = false;
+    
+    const tg = window.Telegram.WebApp;
+    
+    // Telegram Web App otomatik giriş
+    tg.ready();
+    tg.expand();
+    
+    const initData = tg.initDataUnsafe;
+    
+    if (initData && initData.user) {
+        const user = initData.user;
+        autoLogin(user);
+    } else {
+        // Demo mod (gerçekte bu olmaz, Telegram'dan gelir)
+        console.log('Telegram kullanıcı bilgisi alınamadı');
+        document.getElementById('loadingCard').innerHTML = '<div class="card" style="text-align:center;color:red"><p>❌ Telegram bağlantısı başarısız</p></div>';
+    }
+    
+    async function autoLogin(user) {
+        try {
+            const response = await fetch('/api/auto-login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    telegram_id: user.id,
+                    first_name: user.first_name,
+                    username: user.username,
+                    photo_url: user.photo_url
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                currentUser = data.user;
+                silentMode = data.silentMode;
+                showApp();
             } else {
-                // Demo mod - gerçek kullanıcı bilgisi için Telegram'dan alınmalı
-                const demoUser = {
-                    id: 123456789,
-                    first_name: "Demo",
-                    username: "demo_user",
-                    photo_url: "https://via.placeholder.com/60"
-                };
-                verifyUser(demoUser);
+                throw new Error('Giriş hatası');
             }
+        } catch (error) {
+            console.error('Auto login error:', error);
+            document.getElementById('loadingCard').innerHTML = '<div class="card" style="text-align:center;color:red"><p>❌ Sunucu bağlantı hatası</p></div>';
+        }
+    }
+    
+    function showApp() {
+        document.getElementById('loadingCard').style.display = 'none';
+        document.getElementById('app').style.display = 'block';
+        
+        const initial = currentUser.first_name.charAt(0).toUpperCase();
+        const photoUrl = currentUser.photo_url;
+        
+        document.getElementById('profileArea').innerHTML = `
+            ${photoUrl ? `<img class="profile-img" src="${photoUrl}" alt="Profile">` : `<div class="profile-img" style="display:flex;align-items:center;justify-content:center;font-size:24px;">${initial}</div>`}
+            <div class="profile-info">
+                <h2>${currentUser.first_name}</h2>
+                <p>@${currentUser.username || 'telegram_kullanici'}</p>
+            </div>
+        `;
+        
+        document.getElementById('silentToggle').classList.toggle('active', silentMode);
+        loadAccounts();
+        
+        // Her 30 saniyede bir yenile
+        setInterval(loadAccounts, 30000);
+    }
+    
+    async function addAccount() {
+        const username = document.getElementById('instaUser').value.trim();
+        if (!username) {
+            showToast('Lütfen Instagram kullanıcı adı girin');
+            return;
         }
         
-        async function verifyUser(user) {
-            try {
-                const response = await fetch('/api/verify-user', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ telegram_id: user.id })
-                });
-                const data = await response.json();
-                if (data.success) {
-                    currentUser = { ...user, ...data.user };
-                    showMainContent();
-                }
-            } catch (error) {
-                console.error('Login error:', error);
-            }
-        }
+        const btn = document.getElementById('addBtn');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '⏳ Takipçi sayısı alınıyor...';
+        btn.disabled = true;
         
-        function showMainContent() {
-            document.getElementById('loginCard').style.display = 'none';
-            document.getElementById('mainContent').style.display = 'block';
-            
-            const profileHtml = `
-                <img class="profile-img" src="${currentUser.photo_url || 'https://via.placeholder.com/60'}" alt="Profile">
-                <div class="profile-info">
-                    <h2>${currentUser.first_name} ${currentUser.last_name || ''}</h2>
-                    <p>@${currentUser.username || 'kullanici'}</p>
-                </div>
-            `;
-            document.getElementById('profileInfo').innerHTML = profileHtml;
-            
-            document.getElementById('silentToggle').classList.toggle('active', silentMode);
-            loadAccounts();
-        }
-        
-        async function addAccount() {
-            const username = document.getElementById('instagramUsername').value.trim();
-            if (!username) {
-                alert('Lütfen Instagram kullanıcı adı girin');
-                return;
-            }
-            
-            const response = await fetch('/api/add-account', {
+        try {
+            const response = await fetch('/api/add', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     telegram_id: currentUser.id,
-                    instagram_username: username
+                    username: username
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                document.getElementById('instaUser').value = '';
+                loadAccounts();
+                showToast(`✅ @${data.username} takip ediliyor. Takipçi: ${data.followers.toLocaleString()}`);
+            } else {
+                showToast(`❌ ${data.error || 'Hesap bulunamadı'}`);
+            }
+        } catch (error) {
+            showToast('❌ Bağlantı hatası');
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    }
+    
+    async function removeAccount(username) {
+        if (confirm(`${username} takibini durdurmak istediğinize emin misiniz?`)) {
+            const response = await fetch('/api/remove', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    telegram_id: currentUser.id,
+                    username: username
                 })
             });
             
             if (response.ok) {
-                document.getElementById('instagramUsername').value = '';
                 loadAccounts();
-                addNotification('Yeni hesap takip ediliyor: @' + username);
-            } else {
-                alert('Hesap eklenirken hata oluştu');
+                showToast(`⛔ @${username} takibi durduruldu`);
             }
         }
-        
-        async function loadAccounts() {
-            const response = await fetch(`/api/tracked-accounts/${currentUser.id}`);
+    }
+    
+    async function loadAccounts() {
+        try {
+            const response = await fetch(`/api/list/${currentUser.id}`);
             const accounts = await response.json();
             
-            const accountsHtml = accounts.map(acc => `
-                <div class="account-card">
-                    <h3>@${acc.instagram_username}</h3>
-                    <p>Takipçi: ${acc.last_followers || acc.initial_followers}</p>
-                    <p>Eklenme: ${new Date(acc.added_at).toLocaleString('tr-TR')}</p>
+            const container = document.getElementById('accountsList');
+            if (!accounts.length) {
+                container.innerHTML = '<div class="empty">📭 Henüz takip edilen hesap yok<br><br>Yukarıdan bir Instagram kullanıcı adı ekleyin</div>';
+                return;
+            }
+            
+            container.innerHTML = accounts.map(acc => `
+                <div class="account-item">
+                    <div class="account-info">
+                        <h4>@${acc.username}</h4>
+                        <p>Son güncelleme: ${new Date(acc.lastCheck).toLocaleString('tr')}</p>
+                    </div>
+                    <div style="text-align:right">
+                        <div class="followers">${acc.followers.toLocaleString()}</div>
+                        <button class="delete-btn" onclick="removeAccount('${acc.username}')">Sil</button>
+                    </div>
                 </div>
             `).join('');
-            
-            document.getElementById('accountsList').innerHTML = accountsHtml || '<p style="text-align:center;color:#666;">Henüz takip edilen hesap yok</p>';
+        } catch (error) {
+            console.error('Load accounts error:', error);
         }
+    }
+    
+    async function toggleSilent() {
+        silentMode = !silentMode;
+        document.getElementById('silentToggle').classList.toggle('active', silentMode);
         
-        function addNotification(message, type = 'info') {
-            const notifDiv = document.getElementById('notifications');
-            const notifItem = document.createElement('div');
-            notifItem.className = 'notification-item';
-            notifItem.innerHTML = `
-                <span>${new Date().toLocaleTimeString('tr-TR')}</span>
-                <div>${message}</div>
-            `;
-            notifDiv.insertBefore(notifItem, notifDiv.firstChild);
-            
-            // Sessiz modda değilse bildirim göster
-            if (!silentMode && 'Notification' in window && Notification.permission === 'granted') {
-                new Notification('Takipçi Takip', { body: message });
-            }
-        }
+        await fetch('/api/silent-mode', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                telegram_id: currentUser.id,
+                silent: silentMode
+            })
+        });
         
-        function toggleSilentMode() {
-            silentMode = !silentMode;
-            localStorage.setItem('silentMode', silentMode);
-            document.getElementById('silentToggle').classList.toggle('active', silentMode);
-            addNotification(silentMode ? 'Sessiz mod aktif' : 'Sessiz mod pasif');
-        }
+        showToast(silentMode ? '🔕 Sessiz mod aktif, bildirim gelmeyecek' : '🔊 Sesli mod aktif, bildirimler açık');
+    }
+    
+    function showToast(message) {
+        const existing = document.querySelector('.toast');
+        if (existing) existing.remove();
         
-        // Bildirim izni iste
-        if ('Notification' in window && Notification.permission !== 'denied') {
-            Notification.requestPermission();
-        }
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.textContent = message;
+        document.body.appendChild(toast);
         
-        // Sayfa yüklendiğinde Telegram Web App'i kontrol et
-        if (tg) {
-            tg.ready();
-            if (tg.initDataUnsafe?.user) {
-                verifyUser(tg.initDataUnsafe.user);
-            }
-        }
-    </script>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+        setTimeout(() => toast.remove(), 3000);
+    }
+    
+    // Telegram ana butonunu gizle
+    tg.MainButton.hide();
+</script>
 </body>
 </html>
