@@ -2,74 +2,631 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>Sana Özel Kalp</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Yerel AI Sohbet - Rate Limit Yok</title>
     <style>
-        body {
+        * {
             margin: 0;
-            height: 100vh;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: linear-gradient(145deg, #1a2639 0%, #2a3b4c 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* Ana sohbet kabı */
+        .chat-container {
+            width: 100%;
+            max-width: 900px;
+            height: 85vh;
+            background: rgba(30, 35, 48, 0.75);
+            backdrop-filter: blur(12px);
+            border-radius: 32px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        /* Başlık alanı */
+        .chat-header {
+            padding: 20px 24px;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(4px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .chat-header h1 {
+            font-size: 1.6rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #E0F2FE, #A5F3FC);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: -0.3px;
+        }
+
+        .chat-header p {
+            font-size: 0.8rem;
+            color: #9ca3af;
+            margin-top: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            background: #10b98120;
+            padding: 4px 10px;
+            border-radius: 40px;
+            font-size: 0.7rem;
+            color: #86efac;
+            border: 0.5px solid #10b98150;
+        }
+
+        /* Mesaj listesi */
+        .messages-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 20px 10px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            scroll-behavior: smooth;
+        }
+
+        /* Mesaj balonları */
+        .message {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            max-width: 85%;
+            animation: fadeSlideUp 0.25s ease-out;
+        }
+
+        @keyframes fadeSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .user-message {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+
+        .user-message .message-bubble {
+            background: linear-gradient(125deg, #2563eb, #1e40af);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .ai-message .message-bubble {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(4px);
+            color: #f1f5f9;
+            border-bottom-left-radius: 4px;
+            border: 0.5px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .message-bubble {
+            padding: 12px 18px;
+            border-radius: 24px;
+            font-size: 0.95rem;
+            line-height: 1.45;
+            word-break: break-word;
+            white-space: pre-wrap;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        .avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            background-color: #0a0a0a;
-            color: #ff4d6d;
-            font-family: 'Arial', sans-serif;
-            overflow: hidden;
+            background: rgba(0, 0, 0, 0.4);
+            font-size: 1.2rem;
+            flex-shrink: 0;
         }
 
-        .heart {
-            position: relative;
-            width: 100px;
-            height: 90px;
-            animation: beat 1s infinite;
+        .user-message .avatar {
+            background: #2563eb30;
         }
 
-        .heart:before, .heart:after {
-            content: "";
-            position: absolute;
-            left: 50px;
-            top: 0;
-            width: 50px;
-            height: 80px;
-            background: #ff4d6d;
-            border-radius: 50px 50px 0 0;
-            transform: rotate(-45deg);
-            transform-origin: 0 100%;
+        /* Yazıyor animasyonu */
+        .typing-indicator {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(4px);
+            border-radius: 24px;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            width: fit-content;
+            border: 0.5px solid rgba(255, 255, 255, 0.2);
         }
 
-        .heart:after {
-            left: 0;
-            transform: rotate(45deg);
-            transform-origin: 100% 100%;
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: #94a3b8;
+            border-radius: 50%;
+            animation: typingPulse 1.4s infinite ease-in-out;
         }
 
-        .name-display {
-            position: absolute;
-            z-index: 10;
-            font-size: 2rem;
-            font-weight: bold;
-            text-shadow: 0 0 10px rgba(255, 77, 109, 0.5);
+        .typing-dot:nth-child(1) { animation-delay: 0s; }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typingPulse {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+            30% { transform: translateY(-8px); opacity: 1; }
         }
 
-        @keyframes beat {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.2); }
-            100% { transform: scale(1); }
+        /* Giriş alanı */
+        .input-area {
+            padding: 20px 24px 24px;
+            background: rgba(0, 0, 0, 0.25);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 12px;
+            background: rgba(20, 25, 40, 0.7);
+            border-radius: 60px;
+            padding: 6px 6px 6px 20px;
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.2s;
+        }
+
+        .input-wrapper:focus-within {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px #3b82f650;
+        }
+
+        .input-wrapper input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            padding: 14px 0;
+            font-size: 1rem;
+            color: #f0f3fa;
+            outline: none;
+        }
+
+        .input-wrapper input::placeholder {
+            color: #7e8b9e;
+        }
+
+        .send-btn {
+            background: #3b82f6;
+            border: none;
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: white;
+            font-size: 1.3rem;
+        }
+
+        .send-btn:hover {
+            background: #2563eb;
+            transform: scale(1.02);
+        }
+
+        .send-btn:active {
+            transform: scale(0.96);
+        }
+
+        .send-btn:disabled {
+            background: #4b5563;
+            cursor: not-allowed;
+            opacity: 0.6;
+            transform: none;
+        }
+
+        /* Temizle butonu */
+        .clear-btn {
+            background: transparent;
+            border: 1px solid #ef444450;
+            color: #f87171;
+            padding: 6px 14px;
+            border-radius: 40px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: 0.2s;
+            font-weight: 500;
+        }
+
+        .clear-btn:hover {
+            background: #ef444420;
+            border-color: #ef4444;
+        }
+
+        .footer-note {
+            font-size: 0.7rem;
+            text-align: center;
+            margin-top: 12px;
+            color: #6b7280;
+        }
+
+        @media (max-width: 550px) {
+            .message {
+                max-width: 95%;
+            }
+            .chat-header h1 {
+                font-size: 1.3rem;
+            }
+            .input-wrapper {
+                padding: 4px 4px 4px 16px;
+            }
+            .send-btn {
+                width: 42px;
+                height: 42px;
+            }
         }
     </style>
 </head>
 <body>
-
-    <div class="name-display" id="userName">xaliq
+<div class="chat-container">
+    <div class="chat-header">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+            <div>
+                <h1>✨ Zeka Sohbet · Yerel AI</h1>
+                <p>
+                    <span>🧠 Tamamen tarayıcıda çalışır</span>
+                    <span class="badge">🚫 Rate Limit YOK</span>
+                    <span class="badge">🔒 API gerektirmez</span>
+                </p>
+            </div>
+            <button id="clearChatBtn" class="clear-btn">🗑️ Sohbeti temizle</button>
+        </div>
+    </div>
+    <div class="messages-area" id="messagesArea">
+        <!-- Karşılama mesajı js ile eklenecek -->
+    </div>
+    <div class="input-area">
+        <div class="input-wrapper">
+            <input type="text" id="messageInput" placeholder="Mesajını yaz, AI sana cevap versin..." autocomplete="off">
+            <button id="sendBtn" class="send-btn">➤</button>
+        </div>
+        <div class="footer-note">
+            ⚡ Yapay zeka modeli tarayıcı içinde çalışır — internet olmadan da çalışır (ilk yükleme modeli indirir)
+        </div>
+    </div>
 </div>
-    <div class="heart"></div>
 
-    <script>
-        // URL'den isim almak için (Örn: site.github.io?isim=Ayşe)
-        const urlParams = new URLSearchParams(window.location.search);
-        const name = urlParams.get('isim');
-        if (name) {
-            document.getElementById('userName').innerText = name;
+<!-- Transformers.js kütüphanesi ve yerel AI modeli -->
+<script type="importmap">
+    {
+        "imports": {
+            "@xenova/transformers": "https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2/dist/transformers.min.js"
         }
-    </script>
+    }
+</script>
+
+<script type="module">
+    import { pipeline, env } from '@xenova/transformers';
+    
+    // Ortam ayarları: WebWorker kullanmadan basit çalışma, gerekirse local model
+    env.allowLocalModels = true;
+    env.useBrowserCache = true;
+    
+    // DOM elementleri
+    const messagesArea = document.getElementById('messagesArea');
+    const messageInput = document.getElementById('messageInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const clearBtn = document.getElementById('clearChatBtn');
+    
+    // Sohbet durumu
+    let conversationHistory = [];      // { role: 'user' veya 'assistant', content: string }
+    let isGenerating = false;          // Yanıt beklerken input kilidi
+    let textGenerationPipeline = null; // Pipeline nesnesi
+    
+    // Sistem promptu (yardımsever, kısa ve anlaşılır)
+    const SYSTEM_PROMPT = "Sen yardımsever, bilgili ve Türkçe konuşan bir yapay zeka asistanısın. Kısa, net ve samimi cevaplar ver. Gereksiz uzatma, konuya odaklan. Kullanıcıya her zaman saygılı ol.";
+    
+    // Mesajları localstorage'a kaydetme (isteğe bağlı, tarayıcıda kalsın)
+    function saveChatToLocal() {
+        try {
+            // Sadece son 50 mesajı kaydet, performans
+            const toStore = conversationHistory.slice(-100);
+            localStorage.setItem('ai_chat_history', JSON.stringify(toStore));
+        } catch(e) {}
+    }
+    
+    function loadChatFromLocal() {
+        try {
+            const stored = localStorage.getItem('ai_chat_history');
+            if(stored) {
+                const parsed = JSON.parse(stored);
+                if(Array.isArray(parsed) && parsed.length > 0) {
+                    conversationHistory = parsed;
+                    renderMessagesFromHistory();
+                    return true;
+                }
+            }
+        } catch(e) {}
+        return false;
+    }
+    
+    // Mesajları ekrana bas (tüm history)
+    function renderMessagesFromHistory() {
+        messagesArea.innerHTML = '';
+        if(conversationHistory.length === 0) {
+            // Hoşgeldin mesajı ekle
+            const welcomeMsg = { role: 'assistant', content: 'Merhaba! 👋 Ben tamamen tarayıcında çalışan bir AI\'yım. Herhangi bir API anahtarı veya rate limit olmadan sana yardımcı olabilirim. Sorularını bekliyorum!' };
+            conversationHistory.push(welcomeMsg);
+            saveChatToLocal();
+        }
+        
+        for(const msg of conversationHistory) {
+            appendMessageToDOM(msg.role, msg.content, false);
+        }
+        scrollToBottom();
+    }
+    
+    // Tek bir mesajı DOM'a ekler (scroll otomatik)
+    function appendMessageToDOM(role, content, shouldScroll = true) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${role === 'user' ? 'user-message' : 'ai-message'}`;
+        
+        const avatar = document.createElement('div');
+        avatar.className = 'avatar';
+        avatar.textContent = role === 'user' ? '👤' : '🤖';
+        
+        const bubble = document.createElement('div');
+        bubble.className = 'message-bubble';
+        // Basit format: linkleri otomatik tespit etme (opsiyonel)
+        bubble.textContent = content;
+        
+        messageDiv.appendChild(avatar);
+        messageDiv.appendChild(bubble);
+        messagesArea.appendChild(messageDiv);
+        
+        if(shouldScroll) scrollToBottom();
+    }
+    
+    function scrollToBottom() {
+        messagesArea.scrollTop = messagesArea.scrollHeight;
+    }
+    
+    // Yazıyor göstergesi ekle / kaldır
+    let typingIndicatorElement = null;
+    function showTypingIndicator() {
+        removeTypingIndicator();
+        const indicatorDiv = document.createElement('div');
+        indicatorDiv.className = 'message ai-message';
+        indicatorDiv.id = 'typingIndicator';
+        const avatar = document.createElement('div');
+        avatar.className = 'avatar';
+        avatar.textContent = '🤖';
+        const typingBubble = document.createElement('div');
+        typingBubble.className = 'typing-indicator';
+        typingBubble.innerHTML = `<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>`;
+        indicatorDiv.appendChild(avatar);
+        indicatorDiv.appendChild(typingBubble);
+        messagesArea.appendChild(indicatorDiv);
+        scrollToBottom();
+        typingIndicatorElement = indicatorDiv;
+    }
+    
+    function removeTypingIndicator() {
+        if(typingIndicatorElement && typingIndicatorElement.parentNode) {
+            typingIndicatorElement.remove();
+            typingIndicatorElement = null;
+        }
+    }
+    
+    // AI yanıtını oluştur (transformers.js ile)
+    async function generateAIResponse(userMessage) {
+        if(!textGenerationPipeline) {
+            throw new Error("Model henüz yüklenmedi, lütfen biraz bekleyin.");
+        }
+        
+        // Sohbet geçmişini prompt haline getir (son 6 mesajı al, sistem promptu ekle)
+        // Daha iyi bağlam için: sistem + son 6 mesaj (2 tur yeter)
+        const recentHistory = conversationHistory.slice(-8); // son 8 mesaj (4 tur)
+        let prompt = `${SYSTEM_PROMPT}\n\n`;
+        for(const msg of recentHistory) {
+            if(msg.role === 'user') {
+                prompt += `Kullanıcı: ${msg.content}\n`;
+            } else if(msg.role === 'assistant') {
+                prompt += `Asistan: ${msg.content}\n`;
+            }
+        }
+        prompt += `Asistan: `;
+        
+        // Text generation parametreleri
+        const response = await textGenerationPipeline(prompt, {
+            max_new_tokens: 256,
+            temperature: 0.75,
+            top_p: 0.9,
+            repetition_penalty: 1.1,
+            do_sample: true,
+            pad_token_id: 50256,
+            eos_token_id: 50256
+        });
+        
+        // Pipeline'dan dönen cevap: [{ generated_text: "full text" }]
+        let generatedFull = response[0]?.generated_text || "";
+        // Sadece yeni kısmı al (prompt sonrası)
+        let newReply = generatedFull.substring(prompt.length).trim();
+        if(!newReply) {
+            newReply = "Üzgünüm, bir şeyler yanlış gitti. Lütfen tekrar dener misin?";
+        }
+        
+        // Bazen Asistan: tekrarı içerebilir, temizle
+        newReply = newReply.replace(/^Asistan:\s*/i, '').trim();
+        return newReply;
+    }
+    
+    // Yeni mesaj gönderme akışı
+    async function sendMessage() {
+        if(isGenerating) {
+            // Zaten yanıt üretiliyor
+            return;
+        }
+        
+        const userText = messageInput.value.trim();
+        if(userText === "") return;
+        
+        // Kullanıcı mesajını ekle
+        const userMsgObj = { role: 'user', content: userText };
+        conversationHistory.push(userMsgObj);
+        appendMessageToDOM('user', userText);
+        saveChatToLocal();
+        messageInput.value = "";
+        
+        // Input'u geçici devre dışı bırak
+        isGenerating = true;
+        sendBtn.disabled = true;
+        messageInput.disabled = true;
+        
+        // Yazıyor göster
+        showTypingIndicator();
+        
+        try {
+            // Model hazır değilse pipeline başlat (lazy)
+            if(!textGenerationPipeline) {
+                // Geçici yazıyor mesajını güncelle
+                removeTypingIndicator();
+                showTypingIndicator(); 
+                // Model yükleniyor mesajı göster (alt not)
+                const loadingBubble = document.querySelector('#typingIndicator .typing-indicator');
+                if(loadingBubble) {
+                    // ufak bir değişiklik: yazıyor yerine "Model yükleniyor..." yapmak yerine 3 nokta yeterli.
+                }
+                // Pipeline başlat
+                textGenerationPipeline = await pipeline('text-generation', 'Xenova/tiny-llama-1.1b-chat-v0.5');
+                // Not: Daha hafif model isteyenler için Xenova/TinyStories-1M gibi modeller var, ama konuşma için tiny-llama-chat iyi.
+                // Alternatif olarak 'Xenova/Phi-3-mini-4k-instruct' daha güçlü ama boyut büyük. TinyLlama iyi denge.
+                // Bu model 1.1B parametre, ilk yüklemede ~600MB indirir, sonrasında cache'de kalır.
+            }
+            
+            // AI yanıtını al
+            removeTypingIndicator();
+            // Tekrar yazıyor gösterimi kaldırıldı, şimdi gerçek yanıtı al
+            showTypingIndicator(); // Aslında AI yanıtı üretirken de bekletmek için
+            
+            const aiReply = await generateAIResponse(userText);
+            removeTypingIndicator();
+            
+            // AI mesajını history'e ekle ve DOM'a ekle
+            const aiMsgObj = { role: 'assistant', content: aiReply };
+            conversationHistory.push(aiMsgObj);
+            appendMessageToDOM('assistant', aiReply);
+            saveChatToLocal();
+            
+        } catch(error) {
+            console.error("AI hata:", error);
+            removeTypingIndicator();
+            // Hata mesajı göster
+            const errorMsg = "⚠️ Bir hata oluştu: " + (error.message || "Model yüklenemedi veya yanıt üretilemedi. Lütfen sayfayı yenileyip tekrar deneyin.");
+            const errorObj = { role: 'assistant', content: errorMsg };
+            conversationHistory.push(errorObj);
+            appendMessageToDOM('assistant', errorMsg);
+            saveChatToLocal();
+        } finally {
+            isGenerating = false;
+            sendBtn.disabled = false;
+            messageInput.disabled = false;
+            messageInput.focus();
+        }
+    }
+    
+    // Sohbeti temizleme
+    function clearChat() {
+        if(isGenerating) {
+            // Yanıt gelirken temizleme işlemini engelle
+            return;
+        }
+        conversationHistory = [];
+        // Hoşgeldin mesajını ekle
+        const welcomeMsg = { role: 'assistant', content: 'Merhaba! 👋 Sohbet sıfırlandı. Bana dilediğin soruyu sorabilirsin. (Rate limit yok, tamamen yerel AI)' };
+        conversationHistory.push(welcomeMsg);
+        saveChatToLocal();
+        // DOM'u temizle ve yeniden render
+        messagesArea.innerHTML = '';
+        renderMessagesFromHistory();
+    }
+    
+    // Event listeners
+    sendBtn.addEventListener('click', sendMessage);
+    messageInput.addEventListener('keypress', (e) => {
+        if(e.key === 'Enter' && !isGenerating && messageInput.value.trim() !== "") {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+    clearBtn.addEventListener('click', clearChat);
+    
+    // İlk yükleme: localstorage'dan yükle veya karşılama mesajı ile başlat
+    const loaded = loadChatFromLocal();
+    if(!loaded || conversationHistory.length === 0) {
+        // karşılama mesajını yükle
+        const initMsg = { role: 'assistant', content: 'Merhaba! 👋 Ben tamamen tarayıcında çalışan bir AI\'yım. Herhangi bir API anahtarı veya rate limit olmadan sana yardımcı olabilirim. Sorularını bekliyorum!' };
+        conversationHistory.push(initMsg);
+        saveChatToLocal();
+        renderMessagesFromHistory();
+    } else {
+        renderMessagesFromHistory();
+    }
+    
+    // Arka planda modeli önceden yüklemek için sessizce pipeline başlat (kullanıcı ilk mesaj gönderdiğinde beklemesin diye)
+    // Fakat kullanıcı hemen mesaj atarsa tetiklenir, ama biz daha erken yüklemek isteriz.
+    (async function preloadModel() {
+        try {
+            // Kullanıcıya "AI hazırlanıyor" gibi bir mesaj göstermek için indicator yok, sadece arka planda yükle.
+            // Ama yükleme sırasında send butonu etkilenmez, eğer kullanıcı yazarsa pipeline null olur ve sendMessage içinde yüklenir.
+            // Bu preload daha iyi deneyim sağlar.
+            textGenerationPipeline = await pipeline('text-generation', 'Xenova/tiny-llama-1.1b-chat-v0.5');
+            console.log("✅ AI Model başarıyla yüklendi, sohbet hazır.");
+            // Model yüklendikten sonra eğer bir yazıyor varsa kaldır, fakat genelde yok.
+        } catch(err) {
+            console.warn("Model ön yükleme hatası (ilk mesajda tekrar denenir):", err);
+        }
+    })();
+    
+    // Model yüklenirken kullanıcıya bilgi vermek için geçici bilgi (isteğe bağlı)
+    // Soğuk başlangıç için ekstra mesaj yok, ancak butona basınca pipeline yoksa yüklenir ve bekleme olur.
+    // Daha iyi UX: model hazır değilse bildirim ekleyelim
+    setTimeout(() => {
+        if(!textGenerationPipeline) {
+            const infoMsg = document.createElement('div');
+            infoMsg.style.textAlign = 'center';
+            infoMsg.style.fontSize = '0.7rem';
+            infoMsg.style.color = '#9ca3af';
+            infoMsg.style.marginTop = '8px';
+            infoMsg.innerText = '🤖 AI modeli arka planda yükleniyor, ilk mesaj biraz sürebilir...';
+            messagesArea.appendChild(infoMsg);
+            setTimeout(() => {
+                if(infoMsg.parentNode) infoMsg.remove();
+            }, 5000);
+        }
+    }, 500);
+</script>
 </body>
 </html>
