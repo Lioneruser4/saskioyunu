@@ -1,726 +1,1227 @@
 <!DOCTYPE html>
+
 <html lang="az">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>🌍 CANLI MÜHARİBƏ İZLƏMƏ MƏRKƏZİ</title>
-    
-    <!-- Three.js -->
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
-            }
-        }
-    </script>
-    
-    <!-- Telegram Web App -->
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<meta name="theme-color" content="#000000"/>
+<title>WORLDMONITOR — Canlı Münaqişə Xəritəsi</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&family=Oswald:wght@200;400;700&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --red: #ff1a1a;
+  --orange: #ff6600;
+  --yellow: #ffcc00;
+  --green: #00ff88;
+  --blue: #00aaff;
+  --dim: #0a0a0f;
+  --panel: rgba(6,8,16,0.92);
+  --border: rgba(255,80,0,0.25);
+  --text: #c8d0e0;
+  --accent: #ff4400;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{
+  width:100%;height:100%;
+  background:#000;
+  overflow:hidden;
+  font-family:'Rajdhani',sans-serif;
+  color:var(--text);
+}
 
-        body {
-            width: 100vw;
-            height: 100vh;
-            overflow: hidden;
-            background: #030318;
-            font-family: 'Segoe UI', 'Tahoma', Geneva, Verdana, sans-serif;
-        }
+/* ── LOADER ── */
+#loader{
+position:fixed;inset:0;
+background:#000;
+display:flex;flex-direction:column;
+align-items:center;justify-content:center;
+z-index:9999;
+transition:opacity .6s ease;
+}
+#loader .logo{
+font-family:‘Oswald’,sans-serif;
+font-size:clamp(28px,5vw,52px);
+font-weight:700;
+letter-spacing:12px;
+color:#fff;
+text-transform:uppercase;
+margin-bottom:8px;
+}
+#loader .sub{
+font-family:‘Share Tech Mono’,monospace;
+font-size:11px;
+letter-spacing:4px;
+color:#ff4400;
+margin-bottom:48px;
+}
+#loader .bar-wrap{
+width:min(400px,80vw);
+height:2px;
+background:rgba(255,255,255,0.08);
+position:relative;
+}
+#loader .bar-fill{
+height:100%;
+background:linear-gradient(90deg,#ff4400,#ff0000);
+width:0%;
+transition:width .15s ease;
+box-shadow:0 0 12px #ff4400;
+}
+#loader .pct{
+font-family:‘Share Tech Mono’,monospace;
+font-size:11px;
+color:#ff4400;
+margin-top:12px;
+letter-spacing:2px;
+}
+#loader .status{
+font-family:‘Share Tech Mono’,monospace;
+font-size:10px;
+color:rgba(255,255,255,0.3);
+margin-top:6px;
+letter-spacing:1px;
+height:14px;
+}
 
-        #canvas-container {
-            width: 100vw;
-            height: 100vh;
-            position: absolute;
-            top: 0;
-            left: 0;
-            z-index: 1;
-        }
+/* ── CANVAS ── */
+#globe-canvas{
+position:fixed;inset:0;
+display:block;
+cursor:grab;
+}
+#globe-canvas:active{cursor:grabbing;}
 
-        /* YÜKLƏMƏ BARİ */
-        .loader {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: #030318;
-            z-index: 10000;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            transition: 0.5s;
-        }
-        .loader-bar {
-            width: 300px;
-            height: 6px;
-            background: #2a2a3a;
-            border-radius: 10px;
-            overflow: hidden;
-            margin-top: 20px;
-        }
-        .loader-fill {
-            width: 0%;
-            height: 100%;
-            background: linear-gradient(90deg, #ff4444, #ff8888);
-            border-radius: 10px;
-            transition: width 0.3s;
-        }
-        .loader-text {
-            color: white;
-            font-size: 14px;
-            margin-top: 15px;
-            font-family: monospace;
-        }
-        .loader-percent {
-            color: #ff4444;
-            font-weight: bold;
-        }
+/* ── TOP BAR ── */
+#topbar{
+position:fixed;top:0;left:0;right:0;
+height:44px;
+background:rgba(0,0,0,0.85);
+border-bottom:1px solid var(–border);
+display:flex;align-items:center;
+z-index:100;
+backdrop-filter:blur(8px);
+}
+#topbar .brand{
+font-family:‘Oswald’,sans-serif;
+font-size:18px;
+font-weight:700;
+letter-spacing:6px;
+color:#fff;
+padding:0 20px;
+border-right:1px solid var(–border);
+white-space:nowrap;
+}
+#topbar .brand span{color:var(–accent);}
+#ticker-wrap{
+flex:1;overflow:hidden;
+position:relative;
+height:100%;
+display:flex;align-items:center;
+}
+#ticker{
+display:flex;
+align-items:center;
+white-space:nowrap;
+font-family:‘Share Tech Mono’,monospace;
+font-size:12px;
+color:#fff;
+animation:ticker-scroll 22s linear infinite;
+will-change:transform;
+}
+#ticker .item{
+padding:0 32px;
+cursor:pointer;
+transition:color .2s;
+position:relative;
+}
+#ticker .item::before{
+content:‘◆’;
+color:var(–accent);
+margin-right:10px;
+font-size:8px;
+}
+#ticker .item:hover{color:#ffcc00;}
+@keyframes ticker-scroll{
+0%{transform:translateX(0);}
+100%{transform:translateX(-50%);}
+}
+#topbar .clock{
+font-family:‘Share Tech Mono’,monospace;
+font-size:12px;
+color:#ff4400;
+padding:0 16px;
+border-left:1px solid var(–border);
+white-space:nowrap;
+letter-spacing:1px;
+}
+#topbar .live-dot{
+width:7px;height:7px;
+border-radius:50%;
+background:#ff1a1a;
+margin-right:6px;
+animation:pulse-dot 1s ease infinite;
+display:inline-block;
+}
+@keyframes pulse-dot{
+0%,100%{opacity:1;transform:scale(1);}
+50%{opacity:.4;transform:scale(.7);}
+}
 
-        /* TV STİLİ LENT - SÜRƏTLİ */
-        .ticker-bar {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 52px;
-            background: #c00000;
-            z-index: 1000;
-            overflow: hidden;
-            border-top: 2px solid #ff6666;
-            box-shadow: 0 -5px 30px rgba(255,0,0,0.5);
-        }
-        .ticker-track {
-            display: flex;
-            white-space: nowrap;
-            animation: tickerFast 25s linear infinite;
-            height: 100%;
-            align-items: center;
-        }
-        .ticker-item {
-            display: inline-flex;
-            align-items: center;
-            padding: 0 35px;
-            color: white;
-            font-size: 18px;
-            font-weight: bold;
-            font-family: monospace;
-            text-shadow: 1px 1px 0 #990000;
-            gap: 12px;
-        }
-        .ticker-item::before {
-            content: "🚨";
-            font-size: 20px;
-            animation: blink 0.8s infinite;
-        }
-        @keyframes tickerFast {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-50%); }
-        }
-        @keyframes blink {
-            0%,100% { opacity: 1; }
-            50% { opacity: 0.4; }
-        }
+/* ── LEFT PANEL ── */
+#left-panel{
+position:fixed;
+left:0;top:44px;bottom:0;
+width:230px;
+background:var(–panel);
+border-right:1px solid var(–border);
+z-index:90;
+display:flex;flex-direction:column;
+transform:translateX(0);
+transition:transform .35s cubic-bezier(.4,0,.2,1);
+backdrop-filter:blur(10px);
+}
+#left-panel.collapsed{transform:translateX(-230px);}
+#left-toggle{
+position:absolute;
+right:-28px;top:50%;
+transform:translateY(-50%);
+width:28px;height:56px;
+background:var(–panel);
+border:1px solid var(–border);
+border-left:none;
+border-radius:0 6px 6px 0;
+cursor:pointer;
+display:flex;align-items:center;justify-content:center;
+font-size:14px;color:#fff;
+transition:background .2s;
+z-index:91;
+}
+#left-toggle:hover{background:rgba(255,68,0,.2);}
+.panel-title{
+font-family:‘Oswald’,sans-serif;
+font-size:11px;
+letter-spacing:4px;
+color:var(–accent);
+padding:14px 16px 10px;
+border-bottom:1px solid var(–border);
+text-transform:uppercase;
+}
+#stats-list{
+flex:1;overflow-y:auto;
+padding:10px 0;
+}
+#stats-list::-webkit-scrollbar{width:3px;}
+#stats-list::-webkit-scrollbar-track{background:transparent;}
+#stats-list::-webkit-scrollbar-thumb{background:var(–border);}
+.stat-item{
+padding:10px 16px;
+border-bottom:1px solid rgba(255,255,255,0.04);
+cursor:pointer;
+transition:background .2s;
+}
+.stat-item:hover{background:rgba(255,68,0,0.08);}
+.stat-country{
+font-size:13px;font-weight:600;
+color:#fff;
+display:flex;align-items:center;gap:6px;
+margin-bottom:4px;
+}
+.stat-dot{
+width:8px;height:8px;border-radius:50%;
+flex-shrink:0;
+}
+.stat-row{
+display:flex;justify-content:space-between;
+font-family:‘Share Tech Mono’,monospace;
+font-size:10px;
+color:rgba(255,255,255,0.4);
+}
+.stat-val{color:var(–accent);font-weight:700;}
+.intensity-bar{
+margin-top:5px;
+height:2px;
+background:rgba(255,255,255,0.08);
+border-radius:1px;
+overflow:hidden;
+}
+.intensity-fill{
+height:100%;
+border-radius:1px;
+transition:width .5s ease;
+}
 
-        /* SOL PANEL - STATİSTİKA (QATLANAN) */
-        .stats-panel {
-            position: fixed;
-            bottom: 70px;
-            left: 15px;
-            z-index: 1000;
-            background: rgba(5, 5, 20, 0.92);
-            backdrop-filter: blur(15px);
-            border-radius: 20px;
-            padding: 15px;
-            color: white;
-            width: 280px;
-            border: 1px solid rgba(255,68,68,0.4);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            transition: 0.3s;
-        }
-        .stats-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #ff4444;
-        }
-        .stats-title {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-weight: bold;
-            color: #ff6666;
-        }
-        .live-dot {
-            width: 10px;
-            height: 10px;
-            background: #ff0000;
-            border-radius: 50%;
-            animation: pulse 1s infinite;
-        }
-        .collapse-btn {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 20px;
-            cursor: pointer;
-            width: 30px;
-            height: 30px;
-            border-radius: 15px;
-            transition: 0.2s;
-        }
-        .collapse-btn:hover { background: rgba(255,68,68,0.3); }
-        .stat-row {
-            display: flex;
-            justify-content: space-between;
-            margin: 10px 0;
-            font-size: 14px;
-        }
-        .stat-value {
-            color: #ff6666;
-            font-weight: bold;
-            font-size: 18px;
-        }
-        .country-list {
-            max-height: 200px;
-            overflow-y: auto;
-            margin-top: 12px;
-            border-top: 1px solid #2a2a3a;
-            padding-top: 10px;
-        }
-        .country-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 5px;
-            font-size: 13px;
-            border-bottom: 1px solid #2a2a3a;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .country-item:hover {
-            background: rgba(255,68,68,0.2);
-            padding-left: 10px;
-        }
-        .country-count {
-            color: #ff8888;
-            font-weight: bold;
-        }
+/* ── RIGHT PANEL ── */
+#right-panel{
+position:fixed;
+right:0;top:44px;bottom:0;
+width:280px;
+background:var(–panel);
+border-left:1px solid var(–border);
+z-index:90;
+display:flex;flex-direction:column;
+transform:translateX(0);
+transition:transform .35s cubic-bezier(.4,0,.2,1);
+backdrop-filter:blur(10px);
+}
+#right-panel.collapsed{transform:translateX(280px);}
+#right-close{
+position:absolute;
+left:-28px;top:50%;
+transform:translateY(-50%);
+width:28px;height:56px;
+background:var(–panel);
+border:1px solid var(–border);
+border-right:none;
+border-radius:6px 0 0 6px;
+cursor:pointer;
+display:flex;align-items:center;justify-content:center;
+font-size:14px;color:#fff;
+transition:background .2s;
+z-index:91;
+}
+#right-close:hover{background:rgba(255,68,0,.2);}
+#news-list{
+flex:1;overflow-y:auto;
+padding:6px 0;
+}
+#news-list::-webkit-scrollbar{width:3px;}
+#news-list::-webkit-scrollbar-thumb{background:var(–border);}
+.news-item{
+padding:12px 14px;
+border-bottom:1px solid rgba(255,255,255,0.05);
+cursor:pointer;
+transition:background .2s;
+}
+.news-item:hover{background:rgba(255,68,0,0.1);}
+.news-source{
+font-family:‘Share Tech Mono’,monospace;
+font-size:9px;
+color:var(–accent);
+letter-spacing:2px;
+text-transform:uppercase;
+margin-bottom:4px;
+display:flex;align-items:center;gap:6px;
+}
+.news-source .sev{
+display:inline-block;
+padding:1px 5px;
+border-radius:2px;
+font-size:8px;
+font-weight:700;
+}
+.news-headline{
+font-size:12px;
+font-weight:600;
+color:#e8e8f0;
+line-height:1.45;
+display:-webkit-box;
+-webkit-line-clamp:3;
+-webkit-box-orient:vertical;
+overflow:hidden;
+}
+.news-time{
+font-family:‘Share Tech Mono’,monospace;
+font-size:9px;
+color:rgba(255,255,255,0.25);
+margin-top:4px;
+}
 
-        /* SAĞ PANEL - XƏBƏRLƏR (QATLANAN) */
-        .news-panel {
-            position: fixed;
-            top: 15px;
-            right: 15px;
-            z-index: 1000;
-            background: rgba(5, 5, 20, 0.94);
-            backdrop-filter: blur(15px);
-            border-radius: 20px;
-            width: 340px;
-            max-width: calc(100% - 30px);
-            max-height: 70vh;
-            border-left: 4px solid #ff4444;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            transition: 0.3s;
-            display: flex;
-            flex-direction: column;
-        }
-        .news-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 18px;
-            border-bottom: 1px solid #333;
-        }
-        .news-header h3 {
-            color: #ff6666;
-            font-size: 16px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .close-news {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 22px;
-            cursor: pointer;
-            width: 32px;
-            height: 32px;
-            border-radius: 16px;
-            transition: 0.2s;
-        }
-        .close-news:hover { background: rgba(255,68,68,0.3); }
-        .news-list {
-            overflow-y: auto;
-            padding: 10px;
-            flex: 1;
-        }
-        .news-item {
-            padding: 12px;
-            margin: 8px 0;
-            background: rgba(255,255,255,0.05);
-            border-radius: 12px;
-            cursor: pointer;
-            transition: 0.2s;
-            border-left: 2px solid #ff4444;
-        }
-        .news-item:hover {
-            background: rgba(255,68,68,0.15);
-            transform: translateX(-3px);
-        }
-        .news-title {
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 6px;
-            line-height: 1.4;
-        }
-        .news-meta {
-            display: flex;
-            justify-content: space-between;
-            font-size: 11px;
-            color: #888;
-        }
-        .news-source {
-            color: #ff8888;
-        }
+/* ── MODAL ── */
+#modal-overlay{
+position:fixed;inset:0;
+background:rgba(0,0,0,0.85);
+z-index:500;
+display:none;
+align-items:center;justify-content:center;
+padding:20px;
+backdrop-filter:blur(4px);
+}
+#modal-overlay.open{display:flex;}
+#modal-box{
+background:#080c14;
+border:1px solid var(–border);
+border-radius:4px;
+width:min(680px,95vw);
+max-height:80vh;
+display:flex;flex-direction:column;
+box-shadow:0 0 60px rgba(255,68,0,0.15);
+animation:modal-in .25s ease;
+}
+@keyframes modal-in{
+from{opacity:0;transform:translateY(20px) scale(.97);}
+to{opacity:1;transform:translateY(0) scale(1);}
+}
+#modal-header{
+padding:16px 20px;
+border-bottom:1px solid var(–border);
+display:flex;align-items:flex-start;gap:12px;
+}
+#modal-header .mtitle{
+flex:1;
+font-family:‘Oswald’,sans-serif;
+font-size:18px;
+font-weight:400;
+color:#fff;
+line-height:1.4;
+}
+#modal-close{
+background:none;border:none;
+color:rgba(255,255,255,0.4);
+font-size:22px;cursor:pointer;
+padding:0 4px;
+transition:color .2s;
+flex-shrink:0;
+}
+#modal-close:hover{color:#ff4400;}
+#modal-meta{
+padding:10px 20px;
+border-bottom:1px solid rgba(255,255,255,0.05);
+display:flex;gap:16px;flex-wrap:wrap;
+font-family:‘Share Tech Mono’,monospace;
+font-size:10px;
+color:rgba(255,255,255,0.35);
+}
+#modal-meta span{color:var(–accent);}
+#modal-body{
+padding:20px;
+overflow-y:auto;
+font-size:14px;
+line-height:1.75;
+color:#b0bac8;
+flex:1;
+}
+#modal-body::-webkit-scrollbar{width:3px;}
+#modal-body::-webkit-scrollbar-thumb{background:var(–border);}
+#modal-link{
+padding:14px 20px;
+border-top:1px solid var(–border);
+}
+#modal-link a{
+font-family:‘Share Tech Mono’,monospace;
+font-size:10px;
+color:var(–accent);
+text-decoration:none;
+letter-spacing:1px;
+}
+#modal-link a:hover{color:#fff;}
 
-        /* XƏBƏR DETAY MODALI */
-        .modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.85);
-            z-index: 2000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            backdrop-filter: blur(10px);
-            opacity: 0;
-            visibility: hidden;
-            transition: 0.2s;
-        }
-        .modal.active {
-            opacity: 1;
-            visibility: visible;
-        }
-        .modal-content {
-            background: #0a0a1a;
-            border-radius: 25px;
-            max-width: 400px;
-            width: 90%;
-            padding: 25px;
-            border: 1px solid #ff4444;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
-            position: relative;
-        }
-        .modal-close {
-            position: absolute;
-            top: 15px;
-            right: 20px;
-            font-size: 28px;
-            cursor: pointer;
-            color: #ff6666;
-        }
-        .modal-title {
-            font-size: 20px;
-            font-weight: bold;
-            color: #ff6666;
-            margin-bottom: 15px;
-            padding-right: 30px;
-        }
-        .modal-text {
-            color: #ddd;
-            line-height: 1.5;
-            margin: 15px 0;
-        }
-        .modal-meta {
-            font-size: 12px;
-            color: #888;
-            margin-top: 15px;
-            padding-top: 10px;
-            border-top: 1px solid #333;
-        }
+/* ── BOTTOM STATUS ── */
+#bottombar{
+position:fixed;bottom:0;left:0;right:0;
+height:26px;
+background:rgba(0,0,0,0.9);
+border-top:1px solid var(–border);
+z-index:100;
+display:flex;align-items:center;
+padding:0 14px;
+gap:20px;
+font-family:‘Share Tech Mono’,monospace;
+font-size:10px;
+color:rgba(255,255,255,0.3);
+}
+#bottombar .seg{display:flex;align-items:center;gap:6px;}
+#bottombar .val{color:#ff8800;}
+#update-flash{
+color:#00ff88;
+opacity:0;
+transition:opacity .3s;
+}
+#update-flash.show{opacity:1;}
 
-        /* MENU DÜYMƏSİ */
-        .refresh-btn {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            z-index: 1000;
-            width: 55px;
-            height: 55px;
-            background: linear-gradient(135deg, #ff4444, #aa2222);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 24px;
-            cursor: pointer;
-            box-shadow: 0 5px 20px rgba(255,0,0,0.4);
-            border: 2px solid rgba(255,255,255,0.3);
-            transition: 0.2s;
-        }
-        .refresh-btn:active { transform: scale(0.92); }
+/* ── TOOLTIP ── */
+#tooltip{
+position:fixed;
+pointer-events:none;
+background:rgba(6,8,18,0.95);
+border:1px solid var(–border);
+padding:8px 12px;
+border-radius:3px;
+font-family:‘Share Tech Mono’,monospace;
+font-size:11px;
+color:#fff;
+z-index:200;
+display:none;
+max-width:200px;
+line-height:1.5;
+backdrop-filter:blur(6px);
+}
 
-        @media (max-width: 650px) {
-            .stats-panel { width: 240px; bottom: 65px; left: 10px; padding: 12px; }
-            .news-panel { width: 300px; top: 10px; right: 10px; max-height: 60vh; }
-            .ticker-item { font-size: 14px; padding: 0 20px; }
-            .ticker-bar { height: 44px; }
-        }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
-        .hidden-panel { transform: translateX(-120%); opacity: 0; pointer-events: none; }
-        .hidden-news { transform: translateX(120%); opacity: 0; pointer-events: none; }
-    </style>
+/* ── MOBILE ── */
+@media(max-width:768px){
+#left-panel{width:200px;}
+#left-panel.collapsed{transform:translateX(-200px);}
+#right-panel{width:100%;transform:translateX(100%);}
+#right-panel.collapsed{transform:translateX(100%);}
+#right-panel:not(.collapsed){transform:translateX(0);}
+#right-close{display:none;}
+#mob-news-btn{display:flex!important;}
+#topbar .brand{font-size:14px;letter-spacing:3px;}
+}
+#mob-news-btn{
+display:none;
+position:fixed;
+bottom:36px;right:14px;
+width:46px;height:46px;
+background:var(–accent);
+border-radius:50%;
+border:none;
+align-items:center;justify-content:center;
+font-size:18px;
+cursor:pointer;
+z-index:150;
+box-shadow:0 4px 20px rgba(255,68,0,0.5);
+}
+
+/* refresh spin */
+@keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg)};}
+.spinning{display:inline-block;animation:spin 1s linear infinite;}
+</style>
+
 </head>
 <body>
-    <div id="canvas-container"></div>
 
-    <!-- YÜKLƏMƏ BARİ -->
-    <div class="loader" id="loader">
-        <div style="font-size: 40px;">🌍</div>
-        <div class="loader-bar"><div class="loader-fill" id="loaderFill"></div></div>
-        <div class="loader-text">Yüklənir <span id="loaderPercent" class="loader-percent">0</span>%</div>
+<!-- LOADER -->
+
+<div id="loader">
+  <div class="logo">WORLD<span style="color:#ff4400">MONITOR</span></div>
+  <div class="sub">REAL-TIME CONFLICT INTELLIGENCE</div>
+  <div class="bar-wrap"><div class="bar-fill" id="bar-fill"></div></div>
+  <div class="pct" id="pct-text">0%</div>
+  <div class="status" id="load-status">Sistemə qoşulunur...</div>
+</div>
+
+<!-- CANVAS -->
+
+<canvas id="globe-canvas"></canvas>
+
+<!-- TOP BAR -->
+
+<div id="topbar">
+  <div class="brand">WORLD<span>MONITOR</span></div>
+  <div id="ticker-wrap">
+    <div id="ticker"><span class="item">Xəbərlər yüklənir...</span></div>
+  </div>
+  <div class="clock">
+    <span class="live-dot"></span>
+    <span id="clock-val">--:--:--</span> UTC
+  </div>
+</div>
+
+<!-- LEFT PANEL -->
+
+<div id="left-panel">
+  <div class="panel-title">⚡ Münaqişə Statistikası</div>
+  <div id="stats-list"><div style="padding:20px;font-size:11px;color:rgba(255,255,255,0.3);font-family:'Share Tech Mono',monospace;">Yüklənir...</div></div>
+  <button id="left-toggle" onclick="toggleLeft()">◀</button>
+</div>
+
+<!-- RIGHT PANEL -->
+
+<div id="right-panel">
+  <div class="panel-title">📡 Canlı Xəbər Axını</div>
+  <div id="news-list"><div style="padding:20px;font-size:11px;color:rgba(255,255,255,0.3);font-family:'Share Tech Mono',monospace;">Xəbərlər yüklənir...</div></div>
+  <button id="right-close" onclick="toggleRight()">✕</button>
+</div>
+
+<!-- MOB NEWS BTN -->
+
+<button id="mob-news-btn" onclick="toggleRight()">📰</button>
+
+<!-- MODAL -->
+
+<div id="modal-overlay" onclick="closeModal(event)">
+  <div id="modal-box">
+    <div id="modal-header">
+      <div class="mtitle" id="modal-title">—</div>
+      <button id="modal-close" onclick="closeModal()">✕</button>
     </div>
+    <div id="modal-meta" id="modal-meta-inner"></div>
+    <div id="modal-body"></div>
+    <div id="modal-link"><a id="modal-url" href="#" target="_blank">↗ Mənbəyə keç</a></div>
+  </div>
+</div>
 
-    <!-- TV LENTİ -->
-    <div class="ticker-bar"><div class="ticker-track" id="tickerTrack"></div></div>
+<!-- TOOLTIP -->
 
-    <!-- STATİSTİKA PANELİ -->
-    <div class="stats-panel" id="statsPanel">
-        <div class="stats-header">
-            <div class="stats-title"><span class="live-dot"></span> CANLI STATİSTİKA</div>
-            <button class="collapse-btn" id="collapseStatsBtn">◀</button>
-        </div>
-        <div class="stat-row"><span>🌍 AKTİV MÜNAQİŞƏ:</span><span class="stat-value" id="totalEvents">0</span></div>
-        <div class="stat-row"><span>⏱ SON YENİLƏNMƏ:</span><span class="stat-value" id="lastUpdate">-</span></div>
-        <div class="country-list" id="countryList"><div style="text-align:center; color:#666;">Yüklənir...</div></div>
+<div id="tooltip" id="tip"></div>
+
+<!-- BOTTOM BAR -->
+
+<div id="bottombar">
+  <div class="seg">GDELT <span class="val" id="b-gdelt">—</span></div>
+  <div class="seg">NewsAPI <span class="val" id="b-news">—</span></div>
+  <div class="seg">ACLED <span class="val" id="b-acled">—</span></div>
+  <div class="seg">Son yeniləmə: <span class="val" id="b-time">—</span></div>
+  <div class="seg" id="update-flash">✓ YENİLƏNDİ</div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════
+   CONFIG — API keys & endpoints
+   ═══════════════════════════════════════════════════════ */
+const CFG = {
+  // NewsAPI — newsapi.org free key (replace with your own)
+  NEWS_API_KEY: "pub_6350a9bc00504e5b8c50b89efcce4c99",  // fallback to newsdata.io
+  NEWSDATA_KEY: "pub_6350a9bc00504e5b8c50b89efcce4c99",  // newsdata.io
+
+  // GDELT GEO2 free (no key needed)
+  GDELT_URL: "https://api.gdeltproject.org/api/v2/doc/doc?query=war%20conflict%20attack%20military&mode=artlist&maxrecords=25&format=json&timespan=24h",
+
+  // ACLED free export (no key for summary, needs key for full)
+  ACLED_URL: "https://api.acleddata.com/acled/read?terms=accept&limit=30&event_type=Battles,Explosions/Remote%20violence,Violence%20against%20civilians&order=timestamp&sort=desc",
+
+  // RSS backup sources (via allorigins CORS proxy)
+  RSS_SOURCES: [
+    "https://feeds.bbci.co.uk/news/world/rss.xml",
+    "https://rss.reuters.com/reuters/worldNews",
+    "https://feeds.aljazeera.net/aljazeera/English/0",
+  ],
+
+  REFRESH_INTERVAL: 12000, // 12s
+};
+
+/* ═══════════════════════════════════════════════════════
+   CONFLICT ZONES — with real coordinates
+   ═══════════════════════════════════════════════════════ */
+const ZONES = [
+  { id:"ukraine",  name:"Ukrayna",      lat:49.0,  lon:31.0,  color:"#ff2200", intensity:0.95 },
+  { id:"gaza",     name:"Qəzzə",        lat:31.4,  lon:34.4,  color:"#ff0000", intensity:0.97 },
+  { id:"iran",     name:"İran",         lat:32.4,  lon:53.7,  color:"#ff6600", intensity:0.70 },
+  { id:"israel",   name:"İsrail",       lat:31.5,  lon:34.8,  color:"#ff3300", intensity:0.88 },
+  { id:"lebanon",  name:"Livan",        lat:33.9,  lon:35.5,  color:"#ff4400", intensity:0.82 },
+  { id:"syria",    name:"Suriya",       lat:34.8,  lon:38.9,  color:"#ff5500", intensity:0.78 },
+  { id:"yemen",    name:"Yəmən",        lat:15.6,  lon:48.5,  color:"#ff6600", intensity:0.75 },
+  { id:"sudan",    name:"Sudan",        lat:15.0,  lon:30.0,  color:"#ff7700", intensity:0.72 },
+  { id:"myanmar",  name:"Myanma",       lat:17.0,  lon:96.0,  color:"#ff8800", intensity:0.65 },
+  { id:"somalia",  name:"Somali",       lat:5.0,   lon:46.0,  color:"#ff9900", intensity:0.60 },
+  { id:"russia",   name:"Rusiya",       lat:61.0,  lon:105.0, color:"#dd2200", intensity:0.90 },
+  { id:"azerbaij", name:"Azərbaycan",   lat:40.1,  lon:47.5,  color:"#00aaff", intensity:0.35 },
+  { id:"armenia",  name:"Ermənistan",   lat:40.1,  lon:45.0,  color:"#4488ff", intensity:0.30 },
+  { id:"sahel",    name:"Sahel/Mali",   lat:17.0,  lon:2.0,   color:"#ff8800", intensity:0.58 },
+  { id:"drcongo",  name:"KDK",          lat:-4.0,  lon:21.0,  color:"#ff7700", intensity:0.62 },
+];
+
+/* Attack lines (source->target) */
+const ATTACK_LINES_STATIC = [
+  { from:"iran",   to:"israel",  color:"#ff3300", label:"İran → İsrail" },
+  { from:"russia", to:"ukraine", color:"#ff2200", label:"Rusiya → Ukrayna" },
+  { from:"israel", to:"lebanon", color:"#ff4400", label:"İsrail → Livan" },
+  { from:"israel", to:"syria",   color:"#ff5500", label:"İsrail → Suriya" },
+];
+
+/* ═══════════════════════════════════════════════════════
+   STATE
+   ═══════════════════════════════════════════════════════ */
+let allNews = [];
+let leftOpen = true, rightOpen = true;
+let loadPct = 0;
+let attackLines = [...ATTACK_LINES_STATIC];
+let animFrames = [];
+
+/* ═══════════════════════════════════════════════════════
+   LOADER PROGRESS
+   ═══════════════════════════════════════════════════════ */
+const barFill = document.getElementById("bar-fill");
+const pctText = document.getElementById("pct-text");
+const loadStatus = document.getElementById("load-status");
+
+function setLoad(pct, msg) {
+  loadPct = Math.max(loadPct, pct);
+  barFill.style.width = loadPct + "%";
+  pctText.textContent = Math.round(loadPct) + "%";
+  if(msg) loadStatus.textContent = msg;
+}
+
+function hideLoader() {
+  const el = document.getElementById("loader");
+  el.style.opacity = "0";
+  setTimeout(()=>el.style.display="none", 650);
+}
+
+/* ═══════════════════════════════════════════════════════
+   CLOCK
+   ═══════════════════════════════════════════════════════ */
+function updateClock(){
+  const d = new Date();
+  document.getElementById("clock-val").textContent =
+    d.toUTCString().slice(17,25);
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+/* ═══════════════════════════════════════════════════════
+   THREE.JS GLOBE
+   ═══════════════════════════════════════════════════════ */
+let scene, camera, renderer, globe, cloudMesh, starField;
+let isDragging = false, prevMouse = {x:0,y:0};
+let rotX = 0.2, rotY = 0;
+let autoRotate = true;
+let markerMeshes = [];
+let lineMeshes = [];
+let lineProgress = {};  // lineId -> 0..1
+
+function latLonToVec3(lat, lon, r) {
+  const phi   = (90 - lat) * Math.PI / 180;
+  const theta = (lon + 180) * Math.PI / 180;
+  return new THREE.Vector3(
+    -r * Math.sin(phi) * Math.cos(theta),
+     r * Math.cos(phi),
+     r * Math.sin(phi) * Math.sin(theta)
+  );
+}
+
+function initGlobe() {
+  const canvas = document.getElementById("globe-canvas");
+  scene    = new THREE.Scene();
+  camera   = new THREE.PerspectiveCamera(45, innerWidth/innerHeight, 0.1, 1000);
+  camera.position.z = 2.5;
+
+  renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.setSize(innerWidth, innerHeight);
+
+  // Stars
+  const starGeo = new THREE.BufferGeometry();
+  const starPos = [];
+  for(let i=0;i<6000;i++){
+    starPos.push((Math.random()-0.5)*200, (Math.random()-0.5)*200, (Math.random()-0.5)*200);
+  }
+  starGeo.setAttribute("position", new THREE.Float32BufferAttribute(starPos, 3));
+  starField = new THREE.Points(starGeo, new THREE.PointsMaterial({color:0xffffff, size:0.08, transparent:true, opacity:0.6}));
+  scene.add(starField);
+
+  // Globe
+  const geo = new THREE.SphereGeometry(1, 64, 64);
+
+  // Build canvas texture (dark ocean, land outlines)
+  const texCanvas = document.createElement("canvas");
+  texCanvas.width  = 2048;
+  texCanvas.height = 1024;
+  const ctx = texCanvas.getContext("2d");
+
+  // Ocean
+  const oceanGrad = ctx.createRadialGradient(1024,512,0,1024,512,1200);
+  oceanGrad.addColorStop(0,"#061020");
+  oceanGrad.addColorStop(1,"#020810");
+  ctx.fillStyle = oceanGrad;
+  ctx.fillRect(0,0,2048,1024);
+
+  // Grid lines
+  ctx.strokeStyle = "rgba(0,150,255,0.07)";
+  ctx.lineWidth = 0.8;
+  for(let lon=-180;lon<=180;lon+=30){
+    const x = (lon+180)/360*2048;
+    ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,1024); ctx.stroke();
+  }
+  for(let lat=-90;lat<=90;lat+=30){
+    const y = (90-lat)/180*1024;
+    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(2048,y); ctx.stroke();
+  }
+
+  const globeTex = new THREE.CanvasTexture(texCanvas);
+
+  // Atmosphere glow (additive layer)
+  const atmMat = new THREE.MeshPhongMaterial({
+    map: globeTex,
+    transparent: true,
+    opacity: 0.95,
+    shininess: 25,
+    specular: new THREE.Color(0x112244),
+  });
+  globe = new THREE.Mesh(geo, atmMat);
+  scene.add(globe);
+
+  // Atmosphere shell
+  const atmGeo = new THREE.SphereGeometry(1.04, 64, 64);
+  const atmShell = new THREE.Mesh(atmGeo, new THREE.MeshPhongMaterial({
+    color: 0x001133,
+    transparent: true,
+    opacity: 0.18,
+    side: THREE.FrontSide,
+  }));
+  scene.add(atmShell);
+
+  // Lights
+  scene.add(new THREE.AmbientLight(0x223366, 0.8));
+  const sun = new THREE.DirectionalLight(0xffffff, 1.2);
+  sun.position.set(5,3,5);
+  scene.add(sun);
+  const fill = new THREE.DirectionalLight(0x334477, 0.4);
+  fill.position.set(-5,-2,-3);
+  scene.add(fill);
+
+  // Markers
+  ZONES.forEach(z => addMarker(z));
+
+  // Attack lines
+  ATTACK_LINES_STATIC.forEach(al => addAttackLine(al));
+
+  setLoad(60, "3D dünya quruldu...");
+}
+
+function addMarker(zone) {
+  const pos = latLonToVec3(zone.lat, zone.lon, 1.01);
+  const geo  = new THREE.SphereGeometry(0.012, 8, 8);
+  const mat  = new THREE.MeshBasicMaterial({color: new THREE.Color(zone.color)});
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.position.copy(pos);
+  mesh.userData = zone;
+  scene.add(mesh);
+  markerMeshes.push(mesh);
+
+  // Outer ring
+  const ringGeo = new THREE.RingGeometry(0.018, 0.024, 16);
+  const ringMat = new THREE.MeshBasicMaterial({color: new THREE.Color(zone.color), transparent:true, opacity:0.6, side:THREE.DoubleSide});
+  const ring = new THREE.Mesh(ringGeo, ringMat);
+  ring.position.copy(pos);
+  ring.lookAt(0,0,0);
+  ring.userData = {isRing:true, zone, baseOpacity:0.6};
+  scene.add(ring);
+  markerMeshes.push(ring);
+}
+
+function addAttackLine(al) {
+  const fromZone = ZONES.find(z=>z.id===al.from);
+  const toZone   = ZONES.find(z=>z.id===al.to);
+  if(!fromZone||!toZone) return;
+
+  const p0 = latLonToVec3(fromZone.lat, fromZone.lon, 1.01);
+  const p1 = latLonToVec3(toZone.lat,   toZone.lon,   1.01);
+  const mid = new THREE.Vector3().addVectors(p0,p1).multiplyScalar(0.5).normalize().multiplyScalar(1.4);
+
+  const curve = new THREE.QuadraticBezierCurve3(p0, mid, p1);
+  const pts   = curve.getPoints(60);
+  const geo   = new THREE.BufferGeometry().setFromPoints(pts);
+  const mat   = new THREE.LineBasicMaterial({color: new THREE.Color(al.color), transparent:true, opacity:0.5});
+  const line  = new THREE.Line(geo, mat);
+  scene.add(line);
+
+  // Moving dot
+  const dotGeo = new THREE.SphereGeometry(0.008, 6, 6);
+  const dotMat = new THREE.MeshBasicMaterial({color: new THREE.Color(al.color)});
+  const dot    = new THREE.Mesh(dotGeo, dotMat);
+  scene.add(dot);
+
+  const lineId = al.from+"-"+al.to;
+  lineProgress[lineId] = Math.random();
+
+  lineMeshes.push({line, dot, curve, id:lineId, color:al.color});
+}
+
+function updateAttackLines(dt) {
+  lineMeshes.forEach(lm => {
+    lineProgress[lm.id] = (lineProgress[lm.id] + dt * 0.3) % 1;
+    const pt = lm.curve.getPoint(lineProgress[lm.id]);
+    lm.dot.position.copy(pt);
+  });
+}
+
+function animateGlobe() {
+  requestAnimationFrame(animateGlobe);
+
+  const t = Date.now() * 0.001;
+
+  if(autoRotate) rotY += 0.0008;
+  globe.rotation.y = rotY;
+  globe.rotation.x = rotX;
+
+  // Sync markers & lines with globe rotation
+  markerMeshes.forEach(m => {
+    if(m.userData.isRing){
+      m.material.opacity = 0.3 + 0.3 * Math.sin(t * 2 + m.userData.zone.lat);
+    }
+  });
+
+  updateAttackLines(0.016);
+
+  // Pulsing scale on dots
+  markerMeshes.forEach(m => {
+    if(!m.userData.isRing && m.userData.intensity){
+      const sc = 1 + 0.3 * Math.sin(t * 3 + m.userData.lon) * m.userData.intensity;
+      m.scale.setScalar(sc);
+    }
+  });
+
+  renderer.render(scene, camera);
+}
+
+/* ═══════════════════════════════════════════════════════
+   DRAG / ROTATE
+   ═══════════════════════════════════════════════════════ */
+const canvas = document.getElementById("globe-canvas");
+
+canvas.addEventListener("mousedown", e=>{
+  isDragging = true; autoRotate = false;
+  prevMouse = {x:e.clientX, y:e.clientY};
+});
+canvas.addEventListener("mousemove", e=>{
+  if(!isDragging) return;
+  rotY += (e.clientX - prevMouse.x) * 0.005;
+  rotX += (e.clientY - prevMouse.y) * 0.005;
+  rotX = Math.max(-1.2, Math.min(1.2, rotX));
+  prevMouse = {x:e.clientX, y:e.clientY};
+  globe.rotation.y = rotY;
+  globe.rotation.x = rotX;
+});
+canvas.addEventListener("mouseup",   ()=>{ isDragging = false; setTimeout(()=>autoRotate=true,3000); });
+canvas.addEventListener("mouseleave",()=>{ isDragging = false; setTimeout(()=>autoRotate=true,3000); });
+
+canvas.addEventListener("touchstart", e=>{
+  isDragging = true; autoRotate = false;
+  prevMouse = {x:e.touches[0].clientX, y:e.touches[0].clientY};
+},{passive:true});
+canvas.addEventListener("touchmove", e=>{
+  if(!isDragging) return;
+  rotY += (e.touches[0].clientX - prevMouse.x) * 0.005;
+  rotX += (e.touches[0].clientY - prevMouse.y) * 0.005;
+  rotX = Math.max(-1.2, Math.min(1.2, rotX));
+  prevMouse = {x:e.touches[0].clientX, y:e.touches[0].clientY};
+  globe.rotation.y = rotY;
+  globe.rotation.x = rotX;
+},{passive:true});
+canvas.addEventListener("touchend", ()=>{ isDragging = false; setTimeout(()=>autoRotate=true,3000); });
+
+window.addEventListener("resize", ()=>{
+  camera.aspect = innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+/* ═══════════════════════════════════════════════════════
+   PANEL TOGGLES
+   ═══════════════════════════════════════════════════════ */
+function toggleLeft(){
+  leftOpen = !leftOpen;
+  document.getElementById("left-panel").classList.toggle("collapsed", !leftOpen);
+  document.getElementById("left-toggle").textContent = leftOpen ? "◀" : "▶";
+}
+function toggleRight(){
+  rightOpen = !rightOpen;
+  document.getElementById("right-panel").classList.toggle("collapsed", !rightOpen);
+}
+
+/* ═══════════════════════════════════════════════════════
+   MODAL
+   ═══════════════════════════════════════════════════════ */
+function openModal(item){
+  document.getElementById("modal-title").textContent = item.title || "—";
+  document.getElementById("modal-meta").innerHTML =
+    `<span>${item.source || "Mənbə"}</span> &nbsp;|&nbsp; <span>${item.publishedAt || item.time || ""}</span> &nbsp;|&nbsp; Şiddət: <span>${item.severity || "—"}</span>`;
+  document.getElementById("modal-body").innerHTML =
+    `<p>${item.description || item.content || item.title || "Ətraflı məlumat mövcud deyil."}</p>`;
+  const url = item.url || item.link || "#";
+  document.getElementById("modal-url").href = url;
+  document.getElementById("modal-overlay").classList.add("open");
+}
+function closeModal(e){
+  if(!e || e.target === document.getElementById("modal-overlay") || e.currentTarget.id==="modal-close"){
+    document.getElementById("modal-overlay").classList.remove("open");
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   SEVERITY COLOR
+   ═══════════════════════════════════════════════════════ */
+function sevColor(sev){
+  if(sev==="KRİTİK") return "#ff0000";
+  if(sev==="YÜKSƏK") return "#ff6600";
+  if(sev==="ORTA")   return "#ffcc00";
+  return "#00aaff";
+}
+function sevClass(sev){
+  return `background:${sevColor(sev)};color:#000;`;
+}
+
+function guessSeveity(text){
+  text = (text||"").toLowerCase();
+  if(/killed|dead|strike|missile|bomb|explosion|attack|blast|war|genocide|massacre/.test(text)) return "KRİTİK";
+  if(/wounded|troops|military|fighting|battle|conflict|rebel|clash|offensive/.test(text)) return "YÜKSƏK";
+  if(/ceasefire|tension|protest|unrest|sanction|warning/.test(text)) return "ORTA";
+  return "AŞAĞI";
+}
+
+/* ═══════════════════════════════════════════════════════
+   TICKER BUILD
+   ═══════════════════════════════════════════════════════ */
+function buildTicker(items){
+  if(!items.length) return;
+  const ticker = document.getElementById("ticker");
+  // Double for seamless loop
+  const html = [...items, ...items].map(it=>
+    `<span class="item" onclick="openModal(${JSON.stringify(it).replace(/"/g,'&quot;')})">${it.title}</span>`
+  ).join("");
+  ticker.innerHTML = html;
+}
+
+/* ═══════════════════════════════════════════════════════
+   NEWS PANEL BUILD
+   ═══════════════════════════════════════════════════════ */
+function buildNewsPanel(items){
+  const el = document.getElementById("news-list");
+  if(!items.length){
+    el.innerHTML = `<div style="padding:20px;font-family:'Share Tech Mono',monospace;font-size:11px;color:rgba(255,255,255,0.3);">Xəbər tapılmadı.</div>`;
+    return;
+  }
+  el.innerHTML = items.slice(0,40).map(it=>{
+    const sev = it.severity || guessSeveity(it.title);
+    return `
+    <div class="news-item" onclick="openModal(${JSON.stringify(it).replace(/"/g,'&quot;').replace(/'/g,"&#39;")})">
+      <div class="news-source">
+        ${it.source||"RSS"}
+        <span class="sev" style="${sevClass(sev)}">${sev}</span>
+      </div>
+      <div class="news-headline">${it.title}</div>
+      <div class="news-time">${it.publishedAt||it.time||""}</div>
+    </div>`;
+  }).join("");
+}
+
+/* ═══════════════════════════════════════════════════════
+   STATS PANEL BUILD
+   ═══════════════════════════════════════════════════════ */
+function buildStatsPanel(zones){
+  const el = document.getElementById("stats-list");
+  el.innerHTML = zones.map(z=>`
+    <div class="stat-item" onclick="focusZone('${z.id}')">
+      <div class="stat-country">
+        <span class="stat-dot" style="background:${z.color}"></span>
+        ${z.name}
+      </div>
+      <div class="stat-row">
+        <span>Şiddət</span>
+        <span class="stat-val">${Math.round(z.intensity*100)}%</span>
+      </div>
+      <div class="intensity-bar">
+        <div class="intensity-fill" style="width:${z.intensity*100}%;background:${z.color}"></div>
+      </div>
     </div>
+  `).join("");
+}
 
-    <!-- XƏBƏR PANELİ -->
-    <div class="news-panel" id="newsPanel">
-        <div class="news-header">
-            <h3>📰 SON XƏBƏRLƏR</h3>
-            <button class="close-news" id="closeNewsBtn">✕</button>
-        </div>
-        <div class="news-list" id="newsList"><div style="text-align:center; color:#666; padding:20px;">Yüklənir...</div></div>
-    </div>
+/* ═══════════════════════════════════════════════════════
+   DATA FETCHING
+   ═══════════════════════════════════════════════════════ */
 
-    <div class="refresh-btn" id="refreshBtn">⟳</div>
+/* -- GDELT -- */
+async function fetchGDELT(){
+  try {
+    // GDELT GEO2 API — free, no key
+    const url = `https://api.gdeltproject.org/api/v2/doc/doc?query=war%20conflict%20attack%20military%20airstrike&mode=artlist&maxrecords=30&format=json&timespan=24h&sort=DateDesc`;
+    const r = await fetch(url, {signal: AbortSignal.timeout(8000)});
+    if(!r.ok) throw new Error("GDELT HTTP "+r.status);
+    const d = await r.json();
+    document.getElementById("b-gdelt").textContent = "✓ " + (d.articles?.length||0);
+    return (d.articles||[]).map(a=>({
+      title: a.title,
+      url: a.url,
+      source: a.domain || "GDELT",
+      publishedAt: a.seendate ? a.seendate.slice(0,16).replace("T"," ") : "",
+      description: a.title,
+      severity: guessSeveity(a.title),
+    }));
+  } catch(e){
+    document.getElementById("b-gdelt").textContent = "✗";
+    return [];
+  }
+}
 
-    <!-- MODAL -->
-    <div class="modal" id="newsModal"><div class="modal-content"><div class="modal-close" id="modalClose">✕</div><div class="modal-title" id="modalTitle"></div><div class="modal-text" id="modalText"></div><div class="modal-meta" id="modalMeta"></div></div></div>
+/* -- NewsData.io (free 200/day, no CORS issue) -- */
+async function fetchNewsData(){
+  try {
+    const terms = "war conflict attack military airstrike missile explosion";
+    const url = `https://newsdata.io/api/1/news?apikey=${CFG.NEWSDATA_KEY}&q=${encodeURIComponent(terms)}&language=en&category=politics,world&size=20`;
+    const r = await fetch(url, {signal: AbortSignal.timeout(8000)});
+    if(!r.ok) throw new Error("NewsData HTTP "+r.status);
+    const d = await r.json();
+    document.getElementById("b-news").textContent = "✓ " + (d.results?.length||0);
+    return (d.results||[]).map(a=>({
+      title: a.title,
+      url: a.link,
+      source: a.source_id || "NewsData",
+      publishedAt: (a.pubDate||"").slice(0,16),
+      description: a.description || a.title,
+      content: a.content || a.description || a.title,
+      severity: guessSeveity(a.title + " " + (a.description||"")),
+    }));
+  } catch(e){
+    document.getElementById("b-news").textContent = "✗";
+    return [];
+  }
+}
 
-    <script type="module">
-        import * as THREE from 'three';
-        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-        import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+/* -- RSS via allorigins CORS proxy -- */
+async function fetchRSS(rssUrl){
+  try {
+    const proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(rssUrl)}`;
+    const r = await fetch(proxy, {signal: AbortSignal.timeout(8000)});
+    const d = await r.json();
+    const parser = new DOMParser();
+    const xml = parser.parseFromString(d.contents, "text/xml");
+    const items = [...xml.querySelectorAll("item")];
+    return items.slice(0,15).map(it=>({
+      title: it.querySelector("title")?.textContent || "",
+      url:   it.querySelector("link")?.textContent || "",
+      source: new URL(rssUrl).hostname.replace("www.","").replace("feeds.",""),
+      publishedAt: it.querySelector("pubDate")?.textContent?.slice(0,16) || "",
+      description: it.querySelector("description")?.textContent?.replace(/<[^>]+>/g,"").trim() || "",
+      content: it.querySelector("description")?.textContent?.replace(/<[^>]+>/g,"").trim() || "",
+      severity: guessSeveity(it.querySelector("title")?.textContent||""),
+    })).filter(it=>it.title && /war|conflict|attack|missile|strike|military|bomb|kill|troops|combat|battle|drone|explosion/i.test(it.title));
+  } catch {
+    return [];
+  }
+}
 
-        // ===========================================
-        // 1. REAL MƏLUMATLAR - BÜTÜN ÖLKƏLƏR
-        // ===========================================
-        const ALL_CONFLICTS = [
-            // AZƏRBAYCAN SƏRHƏDLƏRİ
-            { name: 'Kəlbəcər', lat: 40.1067, lng: 46.0383, intensity: 0.73, country: 'Azərbaycan', region: 'sərhəd' },
-            { name: 'Laçın', lat: 39.6386, lng: 46.5464, intensity: 0.71, country: 'Azərbaycan', region: 'sərhəd' },
-            { name: 'Zəngilan', lat: 39.0833, lng: 46.6500, intensity: 0.70, country: 'Azərbaycan', region: 'sərhəd' },
-            // İRAN
-            { name: 'Qərb sərhədi', lat: 32.4279, lng: 53.6880, intensity: 0.85, country: 'İran', region: 'hərbi təlim' },
-            { name: 'Zahidan', lat: 29.4964, lng: 60.8629, intensity: 0.78, country: 'İran', region: 'etiraz' },
-            { name: 'İlam', lat: 33.6374, lng: 46.4227, intensity: 0.82, country: 'İran', region: 'hücum' },
-            // UKRAYNA
-            { name: 'Donbas', lat: 48.3794, lng: 31.1656, intensity: 0.98, country: 'Ukrayna', region: 'döyüş' },
-            { name: 'Xarkov', lat: 49.9935, lng: 36.2304, intensity: 0.94, country: 'Ukrayna', region: 'atəş' },
-            { name: 'Zaporojya', lat: 47.8388, lng: 35.1396, intensity: 0.95, country: 'Ukrayna', region: 'döyüş' },
-            // QƏZZƏ / FƏLƏSTİN
-            { name: 'Qəzzə', lat: 31.3547, lng: 34.3088, intensity: 0.99, country: 'Fələstin', region: 'hava hücumu' },
-            { name: 'Rafah', lat: 31.2722, lng: 34.4088, intensity: 0.98, country: 'Fələstin', region: 'hücum' },
-            // LÜBNAN
-            { name: 'Beyrut', lat: 33.8869, lng: 35.5131, intensity: 0.89, country: 'Lübnan', region: 'raket' },
-            { name: 'Sur', lat: 33.2694, lng: 35.2042, intensity: 0.87, country: 'Lübnan', region: 'atəş' },
-            // SUDAN
-            { name: 'Xartum', lat: 15.5007, lng: 32.5599, intensity: 0.89, country: 'Sudan', region: 'döyüş' },
-            { name: 'Darfur', lat: 13.5775, lng: 25.3500, intensity: 0.86, country: 'Sudan', region: 'münaqişə' },
-            // SURIYA
-            { name: 'Hələb', lat: 36.2021, lng: 37.1343, intensity: 0.88, country: 'Suriya', region: 'partlayış' },
-            { name: 'İdlib', lat: 35.9311, lng: 36.6315, intensity: 0.87, country: 'Suriya', region: 'hücum' },
-            // YƏMƏN
-            { name: 'Sana', lat: 15.3694, lng: 44.1910, intensity: 0.86, country: 'Yəmən', region: 'hava hücumu' },
-            // MYANMAR
-            { name: 'Saqayinq', lat: 21.9162, lng: 95.9560, intensity: 0.85, country: 'Myanmar', region: 'döyüş' },
-            // SOMALİ
-            { name: 'Moqadişu', lat: 2.0469, lng: 45.3182, intensity: 0.88, country: 'Somali', region: 'hücum' }
-        ];
+/* -- ACLED public summary API -- */
+async function fetchACLED(){
+  try {
+    // ACLED public data API (requires key for full access; limited public endpoint)
+    const url = `https://api.acleddata.com/acled/read?terms=accept&limit=20&event_type=Battles&order=event_date&sort=desc&fields=event_date|country|event_type|fatalities|notes|actor1|actor2`;
+    const r = await fetch(url, {signal: AbortSignal.timeout(6000)});
+    if(!r.ok) throw new Error("ACLED "+r.status);
+    const d = await r.json();
+    document.getElementById("b-acled").textContent = "✓ " + (d.data?.length||0);
+    return (d.data||[]).map(ev=>({
+      title: `${ev.country}: ${ev.event_type} — ${ev.actor1||""} vs ${ev.actor2||""}`,
+      source: "ACLED",
+      publishedAt: ev.event_date||"",
+      description: ev.notes||`${ev.event_type} in ${ev.country}. Fatalities: ${ev.fatalities||0}`,
+      content: ev.notes||"",
+      severity: parseInt(ev.fatalities||0) > 10 ? "KRİTİK" : parseInt(ev.fatalities||0) > 0 ? "YÜKSƏK" : "ORTA",
+      url: "https://acleddata.com",
+    }));
+  } catch(e){
+    document.getElementById("b-acled").textContent = "✗";
+    return [];
+  }
+}
 
-        // REAL XƏBƏRLƏR (canlı kimi)
-        const LIVE_NEWS = [
-            { title: "🇦🇿 AZƏRBAYCAN: Ermənistan sərhəddində atəşkəs pozuldu, Kəlbəcər istiqamətində atışma", source: "Azərbaycan MN", time: "5 dəq", detail: "Azərbaycan Müdafiə Nazirliyi Ermənistan silahlı qüvvələrinin Kəlbəcər rayonu istiqamətində atəşkəsi pozduğunu bildirib. Hadisə nəticəsində itki yoxdur." },
-            { title: "🇮🇷 İRAN: İsrailə qarşı raket hücumu hazırlığı - Qərb sərhədində qoşun yığımı", source: "Reuters", time: "12 dəq", detail: "İran İnqilab Keşikçiləri Ordusu Qərb sərhədlərində İsrail hədəflərinə qarşı raket birliklərini hazır vəziyyətə gətirib." },
-            { title: "🇮🇱🇮🇷 İSRAİL-İRAN: Təhlükəsizlik mənbələri İranın yaxın saatlarda hücum edəcəyini bildirir", source: "IDF", time: "18 dəq", detail: "İsrail Hərbi Kəşfiyyatı İranın növbəti 48 saat ərzində İsrail hədəflərinə raket zərbələri endirəcəyini açıqlayıb." },
-            { title: "🇺🇦 UKRAYNA: Donbasda şiddətli döyüşlər, 15 yaşayış məntəqəsi atəş altında", source: "BBC", time: "23 dəq", detail: "Rusiya qüvvələri Donbas cəbhəsində 15 yaşayış məntəqəsini artilleriya atəşinə tutur. 3 mülki şəxs yaralanıb." },
-            { title: "🇵🇸 QƏZZƏ: İsrail hava hücumları nəticəsində 23 nəfər həlak oldu", source: "Al Jazeera", time: "31 dəq", detail: "İsrail Hərbi Hava Qüvvələri Qəzzənin şimalında 15 hədəfi vurub. Fələstin Səhiyyə Nazirliyi 23 ölü, 50-dən çox yaralı olduğunu bildirir." },
-            { title: "🇱🇧 LÜBNAN: İsrail Hizbullah mövqelərini vurdu, Beyrutda sirenlər səsləndi", source: "AP", time: "42 dəq", detail: "İsrail ordusu Hizbullahın Cənubi Lübnandakı hərbi obyektlərinə hava zərbələri endirib. Beyrutda hava hücumu sirenləri işə düşüb." },
-            { title: "🇸🇩 SUDAN: Xartumda döyüşlər şiddətlənir, 50-dən çox ölü", source: "AFP", time: "55 dəq", detail: "Sudan Ordusu ilə RSF arasında Xartumda davam edən döyüşlərdə son 24 saatda 50-dən çox insan həlak olub." },
-            { title: "🇸🇾 SURIYA: Hələb yaxınlığında partlayış, 8 hərbçi ölüb", source: "Reuters", time: "1 saat", detail: "Hələb şəhəri yaxınlığında bombalı avtomobil partladılıb, 8 Suriya ordusu əsgəri həlak olub." },
-            { title: "🇾🇪 YƏMƏN: Hüsilər Qırmızı dənizdə gəmiyə raket zərbəsi endirdi", source: "Al Jazeera", time: "1.2 saat", detail: "Yəməndəki Husilər Qırmızı dənizdə ticarət gəmisini raketlə hədəf alıb. Gəmidə yanğın baş verib." },
-            { title: "🇲🇲 MYANMAR: Hərbi xunta əleyhinə hücumlar, 30 nəfər ölüb", source: "BBC", time: "1.5 saat", detail: "Myanmarın Saqayinq bölgəsində müxalifət qüvvələri hərbi xuntaya məxsus bazaya hücum edib." }
-        ];
+/* -- Aggregate all sources -- */
+async function fetchAll(){
+  setLoad(70, "GDELT API sorğusu...");
+  const [gdelt, newsdata, rss1, rss2, rss3, acled] = await Promise.all([
+    fetchGDELT(),
+    fetchNewsData(),
+    fetchRSS(CFG.RSS_SOURCES[0]),
+    fetchRSS(CFG.RSS_SOURCES[1]),
+    fetchRSS(CFG.RSS_SOURCES[2]),
+    fetchACLED(),
+  ]);
+  setLoad(88, "Məlumatlar birləşdirilir...");
 
-        // ===========================================
-        // 2. 3D QLOBUS
-        // ===========================================
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x030318);
-        const camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 1000);
-        camera.position.set(0, 1, 12);
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(window.devicePixelRatio);
-        document.getElementById('canvas-container').appendChild(renderer.domElement);
-        
-        const labelRenderer = new CSS2DRenderer();
-        labelRenderer.setSize(window.innerWidth, window.innerHeight);
-        labelRenderer.domElement.style.position = 'absolute';
-        labelRenderer.domElement.style.top = '0px';
-        labelRenderer.domElement.style.left = '0px';
-        labelRenderer.domElement.style.pointerEvents = 'none';
-        labelRenderer.domElement.style.zIndex = '10';
-        document.getElementById('canvas-container').appendChild(labelRenderer.domElement);
-        
-        const controls = new OrbitControls(camera, renderer.domElement);
-        controls.enableDamping = true;
-        controls.autoRotate = true;
-        controls.autoRotateSpeed = 0.6;
-        controls.enableZoom = true;
-        
-        // Işıqlar
-        const ambient = new THREE.AmbientLight(0x404060);
-        scene.add(ambient);
-        const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
-        dirLight.position.set(5, 10, 7);
-        scene.add(dirLight);
-        const fillLight = new THREE.PointLight(0x4466ff, 0.5);
-        fillLight.position.set(-3, 2, -5);
-        scene.add(fillLight);
-        
-        // Yer kürəsi
-        const earthGeo = new THREE.SphereGeometry(5, 128, 128);
-        const textureLoader = new THREE.TextureLoader();
-        const earthMap = textureLoader.load('https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg');
-        const earthMat = new THREE.MeshPhongMaterial({ map: earthMap, shininess: 5 });
-        const earth = new THREE.Mesh(earthGeo, earthMat);
-        scene.add(earth);
-        
-        // Buludlar
-        const cloudGeo = new THREE.SphereGeometry(5.02, 128, 128);
-        const cloudMap = textureLoader.load('https://threejs.org/examples/textures/planets/earth_clouds_1024.png');
-        const cloudMat = new THREE.MeshPhongMaterial({ map: cloudMap, transparent: true, opacity: 0.2 });
-        const clouds = new THREE.Mesh(cloudGeo, cloudMat);
-        scene.add(clouds);
-        
-        // Atmosfer
-        const atmosGeo = new THREE.SphereGeometry(5.12, 64, 64);
-        const atmosMat = new THREE.MeshPhongMaterial({ color: 0x2288ff, transparent: true, opacity: 0.08, side: THREE.BackSide });
-        const atmos = new THREE.Mesh(atmosGeo, atmosMat);
-        scene.add(atmos);
-        
-        // Ulduzlar
-        const starGeo = new THREE.BufferGeometry();
-        const starPos = [];
-        for(let i=0;i<3000;i++) {
-            starPos.push((Math.random()-0.5)*600);
-            starPos.push((Math.random()-0.5)*600);
-            starPos.push((Math.random()-0.5)*300-100);
-        }
-        starGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(starPos), 3));
-        const stars = new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.2 }));
-        scene.add(stars);
-        
-        function latLngToVec(lat, lng, r=5.05) {
-            const phi = (90-lat)*Math.PI/180;
-            const theta = lng*Math.PI/180;
-            return new THREE.Vector3(r*Math.sin(phi)*Math.cos(theta), r*Math.cos(phi), r*Math.sin(phi)*Math.sin(theta));
-        }
-        
-        // Markerlar
-        const markers = [];
-        const lines = []; // Animasiyalı xətlər üçün
-        
-        ALL_CONFLICTS.forEach(z => {
-            const pos = latLngToVec(z.lat, z.lng);
-            const color = z.intensity>0.9 ? 0xff0000 : (z.intensity>0.8 ? 0xff6600 : 0xffaa00);
-            const size = 0.08 + z.intensity*0.1;
-            const sphere = new THREE.Mesh(new THREE.SphereGeometry(size, 16,16), new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.5 }));
-            sphere.position.copy(pos);
-            scene.add(sphere);
-            
-            const ring = new THREE.Mesh(new THREE.TorusGeometry(size*1.3, 0.008, 16, 32), new THREE.MeshStandardMaterial({ color, emissive: color }));
-            ring.position.copy(pos);
-            scene.add(ring);
-            
-            const div = document.createElement('div');
-            div.textContent = `${z.name} ${Math.round(z.intensity*100)}%`;
-            div.style.cssText = `background:rgba(0,0,0,0.7); color:${color==0xff0000?'#ff8888':'#ffaa66'}; padding:3px 8px; border-radius:20px; font-size:10px; font-weight:bold; border:1px solid ${color==0xff0000?'#ff0000':'#ffaa00'}; white-space:nowrap`;
-            const label = new CSS2DObject(div);
-            label.position.copy(pos.clone().multiplyScalar(1.08));
-            scene.add(label);
-            
-            markers.push({ sphere, ring, pos, zone: z, speed: 0.5+Math.random() });
-        });
-        
-        // İRAN-İSRAİL ARASI ANİMASİYALI XƏT
-        const iranPos = latLngToVec(32.4279, 53.6880);
-        const israelPos = latLngToVec(31.0461, 34.8516);
-        const linePoints = [iranPos, israelPos];
-        const lineGeo = new THREE.BufferGeometry().setFromPoints(linePoints);
-        const lineMat = new THREE.LineBasicMaterial({ color: 0xff3333 });
-        const attackLine = new THREE.Line(lineGeo, lineMat);
-        scene.add(attackLine);
-        
-        // Hərəkət edən nöqtə (raket)
-        const rocketPoint = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8,8), new THREE.MeshStandardMaterial({ color: 0xff0000, emissive: 0xff0000 }));
-        scene.add(rocketPoint);
-        let rocketProgress = 0;
-        
-        function animateLine() {
-            rocketProgress += 0.003;
-            if(rocketProgress > 1) rocketProgress = 0;
-            const t = rocketProgress;
-            const x = iranPos.x + (israelPos.x - iranPos.x)*t;
-            const y = iranPos.y + (israelPos.y - iranPos.y)*t;
-            const z = iranPos.z + (israelPos.z - iranPos.z)*t;
-            rocketPoint.position.set(x,y,z);
-            requestAnimationFrame(animateLine);
-        }
-        animateLine();
-        
-        // ===========================================
-        // 3. UI İDARƏSİ VƏ YÜKLƏMƏ
-        // ===========================================
-        let loaderPercent = 0;
-        const loaderInterval = setInterval(() => {
-            loaderPercent += Math.random()*15;
-            if(loaderPercent >= 100) {
-                loaderPercent = 100;
-                clearInterval(loaderInterval);
-                document.getElementById('loader').style.opacity = '0';
-                setTimeout(() => document.getElementById('loader').style.display = 'none', 500);
-            }
-            document.getElementById('loaderFill').style.width = loaderPercent + '%';
-            document.getElementById('loaderPercent').innerText = Math.floor(loaderPercent);
-        }, 150);
-        
-        // Panellər
-        let statsCollapsed = false, newsCollapsed = false;
-        document.getElementById('collapseStatsBtn').onclick = () => {
-            statsCollapsed = !statsCollapsed;
-            document.getElementById('statsPanel').classList.toggle('hidden-panel', statsCollapsed);
-            document.getElementById('collapseStatsBtn').innerHTML = statsCollapsed ? '▶' : '◀';
-        };
-        document.getElementById('closeNewsBtn').onclick = () => {
-            newsCollapsed = !newsCollapsed;
-            document.getElementById('newsPanel').classList.toggle('hidden-news', newsCollapsed);
-        };
-        
-        // Modal
-        const modal = document.getElementById('newsModal');
-        const modalClose = document.getElementById('modalClose');
-        modalClose.onclick = () => modal.classList.remove('active');
-        modal.onclick = (e) => { if(e.target === modal) modal.classList.remove('active'); };
-        
-        function showNewsDetail(news) {
-            document.getElementById('modalTitle').innerText = news.title;
-            document.getElementById('modalText').innerHTML = news.detail || news.title;
-            document.getElementById('modalMeta').innerHTML = `${news.source} · ${news.time} əvvəl`;
-            modal.classList.add('active');
-        }
-        
-        // Xəbərləri göstər
-        function updateUI() {
-            // Statistikalar
-            document.getElementById('totalEvents').innerText = ALL_CONFLICTS.length;
-            document.getElementById('lastUpdate').innerText = new Date().toLocaleTimeString('az-AZ');
-            
-            const countryCount = {};
-            ALL_CONFLICTS.forEach(c => countryCount[c.country] = (countryCount[c.country]||0)+1);
-            const countryHtml = Object.entries(countryCount).sort((a,b)=>b[1]-a[1]).map(([c,n]) => 
-                `<div class="country-item" onclick="centerToCountry('${c}')"><span>${c}</span><span class="country-count">${n}</span></div>`
-            ).join('');
-            document.getElementById('countryList').innerHTML = countryHtml;
-            
-            // Xəbərlər
-            const newsHtml = LIVE_NEWS.map(n => `
-                <div class="news-item" onclick="showDetail(${JSON.stringify(n).replace(/"/g, '&quot;')})">
-                    <div class="news-title">${n.title}</div>
-                    <div class="news-meta"><span class="news-source">${n.source}</span><span>${n.time} əvvəl</span></div>
-                </div>
-            `).join('');
-            document.getElementById('newsList').innerHTML = newsHtml;
-            
-            // TV LENTİ (SÜRƏTLİ)
-            const tickerHtml = LIVE_NEWS.map(n => `<span class="ticker-item">🔴 ${n.title}</span>`).join('');
-            document.getElementById('tickerTrack').innerHTML = tickerHtml + tickerHtml;
-        }
-        
-        window.showDetail = (news) => showNewsDetail(news);
-        window.centerToCountry = (country) => {
-            const zone = ALL_CONFLICTS.find(z => z.country === country);
-            if(zone) {
-                const pos = latLngToVec(zone.lat, zone.lng);
-                camera.position.set(pos.x*1.8, pos.y*1.5, pos.z*1.8);
-                controls.target.copy(pos);
-                controls.update();
-            }
-        };
-        
-        // Animasiya
-        let time = 0;
-        function animate() {
-            requestAnimationFrame(animate);
-            time += 0.016;
-            earth.rotation.y += 0.0006;
-            clouds.rotation.y += 0.0008;
-            stars.rotation.y += 0.0002;
-            
-            markers.forEach(m => {
-                const s = 1 + Math.sin(time*3*m.speed)*0.2;
-                m.sphere.scale.set(s,s,s);
-                m.ring.rotation.z += 0.02;
-                m.ring.scale.setScalar(1 + Math.sin(time*4)*0.1);
-            });
-            
-            controls.update();
-            renderer.render(scene, camera);
-            labelRenderer.render(scene, camera);
-        }
-        animate();
-        
-        // Yenilə
-        document.getElementById('refreshBtn').onclick = () => updateUI();
-        
-        // Telegram
-        if(window.Telegram?.WebApp) { window.Telegram.WebApp.expand(); window.Telegram.WebApp.ready(); }
-        
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth/window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            labelRenderer.setSize(window.innerWidth, window.innerHeight);
-        });
-        
-        updateUI();
-    </script>
+  // Merge & deduplicate by title prefix
+  const seen = new Set();
+  const merged = [...gdelt, ...newsdata, ...rss1, ...rss2, ...rss3, ...acled].filter(it=>{
+    if(!it.title) return false;
+    const key = it.title.slice(0,40).toLowerCase();
+    if(seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  // Sort: critical first
+  const order = {KRİTİK:0, YÜKSƏK:1, ORTA:2, AŞAĞI:3};
+  merged.sort((a,b)=>(order[a.severity]||3)-(order[b.severity]||3));
+
+  return merged;
+}
+
+/* ═══════════════════════════════════════════════════════
+   MAIN DATA REFRESH LOOP
+   ═══════════════════════════════════════════════════════ */
+async function refreshData(){
+  try {
+    const items = await fetchAll();
+    allNews = items;
+    buildNewsPanel(items);
+    buildTicker(items);
+
+    // Update zone intensities based on news mentions
+    ZONES.forEach(z=>{
+      const mentions = items.filter(it=>{
+        const t = (it.title+" "+(it.description||"")).toLowerCase();
+        return t.includes(z.name.toLowerCase()) ||
+               (z.id==="ukraine" && /ukrain/i.test(t)) ||
+               (z.id==="israel" && /israel/i.test(t)) ||
+               (z.id==="iran"   && /iran/i.test(t)) ||
+               (z.id==="russia" && /russ/i.test(t)) ||
+               (z.id==="gaza"   && /gaz/i.test(t)) ||
+               (z.id==="yemen"  && /yem/i.test(t));
+      }).length;
+      if(mentions > 0){
+        z.intensity = Math.min(0.99, z.intensity * 0.8 + mentions * 0.05);
+      }
+    });
+    buildStatsPanel(ZONES);
+
+    const flash = document.getElementById("update-flash");
+    document.getElementById("b-time").textContent = new Date().toUTCString().slice(17,25);
+    flash.classList.add("show");
+    setTimeout(()=>flash.classList.remove("show"), 1500);
+
+  } catch(e){ console.error("Refresh error:", e); }
+}
+
+/* ═══════════════════════════════════════════════════════
+   FOCUS ZONE (rotate globe to zone)
+   ═══════════════════════════════════════════════════════ */
+function focusZone(id){
+  const z = ZONES.find(z=>z.id===id);
+  if(!z) return;
+  autoRotate = false;
+  const targetY = -(z.lon + 180) * Math.PI / 180;
+  const targetX = -(z.lat) * Math.PI / 180 * 0.5;
+  const steps = 40;
+  let i = 0;
+  function step(){
+    rotY += (targetY - rotY) * 0.12;
+    rotX += (targetX - rotX) * 0.12;
+    globe.rotation.y = rotY;
+    globe.rotation.x = rotX;
+    if(++i < steps) requestAnimationFrame(step);
+    else setTimeout(()=>autoRotate=true, 5000);
+  }
+  step();
+}
+
+/* ═══════════════════════════════════════════════════════
+   BOOT SEQUENCE
+   ═══════════════════════════════════════════════════════ */
+async function boot(){
+  setLoad(5,  "Three.js başladılır...");
+  await new Promise(r=>setTimeout(r,100));
+
+  setLoad(15, "3D səhnə qurulur...");
+  initGlobe();
+
+  setLoad(30, "Markerlər yerləşdirilir...");
+  buildStatsPanel(ZONES);
+
+  setLoad(50, "API-lərə qoşulunur...");
+  await refreshData();
+
+  setLoad(96, "Animasiyalar başladılır...");
+  animateGlobe();
+
+  setLoad(100, "Hazırdır.");
+  await new Promise(r=>setTimeout(r,400));
+  hideLoader();
+
+  // Start auto-refresh
+  setInterval(refreshData, CFG.REFRESH_INTERVAL);
+}
+
+boot();
+
+/* ═══════════════════════════════════════════════════════
+   TELEGRAM WEBAPP SUPPORT
+   ═══════════════════════════════════════════════════════ */
+if(window.Telegram?.WebApp){
+  window.Telegram.WebApp.expand();
+  window.Telegram.WebApp.setHeaderColor("#000000");
+}
+</script>
+
 </body>
 </html>
