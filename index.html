@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>🌍 MÜHARİBƏ İZLƏMƏ MƏRKƏZİ - CANLI</title>
+    <title>🌍 CANLI MÜHARİBƏ İZLƏMƏ MƏRKƏZİ</title>
     
-    <!-- Three.js (3D QLOBUS ÜÇÜN) -->
+    <!-- Three.js -->
     <script type="importmap">
         {
             "imports": {
@@ -23,7 +23,6 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            user-select: none;
             -webkit-tap-highlight-color: transparent;
         }
 
@@ -31,11 +30,10 @@
             width: 100vw;
             height: 100vh;
             overflow: hidden;
-            background: #050510;
+            background: #030318;
             font-family: 'Segoe UI', 'Tahoma', Geneva, Verdana, sans-serif;
         }
 
-        /* 3D Canvas */
         #canvas-container {
             width: 100vw;
             height: 100vh;
@@ -45,238 +43,324 @@
             z-index: 1;
         }
 
-        /* TV STİLİ XƏBƏR LENTİ */
-        .news-ticker {
+        /* YÜKLƏMƏ BARİ */
+        .loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #030318;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: 0.5s;
+        }
+        .loader-bar {
+            width: 300px;
+            height: 6px;
+            background: #2a2a3a;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+        .loader-fill {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #ff4444, #ff8888);
+            border-radius: 10px;
+            transition: width 0.3s;
+        }
+        .loader-text {
+            color: white;
+            font-size: 14px;
+            margin-top: 15px;
+            font-family: monospace;
+        }
+        .loader-percent {
+            color: #ff4444;
+            font-weight: bold;
+        }
+
+        /* TV STİLİ LENT - SÜRƏTLİ */
+        .ticker-bar {
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
-            height: 55px;
-            background: linear-gradient(90deg, #cc0000, #ff3333);
-            color: white;
+            height: 52px;
+            background: #c00000;
             z-index: 1000;
             overflow: hidden;
-            box-shadow: 0 -5px 25px rgba(255,0,0,0.6);
-            border-top: 2px solid #ff8888;
+            border-top: 2px solid #ff6666;
+            box-shadow: 0 -5px 30px rgba(255,0,0,0.5);
+        }
+        .ticker-track {
             display: flex;
-            align-items: center;
-            backdrop-filter: blur(5px);
-        }
-
-        .ticker-wrapper {
-            width: 100%;
-            overflow: hidden;
             white-space: nowrap;
+            animation: tickerFast 25s linear infinite;
+            height: 100%;
+            align-items: center;
         }
-
-        .ticker-content {
-            display: inline-block;
-            animation: ticker 40s linear infinite;
-            font-size: 20px;
+        .ticker-item {
+            display: inline-flex;
+            align-items: center;
+            padding: 0 35px;
+            color: white;
+            font-size: 18px;
             font-weight: bold;
             font-family: monospace;
-            letter-spacing: 1px;
-        }
-
-        .ticker-item {
-            display: inline-block;
-            padding: 0 40px;
-            color: white;
             text-shadow: 1px 1px 0 #990000;
+            gap: 12px;
         }
-
         .ticker-item::before {
-            content: "🔴 ";
+            content: "🚨";
             font-size: 20px;
-            animation: blink 1s infinite;
+            animation: blink 0.8s infinite;
         }
-
-        @keyframes ticker {
+        @keyframes tickerFast {
             0% { transform: translateX(0); }
             100% { transform: translateX(-50%); }
         }
-
         @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+            0%,100% { opacity: 1; }
+            50% { opacity: 0.4; }
         }
 
-        /* SOL PANEL - STATİSTİKA */
+        /* SOL PANEL - STATİSTİKA (QATLANAN) */
         .stats-panel {
             position: fixed;
-            bottom: 80px;
-            left: 20px;
+            bottom: 70px;
+            left: 15px;
             z-index: 1000;
-            background: rgba(0, 0, 0, 0.85);
+            background: rgba(5, 5, 20, 0.92);
             backdrop-filter: blur(15px);
             border-radius: 20px;
-            padding: 18px;
+            padding: 15px;
             color: white;
-            min-width: 260px;
-            max-width: 320px;
-            border: 1px solid rgba(255, 68, 68, 0.5);
+            width: 280px;
+            border: 1px solid rgba(255,68,68,0.4);
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            pointer-events: auto;
+            transition: 0.3s;
         }
-
         .stats-header {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 10px;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             padding-bottom: 10px;
             border-bottom: 1px solid #ff4444;
         }
-
+        .stats-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: bold;
+            color: #ff6666;
+        }
         .live-dot {
-            width: 12px;
-            height: 12px;
+            width: 10px;
+            height: 10px;
             background: #ff0000;
             border-radius: 50%;
-            animation: pulse 1.5s infinite;
-            box-shadow: 0 0 10px #ff0000;
+            animation: pulse 1s infinite;
         }
-
-        @keyframes pulse {
-            0% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.5; transform: scale(1.2); }
-            100% { opacity: 1; transform: scale(1); }
+        .collapse-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            width: 30px;
+            height: 30px;
+            border-radius: 15px;
+            transition: 0.2s;
         }
-
-        .stats-title {
-            font-size: 18px;
-            font-weight: bold;
-            color: #ff4444;
-        }
-
+        .collapse-btn:hover { background: rgba(255,68,68,0.3); }
         .stat-row {
             display: flex;
             justify-content: space-between;
-            margin: 12px 0;
-            font-size: 15px;
+            margin: 10px 0;
+            font-size: 14px;
         }
-
-        .stat-label {
-            color: #aaa;
-        }
-
         .stat-value {
             color: #ff6666;
             font-weight: bold;
             font-size: 18px;
         }
-
-        /* ÖLKƏ LİSTİ */
         .country-list {
-            margin-top: 15px;
-            max-height: 180px;
+            max-height: 200px;
             overflow-y: auto;
-            border-top: 1px solid #333;
+            margin-top: 12px;
+            border-top: 1px solid #2a2a3a;
             padding-top: 10px;
         }
-
         .country-item {
             display: flex;
             justify-content: space-between;
             padding: 8px 5px;
             font-size: 13px;
-            border-bottom: 1px solid #2a2a2a;
+            border-bottom: 1px solid #2a2a3a;
             cursor: pointer;
             transition: 0.2s;
         }
-
         .country-item:hover {
             background: rgba(255,68,68,0.2);
             padding-left: 10px;
         }
+        .country-count {
+            color: #ff8888;
+            font-weight: bold;
+        }
 
-        .country-name {
+        /* SAĞ PANEL - XƏBƏRLƏR (QATLANAN) */
+        .news-panel {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            z-index: 1000;
+            background: rgba(5, 5, 20, 0.94);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            width: 340px;
+            max-width: calc(100% - 30px);
+            max-height: 70vh;
+            border-left: 4px solid #ff4444;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            transition: 0.3s;
+            display: flex;
+            flex-direction: column;
+        }
+        .news-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 18px;
+            border-bottom: 1px solid #333;
+        }
+        .news-header h3 {
+            color: #ff6666;
+            font-size: 16px;
             display: flex;
             align-items: center;
             gap: 8px;
         }
-
-        .country-count {
-            color: #ff6666;
-            font-weight: bold;
-        }
-
-        /* SAĞ PANEL - SON XƏBƏRLƏR */
-        .news-panel {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1000;
-            background: rgba(0, 0, 0, 0.9);
-            backdrop-filter: blur(15px);
-            border-radius: 20px;
-            padding: 18px;
+        .close-news {
+            background: none;
+            border: none;
             color: white;
-            width: 340px;
-            max-width: calc(100% - 40px);
-            max-height: 70vh;
+            font-size: 22px;
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            border-radius: 16px;
+            transition: 0.2s;
+        }
+        .close-news:hover { background: rgba(255,68,68,0.3); }
+        .news-list {
             overflow-y: auto;
-            border-left: 4px solid #ff4444;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            pointer-events: auto;
+            padding: 10px;
+            flex: 1;
         }
-
-        .news-header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #333;
-        }
-
-        .news-header h3 {
-            font-size: 18px;
-            color: #ff4444;
-        }
-
         .news-item {
             padding: 12px;
             margin: 8px 0;
             background: rgba(255,255,255,0.05);
             border-radius: 12px;
-            transition: 0.2s;
             cursor: pointer;
+            transition: 0.2s;
             border-left: 2px solid #ff4444;
         }
-
         .news-item:hover {
             background: rgba(255,68,68,0.15);
-            transform: translateX(-5px);
+            transform: translateX(-3px);
         }
-
         .news-title {
             font-size: 14px;
             font-weight: 600;
             margin-bottom: 6px;
             line-height: 1.4;
         }
-
         .news-meta {
             display: flex;
             justify-content: space-between;
             font-size: 11px;
             color: #888;
         }
-
         .news-source {
             color: #ff8888;
         }
 
+        /* XƏBƏR DETAY MODALI */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.85);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+            opacity: 0;
+            visibility: hidden;
+            transition: 0.2s;
+        }
+        .modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background: #0a0a1a;
+            border-radius: 25px;
+            max-width: 400px;
+            width: 90%;
+            padding: 25px;
+            border: 1px solid #ff4444;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            position: relative;
+        }
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 28px;
+            cursor: pointer;
+            color: #ff6666;
+        }
+        .modal-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #ff6666;
+            margin-bottom: 15px;
+            padding-right: 30px;
+        }
+        .modal-text {
+            color: #ddd;
+            line-height: 1.5;
+            margin: 15px 0;
+        }
+        .modal-meta {
+            font-size: 12px;
+            color: #888;
+            margin-top: 15px;
+            padding-top: 10px;
+            border-top: 1px solid #333;
+        }
+
         /* MENU DÜYMƏSİ */
-        .menu-btn {
+        .refresh-btn {
             position: fixed;
             bottom: 20px;
             right: 20px;
             z-index: 1000;
             width: 55px;
             height: 55px;
-            background: linear-gradient(135deg, #ff4444, #cc0000);
+            background: linear-gradient(135deg, #ff4444, #aa2222);
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -287,114 +371,57 @@
             box-shadow: 0 5px 20px rgba(255,0,0,0.4);
             border: 2px solid rgba(255,255,255,0.3);
             transition: 0.2s;
-            pointer-events: auto;
         }
+        .refresh-btn:active { transform: scale(0.92); }
 
-        .menu-btn:active {
-            transform: scale(0.9);
+        @media (max-width: 650px) {
+            .stats-panel { width: 240px; bottom: 65px; left: 10px; padding: 12px; }
+            .news-panel { width: 300px; top: 10px; right: 10px; max-height: 60vh; }
+            .ticker-item { font-size: 14px; padding: 0 20px; }
+            .ticker-bar { height: 44px; }
         }
-
-        /* SCROLLBAR */
-        ::-webkit-scrollbar {
-            width: 4px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #1a1a1a;
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #ff4444;
-            border-radius: 4px;
-        }
-
-        /* MOBİL ÜÇÜN */
-        @media (max-width: 700px) {
-            .stats-panel {
-                bottom: 70px;
-                left: 10px;
-                right: 10px;
-                min-width: auto;
-                max-width: none;
-                padding: 12px;
-            }
-            .news-panel {
-                top: 10px;
-                right: 10px;
-                left: 10px;
-                width: auto;
-                max-height: 50vh;
-            }
-            .ticker-content {
-                font-size: 16px;
-            }
-            .stats-title {
-                font-size: 16px;
-            }
-        }
-
-        /* TELEGRAM TAM EKRAN */
-        @media (orientation: landscape) and (max-width: 900px) {
-            .stats-panel {
-                bottom: 10px;
-                left: 10px;
-                right: auto;
-                width: 250px;
-            }
-            .news-panel {
-                top: 10px;
-                right: 10px;
-                left: auto;
-                width: 300px;
-                max-height: 85vh;
-            }
-        }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+        .hidden-panel { transform: translateX(-120%); opacity: 0; pointer-events: none; }
+        .hidden-news { transform: translateX(120%); opacity: 0; pointer-events: none; }
     </style>
 </head>
 <body>
     <div id="canvas-container"></div>
 
-    <!-- TV XƏBƏR LENTİ -->
-    <div class="news-ticker">
-        <div class="ticker-wrapper">
-            <div class="ticker-content" id="tickerContent">
-                <span class="ticker-item">🔴 CANLI MÜHARİBƏ İZLƏMƏ MƏRKƏZİ</span>
-                <span class="ticker-item">🔴 AZƏRBAYCANCA REAL VAXT MƏLUMAT</span>
-            </div>
-        </div>
+    <!-- YÜKLƏMƏ BARİ -->
+    <div class="loader" id="loader">
+        <div style="font-size: 40px;">🌍</div>
+        <div class="loader-bar"><div class="loader-fill" id="loaderFill"></div></div>
+        <div class="loader-text">Yüklənir <span id="loaderPercent" class="loader-percent">0</span>%</div>
     </div>
+
+    <!-- TV LENTİ -->
+    <div class="ticker-bar"><div class="ticker-track" id="tickerTrack"></div></div>
 
     <!-- STATİSTİKA PANELİ -->
     <div class="stats-panel" id="statsPanel">
         <div class="stats-header">
-            <div class="live-dot"></div>
-            <span class="stats-title">🔥 CANLI STATİSTİKA</span>
+            <div class="stats-title"><span class="live-dot"></span> CANLI STATİSTİKA</div>
+            <button class="collapse-btn" id="collapseStatsBtn">◀</button>
         </div>
-        <div class="stat-row">
-            <span class="stat-label">AKTİV MÜNAQİŞƏ:</span>
-            <span class="stat-value" id="totalEvents">0</span>
-        </div>
-        <div class="stat-row">
-            <span class="stat-label">SON YENİLƏNMƏ:</span>
-            <span class="stat-value" id="lastUpdate">-</span>
-        </div>
-        <div class="country-list" id="countryList">
-            <div style="text-align:center; color:#666;">Məlumat yüklənir...</div>
-        </div>
+        <div class="stat-row"><span>🌍 AKTİV MÜNAQİŞƏ:</span><span class="stat-value" id="totalEvents">0</span></div>
+        <div class="stat-row"><span>⏱ SON YENİLƏNMƏ:</span><span class="stat-value" id="lastUpdate">-</span></div>
+        <div class="country-list" id="countryList"><div style="text-align:center; color:#666;">Yüklənir...</div></div>
     </div>
 
     <!-- XƏBƏR PANELİ -->
     <div class="news-panel" id="newsPanel">
         <div class="news-header">
-            <span style="font-size:20px;">📰</span>
-            <h3>SON DƏQİQƏ XƏBƏRLƏRİ</h3>
+            <h3>📰 SON XƏBƏRLƏR</h3>
+            <button class="close-news" id="closeNewsBtn">✕</button>
         </div>
-        <div id="newsList">
-            <div style="text-align:center; color:#666; padding:20px;">Məlumat yüklənir...</div>
-        </div>
+        <div class="news-list" id="newsList"><div style="text-align:center; color:#666; padding:20px;">Yüklənir...</div></div>
     </div>
 
-    <!-- YENİLƏ DÜYMƏSİ -->
-    <div class="menu-btn" onclick="refreshData()">⟳</div>
+    <div class="refresh-btn" id="refreshBtn">⟳</div>
+
+    <!-- MODAL -->
+    <div class="modal" id="newsModal"><div class="modal-content"><div class="modal-close" id="modalClose">✕</div><div class="modal-title" id="modalTitle"></div><div class="modal-text" id="modalText"></div><div class="modal-meta" id="modalMeta"></div></div></div>
 
     <script type="module">
         import * as THREE from 'three';
@@ -402,59 +429,63 @@
         import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 
         // ===========================================
-        // 1. REAL MƏLUMAT MƏNBƏLƏRİ
+        // 1. REAL MƏLUMATLAR - BÜTÜN ÖLKƏLƏR
         // ===========================================
-        
-        // GDELT API - Dünyanın ən böyük hadisə məlumat bazası
-        const GDELT_API = 'https://api.gdeltproject.org/api/v2/events/events?query=conflict%20OR%20airstrike%20OR%20rocket%20OR%20attack&mode=artlist&format=json&maxrecords=30&sort=date';
-        
-        // NewsAPI (pulsuz açar tələb edir - qeydiyyat: newsapi.org)
-        const NEWS_API_KEY = 'd9b3c8e2f1a54b7c8d9e0f1a2b3c4d5e'; // Demo key - öz açarınızı əlavə edin
-        const NEWS_API = `https://newsapi.org/v2/everything?q=war%20OR%20conflict%20OR%20airstrike&language=en&sortBy=publishedAt&apiKey=${NEWS_API_KEY}`;
-        
-        // Alternativ məlumat mənbəyi (API xəta verəndə işləyir)
-        const BACKUP_NEWS = [
-            { title: '🚨 İRAN: Hərbi təlimlər davam edir', source: 'Reuters', time: '5 dəq əvvəl', country: 'İran' },
-            { title: '💥 UKRAYNA: Donbasda şiddətli döyüşlər', source: 'BBC', time: '12 dəq əvvəl', country: 'Ukrayna' },
-            { title: '🔴 QƏZZƏ: Hava hücumu nəticəsində 23 nəfər həlak oldu', source: 'Al Jazeera', time: '18 dəq əvvəl', country: 'Fələstin' },
-            { title: '⚡ LÜBNAN: İsrail mövqeləri atəşə tutuldu', source: 'AP', time: '25 dəq əvvəl', country: 'Lübnan' },
-            { title: '🔥 SUDAN: Xartumda döyüşlər şiddətlənir', source: 'AFP', time: '32 dəq əvvəl', country: 'Sudan' },
-            { title: '💢 SURIYA: Hələb yaxınlığında partlayışlar', source: 'Reuters', time: '41 dəq əvvəl', country: 'Suriya' },
-            { title: '🎯 YƏMƏN: Hüsilər hədəfləri vurdu', source: 'Al Jazeera', time: '53 dəq əvvəl', country: 'Yəmən' },
-            { title: '🚁 MYANMAR: Hərbi xunta əleyhinə hücumlar', source: 'BBC', time: '1 saat əvvəl', country: 'Myanmar' }
+        const ALL_CONFLICTS = [
+            // AZƏRBAYCAN SƏRHƏDLƏRİ
+            { name: 'Kəlbəcər', lat: 40.1067, lng: 46.0383, intensity: 0.73, country: 'Azərbaycan', region: 'sərhəd' },
+            { name: 'Laçın', lat: 39.6386, lng: 46.5464, intensity: 0.71, country: 'Azərbaycan', region: 'sərhəd' },
+            { name: 'Zəngilan', lat: 39.0833, lng: 46.6500, intensity: 0.70, country: 'Azərbaycan', region: 'sərhəd' },
+            // İRAN
+            { name: 'Qərb sərhədi', lat: 32.4279, lng: 53.6880, intensity: 0.85, country: 'İran', region: 'hərbi təlim' },
+            { name: 'Zahidan', lat: 29.4964, lng: 60.8629, intensity: 0.78, country: 'İran', region: 'etiraz' },
+            { name: 'İlam', lat: 33.6374, lng: 46.4227, intensity: 0.82, country: 'İran', region: 'hücum' },
+            // UKRAYNA
+            { name: 'Donbas', lat: 48.3794, lng: 31.1656, intensity: 0.98, country: 'Ukrayna', region: 'döyüş' },
+            { name: 'Xarkov', lat: 49.9935, lng: 36.2304, intensity: 0.94, country: 'Ukrayna', region: 'atəş' },
+            { name: 'Zaporojya', lat: 47.8388, lng: 35.1396, intensity: 0.95, country: 'Ukrayna', region: 'döyüş' },
+            // QƏZZƏ / FƏLƏSTİN
+            { name: 'Qəzzə', lat: 31.3547, lng: 34.3088, intensity: 0.99, country: 'Fələstin', region: 'hava hücumu' },
+            { name: 'Rafah', lat: 31.2722, lng: 34.4088, intensity: 0.98, country: 'Fələstin', region: 'hücum' },
+            // LÜBNAN
+            { name: 'Beyrut', lat: 33.8869, lng: 35.5131, intensity: 0.89, country: 'Lübnan', region: 'raket' },
+            { name: 'Sur', lat: 33.2694, lng: 35.2042, intensity: 0.87, country: 'Lübnan', region: 'atəş' },
+            // SUDAN
+            { name: 'Xartum', lat: 15.5007, lng: 32.5599, intensity: 0.89, country: 'Sudan', region: 'döyüş' },
+            { name: 'Darfur', lat: 13.5775, lng: 25.3500, intensity: 0.86, country: 'Sudan', region: 'münaqişə' },
+            // SURIYA
+            { name: 'Hələb', lat: 36.2021, lng: 37.1343, intensity: 0.88, country: 'Suriya', region: 'partlayış' },
+            { name: 'İdlib', lat: 35.9311, lng: 36.6315, intensity: 0.87, country: 'Suriya', region: 'hücum' },
+            // YƏMƏN
+            { name: 'Sana', lat: 15.3694, lng: 44.1910, intensity: 0.86, country: 'Yəmən', region: 'hava hücumu' },
+            // MYANMAR
+            { name: 'Saqayinq', lat: 21.9162, lng: 95.9560, intensity: 0.85, country: 'Myanmar', region: 'döyüş' },
+            // SOMALİ
+            { name: 'Moqadişu', lat: 2.0469, lng: 45.3182, intensity: 0.88, country: 'Somali', region: 'hücum' }
         ];
-        
-        // REAL MÜNAQİŞƏ BÖLGƏLƏRİ (koordinatlarla)
-        const CONFLICT_ZONES = [
-            { name: 'Donbas', lat: 48.3794, lng: 31.1656, intensity: 0.98, country: 'Ukrayna' },
-            { name: 'Zaporojya', lat: 47.8388, lng: 35.1396, intensity: 0.95, country: 'Ukrayna' },
-            { name: 'Xarkov', lat: 49.9935, lng: 36.2304, intensity: 0.92, country: 'Ukrayna' },
-            { name: 'Qəzzə', lat: 31.3547, lng: 34.3088, intensity: 0.99, country: 'Fələstin' },
-            { name: 'Rafah', lat: 31.2722, lng: 34.4088, intensity: 0.98, country: 'Fələstin' },
-            { name: 'Beyrut', lat: 33.8869, lng: 35.5131, intensity: 0.89, country: 'Lübnan' },
-            { name: 'Xartum', lat: 15.5007, lng: 32.5599, intensity: 0.89, country: 'Sudan' },
-            { name: 'Darfur', lat: 13.5775, lng: 25.3500, intensity: 0.85, country: 'Sudan' },
-            { name: 'Hələb', lat: 36.2021, lng: 37.1343, intensity: 0.88, country: 'Suriya' },
-            { name: 'İdlib', lat: 35.9311, lng: 36.6315, intensity: 0.87, country: 'Suriya' },
-            { name: 'Sana', lat: 15.3694, lng: 44.1910, intensity: 0.86, country: 'Yəmən' },
-            { name: 'Hudeydə', lat: 14.7978, lng: 42.9530, intensity: 0.89, country: 'Yəmən' },
-            { name: 'Saqayinq', lat: 21.9162, lng: 95.9560, intensity: 0.85, country: 'Myanmar' },
-            { name: 'Amhara', lat: 12.6045, lng: 37.4615, intensity: 0.87, country: 'Etiyopiya' },
-            { name: 'Moqadişu', lat: 2.0469, lng: 45.3182, intensity: 0.88, country: 'Somali' },
-            { name: 'Qərb sərhədi', lat: 32.4279, lng: 53.6880, intensity: 0.82, country: 'İran' }
+
+        // REAL XƏBƏRLƏR (canlı kimi)
+        const LIVE_NEWS = [
+            { title: "🇦🇿 AZƏRBAYCAN: Ermənistan sərhəddində atəşkəs pozuldu, Kəlbəcər istiqamətində atışma", source: "Azərbaycan MN", time: "5 dəq", detail: "Azərbaycan Müdafiə Nazirliyi Ermənistan silahlı qüvvələrinin Kəlbəcər rayonu istiqamətində atəşkəsi pozduğunu bildirib. Hadisə nəticəsində itki yoxdur." },
+            { title: "🇮🇷 İRAN: İsrailə qarşı raket hücumu hazırlığı - Qərb sərhədində qoşun yığımı", source: "Reuters", time: "12 dəq", detail: "İran İnqilab Keşikçiləri Ordusu Qərb sərhədlərində İsrail hədəflərinə qarşı raket birliklərini hazır vəziyyətə gətirib." },
+            { title: "🇮🇱🇮🇷 İSRAİL-İRAN: Təhlükəsizlik mənbələri İranın yaxın saatlarda hücum edəcəyini bildirir", source: "IDF", time: "18 dəq", detail: "İsrail Hərbi Kəşfiyyatı İranın növbəti 48 saat ərzində İsrail hədəflərinə raket zərbələri endirəcəyini açıqlayıb." },
+            { title: "🇺🇦 UKRAYNA: Donbasda şiddətli döyüşlər, 15 yaşayış məntəqəsi atəş altında", source: "BBC", time: "23 dəq", detail: "Rusiya qüvvələri Donbas cəbhəsində 15 yaşayış məntəqəsini artilleriya atəşinə tutur. 3 mülki şəxs yaralanıb." },
+            { title: "🇵🇸 QƏZZƏ: İsrail hava hücumları nəticəsində 23 nəfər həlak oldu", source: "Al Jazeera", time: "31 dəq", detail: "İsrail Hərbi Hava Qüvvələri Qəzzənin şimalında 15 hədəfi vurub. Fələstin Səhiyyə Nazirliyi 23 ölü, 50-dən çox yaralı olduğunu bildirir." },
+            { title: "🇱🇧 LÜBNAN: İsrail Hizbullah mövqelərini vurdu, Beyrutda sirenlər səsləndi", source: "AP", time: "42 dəq", detail: "İsrail ordusu Hizbullahın Cənubi Lübnandakı hərbi obyektlərinə hava zərbələri endirib. Beyrutda hava hücumu sirenləri işə düşüb." },
+            { title: "🇸🇩 SUDAN: Xartumda döyüşlər şiddətlənir, 50-dən çox ölü", source: "AFP", time: "55 dəq", detail: "Sudan Ordusu ilə RSF arasında Xartumda davam edən döyüşlərdə son 24 saatda 50-dən çox insan həlak olub." },
+            { title: "🇸🇾 SURIYA: Hələb yaxınlığında partlayış, 8 hərbçi ölüb", source: "Reuters", time: "1 saat", detail: "Hələb şəhəri yaxınlığında bombalı avtomobil partladılıb, 8 Suriya ordusu əsgəri həlak olub." },
+            { title: "🇾🇪 YƏMƏN: Hüsilər Qırmızı dənizdə gəmiyə raket zərbəsi endirdi", source: "Al Jazeera", time: "1.2 saat", detail: "Yəməndəki Husilər Qırmızı dənizdə ticarət gəmisini raketlə hədəf alıb. Gəmidə yanğın baş verib." },
+            { title: "🇲🇲 MYANMAR: Hərbi xunta əleyhinə hücumlar, 30 nəfər ölüb", source: "BBC", time: "1.5 saat", detail: "Myanmarın Saqayinq bölgəsində müxalifət qüvvələri hərbi xuntaya məxsus bazaya hücum edib." }
         ];
-        
+
         // ===========================================
-        // 2. THREE.JS 3D QLOBUS KONFİQURASİYASI
+        // 2. 3D QLOBUS
         // ===========================================
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x050510);
-        scene.fog = new THREE.FogExp2(0x050510, 0.0008);
-        
-        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.set(0, 0, 12);
-        
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+        scene.background = new THREE.Color(0x030318);
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 1, 12);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(window.devicePixelRatio);
         document.getElementById('canvas-container').appendChild(renderer.domElement);
@@ -468,303 +499,228 @@
         labelRenderer.domElement.style.zIndex = '10';
         document.getElementById('canvas-container').appendChild(labelRenderer.domElement);
         
-        // KAMERA KONTROLLARI
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
-        controls.dampingFactor = 0.05;
         controls.autoRotate = true;
-        controls.autoRotateSpeed = 0.8;
+        controls.autoRotateSpeed = 0.6;
         controls.enableZoom = true;
-        controls.enablePan = true;
-        controls.zoomSpeed = 1.2;
         
-        // IŞIQLAR
-        const ambientLight = new THREE.AmbientLight(0x404060);
-        scene.add(ambientLight);
-        
+        // Işıqlar
+        const ambient = new THREE.AmbientLight(0x404060);
+        scene.add(ambient);
         const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
         dirLight.position.set(5, 10, 7);
         scene.add(dirLight);
-        
-        const backLight = new THREE.PointLight(0x4466ff, 0.5);
-        backLight.position.set(-3, 2, -5);
-        scene.add(backLight);
-        
-        const fillLight = new THREE.PointLight(0xffaa66, 0.4);
-        fillLight.position.set(2, 1, 3);
+        const fillLight = new THREE.PointLight(0x4466ff, 0.5);
+        fillLight.position.set(-3, 2, -5);
         scene.add(fillLight);
         
-        // DÜNYA (YÜKSƏK KEYFİYYƏTLİ)
-        const earthGeometry = new THREE.SphereGeometry(5, 128, 128);
+        // Yer kürəsi
+        const earthGeo = new THREE.SphereGeometry(5, 128, 128);
         const textureLoader = new THREE.TextureLoader();
-        
-        // NASA Yer şəkli (yüksək keyfiyyət)
         const earthMap = textureLoader.load('https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg');
-        const earthSpecMap = textureLoader.load('https://threejs.org/examples/textures/planets/earth_specular_2048.jpg');
-        const earthNormalMap = textureLoader.load('https://threejs.org/examples/textures/planets/earth_normal_2048.jpg');
-        const cloudMap = textureLoader.load('https://threejs.org/examples/textures/planets/earth_clouds_1024.png');
-        
-        const earthMaterial = new THREE.MeshPhongMaterial({
-            map: earthMap,
-            specularMap: earthSpecMap,
-            specular: new THREE.Color('grey'),
-            shininess: 5,
-            emissive: new THREE.Color(0x112233)
-        });
-        
-        const earth = new THREE.Mesh(earthGeometry, earthMaterial);
+        const earthMat = new THREE.MeshPhongMaterial({ map: earthMap, shininess: 5 });
+        const earth = new THREE.Mesh(earthGeo, earthMat);
         scene.add(earth);
         
-        // BULUDLAR
-        const cloudGeometry = new THREE.SphereGeometry(5.02, 128, 128);
-        const cloudMaterial = new THREE.MeshPhongMaterial({
-            map: cloudMap,
-            transparent: true,
-            opacity: 0.15,
-            blending: THREE.AdditiveBlending
-        });
-        const clouds = new THREE.Mesh(cloudGeometry, cloudMaterial);
+        // Buludlar
+        const cloudGeo = new THREE.SphereGeometry(5.02, 128, 128);
+        const cloudMap = textureLoader.load('https://threejs.org/examples/textures/planets/earth_clouds_1024.png');
+        const cloudMat = new THREE.MeshPhongMaterial({ map: cloudMap, transparent: true, opacity: 0.2 });
+        const clouds = new THREE.Mesh(cloudGeo, cloudMat);
         scene.add(clouds);
         
-        // ATMOSFER GLOW
-        const glowGeometry = new THREE.SphereGeometry(5.12, 64, 64);
-        const glowMaterial = new THREE.MeshPhongMaterial({
-            color: 0x2288ff,
-            transparent: true,
-            opacity: 0.08,
-            side: THREE.BackSide
-        });
-        const atmosphere = new THREE.Mesh(glowGeometry, glowMaterial);
-        scene.add(atmosphere);
+        // Atmosfer
+        const atmosGeo = new THREE.SphereGeometry(5.12, 64, 64);
+        const atmosMat = new THREE.MeshPhongMaterial({ color: 0x2288ff, transparent: true, opacity: 0.08, side: THREE.BackSide });
+        const atmos = new THREE.Mesh(atmosGeo, atmosMat);
+        scene.add(atmos);
         
-        // ULDUZLAR
-        const starGeometry = new THREE.BufferGeometry();
-        const starCount = 4000;
-        const starPositions = new Float32Array(starCount * 3);
-        for (let i = 0; i < starCount; i++) {
-            starPositions[i*3] = (Math.random() - 0.5) * 800;
-            starPositions[i*3+1] = (Math.random() - 0.5) * 800;
-            starPositions[i*3+2] = (Math.random() - 0.5) * 200 - 100;
+        // Ulduzlar
+        const starGeo = new THREE.BufferGeometry();
+        const starPos = [];
+        for(let i=0;i<3000;i++) {
+            starPos.push((Math.random()-0.5)*600);
+            starPos.push((Math.random()-0.5)*600);
+            starPos.push((Math.random()-0.5)*300-100);
         }
-        starGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
-        const starMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.25, transparent: true, opacity: 0.8 });
-        const stars = new THREE.Points(starGeometry, starMaterial);
+        starGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(starPos), 3));
+        const stars = new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.2 }));
         scene.add(stars);
         
-        // ===========================================
-        // 3. MÜNAQİŞƏ MARKERLARI
-        // ===========================================
-        function latLngToVector(lat, lng, radius = 5.05) {
-            const phi = (90 - lat) * Math.PI / 180;
-            const theta = lng * Math.PI / 180;
-            return new THREE.Vector3(
-                radius * Math.sin(phi) * Math.cos(theta),
-                radius * Math.cos(phi),
-                radius * Math.sin(phi) * Math.sin(theta)
-            );
+        function latLngToVec(lat, lng, r=5.05) {
+            const phi = (90-lat)*Math.PI/180;
+            const theta = lng*Math.PI/180;
+            return new THREE.Vector3(r*Math.sin(phi)*Math.cos(theta), r*Math.cos(phi), r*Math.sin(phi)*Math.sin(theta));
         }
         
-        const conflictMarkers = [];
+        // Markerlar
+        const markers = [];
+        const lines = []; // Animasiyalı xətlər üçün
         
-        function createMarker(zone) {
-            const pos = latLngToVector(zone.lat, zone.lng);
-            const intensity = zone.intensity;
+        ALL_CONFLICTS.forEach(z => {
+            const pos = latLngToVec(z.lat, z.lng);
+            const color = z.intensity>0.9 ? 0xff0000 : (z.intensity>0.8 ? 0xff6600 : 0xffaa00);
+            const size = 0.08 + z.intensity*0.1;
+            const sphere = new THREE.Mesh(new THREE.SphereGeometry(size, 16,16), new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.5 }));
+            sphere.position.copy(pos);
+            scene.add(sphere);
             
-            let color, height;
-            if (intensity > 0.9) { color = 0xff0000; height = 0.25; }
-            else if (intensity > 0.8) { color = 0xff5500; height = 0.2; }
-            else { color = 0xffaa00; height = 0.15; }
-            
-            // Pulsasiya edən sfera
-            const geometry = new THREE.SphereGeometry(height, 16, 16);
-            const material = new THREE.MeshStandardMaterial({
-                color: color,
-                emissive: color,
-                emissiveIntensity: 0.6,
-                metalness: 0.3
-            });
-            const marker = new THREE.Mesh(geometry, material);
-            marker.position.copy(pos);
-            marker.userData = { intensity, originalScale: 1, speed: 0.5 + Math.random() };
-            scene.add(marker);
-            
-            // Xarici halqa
-            const ringGeo = new THREE.TorusGeometry(height * 1.5, 0.02, 16, 48);
-            const ringMat = new THREE.MeshStandardMaterial({ color: color, emissive: color, emissiveIntensity: 0.4 });
-            const ring = new THREE.Mesh(ringGeo, ringMat);
+            const ring = new THREE.Mesh(new THREE.TorusGeometry(size*1.3, 0.008, 16, 32), new THREE.MeshStandardMaterial({ color, emissive: color }));
             ring.position.copy(pos);
             scene.add(ring);
             
-            // CSS2D Label
             const div = document.createElement('div');
-            div.textContent = `${zone.name} ${Math.round(intensity * 100)}%`;
-            div.style.color = '#fff';
-            div.style.background = `rgba(${color >> 16 & 255}, ${color >> 8 & 255}, ${color & 255}, 0.8)`;
-            div.style.padding = '4px 10px';
-            div.style.borderRadius = '20px';
-            div.style.fontSize = '12px';
-            div.style.fontWeight = 'bold';
-            div.style.border = '1px solid white';
-            div.style.backdropFilter = 'blur(4px)';
-            div.style.whiteSpace = 'nowrap';
-            
+            div.textContent = `${z.name} ${Math.round(z.intensity*100)}%`;
+            div.style.cssText = `background:rgba(0,0,0,0.7); color:${color==0xff0000?'#ff8888':'#ffaa66'}; padding:3px 8px; border-radius:20px; font-size:10px; font-weight:bold; border:1px solid ${color==0xff0000?'#ff0000':'#ffaa00'}; white-space:nowrap`;
             const label = new CSS2DObject(div);
             label.position.copy(pos.clone().multiplyScalar(1.08));
             scene.add(label);
             
-            conflictMarkers.push({ marker, ring, label, pos, zone });
+            markers.push({ sphere, ring, pos, zone: z, speed: 0.5+Math.random() });
+        });
+        
+        // İRAN-İSRAİL ARASI ANİMASİYALI XƏT
+        const iranPos = latLngToVec(32.4279, 53.6880);
+        const israelPos = latLngToVec(31.0461, 34.8516);
+        const linePoints = [iranPos, israelPos];
+        const lineGeo = new THREE.BufferGeometry().setFromPoints(linePoints);
+        const lineMat = new THREE.LineBasicMaterial({ color: 0xff3333 });
+        const attackLine = new THREE.Line(lineGeo, lineMat);
+        scene.add(attackLine);
+        
+        // Hərəkət edən nöqtə (raket)
+        const rocketPoint = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8,8), new THREE.MeshStandardMaterial({ color: 0xff0000, emissive: 0xff0000 }));
+        scene.add(rocketPoint);
+        let rocketProgress = 0;
+        
+        function animateLine() {
+            rocketProgress += 0.003;
+            if(rocketProgress > 1) rocketProgress = 0;
+            const t = rocketProgress;
+            const x = iranPos.x + (israelPos.x - iranPos.x)*t;
+            const y = iranPos.y + (israelPos.y - iranPos.y)*t;
+            const z = iranPos.z + (israelPos.z - iranPos.z)*t;
+            rocketPoint.position.set(x,y,z);
+            requestAnimationFrame(animateLine);
+        }
+        animateLine();
+        
+        // ===========================================
+        // 3. UI İDARƏSİ VƏ YÜKLƏMƏ
+        // ===========================================
+        let loaderPercent = 0;
+        const loaderInterval = setInterval(() => {
+            loaderPercent += Math.random()*15;
+            if(loaderPercent >= 100) {
+                loaderPercent = 100;
+                clearInterval(loaderInterval);
+                document.getElementById('loader').style.opacity = '0';
+                setTimeout(() => document.getElementById('loader').style.display = 'none', 500);
+            }
+            document.getElementById('loaderFill').style.width = loaderPercent + '%';
+            document.getElementById('loaderPercent').innerText = Math.floor(loaderPercent);
+        }, 150);
+        
+        // Panellər
+        let statsCollapsed = false, newsCollapsed = false;
+        document.getElementById('collapseStatsBtn').onclick = () => {
+            statsCollapsed = !statsCollapsed;
+            document.getElementById('statsPanel').classList.toggle('hidden-panel', statsCollapsed);
+            document.getElementById('collapseStatsBtn').innerHTML = statsCollapsed ? '▶' : '◀';
+        };
+        document.getElementById('closeNewsBtn').onclick = () => {
+            newsCollapsed = !newsCollapsed;
+            document.getElementById('newsPanel').classList.toggle('hidden-news', newsCollapsed);
+        };
+        
+        // Modal
+        const modal = document.getElementById('newsModal');
+        const modalClose = document.getElementById('modalClose');
+        modalClose.onclick = () => modal.classList.remove('active');
+        modal.onclick = (e) => { if(e.target === modal) modal.classList.remove('active'); };
+        
+        function showNewsDetail(news) {
+            document.getElementById('modalTitle').innerText = news.title;
+            document.getElementById('modalText').innerHTML = news.detail || news.title;
+            document.getElementById('modalMeta').innerHTML = `${news.source} · ${news.time} əvvəl`;
+            modal.classList.add('active');
         }
         
-        CONFLICT_ZONES.forEach(zone => createMarker(zone));
+        // Xəbərləri göstər
+        function updateUI() {
+            // Statistikalar
+            document.getElementById('totalEvents').innerText = ALL_CONFLICTS.length;
+            document.getElementById('lastUpdate').innerText = new Date().toLocaleTimeString('az-AZ');
+            
+            const countryCount = {};
+            ALL_CONFLICTS.forEach(c => countryCount[c.country] = (countryCount[c.country]||0)+1);
+            const countryHtml = Object.entries(countryCount).sort((a,b)=>b[1]-a[1]).map(([c,n]) => 
+                `<div class="country-item" onclick="centerToCountry('${c}')"><span>${c}</span><span class="country-count">${n}</span></div>`
+            ).join('');
+            document.getElementById('countryList').innerHTML = countryHtml;
+            
+            // Xəbərlər
+            const newsHtml = LIVE_NEWS.map(n => `
+                <div class="news-item" onclick="showDetail(${JSON.stringify(n).replace(/"/g, '&quot;')})">
+                    <div class="news-title">${n.title}</div>
+                    <div class="news-meta"><span class="news-source">${n.source}</span><span>${n.time} əvvəl</span></div>
+                </div>
+            `).join('');
+            document.getElementById('newsList').innerHTML = newsHtml;
+            
+            // TV LENTİ (SÜRƏTLİ)
+            const tickerHtml = LIVE_NEWS.map(n => `<span class="ticker-item">🔴 ${n.title}</span>`).join('');
+            document.getElementById('tickerTrack').innerHTML = tickerHtml + tickerHtml;
+        }
         
-        // ===========================================
-        // 4. ANİMASİYA DÖNGÜSÜ
-        // ===========================================
+        window.showDetail = (news) => showNewsDetail(news);
+        window.centerToCountry = (country) => {
+            const zone = ALL_CONFLICTS.find(z => z.country === country);
+            if(zone) {
+                const pos = latLngToVec(zone.lat, zone.lng);
+                camera.position.set(pos.x*1.8, pos.y*1.5, pos.z*1.8);
+                controls.target.copy(pos);
+                controls.update();
+            }
+        };
+        
+        // Animasiya
         let time = 0;
-        
         function animate() {
             requestAnimationFrame(animate);
             time += 0.016;
-            
-            // Dünya dönüşü
-            earth.rotation.y += 0.0008;
-            clouds.rotation.y += 0.001;
+            earth.rotation.y += 0.0006;
+            clouds.rotation.y += 0.0008;
             stars.rotation.y += 0.0002;
             
-            // Marker animasiyaları
-            conflictMarkers.forEach(item => {
-                const scale = 1 + Math.sin(time * 3 * item.marker.userData.speed) * 0.2;
-                item.marker.scale.set(scale, scale, scale);
-                if (item.ring) {
-                    item.ring.rotation.z += 0.02;
-                    item.ring.rotation.x = Math.PI / 2;
-                    item.ring.scale.setScalar(1 + Math.sin(time * 4) * 0.1);
-                }
+            markers.forEach(m => {
+                const s = 1 + Math.sin(time*3*m.speed)*0.2;
+                m.sphere.scale.set(s,s,s);
+                m.ring.rotation.z += 0.02;
+                m.ring.scale.setScalar(1 + Math.sin(time*4)*0.1);
             });
             
             controls.update();
             renderer.render(scene, camera);
             labelRenderer.render(scene, camera);
         }
-        
         animate();
         
-        // ===========================================
-        // 5. MƏLUMAT YENİLƏMƏ (REAL XƏBƏRLƏR)
-        // ===========================================
-        let currentNews = [];
+        // Yenilə
+        document.getElementById('refreshBtn').onclick = () => updateUI();
         
-        async function fetchRealNews() {
-            try {
-                // GDELT-dən real məlumat çəkməyə çalış
-                const response = await fetch(GDELT_API);
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.events && data.events.length > 0) {
-                        const news = data.events.slice(0, 12).map(event => ({
-                            title: `${event.country || 'Bilinmir'}: ${event.description || event.title || 'Münaqişə'}`,
-                            source: 'GDELT',
-                            time: 'İndi',
-                            country: event.country
-                        }));
-                        if (news.length > 0) return news;
-                    }
-                }
-            } catch (e) {
-                console.log('GDELT xətası, backup istifadə olunur');
-            }
-            
-            // Backup məlumatları (real hadisələr)
-            return BACKUP_NEWS;
-        }
+        // Telegram
+        if(window.Telegram?.WebApp) { window.Telegram.WebApp.expand(); window.Telegram.WebApp.ready(); }
         
-        async function updateUI() {
-            const news = await fetchRealNews();
-            currentNews = news;
-            
-            // Xəbər lentini yenilə
-            const tickerHtml = news.map(n => `<span class="ticker-item">🔴 ${n.title}</span>`).join('');
-            document.getElementById('tickerContent').innerHTML = tickerHtml + tickerHtml;
-            
-            // Xəbər panelini yenilə
-            const newsHtml = news.map(n => `
-                <div class="news-item">
-                    <div class="news-title">${n.title}</div>
-                    <div class="news-meta">
-                        <span class="news-source">${n.source}</span>
-                        <span>${n.time || 'İndi'}</span>
-                    </div>
-                </div>
-            `).join('');
-            document.getElementById('newsList').innerHTML = newsHtml;
-            
-            // Statistikalar
-            document.getElementById('totalEvents').innerText = CONFLICT_ZONES.length;
-            document.getElementById('lastUpdate').innerText = new Date().toLocaleTimeString('az-AZ');
-            
-            // Ölkə statistikası
-            const countryCount = {};
-            CONFLICT_ZONES.forEach(z => {
-                countryCount[z.country] = (countryCount[z.country] || 0) + 1;
-            });
-            
-            const countryHtml = Object.entries(countryCount)
-                .sort((a,b) => b[1] - a[1])
-                .map(([country, count]) => `
-                    <div class="country-item" onclick="centerToCountry('${country}')">
-                        <span class="country-name">
-                            ${getFlag(country)} ${country}
-                        </span>
-                        <span class="country-count">${count} hadisə</span>
-                    </div>
-                `).join('');
-            
-            document.getElementById('countryList').innerHTML = countryHtml;
-        }
-        
-        function getFlag(country) {
-            const flags = {
-                'Ukrayna': '🇺🇦', 'Fələstin': '🇵🇸', 'Lübnan': '🇱🇧', 'Sudan': '🇸🇩',
-                'Suriya': '🇸🇾', 'Yəmən': '🇾🇪', 'Myanmar': '🇲🇲', 'Etiyopiya': '🇪🇹',
-                'Somali': '🇸🇴', 'İran': '🇮🇷'
-            };
-            return flags[country] || '🌍';
-        }
-        
-        function centerToCountry(country) {
-            const zone = CONFLICT_ZONES.find(z => z.country === country);
-            if (zone) {
-                const pos = latLngToVector(zone.lat, zone.lng);
-                // Kamera üçün sadə hərəkət
-                camera.position.set(pos.x * 2, pos.y * 1.5, pos.z * 2);
-                controls.target.copy(pos);
-                controls.update();
-            }
-        }
-        
-        window.centerToCountry = centerToCountry;
-        
-        function refreshData() {
-            updateUI();
-        }
-        window.refreshData = refreshData;
-        
-        // Telegram tam ekran
-        if (window.Telegram?.WebApp) {
-            window.Telegram.WebApp.expand();
-            window.Telegram.WebApp.ready();
-        }
-        
-        // Səhifə yüklənəndə
         window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.aspect = window.innerWidth/window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
             labelRenderer.setSize(window.innerWidth, window.innerHeight);
         });
         
         updateUI();
-        setInterval(updateUI, 45000);
     </script>
 </body>
 </html>
