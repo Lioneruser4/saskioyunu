@@ -2,715 +2,874 @@
 <html lang="az">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Şaşki - Professional Checkers</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Hastane Müştəri Takip Sistemi</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
         }
 
         body {
-            font-family: 'Segoe UI', 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-            position: fixed;
-            width: 100%;
-            height: 100%;
-        }
-
-        /* Ana Konteyner */
-        .game-container {
-            width: 100%;
-            max-width: 550px;
-            height: 100vh;
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(20px);
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            box-shadow: 0 0 50px rgba(0,0,0,0.5);
-        }
-
-        /* Loading Screen */
-        .loading-screen {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            transition: opacity 0.5s;
-        }
-
-        .loader {
-            width: 80px;
-            height: 80px;
-            position: relative;
-        }
-
-        .loader::before, .loader::after {
-            content: '';
-            position: absolute;
-            border-radius: 50%;
-            animation: pulse 1s ease-in-out infinite;
-        }
-
-        .loader::before {
-            width: 100%;
-            height: 100%;
-            background: rgba(255,255,255,0.2);
-            box-shadow: 0 0 20px rgba(255,255,255,0.5);
-        }
-
-        .loader::after {
-            width: 60%;
-            height: 60%;
-            background: white;
-            top: 20%;
-            left: 20%;
-            animation-delay: 0.5s;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(0.8); opacity: 0.5; }
-            50% { transform: scale(1); opacity: 1; }
-        }
-
-        .loading-text {
-            margin-top: 30px;
-            font-size: 18px;
-            font-weight: 500;
-            letter-spacing: 2px;
-        }
-
-        /* Ana Menü */
-        .main-menu {
+            font-family: 'Segoe UI', 'Roboto', 'Tahoma', sans-serif;
+            background: #f5f7fa;
             padding: 20px;
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-            opacity: 0;
-            transform: translateY(20px);
-            transition: all 0.5s ease;
+            min-height: 100vh;
         }
 
-        .main-menu.show {
-            opacity: 1;
-            transform: translateY(0);
+        /* HASTANE TEMASI - SADE VE ŞIK */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
         }
 
+        /* HEADER */
         .header {
+            background: white;
+            border-radius: 16px;
+            padding: 20px 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border-left: 5px solid #2c7da0;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 30px;
-            padding: 10px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 20px;
-            backdrop-filter: blur(10px);
+            flex-wrap: wrap;
+            gap: 15px;
         }
 
-        .user-profile {
+        h1 {
+            font-size: 22px;
+            color: #2c7da0;
+            font-weight: 600;
+        }
+
+        .header-buttons {
             display: flex;
-            align-items: center;
             gap: 12px;
+            flex-wrap: wrap;
         }
 
-        .user-profile img {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            border: 2px solid gold;
-            object-fit: cover;
-        }
-
-        .user-info {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .user-name {
-            font-weight: bold;
-            font-size: 16px;
-        }
-
-        .user-stats {
-            font-size: 12px;
-            opacity: 0.8;
-        }
-
-        .language-selector {
-            display: flex;
-            gap: 8px;
-            background: rgba(0,0,0,0.3);
-            padding: 5px;
-            border-radius: 25px;
-        }
-
-        .lang-btn {
-            background: transparent;
+        .btn {
+            padding: 10px 20px;
             border: none;
-            color: white;
-            padding: 6px 12px;
-            border-radius: 20px;
+            border-radius: 10px;
             cursor: pointer;
-            font-weight: bold;
-            transition: all 0.3s;
+            font-weight: 500;
+            font-size: 13px;
+            transition: all 0.2s;
         }
 
-        .lang-btn.active {
+        .btn-primary {
+            background: #2c7da0;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1f5e7a;
+            transform: translateY(-1px);
+        }
+
+        .btn-outline {
             background: white;
-            color: #764ba2;
+            border: 1px solid #2c7da0;
+            color: #2c7da0;
         }
 
-        .difficulty-section {
-            margin: 20px 0;
-            background: rgba(255,255,255,0.1);
-            border-radius: 20px;
-            padding: 15px;
+        .btn-outline:hover {
+            background: #2c7da0;
+            color: white;
         }
 
-        .section-title {
-            text-align: center;
-            margin-bottom: 15px;
-            font-size: 14px;
-            opacity: 0.8;
+        .btn-success {
+            background: #2c7da0;
+            color: white;
         }
 
-        .difficulty-buttons {
+        .btn-warning {
+            background: #e9ecef;
+            color: #2c7da0;
+            border: 1px solid #dee2e6;
+        }
+
+        /* QOVLUQLAR PANELI */
+        .folders-panel {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .folders-header {
             display: flex;
+            gap: 12px;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+        }
+
+        .folders-header input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .folders-header input:focus {
+            border-color: #2c7da0;
+        }
+
+        .folders-list {
+            display: flex;
+            flex-wrap: wrap;
             gap: 10px;
         }
 
-        .diff-btn {
-            flex: 1;
-            padding: 12px;
-            border: none;
-            border-radius: 12px;
-            font-weight: bold;
+        .folder-item {
+            background: #f8f9fa;
+            padding: 6px 16px;
+            border-radius: 25px;
             cursor: pointer;
-            transition: all 0.3s;
+            font-size: 13px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid #e9ecef;
+            transition: all 0.2s;
+        }
+
+        .folder-item:hover {
+            background: #e9ecef;
+        }
+
+        .folder-item.active {
+            background: #2c7da0;
+            color: white;
+            border-color: #2c7da0;
+        }
+
+        .delete-folder {
+            cursor: pointer;
+            font-size: 14px;
+            opacity: 0.6;
+        }
+
+        .delete-folder:hover {
+            opacity: 1;
+        }
+
+        /* MUSTERI ELAVE */
+        .add-customer {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .add-customer input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #dee2e6;
+            border-radius: 12px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .add-customer input:focus {
+            border-color: #2c7da0;
+        }
+
+        /* CEDVEL */
+        .table-wrapper {
+            background: white;
+            border-radius: 16px;
+            overflow-x: auto;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            text-align: left;
+            padding: 16px 12px;
+            background: #f8f9fa;
+            font-weight: 600;
+            font-size: 13px;
+            color: #495057;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        td {
+            padding: 14px 12px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 13px;
+            vertical-align: middle;
+        }
+
+        .customer-name {
+            background: none;
+            border: none;
+            color: #2c7da0;
+            font-weight: 600;
+            cursor: pointer;
             font-size: 14px;
         }
 
-        .diff-btn.easy {
-            background: #4caf50;
-            color: white;
+        .customer-name:hover {
+            text-decoration: underline;
         }
 
-        .diff-btn.normal {
-            background: #ff9800;
-            color: white;
-        }
-
-        .diff-btn.hard {
-            background: #f44336;
-            color: white;
-        }
-
-        .diff-btn.active {
-            transform: scale(1.05);
-            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
-            border: 2px solid gold;
-        }
-
-        .menu-buttons {
+        .action-group {
             display: flex;
-            flex-direction: column;
-            gap: 15px;
-            margin-top: auto;
-            margin-bottom: auto;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
         }
 
-        .menu-btn {
-            padding: 16px;
+        .small-btn {
+            padding: 6px 12px;
             border: none;
-            border-radius: 15px;
-            font-size: 18px;
-            font-weight: bold;
+            border-radius: 8px;
             cursor: pointer;
-            transition: all 0.3s;
-            position: relative;
-            overflow: hidden;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.2s;
         }
 
-        .menu-btn::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.3);
-            transform: translate(-50%, -50%);
-            transition: width 0.6s, height 0.6s;
+        .btn-visit {
+            background: #e7f3f8;
+            color: #2c7da0;
         }
 
-        .menu-btn:active::before {
-            width: 300px;
-            height: 300px;
+        .btn-visit:hover {
+            background: #d0e4ed;
         }
 
-        .menu-btn.primary {
-            background: linear-gradient(45deg, #ff6b6b, #ff8e53);
-            color: white;
-            box-shadow: 0 5px 15px rgba(255,107,107,0.4);
+        .btn-money {
+            background: #e9ecef;
+            color: #2c7da0;
         }
 
-        .menu-btn.secondary {
-            background: linear-gradient(45deg, #4ecdc4, #44a08d);
-            color: white;
+        .btn-money:hover {
+            background: #dee2e6;
         }
 
-        .menu-btn.locked {
-            background: #555;
-            color: #aaa;
-            cursor: not-allowed;
+        .btn-money-custom {
+            background: #f8f9fa;
+            color: #6c757d;
+            border: 1px solid #dee2e6;
+            padding: 4px 8px;
+            font-size: 11px;
         }
 
-        /* Oyun Ekranı */
-        .game-screen {
-            display: none;
-            flex-direction: column;
+        .btn-info {
+            background: #e7f3f8;
+            color: #2c7da0;
+        }
+
+        .btn-delete {
+            background: #fff5f5;
+            color: #dc3545;
+        }
+
+        .btn-delete:hover {
+            background: #ffe0e0;
+        }
+
+        .stat-badge {
+            background: #f8f9fa;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            display: inline-block;
+            margin-top: 4px;
+        }
+
+        /* MODAL */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
             height: 100%;
-            position: relative;
-        }
-
-        .game-screen.active {
+            background: rgba(0,0,0,0.5);
             display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
         }
 
-        .game-header {
-            padding: 15px;
-            background: rgba(0,0,0,0.3);
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 550px;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 25px;
         }
 
-        .player-card {
+        .modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: rgba(255,255,255,0.1);
-            border-radius: 15px;
-            padding: 10px 15px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #2c7da0;
         }
 
-        .player-info {
-            display: flex;
-            align-items: center;
-            gap: 12px;
+        .modal-header h3 {
+            color: #2c7da0;
+            font-size: 20px;
         }
 
-        .player-info img {
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-        }
-
-        .player-details {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .player-name {
-            font-weight: bold;
-            font-size: 14px;
-        }
-
-        .turn-indicator {
-            font-size: 11px;
-            padding: 2px 8px;
-            border-radius: 12px;
-            background: rgba(0,0,0,0.5);
-        }
-
-        .turn-indicator.active {
-            background: #ffd700;
-            color: #000;
-            animation: pulse 1s infinite;
-        }
-
-        .timer-box {
-            background: rgba(0,0,0,0.5);
-            border-radius: 30px;
-            padding: 5px 15px;
-            text-align: center;
-            min-width: 70px;
-        }
-
-        .timer-value {
-            font-size: 24px;
-            font-weight: bold;
-            font-family: monospace;
-        }
-
-        .timer-label {
-            font-size: 10px;
-            opacity: 0.7;
-        }
-
-        .game-board-container {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 10px;
-            position: relative;
-        }
-
-        .board {
-            display: grid;
-            grid-template-columns: repeat(8, 1fr);
-            background: #d4b48c;
-            border-radius: 12px;
-            padding: 4px;
-            gap: 2px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-            width: min(450px, 85vw);
-            height: min(450px, 85vw);
-        }
-
-        .cell {
-            aspect-ratio: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            position: relative;
-            cursor: pointer;
-            transition: all 0.2s;
-            border-radius: 4px;
-        }
-
-        .cell.light {
-            background: #f0d9b5;
-        }
-
-        .cell.dark {
-            background: #b58863;
-        }
-
-        .cell.valid-move {
-            background: rgba(76, 175, 80, 0.6) !important;
-            animation: glow 0.5s ease-in-out infinite alternate;
-        }
-
-        .cell.capture-move {
-            background: rgba(244, 67, 54, 0.7) !important;
-            animation: pulse-red 0.5s ease-in-out infinite alternate;
-        }
-
-        .cell.must-move {
-            background: rgba(255, 215, 0, 0.7) !important;
-            animation: pulse-gold 0.3s ease-in-out infinite alternate;
-        }
-
-        @keyframes glow {
-            from { box-shadow: 0 0 5px #4caf50; }
-            to { box-shadow: 0 0 20px #4caf50; }
-        }
-
-        @keyframes pulse-red {
-            from { box-shadow: 0 0 5px #f44336; }
-            to { box-shadow: 0 0 20px #f44336; }
-        }
-
-        @keyframes pulse-gold {
-            from { box-shadow: 0 0 5px gold; transform: scale(1); }
-            to { box-shadow: 0 0 25px gold; transform: scale(1.02); }
-        }
-
-        .piece {
-            width: 80%;
-            height: 80%;
-            border-radius: 50%;
-            position: relative;
-            cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-        }
-
-        .piece:active {
-            transform: scale(1.05);
-        }
-
-        .piece.black {
-            background: radial-gradient(circle at 35% 35%, #444, #111);
-            border: 1px solid #666;
-        }
-
-        .piece.white {
-            background: radial-gradient(circle at 35% 35%, #fff, #ddd);
-            border: 1px solid #999;
-        }
-
-        .piece.king::after {
-            content: '👑';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 24px;
-            text-shadow: 0 0 3px gold;
-        }
-
-        .piece.black.king::after {
-            filter: drop-shadow(0 0 2px gold);
-        }
-
-        /* Yan panel - Yenilen taşlar */
-        .captured-area {
-            display: flex;
-            gap: 20px;
-            padding: 10px;
-            background: rgba(0,0,0,0.3);
-            border-radius: 15px;
-            margin: 5px 10px;
-        }
-
-        .captured-group {
-            flex: 1;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-            align-items: center;
-        }
-
-        .captured-group span {
-            font-size: 12px;
-            margin-right: 8px;
-        }
-
-        .captured-piece-mini {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            animation: slideIn 0.3s ease;
-        }
-
-        @keyframes slideIn {
-            from {
-                transform: translateX(20px);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-
-        /* Bilgi mesajları */
-        .notification {
-            position: fixed;
-            bottom: 100px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0,0,0,0.9);
-            color: #ffd700;
-            padding: 12px 24px;
-            border-radius: 30px;
-            font-weight: bold;
-            z-index: 1000;
-            animation: slideUp 0.3s ease;
-            white-space: nowrap;
-        }
-
-        @keyframes slideUp {
-            from {
-                bottom: 0;
-                opacity: 0;
-            }
-            to {
-                bottom: 100px;
-                opacity: 1;
-            }
-        }
-
-        /* Kazanma animasyonu */
-        .winner-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.9);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 2000;
-            animation: fadeIn 0.5s;
-        }
-
-        .winner-content {
-            text-align: center;
-            animation: bounceIn 0.6s;
-        }
-
-        .trophy-icon {
-            font-size: 80px;
-            animation: trophyBounce 1s infinite;
-        }
-
-        .winner-text {
+        .close-modal {
             font-size: 28px;
-            margin: 20px 0;
-            background: linear-gradient(45deg, gold, #ff6b6b);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        @keyframes bounceIn {
-            0% { transform: scale(0); opacity: 0; }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); opacity: 1; }
-        }
-
-        @keyframes trophyBounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-20px); }
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        /* Ses butonu */
-        .sound-btn {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            background: rgba(0,0,0,0.5);
-            border: none;
-            color: white;
-            font-size: 24px;
             cursor: pointer;
-            z-index: 100;
-            backdrop-filter: blur(5px);
+            color: #6c757d;
         }
 
-        @media (max-width: 500px) {
-            .timer-value {
-                font-size: 18px;
-            }
-            .player-name {
-                font-size: 12px;
-            }
-            .captured-piece-mini {
-                width: 25px;
-                height: 25px;
-            }
+        .info-section {
+            margin-bottom: 20px;
+        }
+
+        .info-section h4 {
+            color: #495057;
+            margin-bottom: 12px;
+            font-size: 15px;
+        }
+
+        .log-list {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .log-item {
+            padding: 8px 10px;
+            border-bottom: 1px solid #e9ecef;
+            font-size: 13px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .total-box {
+            background: #e7f3f8;
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        .total-box span {
+            font-size: 20px;
+            font-weight: bold;
+            color: #2c7da0;
+        }
+
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            th, td { padding: 10px 6px; font-size: 12px; }
+            .small-btn { padding: 4px 8px; font-size: 10px; }
         }
     </style>
 </head>
 <body>
-    <div class="game-container" id="gameContainer">
-        <!-- Loading -->
-        <div class="loading-screen" id="loadingScreen">
-            <div class="loader"></div>
-            <div class="loading-text">ŞAŞKI</div>
-        </div>
-
-        <!-- Ana Menü -->
-        <div class="main-menu" id="mainMenu">
-            <div class="header">
-                <div class="user-profile">
-                    <img id="userAvatar" src="" alt="Profile">
-                    <div class="user-info">
-                        <div class="user-name" id="userName">Player</div>
-                        <div class="user-stats" id="userStats">⭐ 0 | 🏆 0</div>
-                    </div>
-                </div>
-                <div class="language-selector">
-                    <button class="lang-btn" data-lang="az">AZ</button>
-                    <button class="lang-btn" data-lang="en">EN</button>
-                </div>
-            </div>
-
-            <div class="difficulty-section">
-                <div class="section-title" id="difficultyLabel">⚡ ZORLUK SEVİYESİ ⚡</div>
-                <div class="difficulty-buttons">
-                    <button class="diff-btn easy" data-diff="easy">🟢 EASY</button>
-                    <button class="diff-btn normal active" data-diff="normal">🟠 NORMAL</button>
-                    <button class="diff-btn hard" data-diff="hard">🔴 HARD</button>
-                </div>
-            </div>
-
-            <div class="menu-buttons">
-                <button class="menu-btn primary" id="playVsAI">🤖 BOT İLE OYNA</button>
-                <button class="menu-btn secondary" id="playVsFriend">👥 ARKADAŞ İLE</button>
-                <button class="menu-btn locked" id="rankedBtn" disabled>🔒 DERECELİ (YAKINDA)</button>
-            </div>
-        </div>
-
-        <!-- Oyun Ekranı -->
-        <div class="game-screen" id="gameScreen">
-            <div class="game-header">
-                <div class="player-card">
-                    <div class="player-info">
-                        <img id="gamePlayerAvatar" src="">
-                        <div class="player-details">
-                            <div class="player-name" id="gamePlayerName">Siz</div>
-                            <div class="turn-indicator" id="playerTurnIndicator">●</div>
-                        </div>
-                    </div>
-                    <div class="timer-box">
-                        <div class="timer-value" id="playerTimer">30</div>
-                        <div class="timer-label">saniye</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="captured-area">
-                <div class="captured-group">
-                    <span>🎯 Yenilen:</span>
-                    <div id="capturedWhite" style="display: flex; flex-wrap: wrap; gap: 5px;"></div>
-                </div>
-                <div class="captured-group">
-                    <span>🎯 Yenilen:</span>
-                    <div id="capturedBlack" style="display: flex; flex-wrap: wrap; gap: 5px;"></div>
-                </div>
-            </div>
-
-            <div class="game-board-container">
-                <div class="board" id="board"></div>
-            </div>
-
-            <div class="game-header" style="margin-top: auto;">
-                <div class="player-card">
-                    <div class="player-info">
-                        <img id="gameOpponentAvatar" src="">
-                        <div class="player-details">
-                            <div class="player-name" id="gameOpponentName">Bot</div>
-                            <div class="turn-indicator" id="opponentTurnIndicator">○</div>
-                        </div>
-                    </div>
-                    <div class="timer-box">
-                        <div class="timer-value" id="opponentTimer">30</div>
-                        <div class="timer-label">saniye</div>
-                    </div>
-                </div>
-            </div>
+<div class="container">
+    <!-- HEADER -->
+    <div class="header">
+        <h1>🏥 HASTANE MÜŞTƏRİ TAKİP SİSTEMİ</h1>
+        <div class="header-buttons">
+            <button class="btn btn-outline" id="statsBtn">📊 ÜMUMİ STATİSTİKA</button>
+            <button class="btn btn-primary" id="exportBtn">💾 YEDƏK AL</button>
+            <button class="btn btn-warning" id="importBtn">📂 YEDƏK YÜKLƏ</button>
         </div>
     </div>
 
-    <button class="sound-btn" id="soundBtn">🔊</button>
+    <!-- QOVLUQLAR -->
+    <div class="folders-panel">
+        <div class="folders-header">
+            <input type="text" id="folderName" placeholder="Yeni qovluq adı...">
+            <button class="btn btn-primary" id="addFolderBtn">➕ QOVLUQ YARAT</button>
+        </div>
+        <div class="folders-list" id="foldersList"></div>
+    </div>
 
-    <script src="game.js"></script>
+    <!-- MÜŞTƏRİ ƏLAVƏ -->
+    <div class="add-customer">
+        <input type="text" id="custName" placeholder="Müştəri adı">
+        <input type="text" id="custPhone" placeholder="Telefon nömrəsi">
+        <button class="btn btn-primary" id="addCustBtn">➕ MÜŞTƏRİ ƏLAVƏ ET</button>
+    </div>
+
+    <!-- MÜŞTƏRİ CƏDVƏLİ -->
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr><th>MÜŞTƏRİ</th><th>TELEFON</th><th>GƏLİŞ</th><th>PUL</th><th>STATİSTİKA</th><th>ƏMƏLİYYAT</th>
+            </thead>
+            <tbody id="tableBody">
+                <tr><td colspan="6" style="text-align:center; padding:40px;">Müştəri yoxdur</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    // VERİ MODELİ
+    let musteriler = [];
+    let qovluqlar = [];
+    let seciliQovluq = "all";
+
+    // Yaddaş
+    function kaydet() {
+        const data = { musteriler, qovluqlar, seciliQovluq };
+        localStorage.setItem('HastaneTakip', JSON.stringify(data));
+    }
+
+    function yukle() {
+        const kayitli = localStorage.getItem('HastaneTakip');
+        if(kayitli) {
+            const data = JSON.parse(kayitli);
+            musteriler = data.musteriler || [];
+            qovluqlar = data.qovluqlar || [];
+            seciliQovluq = data.seciliQovluq || "all";
+        }
+        if(qovluqlar.length === 0) {
+            qovluqlar = [{ id: "q1", name: "Ümumi" }];
+            seciliQovluq = "q1";
+        }
+    }
+
+    // TARIX FUNKSIYASI
+    function getDateTime() {
+        const now = new Date();
+        const gun = now.getDate().toString().padStart(2,'0');
+        const ay = (now.getMonth()+1).toString().padStart(2,'0');
+        const saat = now.getHours().toString().padStart(2,'0');
+        const deq = now.getMinutes().toString().padStart(2,'0');
+        return `${gun}/${ay} ${saat}:${deq}`;
+    }
+
+    function getToday() {
+        const now = new Date();
+        return now.getDate().toString().padStart(2,'0') + '/' + (now.getMonth()+1).toString().padStart(2,'0');
+    }
+
+    // HESABLAMA - DÜZGÜN
+    function getTotalMoneyFromPayments(payments) {
+        let total = 0;
+        for(let i = 0; i < payments.length; i++) {
+            const match = payments[i].match(/(\d+)\s*AZN/);
+            if(match) {
+                total += parseInt(match[1]);
+            }
+        }
+        return total;
+    }
+
+    function getTodayVisits(visits) {
+        const today = getToday();
+        let count = 0;
+        for(let i = 0; i < visits.length; i++) {
+            if(visits[i].substring(0,5) === today) count++;
+        }
+        return count;
+    }
+
+    // STATİSTİKA YENİLƏ (ümumi buton üçün)
+    function getSystemStats() {
+        let totalMusteri = musteriler.length;
+        let totalGelis = 0;
+        let totalPul = 0;
+        let bugunGelis = 0;
+        const today = getToday();
+
+        musteriler.forEach(m => {
+            totalGelis += m.visits.length;
+            totalPul += getTotalMoneyFromPayments(m.payments);
+            m.visits.forEach(v => {
+                if(v.substring(0,5) === today) bugunGelis++;
+            });
+        });
+
+        // Qovluq statları
+        let qovluqStats = [];
+        qovluqlar.forEach(q => {
+            const qMusteriler = musteriler.filter(m => m.qovluqId === q.id);
+            let qGelis = 0, qPul = 0;
+            qMusteriler.forEach(m => {
+                qGelis += m.visits.length;
+                qPul += getTotalMoneyFromPayments(m.payments);
+            });
+            qovluqStats.push({
+                name: q.name,
+                count: qMusteriler.length,
+                gelis: qGelis,
+                pul: qPul
+            });
+        });
+
+        return { totalMusteri, totalGelis, totalPul, bugunGelis, qovluqStats };
+    }
+
+    // FİLTRƏ
+    function getFiltered() {
+        if(seciliQovluq === "all") return musteriler;
+        return musteriler.filter(m => m.qovluqId === seciliQovluq);
+    }
+
+    // CƏDVƏLİ GÖSTƏR
+    function renderTable() {
+        const tbody = document.getElementById('tableBody');
+        const filtered = getFiltered();
+
+        if(filtered.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:40px; color:#6c757d;">📭 Bu qovluqda müştəri yoxdur</td></tr>';
+            return;
+        }
+
+        let html = '';
+        for(let i = 0; i < filtered.length; i++) {
+            const m = filtered[i];
+            const bugunGelis = getTodayVisits(m.visits);
+            const toplamGelis = m.visits.length;
+            const toplamPul = getTotalMoneyFromPayments(m.payments);
+            const toplamPulSay = m.payments.length;
+
+            html += `<tr>
+                <td><button class="customer-name" onclick="showDetails('${m.id}')">${m.name}</button></td>
+                <td>${m.phone || '-'}</td>
+                <td>
+                    <button class="small-btn btn-visit" onclick="addVisit('${m.id}')">✅ GƏLİŞ +1</button>
+                    <div class="stat-badge">Bugün: ${bugunGelis} | Ümumi: ${toplamGelis}</div>
+                </td>
+                <td>
+                    <div class="action-group">
+                        <button class="small-btn btn-money" onclick="addPayment('${m.id}', 20)">💰 +20 AZN</button>
+                        <button class="small-btn btn-money-custom" onclick="addPaymentCustom('${m.id}')">✏️ Əl ilə</button>
+                    </div>
+                    <div class="stat-badge">${toplamPulSay} dəfə | ${toplamPul} AZN</div>
+                </td>
+                <td>
+                    <div class="stat-badge">📊 ${toplamGelis} gəliş</div>
+                    <div class="stat-badge">💰 ${toplamPul} AZN</div>
+                </td>
+                <td>
+                    <div class="action-group">
+                        <button class="small-btn btn-info" onclick="showDetails('${m.id}')">ℹ️ BİLGİ</button>
+                        <button class="small-btn btn-delete" onclick="deleteMusteri('${m.id}')">🗑️ SIL</button>
+                    </div>
+                </td>
+            </tr>`;
+        }
+        tbody.innerHTML = html;
+    }
+
+    // QOVLUQLARI GÖSTƏR
+    function renderFolders() {
+        const container = document.getElementById('foldersList');
+        container.innerHTML = '';
+
+        const allBtn = document.createElement('div');
+        allBtn.className = `folder-item ${seciliQovluq === 'all' ? 'active' : ''}`;
+        allBtn.innerHTML = '📁 BÜTÜN MÜŞTƏRİLƏR';
+        allBtn.onclick = () => {
+            seciliQovluq = 'all';
+            kaydet();
+            renderFolders();
+            renderTable();
+        };
+        container.appendChild(allBtn);
+
+        for(let i = 0; i < qovluqlar.length; i++) {
+            const f = qovluqlar[i];
+            const div = document.createElement('div');
+            div.className = `folder-item ${seciliQovluq === f.id ? 'active' : ''}`;
+            div.innerHTML = `${f.name} <span class="delete-folder" data-id="${f.id}">✖</span>`;
+            div.onclick = (e) => {
+                if(e.target.classList.contains('delete-folder')) return;
+                seciliQovluq = f.id;
+                kaydet();
+                renderFolders();
+                renderTable();
+            };
+            const delSpan = div.querySelector('.delete-folder');
+            delSpan.onclick = (e) => {
+                e.stopPropagation();
+                if(qovluqlar.length === 1) {
+                    alert("Ən azı bir qovluq qalmalıdır!");
+                    return;
+                }
+                const ilkQovluq = qovluqlar.find(q => q.id !== f.id);
+                for(let j = 0; j < musteriler.length; j++) {
+                    if(musteriler[j].qovluqId === f.id) {
+                        musteriler[j].qovluqId = ilkQovluq.id;
+                    }
+                }
+                qovluqlar = qovluqlar.filter(q => q.id !== f.id);
+                if(seciliQovluq === f.id) seciliQovluq = ilkQovluq.id;
+                kaydet();
+                renderFolders();
+                renderTable();
+            };
+            container.appendChild(div);
+        }
+    }
+
+    // GƏLİŞ ƏLAVƏ
+    window.addVisit = (id) => {
+        for(let i = 0; i < musteriler.length; i++) {
+            if(musteriler[i].id === id) {
+                musteriler[i].visits.push(getDateTime());
+                kaydet();
+                renderTable();
+                break;
+            }
+        }
+    };
+
+    // PUL ƏLAVƏ (default 20 AZN)
+    window.addPayment = (id, amount) => {
+        for(let i = 0; i < musteriler.length; i++) {
+            if(musteriler[i].id === id) {
+                musteriler[i].payments.push(`${getDateTime()} - ${amount} AZN`);
+                kaydet();
+                renderTable();
+                break;
+            }
+        }
+    };
+
+    // ƏL İLƏ PUL ƏLAVƏ
+    window.addPaymentCustom = (id) => {
+        const amount = prompt("Pul məbləğini daxil edin (AZN):", "20");
+        if(amount && !isNaN(parseInt(amount)) && parseInt(amount) > 0) {
+            addPayment(id, parseInt(amount));
+        } else if(amount) {
+            alert("Düzgün məbləğ daxil edin!");
+        }
+    };
+
+    // MÜŞTƏRİ SİL
+    window.deleteMusteri = (id) => {
+        if(confirm("Bu müştərini silmək istədiyinizə əminsiniz?")) {
+            musteriler = musteriler.filter(m => m.id !== id);
+            kaydet();
+            renderTable();
+        }
+    };
+
+    // DETALLAR (BİLGİ BUTONU)
+    window.showDetails = (id) => {
+        let musteri = null;
+        for(let i = 0; i < musteriler.length; i++) {
+            if(musteriler[i].id === id) {
+                musteri = musteriler[i];
+                break;
+            }
+        }
+        if(!musteri) return;
+
+        const totalMoney = getTotalMoneyFromPayments(musteri.payments);
+
+        let visitsHtml = '';
+        for(let i = 0; i < musteri.visits.length; i++) {
+            visitsHtml += `<div class="log-item">🕒 ${musteri.visits[i]}</div>`;
+        }
+        if(musteri.visits.length === 0) visitsHtml = '<div class="log-item">📭 Gəliş qeydi yoxdur</div>';
+
+        let paymentsHtml = '';
+        for(let i = 0; i < musteri.payments.length; i++) {
+            paymentsHtml += `<div class="log-item">💰 ${musteri.payments[i]}</div>`;
+        }
+        if(musteri.payments.length === 0) paymentsHtml = '<div class="log-item">💵 Pul əməliyyatı yoxdur</div>';
+
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>👤 ${musteri.name}</h3>
+                    <span class="close-modal" onclick="this.parentElement.parentElement.parentElement.remove()">&times;</span>
+                </div>
+                <div class="info-section">
+                    <p><strong>📞 Telefon:</strong> ${musteri.phone || 'Yoxdur'}</p>
+                    <p><strong>📁 Qovluq:</strong> ${qovluqlar.find(q => q.id === musteri.qovluqId)?.name || 'Ümumi'}</p>
+                </div>
+                <div class="info-section">
+                    <h4>📅 GƏLİŞ TARİXLƏRİ (${musteri.visits.length} dəfə)</h4>
+                    <div class="log-list">${visitsHtml}</div>
+                </div>
+                <div class="info-section">
+                    <h4>💰 PUL ƏMƏLİYYATLARI (${musteri.payments.length} dəfə)</h4>
+                    <div class="log-list">${paymentsHtml}</div>
+                </div>
+                <div class="total-box">
+                    <strong>📊 ÜMUMİ MƏLUMAT</strong><br>
+                    Gəliş sayı: ${musteri.visits.length}<br>
+                    Ümumi pul: <span>${totalMoney} AZN</span>
+                </div>
+                <button class="btn btn-primary" style="margin-top:20px; width:100%;" onclick="this.parentElement.parentElement.remove()">BAĞLA</button>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    };
+
+    // ÜMUMİ STATİSTİKA (AYRI BUTON)
+    window.showStats = () => {
+        const stats = getSystemStats();
+
+        let qovluqHtml = '';
+        for(let i = 0; i < stats.qovluqStats.length; i++) {
+            const q = stats.qovluqStats[i];
+            qovluqHtml += `<div class="log-item"><strong>📁 ${q.name}</strong>: ${q.count} müştəri, ${q.gelis} gəliş, ${q.pul} AZN</div>`;
+        }
+
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>📊 ÜMUMİ STATİSTİKA</h3>
+                    <span class="close-modal" onclick="this.parentElement.parentElement.parentElement.remove()">&times;</span>
+                </div>
+                <div class="total-box" style="background:#2c7da0; color:white; margin-bottom:20px;">
+                    <strong>SİSTEM ÜMUMİ MƏLUMATLARI</strong><br><br>
+                    Müştəri sayı: ${stats.totalMusteri}<br>
+                    Ümumi gəliş: ${stats.totalGelis}<br>
+                    Ümumi pul: ${stats.totalPul} AZN<br>
+                    Bugünkü gəliş: ${stats.bugunGelis}
+                </div>
+                <div class="info-section">
+                    <h4>📁 QOVLUQ STATİSTİKALARI</h4>
+                    <div class="log-list">${qovluqHtml}</div>
+                </div>
+                <button class="btn btn-primary" style="margin-top:20px; width:100%;" onclick="this.parentElement.parentElement.remove()">BAĞLA</button>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    };
+
+    // QOVLUQ YARAT
+    function addFolder() {
+        const name = document.getElementById('folderName').value.trim();
+        if(!name) {
+            alert("Qovluq adı daxil edin!");
+            return;
+        }
+        const newId = "q" + Date.now();
+        qovluqlar.push({ id: newId, name: name });
+        seciliQovluq = newId;
+        document.getElementById('folderName').value = '';
+        kaydet();
+        renderFolders();
+        renderTable();
+    }
+
+    // MÜŞTƏRİ YARAT
+    function addCustomer() {
+        const name = document.getElementById('custName').value.trim();
+        const phone = document.getElementById('custPhone').value.trim();
+        if(!name) {
+            alert("Müştəri adı daxil edin!");
+            return;
+        }
+
+        let hedef = seciliQovluq;
+        if(hedef === "all") {
+            if(qovluqlar.length > 0) {
+                hedef = qovluqlar[0].id;
+            } else {
+                alert("Əvvəlcə qovluq yaradın!");
+                return;
+            }
+        }
+
+        musteriler.push({
+            id: "m" + Date.now() + Math.random(),
+            name: name,
+            phone: phone,
+            qovluqId: hedef,
+            visits: [],
+            payments: []
+        });
+
+        document.getElementById('custName').value = '';
+        document.getElementById('custPhone').value = '';
+        kaydet();
+        renderTable();
+    }
+
+    // YEDƏK
+    function yedekAl() {
+        const data = { musteriler, qovluqlar, seciliQovluq, date: new Date().toLocaleString() };
+        const jsonStr = JSON.stringify(data, null, 2);
+        const blob = new Blob([jsonStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `hastane_yedek_${new Date().toISOString().slice(0,19)}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        alert("Yedək faylı endirildi!");
+    }
+
+    function yedekYukle() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'application/json';
+        input.onchange = (e) => {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = (evt) => {
+                try {
+                    const data = JSON.parse(evt.target.result);
+                    musteriler = data.musteriler || [];
+                    qovluqlar = data.qovluqlar || [];
+                    seciliQovluq = data.seciliQovluq || (qovluqlar[0]?.id || "all");
+                    kaydet();
+                    renderFolders();
+                    renderTable();
+                    alert("Yedək uğurla yükləndi!");
+                } catch(err) {
+                    alert("Xəta: Yanlış fayl formatı!");
+                }
+            };
+            reader.readAsText(file);
+        };
+        input.click();
+    }
+
+    // BAŞLAT
+    window.onload = () => {
+        yukle();
+        renderFolders();
+        renderTable();
+
+        document.getElementById('addFolderBtn').onclick = addFolder;
+        document.getElementById('addCustBtn').onclick = addCustomer;
+        document.getElementById('exportBtn').onclick = yedekAl;
+        document.getElementById('importBtn').onclick = yedekYukle;
+        document.getElementById('statsBtn').onclick = () => showStats();
+
+        document.getElementById('folderName').onkeypress = (e) => { if(e.key === 'Enter') addFolder(); };
+        document.getElementById('custName').onkeypress = (e) => { if(e.key === 'Enter') addCustomer(); };
+    };
+</script>
 </body>
 </html>
