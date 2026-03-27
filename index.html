@@ -2,222 +2,80 @@
 <html lang="az">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hastane Müştəri Takip Sistemi</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: 'Segoe UI', 'Roboto', 'Tahoma', sans-serif;
-            background: #f5f7fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
             padding: 20px;
-            min-height: 100vh;
         }
-
-        /* HASTANE TEMASI - SADE VE ŞIK */
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        /* HEADER */
+        .container { max-width: 1400px; margin: 0 auto; }
         .header {
             background: white;
-            border-radius: 16px;
-            padding: 20px 25px;
-            margin-bottom: 25px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            border-left: 5px solid #2c7da0;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
             gap: 15px;
+            border-left: 5px solid #2c7da0;
         }
-
-        h1 {
-            font-size: 22px;
-            color: #2c7da0;
-            font-weight: 600;
-        }
-
-        .header-buttons {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-
+        h1 { font-size: 22px; color: #2c7da0; }
         .btn {
             padding: 10px 20px;
             border: none;
-            border-radius: 10px;
+            border-radius: 8px;
             cursor: pointer;
             font-weight: 500;
             font-size: 13px;
-            transition: all 0.2s;
         }
-
-        .btn-primary {
-            background: #2c7da0;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: #1f5e7a;
-            transform: translateY(-1px);
-        }
-
-        .btn-outline {
+        .btn-primary { background: #2c7da0; color: white; }
+        .btn-outline { background: white; border: 1px solid #2c7da0; color: #2c7da0; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-warning { background: #ffc107; color: #333; }
+        .folders-panel, .add-customer, .table-wrapper {
             background: white;
-            border: 1px solid #2c7da0;
-            color: #2c7da0;
-        }
-
-        .btn-outline:hover {
-            background: #2c7da0;
-            color: white;
-        }
-
-        .btn-success {
-            background: #2c7da0;
-            color: white;
-        }
-
-        .btn-warning {
-            background: #e9ecef;
-            color: #2c7da0;
-            border: 1px solid #dee2e6;
-        }
-
-        /* QOVLUQLAR PANELI */
-        .folders-panel {
-            background: white;
-            border-radius: 16px;
+            border-radius: 15px;
             padding: 20px;
-            margin-bottom: 25px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
-
-        .folders-header {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 18px;
-            flex-wrap: wrap;
-        }
-
-        .folders-header input {
+        .folders-header, .add-customer { display: flex; gap: 12px; flex-wrap: wrap; }
+        input {
             flex: 1;
             padding: 10px 15px;
-            border: 1px solid #dee2e6;
-            border-radius: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
             font-size: 14px;
-            outline: none;
-            transition: all 0.2s;
         }
-
-        .folders-header input:focus {
-            border-color: #2c7da0;
-        }
-
-        .folders-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
+        .folders-list { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; }
         .folder-item {
             background: #f8f9fa;
             padding: 6px 16px;
             border-radius: 25px;
             cursor: pointer;
             font-size: 13px;
-            font-weight: 500;
+            border: 1px solid #dee2e6;
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            border: 1px solid #e9ecef;
-            transition: all 0.2s;
         }
-
-        .folder-item:hover {
-            background: #e9ecef;
-        }
-
-        .folder-item.active {
-            background: #2c7da0;
-            color: white;
-            border-color: #2c7da0;
-        }
-
-        .delete-folder {
-            cursor: pointer;
-            font-size: 14px;
-            opacity: 0.6;
-        }
-
-        .delete-folder:hover {
-            opacity: 1;
-        }
-
-        /* MUSTERI ELAVE */
-        .add-customer {
-            background: white;
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 25px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-
-        .add-customer input {
-            flex: 1;
-            padding: 12px 15px;
-            border: 1px solid #dee2e6;
-            border-radius: 12px;
-            font-size: 14px;
-            outline: none;
-        }
-
-        .add-customer input:focus {
-            border-color: #2c7da0;
-        }
-
-        /* CEDVEL */
-        .table-wrapper {
-            background: white;
-            border-radius: 16px;
-            overflow-x: auto;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
+        .folder-item.active { background: #2c7da0; color: white; }
+        .delete-folder { cursor: pointer; opacity: 0.6; }
+        .table-wrapper { overflow-x: auto; padding: 0; }
+        table { width: 100%; border-collapse: collapse; }
         th {
             text-align: left;
-            padding: 16px 12px;
+            padding: 15px 12px;
             background: #f8f9fa;
-            font-weight: 600;
-            font-size: 13px;
-            color: #495057;
             border-bottom: 2px solid #e9ecef;
         }
-
-        td {
-            padding: 14px 12px;
-            border-bottom: 1px solid #f0f0f0;
-            font-size: 13px;
-            vertical-align: middle;
-        }
-
+        td { padding: 12px; border-bottom: 1px solid #f0f0f0; }
         .customer-name {
             background: none;
             border: none;
@@ -226,78 +84,27 @@
             cursor: pointer;
             font-size: 14px;
         }
-
-        .customer-name:hover {
-            text-decoration: underline;
-        }
-
-        .action-group {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-
         .small-btn {
-            padding: 6px 12px;
+            padding: 5px 12px;
             border: none;
-            border-radius: 8px;
+            border-radius: 6px;
             cursor: pointer;
-            font-size: 12px;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-
-        .btn-visit {
-            background: #e7f3f8;
-            color: #2c7da0;
-        }
-
-        .btn-visit:hover {
-            background: #d0e4ed;
-        }
-
-        .btn-money {
-            background: #e9ecef;
-            color: #2c7da0;
-        }
-
-        .btn-money:hover {
-            background: #dee2e6;
-        }
-
-        .btn-money-custom {
-            background: #f8f9fa;
-            color: #6c757d;
-            border: 1px solid #dee2e6;
-            padding: 4px 8px;
             font-size: 11px;
+            margin: 2px;
         }
-
-        .btn-info {
-            background: #e7f3f8;
-            color: #2c7da0;
-        }
-
-        .btn-delete {
-            background: #fff5f5;
-            color: #dc3545;
-        }
-
-        .btn-delete:hover {
-            background: #ffe0e0;
-        }
-
+        .btn-visit { background: #e7f3f8; color: #2c7da0; }
+        .btn-money { background: #e9ecef; color: #2c7da0; }
+        .btn-money-custom { background: #f8f9fa; border: 1px solid #dee2e6; }
+        .btn-info { background: #e7f3f8; color: #2c7da0; }
+        .btn-delete { background: #ffe0e0; color: #dc3545; }
         .stat-badge {
             background: #f8f9fa;
-            padding: 4px 8px;
+            padding: 3px 8px;
             border-radius: 12px;
             font-size: 11px;
             display: inline-block;
             margin-top: 4px;
         }
-
-        /* MODAL */
         .modal {
             position: fixed;
             top: 0;
@@ -310,97 +117,45 @@
             justify-content: center;
             z-index: 1000;
         }
-
         .modal-content {
             background: white;
-            border-radius: 20px;
+            border-radius: 15px;
             width: 90%;
-            max-width: 550px;
+            max-width: 500px;
             max-height: 80vh;
             overflow-y: auto;
-            padding: 25px;
+            padding: 20px;
         }
-
         .modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
+            margin-bottom: 15px;
             border-bottom: 2px solid #2c7da0;
+            padding-bottom: 10px;
         }
-
-        .modal-header h3 {
-            color: #2c7da0;
-            font-size: 20px;
-        }
-
-        .close-modal {
-            font-size: 28px;
-            cursor: pointer;
-            color: #6c757d;
-        }
-
-        .info-section {
-            margin-bottom: 20px;
-        }
-
-        .info-section h4 {
-            color: #495057;
-            margin-bottom: 12px;
-            font-size: 15px;
-        }
-
-        .log-list {
-            background: #f8f9fa;
-            border-radius: 12px;
-            padding: 10px;
-            max-height: 200px;
-            overflow-y: auto;
-        }
-
-        .log-item {
-            padding: 8px 10px;
-            border-bottom: 1px solid #e9ecef;
-            font-size: 13px;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .total-box {
-            background: #e7f3f8;
-            padding: 15px;
-            border-radius: 12px;
-            text-align: center;
-            margin-top: 15px;
-        }
-
-        .total-box span {
-            font-size: 20px;
-            font-weight: bold;
-            color: #2c7da0;
-        }
-
+        .close-modal { font-size: 24px; cursor: pointer; color: #999; }
+        .log-list { background: #f8f9fa; border-radius: 10px; padding: 10px; max-height: 200px; overflow-y: auto; }
+        .log-item { padding: 6px 0; border-bottom: 1px solid #e9ecef; font-size: 12px; }
+        .total-box { background: #e7f3f8; padding: 12px; border-radius: 10px; text-align: center; margin-top: 15px; }
         @media (max-width: 768px) {
             body { padding: 10px; }
-            th, td { padding: 10px 6px; font-size: 12px; }
-            .small-btn { padding: 4px 8px; font-size: 10px; }
+            th, td { padding: 8px 6px; font-size: 11px; }
+            .small-btn { padding: 3px 6px; font-size: 10px; }
         }
     </style>
 </head>
 <body>
 <div class="container">
-    <!-- HEADER -->
     <div class="header">
         <h1>🏥 HASTANE MÜŞTƏRİ TAKİP SİSTEMİ</h1>
-        <div class="header-buttons">
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
             <button class="btn btn-outline" id="statsBtn">📊 ÜMUMİ STATİSTİKA</button>
             <button class="btn btn-primary" id="exportBtn">💾 YEDƏK AL</button>
             <button class="btn btn-warning" id="importBtn">📂 YEDƏK YÜKLƏ</button>
         </div>
     </div>
 
-    <!-- QOVLUQLAR -->
     <div class="folders-panel">
         <div class="folders-header">
             <input type="text" id="folderName" placeholder="Yeni qovluq adı...">
@@ -409,36 +164,29 @@
         <div class="folders-list" id="foldersList"></div>
     </div>
 
-    <!-- MÜŞTƏRİ ƏLAVƏ -->
     <div class="add-customer">
         <input type="text" id="custName" placeholder="Müştəri adı">
         <input type="text" id="custPhone" placeholder="Telefon nömrəsi">
-        <button class="btn btn-primary" id="addCustBtn">➕ MÜŞTƏRİ ƏLAVƏ ET</button>
+        <button class="btn btn-success" id="addCustBtn">➕ MÜŞTƏRİ ƏLAVƏ ET</button>
     </div>
 
-    <!-- MÜŞTƏRİ CƏDVƏLİ -->
     <div class="table-wrapper">
-        <table>
+        <table id="mainTable">
             <thead>
-                <tr><th>MÜŞTƏRİ</th><th>TELEFON</th><th>GƏLİŞ</th><th>PUL</th><th>STATİSTİKA</th><th>ƏMƏLİYYAT</th>
+                <tr><th>MÜŞTƏRİ</th><th>TELEFON</th><th>GƏLİŞ</th><th>PUL</th><th>STATİSTİKA</th><th>ƏMƏLİYYAT</th></tr>
             </thead>
-            <tbody id="tableBody">
-                <tr><td colspan="6" style="text-align:center; padding:40px;">Müştəri yoxdur</td></tr>
-            </tbody>
+            <tbody id="tableBody"><tr><td colspan="6" style="text-align:center; padding:40px;">Yüklənir...</td></tr></tbody>
         </table>
     </div>
 </div>
 
 <script>
-    // VERİ MODELİ
     let musteriler = [];
     let qovluqlar = [];
     let seciliQovluq = "all";
 
-    // Yaddaş
     function kaydet() {
-        const data = { musteriler, qovluqlar, seciliQovluq };
-        localStorage.setItem('HastaneTakip', JSON.stringify(data));
+        localStorage.setItem('HastaneTakip', JSON.stringify({ musteriler, qovluqlar, seciliQovluq }));
     }
 
     function yukle() {
@@ -455,7 +203,6 @@
         }
     }
 
-    // TARIX FUNKSIYASI
     function getDateTime() {
         const now = new Date();
         const gun = now.getDate().toString().padStart(2,'0');
@@ -470,14 +217,11 @@
         return now.getDate().toString().padStart(2,'0') + '/' + (now.getMonth()+1).toString().padStart(2,'0');
     }
 
-    // HESABLAMA - DÜZGÜN
-    function getTotalMoneyFromPayments(payments) {
+    function getTotalMoney(payments) {
         let total = 0;
         for(let i = 0; i < payments.length; i++) {
             const match = payments[i].match(/(\d+)\s*AZN/);
-            if(match) {
-                total += parseInt(match[1]);
-            }
+            if(match) total += parseInt(match[1]);
         }
         return total;
     }
@@ -491,341 +235,161 @@
         return count;
     }
 
-    // STATİSTİKA YENİLƏ (ümumi buton üçün)
-    function getSystemStats() {
-        let totalMusteri = musteriler.length;
-        let totalGelis = 0;
-        let totalPul = 0;
-        let bugunGelis = 0;
-        const today = getToday();
-
-        musteriler.forEach(m => {
-            totalGelis += m.visits.length;
-            totalPul += getTotalMoneyFromPayments(m.payments);
-            m.visits.forEach(v => {
-                if(v.substring(0,5) === today) bugunGelis++;
-            });
-        });
-
-        // Qovluq statları
-        let qovluqStats = [];
-        qovluqlar.forEach(q => {
-            const qMusteriler = musteriler.filter(m => m.qovluqId === q.id);
-            let qGelis = 0, qPul = 0;
-            qMusteriler.forEach(m => {
-                qGelis += m.visits.length;
-                qPul += getTotalMoneyFromPayments(m.payments);
-            });
-            qovluqStats.push({
-                name: q.name,
-                count: qMusteriler.length,
-                gelis: qGelis,
-                pul: qPul
-            });
-        });
-
-        return { totalMusteri, totalGelis, totalPul, bugunGelis, qovluqStats };
-    }
-
-    // FİLTRƏ
     function getFiltered() {
         if(seciliQovluq === "all") return musteriler;
         return musteriler.filter(m => m.qovluqId === seciliQovluq);
     }
 
-    // CƏDVƏLİ GÖSTƏR
     function renderTable() {
         const tbody = document.getElementById('tableBody');
         const filtered = getFiltered();
-
         if(filtered.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:40px; color:#6c757d;">📭 Bu qovluqda müştəri yoxdur</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:40px;">📭 Müştəri yoxdur</td></tr>';
             return;
         }
-
         let html = '';
-        for(let i = 0; i < filtered.length; i++) {
-            const m = filtered[i];
+        for(let m of filtered) {
             const bugunGelis = getTodayVisits(m.visits);
             const toplamGelis = m.visits.length;
-            const toplamPul = getTotalMoneyFromPayments(m.payments);
+            const toplamPul = getTotalMoney(m.payments);
             const toplamPulSay = m.payments.length;
-
             html += `<tr>
                 <td><button class="customer-name" onclick="showDetails('${m.id}')">${m.name}</button></td>
                 <td>${m.phone || '-'}</td>
-                <td>
-                    <button class="small-btn btn-visit" onclick="addVisit('${m.id}')">✅ GƏLİŞ +1</button>
-                    <div class="stat-badge">Bugün: ${bugunGelis} | Ümumi: ${toplamGelis}</div>
-                </td>
-                <td>
-                    <div class="action-group">
-                        <button class="small-btn btn-money" onclick="addPayment('${m.id}', 20)">💰 +20 AZN</button>
-                        <button class="small-btn btn-money-custom" onclick="addPaymentCustom('${m.id}')">✏️ Əl ilə</button>
-                    </div>
-                    <div class="stat-badge">${toplamPulSay} dəfə | ${toplamPul} AZN</div>
-                </td>
-                <td>
-                    <div class="stat-badge">📊 ${toplamGelis} gəliş</div>
-                    <div class="stat-badge">💰 ${toplamPul} AZN</div>
-                </td>
-                <td>
-                    <div class="action-group">
-                        <button class="small-btn btn-info" onclick="showDetails('${m.id}')">ℹ️ BİLGİ</button>
-                        <button class="small-btn btn-delete" onclick="deleteMusteri('${m.id}')">🗑️ SIL</button>
-                    </div>
-                </td>
+                <td><button class="small-btn btn-visit" onclick="addVisit('${m.id}')">✅ GƏLİŞ +1</button><div class="stat-badge">Bugün: ${bugunGelis} | Ümumi: ${toplamGelis}</div></td>
+                <td><button class="small-btn btn-money" onclick="addPayment('${m.id}', 20)">💰 +20 AZN</button><button class="small-btn btn-money-custom" onclick="addPaymentCustom('${m.id}')">✏️ Əl ilə</button><div class="stat-badge">${toplamPulSay} dəfə | ${toplamPul} AZN</div></td>
+                <td><div class="stat-badge">📊 ${toplamGelis} gəliş</div><div class="stat-badge">💰 ${toplamPul} AZN</div></td>
+                <td><button class="small-btn btn-info" onclick="showDetails('${m.id}')">ℹ️ BİLGİ</button><button class="small-btn btn-delete" onclick="deleteMusteri('${m.id}')">🗑️ SIL</button></td>
             </tr>`;
         }
         tbody.innerHTML = html;
     }
 
-    // QOVLUQLARI GÖSTƏR
     function renderFolders() {
         const container = document.getElementById('foldersList');
         container.innerHTML = '';
-
         const allBtn = document.createElement('div');
         allBtn.className = `folder-item ${seciliQovluq === 'all' ? 'active' : ''}`;
         allBtn.innerHTML = '📁 BÜTÜN MÜŞTƏRİLƏR';
-        allBtn.onclick = () => {
-            seciliQovluq = 'all';
-            kaydet();
-            renderFolders();
-            renderTable();
-        };
+        allBtn.onclick = () => { seciliQovluq = 'all'; kaydet(); renderFolders(); renderTable(); };
         container.appendChild(allBtn);
-
-        for(let i = 0; i < qovluqlar.length; i++) {
-            const f = qovluqlar[i];
+        for(let f of qovluqlar) {
             const div = document.createElement('div');
             div.className = `folder-item ${seciliQovluq === f.id ? 'active' : ''}`;
             div.innerHTML = `${f.name} <span class="delete-folder" data-id="${f.id}">✖</span>`;
-            div.onclick = (e) => {
-                if(e.target.classList.contains('delete-folder')) return;
-                seciliQovluq = f.id;
-                kaydet();
-                renderFolders();
-                renderTable();
-            };
+            div.onclick = (e) => { if(e.target.classList.contains('delete-folder')) return; seciliQovluq = f.id; kaydet(); renderFolders(); renderTable(); };
             const delSpan = div.querySelector('.delete-folder');
             delSpan.onclick = (e) => {
                 e.stopPropagation();
-                if(qovluqlar.length === 1) {
-                    alert("Ən azı bir qovluq qalmalıdır!");
-                    return;
-                }
-                const ilkQovluq = qovluqlar.find(q => q.id !== f.id);
-                for(let j = 0; j < musteriler.length; j++) {
-                    if(musteriler[j].qovluqId === f.id) {
-                        musteriler[j].qovluqId = ilkQovluq.id;
-                    }
-                }
+                if(qovluqlar.length === 1) { alert("Ən azı bir qovluq qalmalıdır!"); return; }
+                const ilk = qovluqlar.find(q => q.id !== f.id);
+                for(let m of musteriler) if(m.qovluqId === f.id) m.qovluqId = ilk.id;
                 qovluqlar = qovluqlar.filter(q => q.id !== f.id);
-                if(seciliQovluq === f.id) seciliQovluq = ilkQovluq.id;
-                kaydet();
-                renderFolders();
-                renderTable();
+                if(seciliQovluq === f.id) seciliQovluq = ilk.id;
+                kaydet(); renderFolders(); renderTable();
             };
             container.appendChild(div);
         }
     }
 
-    // GƏLİŞ ƏLAVƏ
     window.addVisit = (id) => {
-        for(let i = 0; i < musteriler.length; i++) {
-            if(musteriler[i].id === id) {
-                musteriler[i].visits.push(getDateTime());
-                kaydet();
-                renderTable();
-                break;
-            }
-        }
+        const m = musteriler.find(m => m.id === id);
+        if(m) { m.visits.push(getDateTime()); kaydet(); renderTable(); }
     };
 
-    // PUL ƏLAVƏ (default 20 AZN)
     window.addPayment = (id, amount) => {
-        for(let i = 0; i < musteriler.length; i++) {
-            if(musteriler[i].id === id) {
-                musteriler[i].payments.push(`${getDateTime()} - ${amount} AZN`);
-                kaydet();
-                renderTable();
-                break;
-            }
-        }
+        const m = musteriler.find(m => m.id === id);
+        if(m) { m.payments.push(`${getDateTime()} - ${amount} AZN`); kaydet(); renderTable(); }
     };
 
-    // ƏL İLƏ PUL ƏLAVƏ
     window.addPaymentCustom = (id) => {
         const amount = prompt("Pul məbləğini daxil edin (AZN):", "20");
         if(amount && !isNaN(parseInt(amount)) && parseInt(amount) > 0) {
             addPayment(id, parseInt(amount));
-        } else if(amount) {
-            alert("Düzgün məbləğ daxil edin!");
         }
     };
 
-    // MÜŞTƏRİ SİL
     window.deleteMusteri = (id) => {
-        if(confirm("Bu müştərini silmək istədiyinizə əminsiniz?")) {
+        if(confirm("Bu müştərini silmək istəyirsiniz?")) {
             musteriler = musteriler.filter(m => m.id !== id);
-            kaydet();
-            renderTable();
+            kaydet(); renderTable();
         }
     };
 
-    // DETALLAR (BİLGİ BUTONU)
     window.showDetails = (id) => {
-        let musteri = null;
-        for(let i = 0; i < musteriler.length; i++) {
-            if(musteriler[i].id === id) {
-                musteri = musteriler[i];
-                break;
-            }
-        }
-        if(!musteri) return;
-
-        const totalMoney = getTotalMoneyFromPayments(musteri.payments);
-
-        let visitsHtml = '';
-        for(let i = 0; i < musteri.visits.length; i++) {
-            visitsHtml += `<div class="log-item">🕒 ${musteri.visits[i]}</div>`;
-        }
-        if(musteri.visits.length === 0) visitsHtml = '<div class="log-item">📭 Gəliş qeydi yoxdur</div>';
-
-        let paymentsHtml = '';
-        for(let i = 0; i < musteri.payments.length; i++) {
-            paymentsHtml += `<div class="log-item">💰 ${musteri.payments[i]}</div>`;
-        }
-        if(musteri.payments.length === 0) paymentsHtml = '<div class="log-item">💵 Pul əməliyyatı yoxdur</div>';
-
+        const m = musteriler.find(m => m.id === id);
+        if(!m) return;
+        const totalMoney = getTotalMoney(m.payments);
+        let visitsHtml = '', paymentsHtml = '';
+        for(let v of m.visits) visitsHtml += `<div class="log-item">🕒 ${v}</div>`;
+        if(m.visits.length === 0) visitsHtml = '<div class="log-item">Gəliş yoxdur</div>';
+        for(let p of m.payments) paymentsHtml += `<div class="log-item">💰 ${p}</div>`;
+        if(m.payments.length === 0) paymentsHtml = '<div class="log-item">Pul yoxdur</div>';
         const modal = document.createElement('div');
         modal.className = 'modal';
-        modal.innerHTML = `
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3>👤 ${musteri.name}</h3>
-                    <span class="close-modal" onclick="this.parentElement.parentElement.parentElement.remove()">&times;</span>
-                </div>
-                <div class="info-section">
-                    <p><strong>📞 Telefon:</strong> ${musteri.phone || 'Yoxdur'}</p>
-                    <p><strong>📁 Qovluq:</strong> ${qovluqlar.find(q => q.id === musteri.qovluqId)?.name || 'Ümumi'}</p>
-                </div>
-                <div class="info-section">
-                    <h4>📅 GƏLİŞ TARİXLƏRİ (${musteri.visits.length} dəfə)</h4>
-                    <div class="log-list">${visitsHtml}</div>
-                </div>
-                <div class="info-section">
-                    <h4>💰 PUL ƏMƏLİYYATLARI (${musteri.payments.length} dəfə)</h4>
-                    <div class="log-list">${paymentsHtml}</div>
-                </div>
-                <div class="total-box">
-                    <strong>📊 ÜMUMİ MƏLUMAT</strong><br>
-                    Gəliş sayı: ${musteri.visits.length}<br>
-                    Ümumi pul: <span>${totalMoney} AZN</span>
-                </div>
-                <button class="btn btn-primary" style="margin-top:20px; width:100%;" onclick="this.parentElement.parentElement.remove()">BAĞLA</button>
-            </div>
-        `;
+        modal.innerHTML = `<div class="modal-content"><div class="modal-header"><h3>👤 ${m.name}</h3><span class="close-modal" onclick="this.parentElement.parentElement.parentElement.remove()">&times;</span></div>
+            <p><strong>📞 Telefon:</strong> ${m.phone || 'Yoxdur'}</p>
+            <h4>📅 GƏLİŞLƏR (${m.visits.length})</h4><div class="log-list">${visitsHtml}</div>
+            <h4>💰 PULLAR (${m.payments.length})</h4><div class="log-list">${paymentsHtml}</div>
+            <div class="total-box"><strong>ÜMUMİ</strong><br>Gəliş: ${m.visits.length}<br>Pul: <span style="font-size:20px;">${totalMoney} AZN</span></div>
+            <button class="btn btn-primary" style="margin-top:15px; width:100%;" onclick="this.parentElement.parentElement.remove()">BAĞLA</button></div>`;
         document.body.appendChild(modal);
     };
 
-    // ÜMUMİ STATİSTİKA (AYRI BUTON)
     window.showStats = () => {
-        const stats = getSystemStats();
-
-        let qovluqHtml = '';
-        for(let i = 0; i < stats.qovluqStats.length; i++) {
-            const q = stats.qovluqStats[i];
-            qovluqHtml += `<div class="log-item"><strong>📁 ${q.name}</strong>: ${q.count} müştəri, ${q.gelis} gəliş, ${q.pul} AZN</div>`;
+        let totalMusteri = musteriler.length;
+        let totalGelis = 0, totalPul = 0, bugunGelis = 0;
+        const today = getToday();
+        for(let m of musteriler) {
+            totalGelis += m.visits.length;
+            totalPul += getTotalMoney(m.payments);
+            for(let v of m.visits) if(v.substring(0,5) === today) bugunGelis++;
         }
-
+        let qovluqHtml = '';
+        for(let q of qovluqlar) {
+            const qM = musteriler.filter(m => m.qovluqId === q.id);
+            let qG = 0, qP = 0;
+            for(let m of qM) { qG += m.visits.length; qP += getTotalMoney(m.payments); }
+            qovluqHtml += `<div class="log-item"><strong>📁 ${q.name}</strong>: ${qM.length} müştəri, ${qG} gəliş, ${qP} AZN</div>`;
+        }
         const modal = document.createElement('div');
         modal.className = 'modal';
-        modal.innerHTML = `
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3>📊 ÜMUMİ STATİSTİKA</h3>
-                    <span class="close-modal" onclick="this.parentElement.parentElement.parentElement.remove()">&times;</span>
-                </div>
-                <div class="total-box" style="background:#2c7da0; color:white; margin-bottom:20px;">
-                    <strong>SİSTEM ÜMUMİ MƏLUMATLARI</strong><br><br>
-                    Müştəri sayı: ${stats.totalMusteri}<br>
-                    Ümumi gəliş: ${stats.totalGelis}<br>
-                    Ümumi pul: ${stats.totalPul} AZN<br>
-                    Bugünkü gəliş: ${stats.bugunGelis}
-                </div>
-                <div class="info-section">
-                    <h4>📁 QOVLUQ STATİSTİKALARI</h4>
-                    <div class="log-list">${qovluqHtml}</div>
-                </div>
-                <button class="btn btn-primary" style="margin-top:20px; width:100%;" onclick="this.parentElement.parentElement.remove()">BAĞLA</button>
-            </div>
-        `;
+        modal.innerHTML = `<div class="modal-content"><div class="modal-header"><h3>📊 ÜMUMİ STATİSTİKA</h3><span class="close-modal" onclick="this.parentElement.parentElement.parentElement.remove()">&times;</span></div>
+            <div class="total-box" style="background:#2c7da0; color:white;"><strong>SİSTEM ÜMUMİ</strong><br>Müştəri: ${totalMusteri}<br>Gəliş: ${totalGelis}<br>Pul: ${totalPul} AZN<br>Bugün: ${bugunGelis}</div>
+            <h4>📁 QOVLUQLAR</h4><div class="log-list">${qovluqHtml}</div>
+            <button class="btn btn-primary" style="margin-top:15px; width:100%;" onclick="this.parentElement.parentElement.remove()">BAĞLA</button></div>`;
         document.body.appendChild(modal);
     };
 
-    // QOVLUQ YARAT
     function addFolder() {
         const name = document.getElementById('folderName').value.trim();
-        if(!name) {
-            alert("Qovluq adı daxil edin!");
-            return;
-        }
-        const newId = "q" + Date.now();
-        qovluqlar.push({ id: newId, name: name });
-        seciliQovluq = newId;
+        if(!name) { alert("Qovluq adı daxil edin!"); return; }
+        qovluqlar.push({ id: "q" + Date.now(), name: name });
+        seciliQovluq = qovluqlar[qovluqlar.length-1].id;
         document.getElementById('folderName').value = '';
-        kaydet();
-        renderFolders();
-        renderTable();
+        kaydet(); renderFolders(); renderTable();
     }
 
-    // MÜŞTƏRİ YARAT
     function addCustomer() {
         const name = document.getElementById('custName').value.trim();
         const phone = document.getElementById('custPhone').value.trim();
-        if(!name) {
-            alert("Müştəri adı daxil edin!");
-            return;
-        }
-
+        if(!name) { alert("Müştəri adı daxil edin!"); return; }
         let hedef = seciliQovluq;
-        if(hedef === "all") {
-            if(qovluqlar.length > 0) {
-                hedef = qovluqlar[0].id;
-            } else {
-                alert("Əvvəlcə qovluq yaradın!");
-                return;
-            }
-        }
-
-        musteriler.push({
-            id: "m" + Date.now() + Math.random(),
-            name: name,
-            phone: phone,
-            qovluqId: hedef,
-            visits: [],
-            payments: []
-        });
-
+        if(hedef === "all") { if(qovluqlar.length) hedef = qovluqlar[0].id; else { alert("Qovluq yaradın!"); return; } }
+        musteriler.push({ id: "m" + Date.now() + Math.random(), name: name, phone: phone, qovluqId: hedef, visits: [], payments: [] });
         document.getElementById('custName').value = '';
         document.getElementById('custPhone').value = '';
-        kaydet();
-        renderTable();
+        kaydet(); renderTable();
     }
 
-    // YEDƏK
     function yedekAl() {
-        const data = { musteriler, qovluqlar, seciliQovluq, date: new Date().toLocaleString() };
-        const jsonStr = JSON.stringify(data, null, 2);
-        const blob = new Blob([jsonStr], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
+        const data = { musteriler, qovluqlar, seciliQovluq };
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
         const a = document.createElement('a');
-        a.href = url;
+        a.href = URL.createObjectURL(blob);
         a.download = `hastane_yedek_${new Date().toISOString().slice(0,19)}.json`;
         a.click();
-        URL.revokeObjectURL(url);
+        URL.revokeObjectURL(a.href);
         alert("Yedək faylı endirildi!");
     }
 
@@ -842,31 +406,24 @@
                     musteriler = data.musteriler || [];
                     qovluqlar = data.qovluqlar || [];
                     seciliQovluq = data.seciliQovluq || (qovluqlar[0]?.id || "all");
-                    kaydet();
-                    renderFolders();
-                    renderTable();
-                    alert("Yedək uğurla yükləndi!");
-                } catch(err) {
-                    alert("Xəta: Yanlış fayl formatı!");
-                }
+                    kaydet(); renderFolders(); renderTable();
+                    alert("Yedək yükləndi!");
+                } catch(err) { alert("Xəta!"); }
             };
             reader.readAsText(file);
         };
         input.click();
     }
 
-    // BAŞLAT
     window.onload = () => {
         yukle();
         renderFolders();
         renderTable();
-
         document.getElementById('addFolderBtn').onclick = addFolder;
         document.getElementById('addCustBtn').onclick = addCustomer;
         document.getElementById('exportBtn').onclick = yedekAl;
         document.getElementById('importBtn').onclick = yedekYukle;
         document.getElementById('statsBtn').onclick = () => showStats();
-
         document.getElementById('folderName').onkeypress = (e) => { if(e.key === 'Enter') addFolder(); };
         document.getElementById('custName').onkeypress = (e) => { if(e.key === 'Enter') addCustomer(); };
     };
