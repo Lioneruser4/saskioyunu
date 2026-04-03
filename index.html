@@ -1,347 +1,414 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="windows-1254">
-<title>Musteri Takip Sistemi</title>
-<hta:application id="MusteriTakip" applicationname="MusteriTakip" border="thin" caption="yes" maximizebutton="yes" minimizebutton="yes" sysmenu="yes" navigable="no" showintaskbar="yes" singleinstance="yes" windowstate="maximized">
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Segoe UI',Tahoma,sans-serif;background:#eef2f7;padding:20px}
-.container{max-width:1400px;margin:0 auto}
-.header{background:white;border-radius:14px;padding:15px 20px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;border-left:5px solid #2c7da0}
-h1{font-size:22px;color:#2c7da0}
-.btn{padding:8px 18px;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500}
-.btn-mavi{background:#2c7da0;color:white}
-.btn-boz{background:#e9ecef;color:#2c7da0;border:1px solid #dee2e6}
-.btn-yesil{background:#28a745;color:white;width:42px;height:38px;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;border:none;cursor:pointer;font-size:16px}
-.btn-yesil:hover{background:#218838}
-.panel{background:white;border-radius:14px;padding:18px;margin-bottom:20px}
-.input-grup{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:15px}
-input{flex:1;padding:10px 14px;border:1px solid #ddd;border-radius:10px;font-size:13px;outline:none}
-input:focus{border-color:#2c7da0}
-.qovluqlar{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
-.qovluq-item{background:#f8f9fa;border:1px solid #e9ecef;padding:6px 16px;border-radius:25px;cursor:pointer;font-size:13px;font-weight:500;display:inline-flex;align-items:center;gap:8px}
-.qovluq-item.active{background:#2c7da0;color:white}
-.sil-qovluq{cursor:pointer;font-size:14px;opacity:0.6}
-.table-wrapper{background:white;border-radius:14px;overflow-x:auto}
-table{width:100%;border-collapse:collapse}
-th{text-align:left;padding:14px 12px;background:#f8f9fa;border-bottom:2px solid #e9ecef}
-td{padding:12px;border-bottom:1px solid #f0f0f0}
-.musteri-ad{background:none;border:none;color:#2c7da0;font-weight:600;cursor:pointer;font-size:14px}
-.kucuk-btn{padding:5px 12px;border:none;border-radius:6px;cursor:pointer;font-size:11px;margin:2px}
-.btn-gelis{background:#e7f3f8;color:#2c7da0}
-.btn-bilgi{background:#e9ecef;color:#2c7da0}
-.btn-sil{background:#ffe0e0;color:#dc3545}
-.badge{background:#f8f9fa;padding:3px 8px;border-radius:12px;font-size:11px;display:inline-block;margin-top:4px}
-.modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:1000}
-.modal-ic{background:white;border-radius:18px;width:90%;max-width:550px;max-height:80vh;overflow-y:auto;padding:22px}
-.modal-baslik{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;border-bottom:2px solid #2c7da0;padding-bottom:10px}
-.kapat{font-size:26px;cursor:pointer;color:#888}
-.log-list{background:#f8f9fa;border-radius:12px;padding:10px;max-height:200px;overflow-y:auto;margin-bottom:15px}
-.log-item{padding:6px 0;border-bottom:1px solid #e9ecef;font-size:12px}
-.toplam-kutu{background:#e7f3f8;padding:12px;border-radius:12px;text-align:center;margin-top:10px}
-</style>
-</head>
-<body>
-<div class="container">
-<div class="header">
-<h1>MUSTERI TAKIP SISTEMI</h1>
-<div><button class="btn btn-boz" id="statBtn">STATISTIKA</button>
-<button class="btn btn-mavi" id="yedekBtn">YEDEK AL</button>
-<button class="btn btn-boz" id="yukleBtn">YEDEK YUKLE</button></div></div>
-<div class="panel"><div class="input-grup"><input type="text" id="yeniQovluq" placeholder="Yeni qovluq adi"><button class="btn btn-mavi" id="qovluqElave">QOVLUQ YARAT</button></div><div class="qovluqlar" id="qovluqListesi"></div></div>
-<div class="panel"><div class="input-grup"><input type="text" id="musteriAd" placeholder="Musteri adi"><input type="text" id="musteriTel" placeholder="Telefon"><button class="btn btn-mavi" id="musteriElave">MUSTERI ELAVE ET</button></div></div>
-<div class="table-wrapper">\n<table>\n<thead>\n<tr><th>MUSTERI</th><th>TELEFON</th><th>GELIS</th><th>PUL</th><th>STATISTIKA</th><th>EMELIYYAT</th></tr>\n</thead>\n<tbody id="cedvelGovde"></tbody>\n</table>\n</div></div>
-<script>
-var musteriler=[];
-var qovluqlar=[];
-var seciliQovluq="all";
+const express = require(‘express’);
+const http = require(‘http’);
+const { Server } = require(‘socket.io’);
+const path = require(‘path’);
 
-function tarixSaat(){
-    var n=new Date();
-    var g=n.getDate().toString().padStart(2,'0');
-    var a=(n.getMonth()+1).toString().padStart(2,'0');
-    var sa=n.getHours().toString().padStart(2,'0');
-    var d=n.getMinutes().toString().padStart(2,'0');
-    return g+'/'+a+' '+sa+':'+d;
-}
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+cors: { origin: ‘*’ },
+pingInterval: 2000,
+pingTimeout: 5000
+});
 
-function bugunTarix(){
-    var n=new Date();
-    return n.getDate().toString().padStart(2,'0')+'/'+(n.getMonth()+1).toString().padStart(2,'0');
-}
+app.use(express.static(path.join(__dirname, ‘public’)));
+app.get(’/’, (req, res) => res.sendFile(path.join(__dirname, ‘public’, ‘index.html’)));
 
-function umumiPul(payments){
-    var t=0;
-    for(var i=0;i<payments.length;i++){
-        var m=payments[i].match(/(\d+)/);
-        if(m) t+=parseInt(m[1]);
-    }
-    return t;
-}
+// ─── CONSTANTS ───────────────────────────────────────────────
+const TICK_RATE = 60;          // ms per server tick
+const MAP_W = 2400;
+const MAP_H = 1800;
+const PLAYER_SPEED = 180;      // px/s
+const BULLET_SPEED = 700;
+const BULLET_MAX_DIST = 1400;
+const PLAYER_RADIUS = 18;
+const PLAYER_HP = 100;
+const RESPAWN_TIME = 4000;     // ms
+const WIN_KILLS = 15;
+const LOBBY_MIN_PLAYERS = 2;
 
-function bugunGelis(visits){
-    var b=bugunTarix();
-    var s=0;
-    for(var i=0;i<visits.length;i++){
-        if(visits[i].substring(0,5)===b) s++;
-    }
-    return s;
-}
+// ─── MAP WALLS ────────────────────────────────────────────────
+const WALLS = [
+// Outer boundary
+{ x: 0,    y: 0,    w: MAP_W, h: 20   },
+{ x: 0,    y: MAP_H-20, w: MAP_W, h: 20 },
+{ x: 0,    y: 0,    w: 20,   h: MAP_H },
+{ x: MAP_W-20, y: 0, w: 20, h: MAP_H },
 
-function filtreliMusteriler(){
-    if(seciliQovluq==="all") return musteriler;
-    var r=[];
-    for(var i=0;i<musteriler.length;i++){
-        if(musteriler[i].qovluqId===seciliQovluq) r.push(musteriler[i]);
-    }
-    return r;
-}
+// Center structure
+{ x: 1050, y: 750,  w: 300, h: 300 },
 
-function kaydet(){
-    try{
-        var data={musteriler:musteriler,qovluqlar:qovluqlar,seciliQovluq:seciliQovluq};
-        localStorage.setItem('MusteriTakip',JSON.stringify(data));
-        var msg=document.createElement('div');
-        msg.style.cssText='position:fixed;bottom:20px;right:20px;background:#28a745;color:white;padding:8px 16px;border-radius:20px;font-size:12px;z-index:9999;';
-        msg.innerHTML='Kaydedildi';
-        document.body.appendChild(msg);
-        setTimeout(function(){msg.remove();},1500);
-    }catch(e){alert('Kayit hatasi: '+e.message);}
-}
+// Left area
+{ x: 180,  y: 180,  w: 220, h: 30  },
+{ x: 180,  y: 180,  w: 30,  h: 200 },
+{ x: 180,  y: 550,  w: 220, h: 30  },
+{ x: 180,  y: 750,  w: 30,  h: 200 },
+{ x: 180,  y: 950,  w: 220, h: 30  },
+{ x: 180,  y: 1200, w: 220, h: 30  },
+{ x: 180,  y: 1200, w: 30,  h: 180 },
+{ x: 180,  y: 1380, w: 220, h: 30  },
 
-function yukle(){
-    try{
-        var k=localStorage.getItem('MusteriTakip');
-        if(k){
-            var d=JSON.parse(k);
-            musteriler=d.musteriler||[];
-            qovluqlar=d.qovluqlar||[];
-            seciliQovluq=d.seciliQovluq||"all";
-        }
-        if(qovluqlar.length===0){
-            qovluqlar=[{id:"q1",name:"Umumi"}];
-            seciliQovluq="q1";
-        }
-    }catch(e){alert('Yukleme hatasi');}
-}
+// Right area
+{ x: 2000, y: 180,  w: 220, h: 30  },
+{ x: 2190, y: 180,  w: 30,  h: 200 },
+{ x: 2000, y: 550,  w: 220, h: 30  },
+{ x: 2190, y: 750,  w: 30,  h: 200 },
+{ x: 2000, y: 950,  w: 220, h: 30  },
+{ x: 2000, y: 1200, w: 220, h: 30  },
+{ x: 2190, y: 1200, w: 30,  h: 180 },
+{ x: 2000, y: 1380, w: 220, h: 30  },
 
-function cedvelGoster(){
-    var tbody=document.getElementById('cedvelGovde');
-    var filtered=filtreliMusteriler();
-    if(filtered.length===0){
-        tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:40px;">Musteri yoxdur</td></tr>';
-        return;
-    }
-    var html='';
-    for(var i=0;i<filtered.length;i++){
-        var m=filtered[i];
-        var bugunG=bugunGelis(m.visits);
-        var toplamG=m.visits.length;
-        var toplamPul=umumiPul(m.payments);
-        var pulSay=m.payments.length;
-        html+='<tr>';
-        html+='<td><button class="musteri-ad" onclick="detayGoster(\''+m.id+'\')">'+m.name+'</button></td>';
-        html+='<td>'+(m.phone||'-')+'</td>';
-        html+='<td><button class="kucuk-btn btn-gelis" onclick="gelisElave(\''+m.id+'\')">GELIS +1</button><div class="badge">Bugun: '+bugunG+' | Umumi: '+toplamG+'</div></td>';
-        html+='<td><button class="btn-yesil" onclick="pulElave(\''+m.id+'\',20)"></button><div class="badge">'+pulSay+' defe</div></td>';
-        html+='<td><div class="badge">📊 '+toplamG+' gelis</div></td>';
-        html+='<td><button class="kucuk-btn btn-bilgi" onclick="detayGoster(\''+m.id+'\')">BILGI</button><button class="kucuk-btn btn-sil" onclick="musteriSil(\''+m.id+'\')">SIL</button></td>';
-        html+='</tr>';
-    }
-    tbody.innerHTML=html;
-}
+// Mid corridors
+{ x: 600,  y: 400,  w: 30,  h: 280 },
+{ x: 600,  y: 1120, w: 30,  h: 280 },
+{ x: 1770, y: 400,  w: 30,  h: 280 },
+{ x: 1770, y: 1120, w: 30,  h: 280 },
 
-function qovluqGoster(){
-    var container=document.getElementById('qovluqListesi');
-    container.innerHTML='';
-    var allBtn=document.createElement('div');
-    allBtn.className='qovluq-item'+(seciliQovluq==='all'?' active':'');
-    allBtn.innerHTML='BUTUN MUSTERILER';
-    allBtn.onclick=function(){seciliQovluq='all';kaydet();qovluqGoster();cedvelGoster();};
-    container.appendChild(allBtn);
-    for(var i=0;i<qovluqlar.length;i++){
-        var q=qovluqlar[i];
-        var div=document.createElement('div');
-        div.className='qovluq-item'+(seciliQovluq===q.id?' active':'');
-        div.innerHTML=q.name+'<span class="sil-qovluq" data-id="'+q.id+'">✖</span>';
-        div.onclick=(function(qid){return function(e){if(e.target.classList.contains('sil-qovluq'))return;seciliQovluq=qid;kaydet();qovluqGoster();cedvelGoster();};})(q.id);
-        var silSpan=div.querySelector('.sil-qovluq');
-        silSpan.onclick=(function(qid){return function(e){e.stopPropagation();if(qovluqlar.length===1){alert('En azi bir qovluq qalmalidir!');return;}var ilk=null;for(var j=0;j<qovluqlar.length;j++){if(qovluqlar[j].id!==qid){ilk=qovluqlar[j];break;}}for(var k=0;k<musteriler.length;k++){if(musteriler[k].qovluqId===qid)musteriler[k].qovluqId=ilk.id;}var yeni=[];for(var j=0;j<qovluqlar.length;j++){if(qovluqlar[j].id!==qid)yeni.push(qovluqlar[j]);}qovluqlar=yeni;if(seciliQovluq===qid)seciliQovluq=ilk.id;kaydet();qovluqGoster();cedvelGoster();};})(q.id);
-        container.appendChild(div);
-    }
-}
+// Crates / covers
+{ x: 450,  y: 820,  w: 90,  h: 90  },
+{ x: 700,  y: 620,  w: 90,  h: 90  },
+{ x: 700,  y: 1100, w: 90,  h: 90  },
+{ x: 1600, y: 820,  w: 90,  h: 90  },
+{ x: 1860, y: 620,  w: 90,  h: 90  },
+{ x: 1860, y: 1100, w: 90,  h: 90  },
+{ x: 1100, y: 480,  w: 200, h: 30  },
+{ x: 1100, y: 1290, w: 200, h: 30  },
+];
 
-window.gelisElave=function(id){
-    for(var i=0;i<musteriler.length;i++){
-        if(musteriler[i].id===id){
-            musteriler[i].visits.push(tarixSaat());
-            kaydet();
-            cedvelGoster();
-            break;
-        }
-    }
+// ─── GAME STATE ───────────────────────────────────────────────
+const rooms = {};   // roomId -> room object
+const players = {}; // socketId -> player object
+
+function createRoom(id) {
+return {
+id,
+state: ‘lobby’,    // lobby | countdown | playing | ended
+players: {},
+bullets: [],
+scores: { T: 0, CT: 0 },
+countdown: 0,
+startTime: 0,
+bulletIdCounter: 0,
 };
-
-window.pulElave=function(id,miktar){
-    for(var i=0;i<musteriler.length;i++){
-        if(musteriler[i].id===id){
-            musteriler[i].payments.push(tarixSaat()+' - '+miktar+' AZN');
-            kaydet();
-            cedvelGoster();
-            break;
-        }
-    }
-};
-
-window.musteriSil=function(id){
-    if(confirm('Bu musterini silmek isteyirsiniz?')){
-        var yeni=[];
-        for(var i=0;i<musteriler.length;i++){
-            if(musteriler[i].id!==id) yeni.push(musteriler[i]);
-        }
-        musteriler=yeni;
-        kaydet();
-        cedvelGoster();
-        qovluqGoster();
-    }
-};
-
-window.detayGoster=function(id){
-    var m=null;
-    for(var i=0;i<musteriler.length;i++){
-        if(musteriler[i].id===id){m=musteriler[i];break;}
-    }
-    if(!m) return;
-    var toplamPul=umumiPul(m.payments);
-    var gelisHtml='',pulHtml='';
-    for(var i=0;i<m.visits.length;i++) gelisHtml+='<div class="log-item">🕒 '+m.visits[i]+'</div>';
-    if(m.visits.length===0) gelisHtml='<div class="log-item">Gelis yoxdur</div>';
-    for(var i=0;i<m.payments.length;i++) pulHtml+='<div class="log-item">💰 '+m.payments[i]+'</div>';
-    if(m.payments.length===0) pulHtml='<div class="log-item">Pul yoxdur</div>';
-    var qovluqAdi='Umumi';
-    for(var i=0;i<qovluqlar.length;i++){if(qovluqlar[i].id===m.qovluqId){qovluqAdi=qovluqlar[i].name;break;}}
-    var md=document.createElement('div');
-    md.className='modal';
-    md.innerHTML='<div class="modal-ic"><div class="modal-baslik"><h3>👤 '+m.name+'</h3><span class="kapat" onclick="this.parentElement.parentElement.parentElement.remove()">&times;</span></div><p><strong>Telefon:</strong> '+(m.phone||'Yoxdur')+'</p><p><strong>Qovluq:</strong> '+qovluqAdi+'</p><h4>GELISLER ('+m.visits.length+')</h4><div class="log-list">'+gelisHtml+'</div><h4>PULLAR ('+m.payments.length+')</h4><div class="log-list">'+pulHtml+'</div><div class="toplam-kutu"><strong>UMUMI</strong><br>Gelis sayi: '+m.visits.length+'<br>Umumi pul: <span style="font-size:20px;">'+toplamPul+' AZN</span></div><button class="btn btn-mavi" style="margin-top:15px;width:100%;" onclick="this.parentElement.parentElement.remove()">BAGLA</button></div>';
-    document.body.appendChild(md);
-};
-
-window.statistikaGoster=function(){
-    var totalMusteri=musteriler.length;
-    var totalGelis=0,totalPul=0,bugunGelisSay=0;
-    var bugun=bugunTarix();
-    for(var i=0;i<musteriler.length;i++){
-        var m=musteriler[i];
-        totalGelis+=m.visits.length;
-        totalPul+=umumiPul(m.payments);
-        for(var j=0;j<m.visits.length;j++){
-            if(m.visits[j].substring(0,5)===bugun) bugunGelisSay++;
-        }
-    }
-    var qovluqStat='';
-    for(var i=0;i<qovluqlar.length;i++){
-        var q=qovluqlar[i];
-        var qMusteriler=[];
-        for(var j=0;j<musteriler.length;j++){
-            if(musteriler[j].qovluqId===q.id) qMusteriler.push(musteriler[j]);
-        }
-        var qGelis=0,qPul=0;
-        for(var j=0;j<qMusteriler.length;j++){
-            qGelis+=qMusteriler[j].visits.length;
-            qPul+=umumiPul(qMusteriler[j].payments);
-        }
-        qovluqStat+='<div class="log-item"><strong>📁 '+q.name+'</strong>: '+qMusteriler.length+' musteri, '+qGelis+' gelis, '+qPul+' AZN</div>';
-    }
-    var md=document.createElement('div');
-    md.className='modal';
-    md.innerHTML='<div class="modal-ic"><div class="modal-baslik"><h3>UMUMI STATISTIKA</h3><span class="kapat" onclick="this.parentElement.parentElement.parentElement.remove()">&times;</span></div><div class="toplam-kutu" style="background:#2c7da0;color:white;"><strong>SISTEM UMUMI</strong><br>Musteri sayi: '+totalMusteri+'<br>Umumi gelis: '+totalGelis+'<br>Umumi pul: '+totalPul+' AZN<br>Bugunku gelis: '+bugunGelisSay+'</div><h4>QOVLUQLAR UZRE</h4><div class="log-list">'+qovluqStat+'</div><button class="btn btn-mavi" style="margin-top:15px;width:100%;" onclick="this.parentElement.parentElement.remove()">BAGLA</button></div>';
-    document.body.appendChild(md);
-};
-
-function qovluqYarat(){
-    var ad=document.getElementById('yeniQovluq').value.trim();
-    if(!ad){alert('Qovluq adi daxil edin!');return;}
-    qovluqlar.push({id:'q'+Date.now(),name:ad});
-    seciliQovluq=qovluqlar[qovluqlar.length-1].id;
-    document.getElementById('yeniQovluq').value='';
-    kaydet();
-    qovluqGoster();
-    cedvelGoster();
 }
 
-function musteriYarat(){
-    var ad=document.getElementById('musteriAd').value.trim();
-    var tel=document.getElementById('musteriTel').value.trim();
-    if(!ad){alert('Musteri adi daxil edin!');return;}
-    var hedef=seciliQovluq;
-    if(hedef==='all'){
-        if(qovluqlar.length>0) hedef=qovluqlar[0].id;
-        else{alert('Once qovluq yaradin!');return;}
-    }
-    musteriler.push({
-        id:'m'+Date.now()+Math.random(),
-        name:ad,
-        phone:tel,
-        qovluqId:hedef,
-        visits:[],
-        payments:[]
-    });
-    document.getElementById('musteriAd').value='';
-    document.getElementById('musteriTel').value='';
-    kaydet();
-    cedvelGoster();
-    qovluqGoster();
-}
-
-function yedekAl(){
-    var data={musteriler:musteriler,qovluqlar:qovluqlar,seciliQovluq:seciliQovluq};
-    var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
-    var a=document.createElement('a');
-    a.href=URL.createObjectURL(blob);
-    a.download='musteriler_yedek_'+new Date().toISOString().slice(0,19)+'.json';
-    a.click();
-    URL.revokeObjectURL(a.href);
-    alert('Yedek fayli endirildi!');
-}
-
-function yedekYukle(){
-    var inp=document.createElement('input');
-    inp.type='file';
-    inp.accept='application/json';
-    inp.onchange=function(e){
-        var f=e.target.files[0];
-        var r=new FileReader();
-        r.onload=function(ev){
-            try{
-                var d=JSON.parse(ev.target.result);
-                musteriler=d.musteriler||[];
-                qovluqlar=d.qovluqlar||[];
-                seciliQovluq=d.seciliQovluq||(qovluqlar[0]?qovluqlar[0].id:'all');
-                if(qovluqlar.length===0) qovluqlar=[{id:'q1',name:'Umumi'}];
-                kaydet();
-                qovluqGoster();
-                cedvelGoster();
-                alert('Yedek yuklendi!');
-            }catch(err){alert('Xeta!');}
-        };
-        r.readAsText(f);
-    };
-    inp.click();
-}
-
-window.onload=function(){
-    yukle();
-    qovluqGoster();
-    cedvelGoster();
-    document.getElementById('qovluqElave').onclick=qovluqYarat;
-    document.getElementById('musteriElave').onclick=musteriYarat;
-    document.getElementById('statBtn').onclick=function(){statistikaGoster();};
-    document.getElementById('yedekBtn').onclick=yedekAl;
-    document.getElementById('yukleBtn').onclick=yedekYukle;
-    document.getElementById('yeniQovluq').onkeypress=function(e){if(e.key==='Enter')qovluqYarat();};
-    document.getElementById('musteriAd').onkeypress=function(e){if(e.key==='Enter')musteriYarat();};
+function createPlayer(socketId, name, room) {
+const team = assignTeam(room);
+const spawn = getSpawn(team, room);
+return {
+id: socketId,
+name: name.substring(0, 16) || ‘Player’,
+room: room.id,
+team,
+x: spawn.x,
+y: spawn.y,
+angle: 0,
+hp: PLAYER_HP,
+alive: true,
+kills: 0,
+deaths: 0,
+vx: 0,
+vy: 0,
+input: { up: false, down: false, left: false, right: false, shoot: false, angle: 0 },
+lastShot: 0,
+respawnAt: 0,
+flashAlpha: 0,
 };
-</script>
-</body>
-</html>
+}
+
+function assignTeam(room) {
+const ps = Object.values(room.players);
+const ts = ps.filter(p => p.team === ‘T’).length;
+const cts = ps.filter(p => p.team === ‘CT’).length;
+return ts <= cts ? ‘T’ : ‘CT’;
+}
+
+function getSpawn(team, room) {
+const spawns = team === ‘T’
+? [{ x: 280, y: 300 }, { x: 280, y: 900 }, { x: 280, y: 1500 }, { x: 500, y: 600 }, { x: 500, y: 1200 }]
+: [{ x: 2120, y: 300 }, { x: 2120, y: 900 }, { x: 2120, y: 1500 }, { x: 1900, y: 600 }, { x: 1900, y: 1200 }];
+
+// pick least crowded
+const occ = Object.values(room.players).filter(p => p.alive && p.team === team);
+for (const sp of spawns) {
+const near = occ.some(p => dist(p, sp) < 80);
+if (!near) return { x: sp.x, y: sp.y };
+}
+return spawns[Math.floor(Math.random() * spawns.length)];
+}
+
+function dist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
+
+// ─── COLLISION ───────────────────────────────────────────────
+function aabbCircle(cx, cy, r, wx, wy, ww, wh) {
+const nearX = Math.max(wx, Math.min(cx, wx + ww));
+const nearY = Math.max(wy, Math.min(cy, wy + wh));
+return Math.hypot(cx - nearX, cy - nearY) < r;
+}
+
+function resolvePlayer(p) {
+for (const w of WALLS) {
+if (!aabbCircle(p.x, p.y, PLAYER_RADIUS, w.x, w.y, w.w, w.h)) continue;
+// push out
+const cx = w.x + w.w / 2;
+const cy = w.y + w.h / 2;
+const overlapX = (w.w / 2 + PLAYER_RADIUS) - Math.abs(p.x - cx);
+const overlapY = (w.h / 2 + PLAYER_RADIUS) - Math.abs(p.y - cy);
+if (overlapX < overlapY) {
+p.x += p.x < cx ? -overlapX : overlapX;
+} else {
+p.y += p.y < cy ? -overlapY : overlapY;
+}
+}
+p.x = Math.max(PLAYER_RADIUS + 20, Math.min(MAP_W - PLAYER_RADIUS - 20, p.x));
+p.y = Math.max(PLAYER_RADIUS + 20, Math.min(MAP_H - PLAYER_RADIUS - 20, p.y));
+}
+
+function bulletHitsWall(b) {
+return WALLS.some(w =>
+b.x >= w.x && b.x <= w.x + w.w && b.y >= w.y && b.y <= w.y + w.h
+);
+}
+
+// ─── SOCKET.IO ───────────────────────────────────────────────
+const ROOM_ID = ‘main’; // single room for now
+rooms[ROOM_ID] = createRoom(ROOM_ID);
+
+io.on(‘connection’, socket => {
+console.log(’+ connected:’, socket.id);
+
+socket.on(‘join’, ({ name }) => {
+const room = rooms[ROOM_ID];
+const player = createPlayer(socket.id, name, room);
+room.players[socket.id] = player;
+players[socket.id] = player;
+socket.join(ROOM_ID);
+
+```
+socket.emit('joined', {
+  id: socket.id,
+  team: player.team,
+  walls: WALLS,
+  mapW: MAP_W,
+  mapH: MAP_H,
+  room: sanitizeRoom(room),
+});
+
+io.to(ROOM_ID).emit('playerJoined', sanitizePlayer(player));
+
+checkLobby(room);
+```
+
+});
+
+socket.on(‘input’, (data) => {
+const p = players[socket.id];
+if (!p) return;
+p.input = data;
+});
+
+socket.on(‘chat’, (msg) => {
+const p = players[socket.id];
+if (!p) return;
+io.to(ROOM_ID).emit(‘chat’, { name: p.name, team: p.team, msg: String(msg).substring(0, 80) });
+});
+
+socket.on(‘disconnect’, () => {
+const p = players[socket.id];
+if (!p) return;
+const room = rooms[p.room];
+if (room) delete room.players[socket.id];
+delete players[socket.id];
+io.to(ROOM_ID).emit(‘playerLeft’, socket.id);
+console.log(’- disconnected:’, socket.id);
+});
+});
+
+function checkLobby(room) {
+const count = Object.keys(room.players).length;
+if (room.state === ‘lobby’ && count >= LOBBY_MIN_PLAYERS) {
+startCountdown(room);
+}
+}
+
+function startCountdown(room) {
+room.state = ‘countdown’;
+room.countdown = 5;
+io.to(room.id).emit(‘countdown’, room.countdown);
+
+const iv = setInterval(() => {
+room.countdown–;
+io.to(room.id).emit(‘countdown’, room.countdown);
+if (room.countdown <= 0) {
+clearInterval(iv);
+startGame(room);
+}
+}, 1000);
+}
+
+function startGame(room) {
+room.state = ‘playing’;
+room.scores = { T: 0, CT: 0 };
+room.bullets = [];
+// respawn all
+for (const p of Object.values(room.players)) {
+const sp = getSpawn(p.team, room);
+p.x = sp.x; p.y = sp.y;
+p.hp = PLAYER_HP;
+p.alive = true;
+p.kills = 0;
+p.deaths = 0;
+}
+io.to(room.id).emit(‘gameStart’, sanitizeRoom(room));
+}
+
+function endGame(room, winTeam) {
+room.state = ‘ended’;
+io.to(room.id).emit(‘gameEnd’, { winTeam, scores: room.scores, players: sanitizePlayers(room) });
+setTimeout(() => resetRoom(room), 8000);
+}
+
+function resetRoom(room) {
+room.state = ‘lobby’;
+room.bullets = [];
+room.scores = { T: 0, CT: 0 };
+for (const p of Object.values(room.players)) {
+const sp = getSpawn(p.team, room);
+p.x = sp.x; p.y = sp.y;
+p.hp = PLAYER_HP;
+p.alive = true;
+p.kills = 0;
+p.deaths = 0;
+}
+io.to(room.id).emit(‘lobbyReset’, sanitizeRoom(room));
+checkLobby(room);
+}
+
+// ─── GAME LOOP ────────────────────────────────────────────────
+const DT = TICK_RATE / 1000;
+
+setInterval(() => {
+const room = rooms[ROOM_ID];
+if (!room || room.state !== ‘playing’) return;
+
+const now = Date.now();
+
+// Move players
+for (const p of Object.values(room.players)) {
+if (!p.alive) {
+if (now >= p.respawnAt) {
+const sp = getSpawn(p.team, room);
+p.x = sp.x; p.y = sp.y;
+p.hp = PLAYER_HP;
+p.alive = true;
+io.to(room.id).emit(‘respawn’, { id: p.id, x: p.x, y: p.y });
+}
+continue;
+}
+
+```
+const inp = p.input;
+p.angle = inp.angle || 0;
+
+let dx = 0, dy = 0;
+if (inp.up)    dy -= 1;
+if (inp.down)  dy += 1;
+if (inp.left)  dx -= 1;
+if (inp.right) dx += 1;
+
+if (dx !== 0 && dy !== 0) { dx *= 0.707; dy *= 0.707; }
+
+p.x += dx * PLAYER_SPEED * DT;
+p.y += dy * PLAYER_SPEED * DT;
+resolvePlayer(p);
+
+// Shoot
+if (inp.shoot && now - p.lastShot > 100) {
+  p.lastShot = now;
+  room.bullets.push({
+    id: room.bulletIdCounter++,
+    ownerId: p.id,
+    team: p.team,
+    x: p.x + Math.cos(p.angle) * 22,
+    y: p.y + Math.sin(p.angle) * 22,
+    vx: Math.cos(p.angle) * BULLET_SPEED,
+    vy: Math.sin(p.angle) * BULLET_SPEED,
+    dist: 0,
+    dead: false,
+  });
+}
+```
+
+}
+
+// Move bullets
+const events = [];
+room.bullets = room.bullets.filter(b => {
+if (b.dead) return false;
+b.x += b.vx * DT;
+b.y += b.vy * DT;
+b.dist += BULLET_SPEED * DT;
+
+```
+if (b.dist > BULLET_MAX_DIST) return false;
+if (bulletHitsWall(b)) {
+  events.push({ type: 'bulletHitWall', x: b.x, y: b.y });
+  return false;
+}
+
+// Hit player
+for (const p of Object.values(room.players)) {
+  if (!p.alive || p.id === b.ownerId || p.team === b.team) continue;
+  if (dist(b, p) < PLAYER_RADIUS + 5) {
+    const dmg = 26 + Math.random() * 10 | 0;
+    p.hp -= dmg;
+    events.push({ type: 'hit', targetId: p.id, dmg, x: b.x, y: b.y });
+    b.dead = true;
+
+    if (p.hp <= 0) {
+      p.alive = false;
+      p.hp = 0;
+      p.deaths++;
+      p.respawnAt = now + RESPAWN_TIME;
+
+      const shooter = room.players[b.ownerId];
+      if (shooter) shooter.kills++;
+      room.scores[b.team]++;
+
+      events.push({ type: 'kill', killerId: b.ownerId, victimId: p.id, scores: room.scores });
+
+      if (room.scores[b.team] >= WIN_KILLS) {
+        endGame(room, b.team);
+      }
+    }
+    return false;
+  }
+}
+return true;
+```
+
+});
+
+// Emit state
+io.to(room.id).emit(‘state’, {
+players: sanitizePlayers(room),
+bullets: room.bullets.map(b => ({ id: b.id, x: b.x, y: b.y, team: b.team })),
+events,
+scores: room.scores,
+ts: now,
+});
+}, TICK_RATE);
+
+// ─── HELPERS ─────────────────────────────────────────────────
+function sanitizePlayer(p) {
+return { id: p.id, name: p.name, team: p.team, x: p.x, y: p.y, angle: p.angle, hp: p.hp, alive: p.alive, kills: p.kills, deaths: p.deaths };
+}
+function sanitizePlayers(room) {
+return Object.values(room.players).map(sanitizePlayer);
+}
+function sanitizeRoom(room) {
+return { state: room.state, scores: room.scores, players: sanitizePlayers(room), countdown: room.countdown };
+}
+
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => console.log(`FPS Server running on port ${PORT}`));
