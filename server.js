@@ -1,238 +1,414 @@
-const express = require('express');
-const TelegramBot = require('node-telegram-bot-api');
-const axios = require('axios');
-const cron = require('node-cron');
+const express = require(‘express’);
+const http = require(‘http’);
+const { Server } = require(‘socket.io’);
+const path = require(‘path’);
+
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+cors: { origin: ‘*’ },
+pingInterval: 2000,
+pingTimeout: 5000
+});
 
-const TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const WEBAPP_URL = process.env.WEBAPP_URL || 'https://localhost:3000';
+app.use(express.static(path.join(__dirname, ‘public’)));
+app.get(’/’, (req, res) => res.sendFile(path.join(__dirname, ‘public’, ‘index.html’)));
 
-let bot = null;
-if (TOKEN) {
-    bot = new TelegramBot(TOKEN, { polling: true });
-    console.log('✅ Telegram bot aktif');
+// ─── CONSTANTS ───────────────────────────────────────────────
+const TICK_RATE = 60;          // ms per server tick
+const MAP_W = 2400;
+const MAP_H = 1800;
+const PLAYER_SPEED = 180;      // px/s
+const BULLET_SPEED = 700;
+const BULLET_MAX_DIST = 1400;
+const PLAYER_RADIUS = 18;
+const PLAYER_HP = 100;
+const RESPAWN_TIME = 4000;     // ms
+const WIN_KILLS = 15;
+const LOBBY_MIN_PLAYERS = 2;
+
+// ─── MAP WALLS ────────────────────────────────────────────────
+const WALLS = [
+// Outer boundary
+{ x: 0,    y: 0,    w: MAP_W, h: 20   },
+{ x: 0,    y: MAP_H-20, w: MAP_W, h: 20 },
+{ x: 0,    y: 0,    w: 20,   h: MAP_H },
+{ x: MAP_W-20, y: 0, w: 20, h: MAP_H },
+
+// Center structure
+{ x: 1050, y: 750,  w: 300, h: 300 },
+
+// Left area
+{ x: 180,  y: 180,  w: 220, h: 30  },
+{ x: 180,  y: 180,  w: 30,  h: 200 },
+{ x: 180,  y: 550,  w: 220, h: 30  },
+{ x: 180,  y: 750,  w: 30,  h: 200 },
+{ x: 180,  y: 950,  w: 220, h: 30  },
+{ x: 180,  y: 1200, w: 220, h: 30  },
+{ x: 180,  y: 1200, w: 30,  h: 180 },
+{ x: 180,  y: 1380, w: 220, h: 30  },
+
+// Right area
+{ x: 2000, y: 180,  w: 220, h: 30  },
+{ x: 2190, y: 180,  w: 30,  h: 200 },
+{ x: 2000, y: 550,  w: 220, h: 30  },
+{ x: 2190, y: 750,  w: 30,  h: 200 },
+{ x: 2000, y: 950,  w: 220, h: 30  },
+{ x: 2000, y: 1200, w: 220, h: 30  },
+{ x: 2190, y: 1200, w: 30,  h: 180 },
+{ x: 2000, y: 1380, w: 220, h: 30  },
+
+// Mid corridors
+{ x: 600,  y: 400,  w: 30,  h: 280 },
+{ x: 600,  y: 1120, w: 30,  h: 280 },
+{ x: 1770, y: 400,  w: 30,  h: 280 },
+{ x: 1770, y: 1120, w: 30,  h: 280 },
+
+// Crates / covers
+{ x: 450,  y: 820,  w: 90,  h: 90  },
+{ x: 700,  y: 620,  w: 90,  h: 90  },
+{ x: 700,  y: 1100, w: 90,  h: 90  },
+{ x: 1600, y: 820,  w: 90,  h: 90  },
+{ x: 1860, y: 620,  w: 90,  h: 90  },
+{ x: 1860, y: 1100, w: 90,  h: 90  },
+{ x: 1100, y: 480,  w: 200, h: 30  },
+{ x: 1100, y: 1290, w: 200, h: 30  },
+];
+
+// ─── GAME STATE ───────────────────────────────────────────────
+const rooms = {};   // roomId -> room object
+const players = {}; // socketId -> player object
+
+function createRoom(id) {
+return {
+id,
+state: ‘lobby’,    // lobby | countdown | playing | ended
+players: {},
+bullets: [],
+scores: { T: 0, CT: 0 },
+countdown: 0,
+startTime: 0,
+bulletIdCounter: 0,
+};
 }
 
-app.use(express.json());
-app.use(express.static('public'));
-
-// Veri depolama (memory'de)
-let usersData = {};
-let trackedAccounts = {};
-
-// Instagram takipçi sayısı çek (hesap gerekmez)
-async function getInstagramFollowers(username) {
-    try {
-        const cleanUsername = username.replace('@', '').replace('https://www.instagram.com/', '').replace('/', '').trim();
-        
-        // Instagram'ın public API'si
-        const url = `https://www.instagram.com/${cleanUsername}/?__a=1&__d=dis`;
-        
-        const response = await axios.get(url, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1',
-                'Accept': 'application/json',
-                'Accept-Language': 'tr-TR,tr;q=0.9',
-                'Referer': 'https://www.instagram.com/'
-            },
-            timeout: 10000
-        });
-        
-        let followers = 0;
-        const data = response.data;
-        
-        if (data?.graphql?.user?.edge_followed_by?.count) {
-            followers = data.graphql.user.edge_followed_by.count;
-        } else if (data?.data?.user?.edge_followed_by?.count) {
-            followers = data.data.user.edge_followed_by.count;
-        } else if (data?.user?.edge_followed_by?.count) {
-            followers = data.user.edge_followed_by.count;
-        }
-        
-        if (followers > 0) {
-            return { success: true, followers, username: cleanUsername, fullName: data?.graphql?.user?.full_name || cleanUsername };
-        }
-        
-        throw new Error('Takipçi sayısı bulunamadı');
-        
-    } catch (error) {
-        console.log(`❌ ${username} çekilemedi:`, error.message);
-        return { success: false, error: 'Profil gizli veya bulunamadı' };
-    }
+function createPlayer(socketId, name, room) {
+const team = assignTeam(room);
+const spawn = getSpawn(team, room);
+return {
+id: socketId,
+name: name.substring(0, 16) || ‘Player’,
+room: room.id,
+team,
+x: spawn.x,
+y: spawn.y,
+angle: 0,
+hp: PLAYER_HP,
+alive: true,
+kills: 0,
+deaths: 0,
+vx: 0,
+vy: 0,
+input: { up: false, down: false, left: false, right: false, shoot: false, angle: 0 },
+lastShot: 0,
+respawnAt: 0,
+flashAlpha: 0,
+};
 }
 
-// Takipçi değişimini kontrol et ve bildirim gönder
-async function checkAndNotify(telegramId, username, currentFollowers) {
-    const userAccounts = trackedAccounts[telegramId];
-    if (!userAccounts || !userAccounts[username]) return false;
-    
-    const oldData = userAccounts[username];
-    const oldFollowers = oldData.followers;
-    
-    if (currentFollowers !== oldFollowers) {
-        const change = currentFollowers - oldFollowers;
-        const changeText = change > 0 ? `📈 +${change} takipçi` : `📉 ${change} takipçi`;
-        const emoji = change > 0 ? '🎉' : '⚠️';
-        
-        // Güncelle
-        userAccounts[username] = {
-            followers: currentFollowers,
-            lastCheck: new Date().toISOString(),
-            history: [...(oldData.history || []), { followers: currentFollowers, date: new Date().toISOString() }]
-        };
-        
-        // Bildirim gönder
-        if (bot && !usersData[telegramId]?.silentMode) {
-            const message = `${emoji} *${username}* takipçi değişti!\n\n${changeText}\n\n📊 Eski: ${oldFollowers.toLocaleString()}\n📊 Yeni: ${currentFollowers.toLocaleString()}\n📅 ${new Date().toLocaleString('tr')}`;
-            
-            await bot.sendMessage(telegramId, message, { parse_mode: 'Markdown' });
-            console.log(`📨 Bildirim: ${username} -> ${change > 0 ? '+' : ''}${change}`);
-        }
-        return true;
+function assignTeam(room) {
+const ps = Object.values(room.players);
+const ts = ps.filter(p => p.team === ‘T’).length;
+const cts = ps.filter(p => p.team === ‘CT’).length;
+return ts <= cts ? ‘T’ : ‘CT’;
+}
+
+function getSpawn(team, room) {
+const spawns = team === ‘T’
+? [{ x: 280, y: 300 }, { x: 280, y: 900 }, { x: 280, y: 1500 }, { x: 500, y: 600 }, { x: 500, y: 1200 }]
+: [{ x: 2120, y: 300 }, { x: 2120, y: 900 }, { x: 2120, y: 1500 }, { x: 1900, y: 600 }, { x: 1900, y: 1200 }];
+
+// pick least crowded
+const occ = Object.values(room.players).filter(p => p.alive && p.team === team);
+for (const sp of spawns) {
+const near = occ.some(p => dist(p, sp) < 80);
+if (!near) return { x: sp.x, y: sp.y };
+}
+return spawns[Math.floor(Math.random() * spawns.length)];
+}
+
+function dist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
+
+// ─── COLLISION ───────────────────────────────────────────────
+function aabbCircle(cx, cy, r, wx, wy, ww, wh) {
+const nearX = Math.max(wx, Math.min(cx, wx + ww));
+const nearY = Math.max(wy, Math.min(cy, wy + wh));
+return Math.hypot(cx - nearX, cy - nearY) < r;
+}
+
+function resolvePlayer(p) {
+for (const w of WALLS) {
+if (!aabbCircle(p.x, p.y, PLAYER_RADIUS, w.x, w.y, w.w, w.h)) continue;
+// push out
+const cx = w.x + w.w / 2;
+const cy = w.y + w.h / 2;
+const overlapX = (w.w / 2 + PLAYER_RADIUS) - Math.abs(p.x - cx);
+const overlapY = (w.h / 2 + PLAYER_RADIUS) - Math.abs(p.y - cy);
+if (overlapX < overlapY) {
+p.x += p.x < cx ? -overlapX : overlapX;
+} else {
+p.y += p.y < cy ? -overlapY : overlapY;
+}
+}
+p.x = Math.max(PLAYER_RADIUS + 20, Math.min(MAP_W - PLAYER_RADIUS - 20, p.x));
+p.y = Math.max(PLAYER_RADIUS + 20, Math.min(MAP_H - PLAYER_RADIUS - 20, p.y));
+}
+
+function bulletHitsWall(b) {
+return WALLS.some(w =>
+b.x >= w.x && b.x <= w.x + w.w && b.y >= w.y && b.y <= w.y + w.h
+);
+}
+
+// ─── SOCKET.IO ───────────────────────────────────────────────
+const ROOM_ID = ‘main’; // single room for now
+rooms[ROOM_ID] = createRoom(ROOM_ID);
+
+io.on(‘connection’, socket => {
+console.log(’+ connected:’, socket.id);
+
+socket.on(‘join’, ({ name }) => {
+const room = rooms[ROOM_ID];
+const player = createPlayer(socket.id, name, room);
+room.players[socket.id] = player;
+players[socket.id] = player;
+socket.join(ROOM_ID);
+
+```
+socket.emit('joined', {
+  id: socket.id,
+  team: player.team,
+  walls: WALLS,
+  mapW: MAP_W,
+  mapH: MAP_H,
+  room: sanitizeRoom(room),
+});
+
+io.to(ROOM_ID).emit('playerJoined', sanitizePlayer(player));
+
+checkLobby(room);
+```
+
+});
+
+socket.on(‘input’, (data) => {
+const p = players[socket.id];
+if (!p) return;
+p.input = data;
+});
+
+socket.on(‘chat’, (msg) => {
+const p = players[socket.id];
+if (!p) return;
+io.to(ROOM_ID).emit(‘chat’, { name: p.name, team: p.team, msg: String(msg).substring(0, 80) });
+});
+
+socket.on(‘disconnect’, () => {
+const p = players[socket.id];
+if (!p) return;
+const room = rooms[p.room];
+if (room) delete room.players[socket.id];
+delete players[socket.id];
+io.to(ROOM_ID).emit(‘playerLeft’, socket.id);
+console.log(’- disconnected:’, socket.id);
+});
+});
+
+function checkLobby(room) {
+const count = Object.keys(room.players).length;
+if (room.state === ‘lobby’ && count >= LOBBY_MIN_PLAYERS) {
+startCountdown(room);
+}
+}
+
+function startCountdown(room) {
+room.state = ‘countdown’;
+room.countdown = 5;
+io.to(room.id).emit(‘countdown’, room.countdown);
+
+const iv = setInterval(() => {
+room.countdown–;
+io.to(room.id).emit(‘countdown’, room.countdown);
+if (room.countdown <= 0) {
+clearInterval(iv);
+startGame(room);
+}
+}, 1000);
+}
+
+function startGame(room) {
+room.state = ‘playing’;
+room.scores = { T: 0, CT: 0 };
+room.bullets = [];
+// respawn all
+for (const p of Object.values(room.players)) {
+const sp = getSpawn(p.team, room);
+p.x = sp.x; p.y = sp.y;
+p.hp = PLAYER_HP;
+p.alive = true;
+p.kills = 0;
+p.deaths = 0;
+}
+io.to(room.id).emit(‘gameStart’, sanitizeRoom(room));
+}
+
+function endGame(room, winTeam) {
+room.state = ‘ended’;
+io.to(room.id).emit(‘gameEnd’, { winTeam, scores: room.scores, players: sanitizePlayers(room) });
+setTimeout(() => resetRoom(room), 8000);
+}
+
+function resetRoom(room) {
+room.state = ‘lobby’;
+room.bullets = [];
+room.scores = { T: 0, CT: 0 };
+for (const p of Object.values(room.players)) {
+const sp = getSpawn(p.team, room);
+p.x = sp.x; p.y = sp.y;
+p.hp = PLAYER_HP;
+p.alive = true;
+p.kills = 0;
+p.deaths = 0;
+}
+io.to(room.id).emit(‘lobbyReset’, sanitizeRoom(room));
+checkLobby(room);
+}
+
+// ─── GAME LOOP ────────────────────────────────────────────────
+const DT = TICK_RATE / 1000;
+
+setInterval(() => {
+const room = rooms[ROOM_ID];
+if (!room || room.state !== ‘playing’) return;
+
+const now = Date.now();
+
+// Move players
+for (const p of Object.values(room.players)) {
+if (!p.alive) {
+if (now >= p.respawnAt) {
+const sp = getSpawn(p.team, room);
+p.x = sp.x; p.y = sp.y;
+p.hp = PLAYER_HP;
+p.alive = true;
+io.to(room.id).emit(‘respawn’, { id: p.id, x: p.x, y: p.y });
+}
+continue;
+}
+
+```
+const inp = p.input;
+p.angle = inp.angle || 0;
+
+let dx = 0, dy = 0;
+if (inp.up)    dy -= 1;
+if (inp.down)  dy += 1;
+if (inp.left)  dx -= 1;
+if (inp.right) dx += 1;
+
+if (dx !== 0 && dy !== 0) { dx *= 0.707; dy *= 0.707; }
+
+p.x += dx * PLAYER_SPEED * DT;
+p.y += dy * PLAYER_SPEED * DT;
+resolvePlayer(p);
+
+// Shoot
+if (inp.shoot && now - p.lastShot > 100) {
+  p.lastShot = now;
+  room.bullets.push({
+    id: room.bulletIdCounter++,
+    ownerId: p.id,
+    team: p.team,
+    x: p.x + Math.cos(p.angle) * 22,
+    y: p.y + Math.sin(p.angle) * 22,
+    vx: Math.cos(p.angle) * BULLET_SPEED,
+    vy: Math.sin(p.angle) * BULLET_SPEED,
+    dist: 0,
+    dead: false,
+  });
+}
+```
+
+}
+
+// Move bullets
+const events = [];
+room.bullets = room.bullets.filter(b => {
+if (b.dead) return false;
+b.x += b.vx * DT;
+b.y += b.vy * DT;
+b.dist += BULLET_SPEED * DT;
+
+```
+if (b.dist > BULLET_MAX_DIST) return false;
+if (bulletHitsWall(b)) {
+  events.push({ type: 'bulletHitWall', x: b.x, y: b.y });
+  return false;
+}
+
+// Hit player
+for (const p of Object.values(room.players)) {
+  if (!p.alive || p.id === b.ownerId || p.team === b.team) continue;
+  if (dist(b, p) < PLAYER_RADIUS + 5) {
+    const dmg = 26 + Math.random() * 10 | 0;
+    p.hp -= dmg;
+    events.push({ type: 'hit', targetId: p.id, dmg, x: b.x, y: b.y });
+    b.dead = true;
+
+    if (p.hp <= 0) {
+      p.alive = false;
+      p.hp = 0;
+      p.deaths++;
+      p.respawnAt = now + RESPAWN_TIME;
+
+      const shooter = room.players[b.ownerId];
+      if (shooter) shooter.kills++;
+      room.scores[b.team]++;
+
+      events.push({ type: 'kill', killerId: b.ownerId, victimId: p.id, scores: room.scores });
+
+      if (room.scores[b.team] >= WIN_KILLS) {
+        endGame(room, b.team);
+      }
     }
     return false;
+  }
 }
+return true;
+```
 
-// Tüm hesapları kontrol et
-async function checkAllAccounts() {
-    console.log('🔍 Kontrol başladı:', new Date().toLocaleString());
-    let totalChanges = 0;
-    
-    for (const [telegramId, accounts] of Object.entries(trackedAccounts)) {
-        for (const [username, data] of Object.entries(accounts)) {
-            const result = await getInstagramFollowers(username);
-            if (result.success) {
-                const changed = await checkAndNotify(telegramId, username, result.followers);
-                if (changed) totalChanges++;
-            }
-            await new Promise(r => setTimeout(r, 1000)); // Rate limit koruması
-        }
-    }
-    console.log(`✅ Kontrol bitti. ${totalChanges} değişiklik bulundu.`);
+});
+
+// Emit state
+io.to(room.id).emit(‘state’, {
+players: sanitizePlayers(room),
+bullets: room.bullets.map(b => ({ id: b.id, x: b.x, y: b.y, team: b.team })),
+events,
+scores: room.scores,
+ts: now,
+});
+}, TICK_RATE);
+
+// ─── HELPERS ─────────────────────────────────────────────────
+function sanitizePlayer(p) {
+return { id: p.id, name: p.name, team: p.team, x: p.x, y: p.y, angle: p.angle, hp: p.hp, alive: p.alive, kills: p.kills, deaths: p.deaths };
 }
-
-// Her 10 dakikada bir kontrol et
-cron.schedule('*/10 * * * *', () => {
-    checkAllAccounts();
-});
-
-// Telegram bot komutları
-if (bot) {
-    bot.onText(/\/start/, (msg) => {
-        const chatId = msg.chat.id;
-        const user = msg.from;
-        
-        usersData[chatId] = {
-            id: chatId,
-            first_name: user.first_name,
-            username: user.username,
-            silentMode: false
-        };
-        
-        if (!trackedAccounts[chatId]) {
-            trackedAccounts[chatId] = {};
-        }
-        
-        bot.sendMessage(chatId, `👋 *${user.first_name}* merhaba!\n\nInstagram takipçi takip botuna hoşgeldin.\n\n🔔 Takip ettiğin profillerin takipçi sayısı değiştiğinde sana anında bildirim göndereceğim.\n\n📌 Paneli açarak takip etmek istediğin profilleri ekleyebilirsin.`, {
-            parse_mode: 'Markdown',
-            reply_markup: {
-                inline_keyboard: [[{
-                    text: "📊 Takipçi Takip Paneli",
-                    web_app: { url: WEBAPP_URL }
-                }]]
-            }
-        });
-    });
+function sanitizePlayers(room) {
+return Object.values(room.players).map(sanitizePlayer);
 }
-
-// API Endpoints
-app.post('/api/auto-login', (req, res) => {
-    const { telegram_id, first_name, username, photo_url } = req.body;
-    
-    if (!usersData[telegram_id]) {
-        usersData[telegram_id] = {
-            id: telegram_id,
-            first_name: first_name,
-            username: username,
-            photo_url: photo_url,
-            silentMode: false
-        };
-        trackedAccounts[telegram_id] = {};
-    }
-    
-    res.json({ 
-        success: true, 
-        user: usersData[telegram_id],
-        silentMode: usersData[telegram_id].silentMode 
-    });
-});
-
-app.post('/api/add', async (req, res) => {
-    const { telegram_id, username } = req.body;
-    
-    if (!trackedAccounts[telegram_id]) {
-        trackedAccounts[telegram_id] = {};
-    }
-    
-    // Takipçi sayısını çek
-    const result = await getInstagramFollowers(username);
-    
-    if (result.success) {
-        trackedAccounts[telegram_id][result.username] = {
-            followers: result.followers,
-            fullName: result.fullName,
-            lastCheck: new Date().toISOString(),
-            history: [{ followers: result.followers, date: new Date().toISOString() }]
-        };
-        res.json({ success: true, followers: result.followers, username: result.username });
-    } else {
-        res.json({ success: false, error: result.error });
-    }
-});
-
-app.post('/api/remove', (req, res) => {
-    const { telegram_id, username } = req.body;
-    if (trackedAccounts[telegram_id]) {
-        delete trackedAccounts[telegram_id][username];
-    }
-    res.json({ success: true });
-});
-
-app.get('/api/list/:telegram_id', (req, res) => {
-    const accounts = trackedAccounts[req.params.telegram_id] || {};
-    const list = Object.entries(accounts).map(([username, data]) => ({
-        username,
-        followers: data.followers,
-        lastCheck: data.lastCheck,
-        fullName: data.fullName
-    }));
-    res.json(list);
-});
-
-app.post('/api/silent-mode', (req, res) => {
-    const { telegram_id, silent } = req.body;
-    if (usersData[telegram_id]) {
-        usersData[telegram_id].silentMode = silent;
-    }
-    res.json({ success: true });
-});
-
-app.get('/api/status', (req, res) => {
-    const totalTracked = Object.values(trackedAccounts).reduce((a,b) => a + Object.keys(b).length, 0);
-    res.json({
-        status: 'ok',
-        users: Object.keys(usersData).length,
-        trackedAccounts: totalTracked,
-        bot: !!bot
-    });
-});
+function sanitizeRoom(room) {
+return { state: room.state, scores: room.scores, players: sanitizePlayers(room), countdown: room.countdown };
+}
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`✅ Server: http://localhost:${PORT}`);
-    console.log(`📱 Web App: ${WEBAPP_URL}`);
-    console.log(`🤖 Bot: ${TOKEN ? 'Aktif' : 'Token yok'}`);
-    
-    // İlk kontrolü 10 saniye sonra yap
-    setTimeout(() => checkAllAccounts(), 10000);
-});
+server.listen(PORT, () => console.log(`FPS Server running on port ${PORT}`));
