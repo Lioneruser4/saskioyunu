@@ -1,76 +1,625 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="az">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, orientation=landscape">
-    <title>Backrooms Expedition - Telegram WebView</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>CV Creator - Azərbaycanca | Profesional CV Şablonları</title>
     <style>
-        body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', Courier, monospace; color: #ffc933; }
-        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
-        #joystick-container { position: absolute; bottom: 20px; left: 20px; width: 150px; height: 150px; background: rgba(0,0,0,0.5); border-radius: 50%; pointer-events: auto; }
-        #joystick-knob { position: absolute; top: 50px; left: 50px; width: 50px; height: 50px; background: #ffc933; border-radius: 50%; }
-        #jump-btn { position: absolute; bottom: 20px; right: 20px; width: 80px; height: 80px; background: rgba(255, 201, 51, 0.3); border: 2px solid #ffc933; border-radius: 50%; pointer-events: auto; color: #ffc933; font-weight: bold; display: flex; align-items: center; justify-content: center; }
-        #status-bar { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.7); padding: 5px 10px; pointer-events: none; border-left: 3px solid #ffc933; }
-        #loading-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #1c1b1b; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
-        .flicker { animation: flicker 0.2s infinite; }
-        @keyframes flicker { 0% { opacity: 0.9; } 50% { opacity: 1; } 100% { opacity: 0.9; } }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(145deg, #e0eafc 0%, #cfdef3 100%);
+            padding: 30px 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Başlıq və izahat */
+        .header {
+            text-align: center;
+            margin-bottom: 35px;
+        }
+
+        .header h1 {
+            font-size: 2.4rem;
+            color: #1e2a3e;
+            letter-spacing: -0.5px;
+            background: rgba(255,255,255,0.3);
+            display: inline-block;
+            padding: 10px 28px;
+            border-radius: 60px;
+            backdrop-filter: blur(4px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .header p {
+            margin-top: 12px;
+            color: #2c3e4e;
+            font-weight: 500;
+            font-size: 1.1rem;
+        }
+
+        /* iki sütunlu layout */
+        .cv-builder {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+        }
+
+        /* SOL - Form paneli */
+        .form-panel {
+            flex: 1.2;
+            min-width: 280px;
+            background: white;
+            border-radius: 32px;
+            padding: 28px 24px;
+            box-shadow: 0 20px 35px rgba(0,0,0,0.1);
+            backdrop-filter: blur(2px);
+            transition: all 0.2s;
+        }
+
+        .form-panel h2 {
+            font-size: 1.7rem;
+            border-left: 6px solid #2c7da0;
+            padding-left: 16px;
+            margin-bottom: 25px;
+            color: #1f3b4c;
+        }
+
+        .input-group {
+            margin-bottom: 22px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .input-group label {
+            font-weight: 600;
+            margin-bottom: 7px;
+            color: #1e4663;
+            font-size: 0.9rem;
+        }
+
+        .input-group input, .input-group textarea {
+            padding: 12px 16px;
+            border: 2px solid #dce5f0;
+            border-radius: 24px;
+            font-size: 1rem;
+            transition: 0.2s;
+            background: #fefefe;
+            outline: none;
+        }
+
+        .input-group input:focus, .input-group textarea:focus {
+            border-color: #2c7da0;
+            box-shadow: 0 0 0 3px rgba(44,125,160,0.2);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 70px;
+        }
+
+        .dynamic-list {
+            background: #f8fafd;
+            border-radius: 24px;
+            padding: 12px 16px;
+            margin-top: 5px;
+        }
+
+        .list-item {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .list-item input {
+            flex: 1;
+            padding: 10px 14px;
+            border-radius: 40px;
+            border: 1px solid #cbdde9;
+        }
+
+        .add-btn {
+            background: #eef2f7;
+            border: 1px solid #bdd3e6;
+            padding: 8px 18px;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 6px;
+            transition: 0.2s;
+            color: #1f6392;
+        }
+
+        .add-btn:hover {
+            background: #d4e2f0;
+            transform: scale(0.97);
+        }
+
+        .remove-item {
+            background: none;
+            border: none;
+            font-size: 1.3rem;
+            cursor: pointer;
+            color: #a0b8ce;
+            font-weight: bold;
+            width: 32px;
+        }
+
+        .remove-item:hover {
+            color: #c0392b;
+        }
+
+        .generate-btn {
+            background: linear-gradient(135deg, #2c7da0, #1f5e7e);
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 40px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: white;
+            margin-top: 28px;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 5px 12px rgba(0,0,0,0.15);
+        }
+
+        .generate-btn:hover {
+            background: linear-gradient(135deg, #236c8c, #194f6a);
+            transform: translateY(-2px);
+        }
+
+        /* SAĞ - Şablonlar bölməsi */
+        .templates-area {
+            flex: 2;
+            min-width: 340px;
+        }
+
+        .template-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 25px;
+            border-bottom: 2px solid rgba(255,255,255,0.6);
+            padding-bottom: 12px;
+        }
+
+        .tab-btn {
+            background: rgba(255,255,240,0.7);
+            border: none;
+            padding: 8px 22px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: 0.2s;
+            color: #1e3b4a;
+            backdrop-filter: blur(4px);
+        }
+
+        .tab-btn.active {
+            background: #1f6392;
+            color: white;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+        }
+
+        .cv-card {
+            background: white;
+            border-radius: 36px;
+            padding: 28px 28px;
+            box-shadow: 0 25px 40px rgba(0,0,0,0.2);
+            transition: all 0.25s;
+            min-height: 550px;
+        }
+
+        /* Şablon stilləri (dinamik məzmun) */
+        .template-content {
+            transition: 0.1s;
+        }
+
+        /* Şablon 1 - klassik */
+        .template-1 .cv-header {
+            text-align: center;
+            border-bottom: 3px solid #2c7da0;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+        .template-1 .cv-name {
+            font-size: 2rem;
+            color: #1f3b4c;
+        }
+        .template-1 .section-title {
+            color: #2c7da0;
+            border-left: 4px solid;
+            padding-left: 12px;
+            margin: 20px 0 10px 0;
+        }
+
+        /* Şablon 2 - minimal modern */
+        .template-2 {
+            background: #fefaf5;
+        }
+        .template-2 .cv-header {
+            background: #2c3e50;
+            color: white;
+            margin: -28px -28px 20px -28px;
+            padding: 28px 28px 20px 28px;
+            border-radius: 36px 36px 30px 30px;
+        }
+        .template-2 .cv-name {
+            font-size: 1.9rem;
+        }
+        .template-2 .section-title {
+            font-weight: 800;
+            letter-spacing: -0.3px;
+            border-bottom: 2px solid #e0b354;
+            display: inline-block;
+            margin: 15px 0 10px 0;
+        }
+
+        /* Şablon 3 - yan panel + grid */
+        .template-3 {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .template-3 .sidebar {
+            flex: 1;
+            background: #eef2fa;
+            padding: 18px;
+            border-radius: 28px;
+        }
+        .template-3 .main-content {
+            flex: 2;
+        }
+        .template-3 .section-title {
+            font-weight: bold;
+            margin: 12px 0 8px 0;
+            color: #1a5d7a;
+        }
+
+        .info-line {
+            margin: 6px 0;
+        }
+
+        hr {
+            margin: 12px 0;
+        }
+
+        .badge {
+            background: #e9ecef;
+            padding: 4px 12px;
+            border-radius: 40px;
+            display: inline-block;
+            margin: 4px 6px 4px 0;
+            font-size: 0.85rem;
+        }
+
+        @media (max-width: 780px) {
+            .cv-builder {
+                flex-direction: column;
+            }
+            .template-3 {
+                flex-direction: column;
+            }
+        }
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #2c3e50;
+            font-weight: 500;
+        }
     </style>
 </head>
 <body>
-    <div id="loading-screen">
-        <h1 class="flicker">INITIALIZING EXPEDITION...</h1>
-        <p id="loading-status">Connecting to Telegram...</p>
+<div class="container">
+    <div class="header">
+        <h1>📄 CV Creator • Azərbaycanca</h1>
+        <p>Məlumatlarını daxil et, öz CV-ni seçdiyin şablonla avtomatik yarat!</p>
     </div>
 
-    <div id="ui-layer">
-        <div id="status-bar">
-            AGENT: <span id="user-name">IDENTIFYING...</span><br>
-            SECTOR: LOBBY_01<br>
-            LATENCY: <span id="ping">0ms</span>
+    <div class="cv-builder">
+        <!-- SOL TƏRƏF: MƏLUMAT SORĞUSU -->
+        <div class="form-panel">
+            <h2>📋 Məlumatlarını daxil et</h2>
+            <div class="input-group">
+                <label>Ad və Soyad:</label>
+                <input type="text" id="fullname" placeholder="Məs: Aysel Məmmədova" value="Aysel Məmmədova">
+            </div>
+            <div class="input-group">
+                <label>Yaş (rəqəmlə):</label>
+                <input type="number" id="age" placeholder="Məs: 26" value="26">
+            </div>
+            <div class="input-group">
+                <label>Peşə / Vəzifə (başlıq):</label>
+                <input type="text" id="profession" placeholder="Frontend Developer" value="Frontend Developer">
+            </div>
+            <div class="input-group">
+                <label>Email:</label>
+                <input type="email" id="email" placeholder="example@mail.com" value="aysel.m@code.az">
+            </div>
+            <div class="input-group">
+                <label>Telefon:</label>
+                <input type="text" id="phone" placeholder="+994 50 123 45 67" value="+994 50 123 45 67">
+            </div>
+            <div class="input-group">
+                <label>Bio / Haqqımda (qısa):</label>
+                <textarea id="bio" rows="2">Texnologiyalara maraqlı, komandada işləməyi bacaran, çevik inkişaf tərəfdarı.</textarea>
+            </div>
+
+            <!-- İş yerləri (dinamik) -->
+            <div class="input-group">
+                <label>💼 İş təcrübələri (şirkət & vəzifə):</label>
+                <div id="jobsContainer" class="dynamic-list">
+                    <div class="list-item" data-job-index="0">
+                        <input type="text" class="job-input" placeholder="Şirkət adı, Vəzifə" value="AzSoft, Frontend Dev">
+                        <button class="remove-item" onclick="removeJob(this)">✖</button>
+                    </div>
+                    <div class="list-item" data-job-index="1">
+                        <input type="text" class="job-input" placeholder="Şirkət adı, Vəzifə" value="DataLab, Junior Developer">
+                        <button class="remove-item" onclick="removeJob(this)">✖</button>
+                    </div>
+                </div>
+                <button type="button" class="add-btn" onclick="addJobField()">+ Əlavə iş yeri</button>
+            </div>
+
+            <!-- Dil bilgiləri dinamik -->
+            <div class="input-group">
+                <label>🌐 Dillər (dil və səviyyə):</label>
+                <div id="langsContainer" class="dynamic-list">
+                    <div class="list-item" data-lang-index="0">
+                        <input type="text" class="lang-input" placeholder="Məs: Azərbaycan dili (Ana dili)" value="Azərbaycan dili (Ana dili)">
+                        <button class="remove-item" onclick="removeLang(this)">✖</button>
+                    </div>
+                    <div class="list-item" data-lang-index="1">
+                        <input type="text" class="lang-input" placeholder="Məs: İngilis dili (C1)" value="İngilis dili (Advanced C1)">
+                        <button class="remove-item" onclick="removeLang(this)">✖</button>
+                    </div>
+                </div>
+                <button type="button" class="add-btn" onclick="addLangField()">+ Dil əlavə et</button>
+            </div>
+
+            <!-- Bacarıqlar (isteğe bağlı) -->
+            <div class="input-group">
+                <label>⚙️ Texniki bacarıqlar (vergüllə yaz, və ya hər birini):</label>
+                <input type="text" id="skills" placeholder="React, Python, UI/UX, Git" value="React, JavaScript, Python, UI/UX">
+            </div>
+
+            <button class="generate-btn" id="generateCVBtn">✨ CV-ni yenilə / Şablonlara tətbiq et</button>
         </div>
-        <div id="joystick-container"><div id="joystick-knob"></div></div>
-        <div id="jump-btn">JUMP</div>
+
+        <!-- SAĞ TƏRƏF: Şablonlar (3 fərqli şablon) -->
+        <div class="templates-area">
+            <div class="template-tabs">
+                <button class="tab-btn active" data-template="temp1">📘 Şablon 1 - Klassik</button>
+                <button class="tab-btn" data-template="temp2">🌟 Şablon 2 - Modern</button>
+                <button class="tab-btn" data-template="temp3">🎨 Şablon 3 - Yan panel</button>
+            </div>
+            <div class="cv-card" id="cvPreviewCard">
+                <!-- Dinamik məzmun burada javascript ilə doldurulacaq -->
+                <div id="cvDynamicContent" class="template-content template-1">
+                    <!-- default şablon 1 məzmunu js ilə yazılacaq -->
+                </div>
+            </div>
+        </div>
     </div>
+    <footer>💡 Məlumatlarını dəyiş → "CV-ni yenilə" düyməsi → istənilən şablonu seç. Avtomatik dolur!</footer>
+</div>
 
-    <script src="game.js"></script>
-    <script>
-        // Telegram Integration
-        const tele = window.Telegram.WebApp;
-        tele.expand();
-        const userData = {
-            id: tele.initDataUnsafe?.user?.id || "GUEST_" + Math.floor(Math.random()*1000),
-            name: tele.initDataUnsafe?.user?.first_name || "Unknown_Subject"
-        };
-        document.getElementById('user-name').innerText = userData.name.toUpperCase();
+<script>
+    // --- Dinamik iş yeri və dil idarəsi ---
+    function addJobField() {
+        const container = document.getElementById('jobsContainer');
+        const newDiv = document.createElement('div');
+        newDiv.className = 'list-item';
+        const idx = container.children.length;
+        newDiv.setAttribute('data-job-index', idx);
+        newDiv.innerHTML = `<input type="text" class="job-input" placeholder="Şirkət adı, Vəzifə" value="Yeni iş yeri, Vəzifə">
+                            <button class="remove-item" onclick="removeJob(this)">✖</button>`;
+        container.appendChild(newDiv);
+    }
 
-        // Socket.io Connection
-        const socket = io('https://saskioyunu-1-2d6i.onrender.com', {
-            reconnection: true,
-            reconnectionAttempts: Infinity,
-            reconnectionDelay: 1000
+    function removeJob(btn) {
+        const item = btn.parentElement;
+        if (document.getElementById('jobsContainer').children.length > 1) {
+            item.remove();
+        } else {
+            alert("Ən azı bir iş yeri olmalıdır.");
+        }
+    }
+
+    function addLangField() {
+        const container = document.getElementById('langsContainer');
+        const newDiv = document.createElement('div');
+        newDiv.className = 'list-item';
+        newDiv.innerHTML = `<input type="text" class="lang-input" placeholder="Məs: Rus dili (B2)" value="Yeni dil, Səviyyə">
+                            <button class="remove-item" onclick="removeLang(this)">✖</button>`;
+        container.appendChild(newDiv);
+    }
+
+    function removeLang(btn) {
+        const item = btn.parentElement;
+        if (document.getElementById('langsContainer').children.length > 1) {
+            item.remove();
+        } else {
+            alert("Ən azı bir dil məlumatı olmalıdır.");
+        }
+    }
+
+    // --- Məlumatları toplayan funksiya (obyekt qaytarır) ---
+    function gatherCVData() {
+        const fullname = document.getElementById('fullname').value.trim() || "Ad Soyad";
+        const age = document.getElementById('age').value || "?";
+        const profession = document.getElementById('profession').value.trim() || "Peşə";
+        const email = document.getElementById('email').value.trim() || "email@example.com";
+        const phone = document.getElementById('phone').value.trim() || "+994 XX XXX XX XX";
+        const bio = document.getElementById('bio').value.trim() || "Bio məlumatı yoxdur.";
+        const skillsRaw = document.getElementById('skills').value;
+        const skillsList = skillsRaw.split(',').map(s => s.trim()).filter(s => s !== "");
+
+        // İş yerlərini array şəklində al
+        const jobInputs = document.querySelectorAll('#jobsContainer .job-input');
+        let jobs = [];
+        jobInputs.forEach(inp => {
+            if (inp.value.trim() !== "") jobs.push(inp.value.trim());
         });
+        if (jobs.length === 0) jobs = ["Təcrübə daxil edilməyib"];
 
-        socket.on('connect', () => {
-            document.getElementById('loading-status').innerText = "Entering the Backrooms...";
-            socket.emit('find_game', userData);
+        // Dillər
+        const langInputs = document.querySelectorAll('#langsContainer .lang-input');
+        let languages = [];
+        langInputs.forEach(inp => {
+            if (inp.value.trim() !== "") languages.push(inp.value.trim());
         });
+        if (languages.length === 0) languages = ["Məlumat daxil edilməyib"];
 
-        socket.on('room_joined', (data) => {
-            document.getElementById('loading-screen').style.display = 'none';
-            initGame(socket, data.yourId);
+        return { fullname, age, profession, email, phone, bio, skillsList, jobs, languages };
+    }
+
+    // --- Ümumi render funksiyası (templateId = 'temp1', 'temp2', 'temp3') ---
+    function renderCV(templateId) {
+        const data = gatherCVData();
+        const container = document.getElementById('cvDynamicContent');
+        let html = '';
+
+        if (templateId === 'temp1') {
+            // Şablon 1 - Klassik
+            html = `<div class="template-1">
+                        <div class="cv-header">
+                            <div class="cv-name">${escapeHtml(data.fullname)}</div>
+                            <div style="color:#2c7da0; font-weight:500;">${escapeHtml(data.profession)}</div>
+                            <div>📧 ${escapeHtml(data.email)} &nbsp; 📞 ${escapeHtml(data.phone)}</div>
+                            <div>🎂 Yaş: ${escapeHtml(data.age)}</div>
+                        </div>
+                        <div class="section-title">👤 Haqqımda</div>
+                        <p>${escapeHtml(data.bio)}</p>
+                        <div class="section-title">💼 İş təcrübəsi</div>
+                        <ul>${data.jobs.map(job => `<li>${escapeHtml(job)}</li>`).join('')}</ul>
+                        <div class="section-title">🌐 Dillər</div>
+                        <div>${data.languages.map(lang => `<span class="badge">${escapeHtml(lang)}</span>`).join('')}</div>
+                        <div class="section-title">⚙️ Bacarıqlar</div>
+                        <div>${data.skillsList.map(skill => `<span class="badge">${escapeHtml(skill)}</span>`).join('')}</div>
+                    </div>`;
+        } 
+        else if (templateId === 'temp2') {
+            // Şablon 2 - Modern (altın vurgulu)
+            html = `<div class="template-2">
+                        <div class="cv-header">
+                            <div class="cv-name">✨ ${escapeHtml(data.fullname)}</div>
+                            <div style="font-size:1.1rem; opacity:0.9;">${escapeHtml(data.profession)} | Yaş ${escapeHtml(data.age)}</div>
+                            <div>📧 ${escapeHtml(data.email)}  •  📞 ${escapeHtml(data.phone)}</div>
+                        </div>
+                        <div class="section-title">📌 Profil</div>
+                        <p>${escapeHtml(data.bio)}</p>
+                        <div class="section-title">📂 Təcrübələr</div>
+                        <ul style="list-style-type: square; padding-left: 20px;">
+                            ${data.jobs.map(job => `<li>${escapeHtml(job)}</li>`).join('')}
+                        </ul>
+                        <div class="section-title">🗣️ Dillər</div>
+                        <div>${data.languages.map(lang => `<span class="badge" style="background:#f0dbb2;">${escapeHtml(lang)}</span>`).join('')}</div>
+                        <div class="section-title">🛠️ Texniki bacarıqlar</div>
+                        <div>${data.skillsList.map(skill => `<span class="badge" style="background:#e1ecf4;">${escapeHtml(skill)}</span>`).join('')}</div>
+                    </div>`;
+        } 
+        else if (templateId === 'temp3') {
+            // Şablon 3 - yan panel + əsas məzmun
+            html = `<div class="template-3">
+                        <div class="sidebar">
+                            <div style="font-size: 1.8rem; font-weight: bold;">${escapeHtml(data.fullname)}</div>
+                            <div>🎂 ${escapeHtml(data.age)} yaş</div>
+                            <div>💼 ${escapeHtml(data.profession)}</div>
+                            <hr>
+                            <div class="section-title">📞 Əlaqə</div>
+                            <div class="info-line">📧 ${escapeHtml(data.email)}</div>
+                            <div class="info-line">📱 ${escapeHtml(data.phone)}</div>
+                            <hr>
+                            <div class="section-title">🌐 Dillər</div>
+                            <ul style="margin-left: 18px;">${data.languages.map(lang => `<li>${escapeHtml(lang)}</li>`).join('')}</ul>
+                        </div>
+                        <div class="main-content">
+                            <div class="section-title">📖 Haqqımda</div>
+                            <p>${escapeHtml(data.bio)}</p>
+                            <div class="section-title">💼 İş təcrübələri</div>
+                            <ul>${data.jobs.map(job => `<li>${escapeHtml(job)}</li>`).join('')}</ul>
+                            <div class="section-title">⚙️ Bacarıqlar</div>
+                            <div>${data.skillsList.map(skill => `<span class="badge">${escapeHtml(skill)}</span>`).join('')}</div>
+                        </div>
+                    </div>`;
+        }
+        container.innerHTML = html;
+        // Template sinfini əlavə et (stil fərqliliyi üçün)
+        container.className = `template-content ${templateId === 'temp1' ? 'template-1' : (templateId === 'temp2' ? 'template-2' : 'template-3-style')}`;
+    }
+
+    // XSS qorunması üçün sadə funksiya
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
+            return c;
         });
+    }
 
-        // Ping logic
-        setInterval(() => {
-            const start = Date.now();
-            socket.emit('ping', () => {
-                const duration = Date.now() - start;
-                document.getElementById('ping').innerText = duration + 'ms';
-            });
-        }, 2000);
-    </script>
+    // --- Aktiv şablonu izləmək ---
+    let currentTemplate = 'temp1';
+
+    function setActiveTab(templateId) {
+        currentTemplate = templateId;
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            if (btn.getAttribute('data-template') === templateId) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+        renderCV(currentTemplate);
+    }
+
+    // Yeniləmə düyməsi: hər dəfə mövcud şablona məlumatları tətbiq edir.
+    document.getElementById('generateCVBtn').addEventListener('click', () => {
+        renderCV(currentTemplate);
+    });
+
+    // Tab dəyişmə hadisələri
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const templateId = btn.getAttribute('data-template');
+            setActiveTab(templateId);
+        });
+    });
+
+    // Səhifə yüklənəndə default məlumatlarla render (yaş, iş yerləri, dil bilgiləri öncədən formda var)
+    window.addEventListener('DOMContentLoaded', () => {
+        setActiveTab('temp1');
+        // Formda dəyişiklik olduqda avtomatik yeniləmə istəyən ola bilər, amma əl ilə düymə tələb olunur.
+        // İstifadəçi rahatlığı üçün generate düyməsi əsasdır.
+    });
+
+    // opsional: inputlarda enter basılanda generate etmək istəyənlər üçün (isteğe bağlı)
+    const inputs = document.querySelectorAll('input, textarea');
+    inputs.forEach(inp => {
+        inp.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                renderCV(currentTemplate);
+            }
+        });
+    });
+</script>
 </body>
 </html>
