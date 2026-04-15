@@ -2,38 +2,44 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Hareket Takip Kamera - GitHub.io</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Hareket Takip - Tam Şekil Algılama | Tam Ekran Kamera</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            user-select: none; /* Seçimi engelleyerek hafif performans artışı */
+            user-select: none;
         }
 
         body {
-            background: #0a0f1e;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            background: #000000;
+            overflow: hidden;
             font-family: 'Segoe UI', 'Roboto', 'Courier New', monospace;
-            padding: 16px;
+            height: 100vh;
+            width: 100vw;
+            position: fixed;
+            top: 0;
+            left: 0;
         }
 
-        .container {
-            background: #11151f;
-            border-radius: 2rem;
-            padding: 1rem;
-            box-shadow: 0 20px 35px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
+        /* Tam ekran kamera container */
+        .fullscreen-camera {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 1;
         }
 
         .video-wrapper {
             position: relative;
-            border-radius: 1.2rem;
+            width: 100%;
+            height: 100%;
             overflow: hidden;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+            background: #000;
         }
 
         canvas, video {
@@ -53,30 +59,36 @@
 
         canvas {
             z-index: 2;
-            pointer-events: none; /* canvas sadece gösterim için, etkileşim video üzerinden */
+            pointer-events: none;
         }
 
-        .info-panel {
-            margin-top: 1rem;
+        /* Şeffaf kontrol paneli - ekranın altında, tam ekranı engellemez */
+        .control-overlay {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 10;
+            background: rgba(0, 0, 0, 0.65);
+            backdrop-filter: blur(12px);
+            padding: 12px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 12px;
             flex-wrap: wrap;
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(8px);
-            padding: 0.7rem 1.2rem;
-            border-radius: 3rem;
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            gap: 12px;
+            border-top: 1px solid rgba(72, 255, 120, 0.4);
+            font-weight: 500;
+            pointer-events: auto;
         }
 
         .stats {
             display: flex;
-            gap: 1.5rem;
-            font-weight: 600;
+            gap: 1.8rem;
             color: #eef5ff;
-            text-shadow: 0 1px 2px black;
+            text-shadow: 0 1px 3px black;
             font-size: 0.9rem;
+            font-weight: 600;
         }
 
         .stats span {
@@ -84,73 +96,83 @@
             font-weight: bold;
             font-size: 1.2rem;
             margin-left: 6px;
-            background: #00000066;
-            padding: 0px 8px;
-            border-radius: 40px;
+            background: #000000aa;
+            padding: 2px 10px;
+            border-radius: 30px;
+            letter-spacing: 0.5px;
         }
 
         button {
-            background: #2c3e66;
+            background: #1e3a3a;
             border: none;
             color: white;
             font-weight: bold;
-            padding: 6px 18px;
-            border-radius: 2rem;
+            padding: 8px 24px;
+            border-radius: 40px;
             cursor: pointer;
             font-family: monospace;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             letter-spacing: 0.5px;
             transition: all 0.1s ease;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+            backdrop-filter: blur(4px);
         }
 
         button:active {
             transform: scale(0.96);
-            background: #1f2c46;
+            background: #0f2a2a;
         }
 
         .status {
-            background: #1e2a3a;
-            padding: 5px 14px;
-            border-radius: 2rem;
+            background: #0a1a1acc;
+            padding: 5px 16px;
+            border-radius: 40px;
             font-size: 0.8rem;
             font-weight: 500;
-            color: #bbe1ff;
+            color: #bbffdd;
+            font-family: monospace;
         }
 
         .fps-meter {
             font-family: monospace;
             font-weight: bold;
             background: #000000aa;
+            padding: 4px 14px;
+            border-radius: 40px;
+            font-size: 0.8rem;
+        }
+
+        .object-shape-badge {
+            background: #1e5a3acc;
+            border-radius: 30px;
             padding: 4px 12px;
-            border-radius: 2rem;
+            font-size: 0.75rem;
         }
 
         @media (max-width: 700px) {
             .stats { gap: 0.8rem; font-size: 0.7rem;}
-            .stats span { font-size: 1rem;}
-            .info-panel { padding: 0.5rem 1rem; }
+            .stats span { font-size: 1rem; padding: 2px 6px;}
+            .control-overlay { padding: 8px 12px; gap: 8px; }
+            button { padding: 6px 16px; font-size: 0.8rem; }
         }
     </style>
 </head>
 <body>
-<div>
-    <div class="container">
-        <div class="video-wrapper" style="position: relative; width: 85vw; max-width: 1100px; aspect-ratio: 16 / 9; margin: 0 auto;">
-            <video id="video" autoplay playsinline muted style="width:100%; height:100%; object-fit: cover;"></video>
-            <canvas id="overlayCanvas" style="width:100%; height:100%; object-fit: cover;"></canvas>
-        </div>
-        <div class="info-panel">
-            <div class="stats">
-                <div>🎯 HEDEFLER: <span id="objectCount">0</span></div>
-                <div>⚡ HAREKET SKOR: <span id="motionScore">0</span></div>
-            </div>
-            <div class="status" id="camStatus">📷 KAMERA BAŞLATILIYOR...</div>
-            <div class="fps-meter" id="fpsDisplay">⚡ 0 FPS</div>
-            <button id="resetBtn">⟳ YENİDEN BAŞLAT</button>
-        </div>
-        <div style="font-size: 11px; text-align: center; margin-top: 12px; color:#7f8c9a;">✨ Hareketli nesneleri anında takip eder — yeşil çerçeveler ile işaretler ✨</div>
+<div class="fullscreen-camera">
+    <div class="video-wrapper">
+        <video id="video" autoplay playsinline muted style="width:100%; height:100%; object-fit: cover;"></video>
+        <canvas id="overlayCanvas" style="width:100%; height:100%; object-fit: cover;"></canvas>
     </div>
+</div>
+
+<div class="control-overlay">
+    <div class="stats">
+        <div>🎯 TAKİP EDİLEN NESNE: <span id="objectCount">0</span></div>
+        <div>📊 HAREKET ALANI: <span id="motionScore">0</span> px</div>
+    </div>
+    <div class="status" id="camStatus">📷 KAMERA BAŞLATILIYOR...</div>
+    <div class="fps-meter" id="fpsDisplay">⚡ 0 FPS</div>
+    <button id="resetBtn">⟳ YENİDEN BAŞLAT</button>
 </div>
 
 <script>
@@ -165,40 +187,38 @@
         const fpsDisplaySpan = document.getElementById('fpsDisplay');
         const resetBtn = document.getElementById('resetBtn');
 
-        // ---- PERFORMANS AYARLARI (gecikmesiz takip) ----
+        // ---- PERFORMANS & ALGILAMA AYARLARI ----
         let animationFrameId = null;
-        let processingFrame = false;       // Çakışma önleme
+        let processingFrame = false;
         let lastTimestamp = 0;
         let frameCount = 0;
         let fps = 0;
         
-        // ---- HAREKET ALGILAMA DEĞİŞKENLERİ ----
-        let previousFrame = null;           // gri tonlamalı önceki kare (ImageData)
-        let motionData = null;              // eşiklenmiş fark haritası (ImageData)
-        
-        // ayarlar (hızlı & hassas)
-        const BLUR_SIZE = 3;                // küçük gürültü azaltma (performans için çok büyük değil)
-        const MOTION_THRESHOLD = 28;        // piksel fark eşiği (0-255) - düşük gecikme
-        const MIN_CONTOUR_AREA = 280;       // minimum takip edilecek alan (piksel) - küçük hareketleri de yakala
-        const MAX_OBJECTS = 12;              // maksimum takip sayısı
-            
-        // çerçeve boyutları
+        // Hareket algılama değişkenleri
+        let previousGrayFrame = null;      // önceki gri kare (blurlanmış)
         let width = 0, height = 0;
         let active = true;
-
-        // ---- KAMERA BAŞLAT (düşük gecikmeli ayarlar) ----
+        
+        // ÖNEMLİ AYARLAR: TEK BÜTÜN NESNE ŞEKLİNİ ALMAK İÇİN
+        const MOTION_THRESHOLD = 32;        // hareket hassasiyeti (düşük gürültü)
+        const MIN_OBJECT_AREA = 500;        // minimum alan (küçük parçaları reddeder, büyük nesneyi alır)
+        const MAX_OBJECTS = 1;              // SADECE EN BÜYÜK NESNEYİ TAKİP ET (tek nesne)
+        const BLUR_KERNEL = 3;              // hafif bulanıklaştırma ile gürültü azalt
+        
+        // Şekil takibi için kontur noktaları (kenar tespiti için)
+        let lastTrackedContour = null;      // bir önceki kontur (isteğe bağlı)
+        
+        // ---- KAMERA BAŞLAT (Tam ekran uyumlu, düşük gecikme) ----
         async function initCamera() {
             try {
-                camStatusDiv.innerHTML = "📷 İzin isteniyor...";
-                // Düşük gecikme için ideal ayarlar: resolution 640x480 veya mevcut ideal, fakat hızlı işlem için max 720p
-                // Mobil ve masaüstünde en düşük gecikmeyi sağlamak için ideal çözünürlük: 640x480 veya cihazın desteklediği hızlı mod.
-                // "advanced" constraint ile düşük gecikme tercihi.
+                camStatusDiv.innerHTML = "🎥 Kamera izni isteniyor...";
+                // Tam ekran performans için ideal çözünürlük: cihaza göre maksimum hız
                 const stream = await navigator.mediaDevices.getUserMedia({
                     video: {
-                        width: { ideal: 640, max: 800 },
-                        height: { ideal: 480, max: 600 },
+                        width: { ideal: 1280, max: 1920 },
+                        height: { ideal: 720, max: 1080 },
                         frameRate: { ideal: 30, max: 60 },
-                        facingMode: "environment" // arka kamera öncelikli (tablet/telefon)
+                        facingMode: "environment"  // arka kamera öncelikli
                     },
                     audio: false
                 });
@@ -206,75 +226,65 @@
                 video.srcObject = stream;
                 await video.play();
                 
-                // video metadata yüklendiğinde canvas boyutlarını ayarla
+                // Video boyutları hazır olunca canvas boyutlarını ayarla
                 video.addEventListener('loadedmetadata', () => {
-                    // videonun gerçek görüntü boyutları
                     width = video.videoWidth;
                     height = video.videoHeight;
                     
-                    // canvas elementinin boyutlarını tam eşitle (çözünürlük takibi için)
+                    // Canvas tam çözünürlük (şekil çizimi için net)
                     canvas.width = width;
                     canvas.height = height;
-                    // video elementinin boyut CSS ile kontrol ediliyor, ama çizim buffer'ı tam boy olmalı
                     
-                    // önceki frame buffer'ları temizle
-                    if(previousFrame) previousFrame = null;
+                    // Önceki kareyi temizle
+                    previousGrayFrame = null;
                     
-                    camStatusDiv.innerHTML = "✅ TAKİP AKTİF | HAREKET BEKLENİYOR";
+                    camStatusDiv.innerHTML = "✅ TAKİP AKTİF | TEK NESNE ŞEKLİ İZLENİYOR";
                     
-                    // ilk kareyi bekleyerek işlem döngüsünü başlat
+                    // Döngüyü başlat
                     if(animationFrameId) cancelAnimationFrame(animationFrameId);
-                    animationFrameId = requestAnimationFrame(detectMotionLoop);
+                    animationFrameId = requestAnimationFrame(motionTrackingLoop);
                 });
                 
             } catch (err) {
                 console.error("Kamera hatası:", err);
-                camStatusDiv.innerHTML = "❌ KAMERA ERİŞİM HATASI | İzin verin";
+                camStatusDiv.innerHTML = "❌ KAMERA HATASI | İzin vermelisiniz";
                 alert("Kamera erişimi gerekli! Lütfen izin verin ve sayfayı yenileyin.");
             }
         }
         
-        // ---- HIZLI GRAYSCALE DÖNÜŞÜMÜ (ImageData -> Uint8Array) ----
+        // ---- HIZLI GRİ TON DÖNÜŞÜMÜ (ImageData -> Uint8Array) ----
         function toGrayscaleFast(imageData) {
             const data = imageData.data;
             const len = data.length;
-            // yeni bir Uint8ClampedArray oluştur (gri ton, her piksel 1 byte)
             const gray = new Uint8Array(imageData.width * imageData.height);
             for (let i = 0, j = 0; i < len; i += 4, j++) {
-                // luminance formülü: 0.299R + 0.587G + 0.114B
-                // tamsayı hızı için shift & toplama tercih edilebilir, ancak modern JS yeterince hızlı
-                const r = data[i];
-                const g = data[i+1];
-                const b = data[i+2];
-                // gri = (r*0.299 + g*0.587 + b*0.114)
-                gray[j] = (r * 0.299 + g * 0.587 + b * 0.114) | 0;
+                // luminance 0.299R + 0.587G + 0.114B
+                gray[j] = (data[i] * 0.299 + data[i+1] * 0.587 + data[i+2] * 0.114) | 0;
             }
             return gray;
         }
         
-        // ----- Basit Kutu (blur) ile gürültü azaltma: 3x3 ortalama filtresi (performans optimizasyonu) -----
+        // ---- 3x3 ORTALAMA BLUR (gürültü azaltma, şekil bütünlüğü için) ----
         function applyFastBlur(gray, w, h) {
-            // ortalama blur 3x3, sınırlarda koruma
             const blurred = new Uint8Array(w * h);
             for (let y = 1; y < h-1; y++) {
                 const rowOff = y * w;
                 for (let x = 1; x < w-1; x++) {
                     let sum = 0;
-                    let idx = rowOff + x;
-                    // 3x3 kernel
-                    sum += gray[idx - w - 1]; // üst sol
-                    sum += gray[idx - w];     // üst
-                    sum += gray[idx - w + 1]; // üst sağ
-                    sum += gray[idx - 1];     // sol
-                    sum += gray[idx];         // merkez
-                    sum += gray[idx + 1];     // sağ
-                    sum += gray[idx + w - 1]; // alt sol
-                    sum += gray[idx + w];     // alt
-                    sum += gray[idx + w + 1]; // alt sağ
+                    const idx = rowOff + x;
+                    sum += gray[idx - w - 1];
+                    sum += gray[idx - w];
+                    sum += gray[idx - w + 1];
+                    sum += gray[idx - 1];
+                    sum += gray[idx];
+                    sum += gray[idx + 1];
+                    sum += gray[idx + w - 1];
+                    sum += gray[idx + w];
+                    sum += gray[idx + w + 1];
                     blurred[idx] = (sum / 9) | 0;
                 }
             }
-            // sınır kopyalama (basit)
+            // Kenar kopyalama (basit)
             for (let y = 0; y < h; y++) {
                 for (let x = 0; x < w; x++) {
                     if (y === 0 || y === h-1 || x === 0 || x === w-1) {
@@ -285,12 +295,11 @@
             return blurred;
         }
         
-        // ----- Hareket farkı hesapla (Frame differencing) ve binary maske oluştur (Uint8Array)-----
+        // ---- HAREKET FARKI MASKESİ (binary) ----
         function computeMotionMask(prevGray, currGray, w, h, threshold) {
             const mask = new Uint8Array(w * h);
             let motionPixelCount = 0;
-            const totalPixels = w * h;
-            for (let i = 0; i < totalPixels; i++) {
+            for (let i = 0; i < w * h; i++) {
                 const diff = Math.abs(currGray[i] - prevGray[i]);
                 if (diff > threshold) {
                     mask[i] = 255;
@@ -302,9 +311,58 @@
             return { mask, motionPixelCount };
         }
         
-        // ----- Bileşen Etiketleme (Connected Components) hızlı 2-pass (basit union-find) -----
-        // Bu fonksiyon binary mask üzerinde bağlı bileşenleri bulur, her bileşenin bounding box'ını döndürür
-        function findConnectedComponents(mask, w, h, minArea) {
+        // ---- GENİŞLETME (Dilation) işlemi: hareket bölgesini birleştir, parçaları bütünleştir ----
+        // Bu sayede küçük parçalar birleşir ve TEK bir büyük nesne şekli oluşur
+        function dilateMask(mask, w, h, iterations = 2) {
+            let temp = new Uint8Array(mask);
+            for (let iter = 0; iter < iterations; iter++) {
+                const dilated = new Uint8Array(w * h);
+                for (let y = 1; y < h-1; y++) {
+                    for (let x = 1; x < w-1; x++) {
+                        const idx = y * w + x;
+                        if (temp[idx] === 255) {
+                            // 3x3 komşuluğa yay
+                            dilated[idx] = 255;
+                            dilated[idx - 1] = 255;
+                            dilated[idx + 1] = 255;
+                            dilated[idx - w] = 255;
+                            dilated[idx + w] = 255;
+                            dilated[idx - w - 1] = 255;
+                            dilated[idx - w + 1] = 255;
+                            dilated[idx + w - 1] = 255;
+                            dilated[idx + w + 1] = 255;
+                        }
+                    }
+                }
+                temp = dilated;
+            }
+            return temp;
+        }
+        
+        // ---- EROZYON (Erosion) ile küçük gürültüleri temizle (isteğe bağlı) ----
+        function erodeMask(mask, w, h, iterations = 1) {
+            let temp = new Uint8Array(mask);
+            for (let iter = 0; iter < iterations; iter++) {
+                const eroded = new Uint8Array(w * h);
+                for (let y = 1; y < h-1; y++) {
+                    for (let x = 1; x < w-1; x++) {
+                        const idx = y * w + x;
+                        if (temp[idx] === 255 &&
+                            temp[idx-1] === 255 && temp[idx+1] === 255 &&
+                            temp[idx-w] === 255 && temp[idx+w] === 255) {
+                            eroded[idx] = 255;
+                        }
+                    }
+                }
+                temp = eroded;
+            }
+            return temp;
+        }
+        
+        // ---- BAĞLI BİLEŞEN BULMA (Connected Components) + EN BÜYÜK NESNEYİ SEÇ ----
+        // SADECE en büyük alana sahip TEK nesneyi döndürür (tam şekil)
+        function findLargestObject(mask, w, h, minArea) {
+            // Union-Find (4 komşuluk)
             const parent = new Array(w * h);
             for (let i = 0; i < w*h; i++) parent[i] = i;
             
@@ -321,120 +379,174 @@
                 if(ra !== rb) parent[rb] = ra;
             }
             
-            // first pass: 4-komşuluk (hızlı bağlantı, yeterli)
+            // First pass: 4-komşuluk birleştirme
             for (let y = 0; y < h; y++) {
                 for (let x = 0; x < w; x++) {
                     const idx = y * w + x;
                     if (mask[idx] === 255) {
-                        // sol komşu
                         if (x > 0 && mask[idx-1] === 255) union(idx, idx-1);
-                        // üst komşu
                         if (y > 0 && mask[idx-w] === 255) union(idx, idx-w);
                     }
                 }
             }
             
-            // component toplama ve bounding box hesaplama
-            const compMap = new Map(); // root -> {minX,minY,maxX,maxY, count}
+            // Bileşenleri topla (alan, bounding box, ve tüm üye piksellerin listesi - kontur için)
+            const components = new Map(); // root -> {pixelIndices, minX, maxX, minY, maxY, count}
             for (let y = 0; y < h; y++) {
                 for (let x = 0; x < w; x++) {
                     const idx = y * w + x;
                     if (mask[idx] === 255) {
                         const root = find(idx);
-                        if (!compMap.has(root)) {
-                            compMap.set(root, {
+                        if (!components.has(root)) {
+                            components.set(root, {
+                                pixelIndices: [idx],
                                 minX: x, maxX: x,
                                 minY: y, maxY: y,
                                 count: 1
                             });
                         } else {
-                            const box = compMap.get(root);
-                            box.minX = Math.min(box.minX, x);
-                            box.maxX = Math.max(box.maxX, x);
-                            box.minY = Math.min(box.minY, y);
-                            box.maxY = Math.max(box.maxY, y);
-                            box.count++;
+                            const comp = components.get(root);
+                            comp.pixelIndices.push(idx);
+                            comp.minX = Math.min(comp.minX, x);
+                            comp.maxX = Math.max(comp.maxX, x);
+                            comp.minY = Math.min(comp.minY, y);
+                            comp.maxY = Math.max(comp.maxY, y);
+                            comp.count++;
                         }
                     }
                 }
             }
             
-            // bounding box listesi (alan minArea üzeri)
-            const boxes = [];
-            for (let [_, box] of compMap.entries()) {
-                const area = (box.maxX - box.minX + 1) * (box.maxY - box.minY + 1);
-                if (area >= minArea && box.count >= 8) { // en az 8 piksel ile anlamlı
-                    boxes.push({
-                        x: box.minX,
-                        y: box.minY,
-                        w: box.maxX - box.minX + 1,
-                        h: box.maxY - box.minY + 1,
-                        area: area,
-                        pixelCount: box.count
-                    });
+            // En büyük bileşeni bul (alan = count)
+            let largest = null;
+            let maxArea = 0;
+            for (let [_, comp] of components.entries()) {
+                const area = comp.count;
+                if (area > maxArea && area >= minArea) {
+                    maxArea = area;
+                    largest = comp;
                 }
             }
-            // büyükten küçüğe sıralama (isteğe bağlı) ama karışıklık olmasın
-            boxes.sort((a,b) => b.area - a.area);
-            if(boxes.length > MAX_OBJECTS) boxes.length = MAX_OBJECTS;
-            return boxes;
-        }
-        
-        // ---- ÇERÇEVE ÇİZİM: yeşil dikdörtgenler ile takip ----
-        function drawTrackingBoxes(boxes, motionScore) {
-            if(!ctx) return;
-            ctx.clearRect(0, 0, width, height);
-            if(!boxes.length) {
-                // hiçbir hedef yoksa hafif yazı göster
-                ctx.font = "bold 18px 'Segoe UI'";
-                ctx.shadowBlur = 0;
-                ctx.fillStyle = "#88aaffcc";
-                ctx.shadowColor = "black";
-                ctx.fillText("⚡ hareket bekleniyor...", 20, 40);
-                ctx.shadowBlur = 0;
-                return;
+            
+            if (!largest) return null;
+            
+            // Şekil konturunu hesapla: basitçe bounding box değil, gerçek kontur noktaları (kenar pikseller)
+            // Hareket maskesinin dış hatlarını almak için "Marching squares" mantığı basit: 
+            // Kenar pikselleri: en az bir komşusu 0 olan mask pikselleri.
+            const edgePoints = [];
+            const pixelSet = new Set(largest.pixelIndices);
+            
+            for (let idx of largest.pixelIndices) {
+                const x = idx % w;
+                const y = Math.floor(idx / w);
+                // 4 yönde komşuluktan herhangi biri maskede yoksa kenar noktası
+                if (x === 0 || x === w-1 || y === 0 || y === h-1) {
+                    edgePoints.push({x, y});
+                    continue;
+                }
+                let isEdge = false;
+                if (!pixelSet.has(idx-1)) isEdge = true;
+                if (!pixelSet.has(idx+1)) isEdge = true;
+                if (!pixelSet.has(idx-w)) isEdge = true;
+                if (!pixelSet.has(idx+w)) isEdge = true;
+                if (isEdge) edgePoints.push({x, y});
             }
             
-            // her bir takip edilen nesneyi çerçevele
-            for(let i=0; i<boxes.length; i++) {
-                const b = boxes[i];
-                // neon yeşil çerçeve, kalın
+            // kontur noktalarını sıralamak için basit bir convex hull gerekmez; ama tüm kenar noktalarını çiz
+            // şeklin tamamını görselleştirmek için tüm kenar noktaları birleşik bir çokgen gibi çizilecek.
+            // Ancak daha düzgün görünüm için bounding box + kontur çizgisi yapabiliriz.
+            // Ama istenen "nesnenin şeklini alsın" -> hareket eden alanın tüm dış hatlarını çizelim.
+            
+            return {
+                boundingBox: {
+                    x: largest.minX,
+                    y: largest.minY,
+                    w: largest.maxX - largest.minX + 1,
+                    h: largest.maxY - largest.minY + 1
+                },
+                contourPoints: edgePoints,
+                area: maxArea,
+                pixelCount: largest.count
+            };
+        }
+        
+        // ---- ŞEKLİ ÇİZ: YEŞİL KONTUR (tam dış hat) + Dolgu efekti ----
+        function drawShape(objectData) {
+            if (!objectData) return;
+            
+            const { boundingBox, contourPoints, area } = objectData;
+            
+            // 1. Nesnenin dış hatlarını yeşil çizgi ile çiz (gerçek şekil)
+            if (contourPoints && contourPoints.length > 10) {
+                // Kontur noktalarını küçük noktalar veya çizgi bağlantısı yapmak için:
+                // Basitçe her kenar noktasını küçük yuvarlaklarla işaretleme, çok yoğun olmasın.
                 ctx.beginPath();
-                ctx.strokeStyle = "#1eff6e";
-                ctx.lineWidth = Math.max(2, Math.min(5, Math.floor(b.w / 20) + 2));
+                ctx.strokeStyle = "#2eff9e";
+                ctx.lineWidth = 3;
                 ctx.shadowBlur = 0;
-                ctx.strokeRect(b.x, b.y, b.w, b.h);
-                // köşe vurgusu
-                ctx.fillStyle = "#1eff6ecc";
-                ctx.font = `bold ${Math.max(12, Math.floor(b.h/5))}px monospace`;
+                
+                // Daha iyi görsel: dış hatları birleştirmek için convex hull yapmadan tüm noktaları küçük dairelerle işaretle
+                // Bu şeklin şeklini tam olarak gösterir.
+                for (let i = 0; i < contourPoints.length; i += 2) { // her 2 noktada bir çizim hızı
+                    const p = contourPoints[i];
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, 2.2, 0, Math.PI * 2);
+                    ctx.fillStyle = "#4affb5";
+                    ctx.fill();
+                }
+                
+                // Ayrıca kalın bir dış çizgi için bounding box değil, kontur noktalarını takip eden bir çizgi çizelim
+                // (Komşuluk bağlantısı yapmak performanslı değil, ancak şekil belli olsun diye bounding box ekstra)
+                // Ama daha temiz: bounding box'ı da çizelim ama saydam yeşil dolgu ile.
+                ctx.beginPath();
+                ctx.strokeStyle = "#1eff8e";
+                ctx.lineWidth = 2.5;
+                ctx.setLineDash([5, 8]);
+                ctx.strokeRect(boundingBox.x, boundingBox.y, boundingBox.w, boundingBox.h);
+                ctx.setLineDash([]);
+                
+                // Bounding box içine hafif dolgu (şeffaf yeşil)
+                ctx.fillStyle = "#1eff8e22";
+                ctx.fillRect(boundingBox.x, boundingBox.y, boundingBox.w, boundingBox.h);
+                
+                // Merkeze bir etiket
+                const centerX = boundingBox.x + boundingBox.w/2;
+                const centerY = boundingBox.y + boundingBox.h/2;
+                ctx.font = "bold 16px 'Segoe UI'";
+                ctx.fillStyle = "#ffffff";
                 ctx.shadowBlur = 4;
-                ctx.fillText(`●`, b.x+3, b.y+15);
-                ctx.font = "bold 13px monospace";
-                ctx.fillStyle = "#ffffffdd";
-                ctx.fillText(`${i+1}`, b.x+5, b.y+14);
+                ctx.fillText("🔘 TAKİPTE", centerX - 35, centerY - 8);
+                ctx.font = "bold 12px monospace";
+                ctx.fillStyle = "#bbffaa";
+                ctx.fillText(`alan:${area}px`, centerX - 25, centerY + 12);
+                
+            } else {
+                // Eğer kontur yoksa sadece bounding box çiz
+                ctx.beginPath();
+                ctx.strokeStyle = "#4affb5";
+                ctx.lineWidth = 3;
+                ctx.strokeRect(boundingBox.x, boundingBox.y, boundingBox.w, boundingBox.h);
+                ctx.fillStyle = "#4affb522";
+                ctx.fillRect(boundingBox.x, boundingBox.y, boundingBox.w, boundingBox.h);
             }
             
-            // eğer çok fazla hareket varsa skor göstergesi çiz
-            if(motionScore > 1200) {
-                ctx.font = "bold 14px monospace";
-                ctx.fillStyle = "#ffd966";
-                ctx.fillText("🔥 YOĞUN HAREKET", width-130, 30);
-            }
+            // Üst bilgi: "TEK NESNE TAKİBİ"
+            ctx.font = "bold 15px monospace";
+            ctx.fillStyle = "#e0ffc0";
+            ctx.shadowBlur = 2;
+            ctx.fillText("⚡ HAREKET EDEN NESNE ŞEKLİ", 18, 42);
         }
         
-        // ---- ANA İŞLEME DÖNGÜSÜ (gecikmesiz, hızlı frameler) ----
-        let frameSkipGuard = false;
-        async function detectMotionLoop(timestamp) {
+        // ---- ANA TAKİP DÖNGÜSÜ (Gecikmesiz, sadece TEK NESNE) ----
+        async function motionTrackingLoop(timestamp) {
             if (!active) return;
             if (!video.videoWidth || !video.videoHeight) {
-                // video hazır değil, tekrar dene
-                animationFrameId = requestAnimationFrame(detectMotionLoop);
+                animationFrameId = requestAnimationFrame(motionTrackingLoop);
                 return;
             }
             
-            // Eğer önceki kare işleniyorsa atla (frame drop yaparak gecikmeyi önle)
             if (processingFrame) {
-                animationFrameId = requestAnimationFrame(detectMotionLoop);
+                animationFrameId = requestAnimationFrame(motionTrackingLoop);
                 return;
             }
             
@@ -451,89 +563,99 @@
             }
             
             try {
-                // Canvas'a video karesini çizip ImageData al (hızlı yakalama)
-                // Geçici canvas oluşturmak yerine doğrudan video üzerinden imagedata almak daha hızlı değil.
-                // OffscreenCanvas kullanarak daha hızlı işlem:
+                // Mevcut kareyi al
                 const offCanvas = new OffscreenCanvas(width, height);
                 const offCtx = offCanvas.getContext('2d');
                 offCtx.drawImage(video, 0, 0, width, height);
                 const currentImageData = offCtx.getImageData(0, 0, width, height);
-                
-                // gri tonlamaya çevir
                 const currGray = toGrayscaleFast(currentImageData);
+                const currBlurred = applyFastBlur(currGray, width, height);
                 
-                // ilk frame durumu: sadece kaydet
-                if (previousFrame === null) {
-                    previousFrame = currGray;
+                // İlk kare ise sadece kaydet
+                if (previousGrayFrame === null) {
+                    previousGrayFrame = currBlurred;
                     processingFrame = false;
-                    animationFrameId = requestAnimationFrame(detectMotionLoop);
+                    animationFrameId = requestAnimationFrame(motionTrackingLoop);
                     return;
                 }
                 
-                // blur ile gürültü azalt (hızlı)
-                const currBlurred = applyFastBlur(currGray, width, height);
-                const prevBlurred = applyFastBlur(previousFrame, width, height);
+                // Hareket maskesi hesapla
+                let { mask, motionPixelCount } = computeMotionMask(previousGrayFrame, currBlurred, width, height, MOTION_THRESHOLD);
                 
-                // hareket maskesi oluştur
-                const { mask, motionPixelCount } = computeMotionMask(prevBlurred, currBlurred, width, height, MOTION_THRESHOLD);
-                
-                // hareket skorunu güncelle (UI)
+                // Hareket skoru göster
                 motionScoreSpan.innerText = motionPixelCount;
                 
-                // bağlı bileşenler (nesneleri) bul
-                let boxes = [];
-                if (motionPixelCount > 40) {  // yeterli hareket varsa takip et
-                    boxes = findConnectedComponents(mask, width, height, MIN_CONTOUR_AREA);
+                // Eğer hareket çok azsa, temizle
+                if (motionPixelCount < 80) {
+                    ctx.clearRect(0, 0, width, height);
+                    objectCountSpan.innerText = "0";
+                    previousGrayFrame = currBlurred;
+                    processingFrame = false;
+                    animationFrameId = requestAnimationFrame(motionTrackingLoop);
+                    return;
                 }
                 
-                // UI güncelleme: hedef sayısı
-                objectCountSpan.innerText = boxes.length;
+                // Morfolojik işlemler: genişletme (dilation) ile parçaları birleştir → TEK BÜYÜK NESNE
+                let dilatedMask = dilateMask(mask, width, height, 2);
+                // Hafif erozyon ile gürültüyü azalt
+                let cleanedMask = erodeMask(dilatedMask, width, height, 1);
+                // Tekrar genişletme (bütünlük için)
+                let finalMask = dilateMask(cleanedMask, width, height, 1);
                 
-                // CANVAS üzerine çizim yap (takip çerçeveleri)
-                drawTrackingBoxes(boxes, motionPixelCount);
+                // EN BÜYÜK NESNEYİ BUL (sadece bir tane, şekil konturu ile)
+                const largestObject = findLargestObject(finalMask, width, height, MIN_OBJECT_AREA);
                 
-                // bir sonraki frame için şimdiki kareyi kaydet (referans)
-                previousFrame = currBlurred;
+                if (largestObject && largestObject.area >= MIN_OBJECT_AREA) {
+                    objectCountSpan.innerText = "1";
+                    // Canvas temizle ve şekli çiz
+                    ctx.clearRect(0, 0, width, height);
+                    drawShape(largestObject);
+                } else {
+                    objectCountSpan.innerText = "0";
+                    ctx.clearRect(0, 0, width, height);
+                    ctx.font = "18px monospace";
+                    ctx.fillStyle = "#88aaffcc";
+                    ctx.fillText("🔍 Hareket eden büyük nesne yok...", 30, 70);
+                }
                 
-            } catch(err) {
-                console.warn("İşleme hatası:", err);
+                // Güncel kareyi kaydet
+                previousGrayFrame = currBlurred;
+                
+            } catch (err) {
+                console.warn("Takip hatası:", err);
             } finally {
                 processingFrame = false;
             }
             
-            // döngüyü devam ettir
-            animationFrameId = requestAnimationFrame(detectMotionLoop);
+            animationFrameId = requestAnimationFrame(motionTrackingLoop);
         }
         
-        // ---- YENİDEN BAŞLAT (kamera ve frame sıfırlama) ----
+        // ---- SIFIRLAMA (kamerayı yeniden başlat) ----
         function fullReset() {
             if(animationFrameId) {
                 cancelAnimationFrame(animationFrameId);
                 animationFrameId = null;
             }
-            // mevcut stream'i durdur
             if(video.srcObject) {
                 const tracks = video.srcObject.getTracks();
                 tracks.forEach(track => track.stop());
                 video.srcObject = null;
             }
-            previousFrame = null;
+            previousGrayFrame = null;
             processingFrame = false;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if(ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
             objectCountSpan.innerText = "0";
             motionScoreSpan.innerText = "0";
             fpsDisplaySpan.innerText = "⚡ 0 FPS";
             camStatusDiv.innerHTML = "🔄 SIFIRLANIYOR...";
             setTimeout(() => {
                 initCamera();
-            }, 100);
+            }, 150);
         }
         
-        resetBtn.addEventListener('click', () => {
-            fullReset();
-        });
+        resetBtn.addEventListener('click', fullReset);
         
-        // sayfa kapanırken stream'i serbest bırak
+        // Sayfa kapanırken stream'i durdur
         window.addEventListener('beforeunload', () => {
             if(video.srcObject) {
                 video.srcObject.getTracks().forEach(track => track.stop());
