@@ -1,625 +1,549 @@
 <!DOCTYPE html>
-<html lang="az">
+<html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>CV Creator - Azərbaycanca | Profesional CV Şablonları</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Hareket Takip Kamera - GitHub.io</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            user-select: none; /* Seçimi engelleyerek hafif performans artışı */
         }
 
         body {
-            background: linear-gradient(145deg, #e0eafc 0%, #cfdef3 100%);
-            padding: 30px 20px;
+            background: #0a0f1e;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', 'Roboto', 'Courier New', monospace;
+            padding: 16px;
         }
 
         .container {
-            max-width: 1400px;
-            margin: 0 auto;
+            background: #11151f;
+            border-radius: 2rem;
+            padding: 1rem;
+            box-shadow: 0 20px 35px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
         }
 
-        /* Başlıq və izahat */
-        .header {
-            text-align: center;
-            margin-bottom: 35px;
+        .video-wrapper {
+            position: relative;
+            border-radius: 1.2rem;
+            overflow: hidden;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
         }
 
-        .header h1 {
-            font-size: 2.4rem;
-            color: #1e2a3e;
-            letter-spacing: -0.5px;
-            background: rgba(255,255,255,0.3);
-            display: inline-block;
-            padding: 10px 28px;
-            border-radius: 60px;
-            backdrop-filter: blur(4px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        canvas, video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
         }
 
-        .header p {
-            margin-top: 12px;
-            color: #2c3e4e;
-            font-weight: 500;
-            font-size: 1.1rem;
+        video {
+            filter: brightness(1.02) contrast(1.05);
+            z-index: 1;
         }
 
-        /* iki sütunlu layout */
-        .cv-builder {
+        canvas {
+            z-index: 2;
+            pointer-events: none; /* canvas sadece gösterim için, etkileşim video üzerinden */
+        }
+
+        .info-panel {
+            margin-top: 1rem;
             display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
             flex-wrap: wrap;
-            gap: 30px;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            padding: 0.7rem 1.2rem;
+            border-radius: 3rem;
+            border: 1px solid rgba(255, 255, 255, 0.15);
         }
 
-        /* SOL - Form paneli */
-        .form-panel {
-            flex: 1.2;
-            min-width: 280px;
-            background: white;
-            border-radius: 32px;
-            padding: 28px 24px;
-            box-shadow: 0 20px 35px rgba(0,0,0,0.1);
-            backdrop-filter: blur(2px);
-            transition: all 0.2s;
-        }
-
-        .form-panel h2 {
-            font-size: 1.7rem;
-            border-left: 6px solid #2c7da0;
-            padding-left: 16px;
-            margin-bottom: 25px;
-            color: #1f3b4c;
-        }
-
-        .input-group {
-            margin-bottom: 22px;
+        .stats {
             display: flex;
-            flex-direction: column;
-        }
-
-        .input-group label {
+            gap: 1.5rem;
             font-weight: 600;
-            margin-bottom: 7px;
-            color: #1e4663;
+            color: #eef5ff;
+            text-shadow: 0 1px 2px black;
             font-size: 0.9rem;
         }
 
-        .input-group input, .input-group textarea {
-            padding: 12px 16px;
-            border: 2px solid #dce5f0;
-            border-radius: 24px;
-            font-size: 1rem;
-            transition: 0.2s;
-            background: #fefefe;
-            outline: none;
-        }
-
-        .input-group input:focus, .input-group textarea:focus {
-            border-color: #2c7da0;
-            box-shadow: 0 0 0 3px rgba(44,125,160,0.2);
-        }
-
-        textarea {
-            resize: vertical;
-            min-height: 70px;
-        }
-
-        .dynamic-list {
-            background: #f8fafd;
-            border-radius: 24px;
-            padding: 12px 16px;
-            margin-top: 5px;
-        }
-
-        .list-item {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 12px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-
-        .list-item input {
-            flex: 1;
-            padding: 10px 14px;
-            border-radius: 40px;
-            border: 1px solid #cbdde9;
-        }
-
-        .add-btn {
-            background: #eef2f7;
-            border: 1px solid #bdd3e6;
-            padding: 8px 18px;
-            border-radius: 40px;
-            font-weight: 600;
-            cursor: pointer;
-            margin-top: 6px;
-            transition: 0.2s;
-            color: #1f6392;
-        }
-
-        .add-btn:hover {
-            background: #d4e2f0;
-            transform: scale(0.97);
-        }
-
-        .remove-item {
-            background: none;
-            border: none;
-            font-size: 1.3rem;
-            cursor: pointer;
-            color: #a0b8ce;
+        .stats span {
+            color: #4affb5;
             font-weight: bold;
-            width: 32px;
-        }
-
-        .remove-item:hover {
-            color: #c0392b;
-        }
-
-        .generate-btn {
-            background: linear-gradient(135deg, #2c7da0, #1f5e7e);
-            width: 100%;
-            padding: 14px;
-            border: none;
-            border-radius: 40px;
             font-size: 1.2rem;
-            font-weight: bold;
-            color: white;
-            margin-top: 28px;
-            cursor: pointer;
-            transition: 0.2s;
-            box-shadow: 0 5px 12px rgba(0,0,0,0.15);
+            margin-left: 6px;
+            background: #00000066;
+            padding: 0px 8px;
+            border-radius: 40px;
         }
 
-        .generate-btn:hover {
-            background: linear-gradient(135deg, #236c8c, #194f6a);
-            transform: translateY(-2px);
-        }
-
-        /* SAĞ - Şablonlar bölməsi */
-        .templates-area {
-            flex: 2;
-            min-width: 340px;
-        }
-
-        .template-tabs {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            margin-bottom: 25px;
-            border-bottom: 2px solid rgba(255,255,255,0.6);
-            padding-bottom: 12px;
-        }
-
-        .tab-btn {
-            background: rgba(255,255,240,0.7);
+        button {
+            background: #2c3e66;
             border: none;
-            padding: 8px 22px;
-            border-radius: 40px;
-            font-weight: 600;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: 0.2s;
-            color: #1e3b4a;
-            backdrop-filter: blur(4px);
-        }
-
-        .tab-btn.active {
-            background: #1f6392;
             color: white;
-            box-shadow: 0 3px 8px rgba(0,0,0,0.2);
-        }
-
-        .cv-card {
-            background: white;
-            border-radius: 36px;
-            padding: 28px 28px;
-            box-shadow: 0 25px 40px rgba(0,0,0,0.2);
-            transition: all 0.25s;
-            min-height: 550px;
-        }
-
-        /* Şablon stilləri (dinamik məzmun) */
-        .template-content {
-            transition: 0.1s;
-        }
-
-        /* Şablon 1 - klassik */
-        .template-1 .cv-header {
-            text-align: center;
-            border-bottom: 3px solid #2c7da0;
-            padding-bottom: 15px;
-            margin-bottom: 25px;
-        }
-        .template-1 .cv-name {
-            font-size: 2rem;
-            color: #1f3b4c;
-        }
-        .template-1 .section-title {
-            color: #2c7da0;
-            border-left: 4px solid;
-            padding-left: 12px;
-            margin: 20px 0 10px 0;
-        }
-
-        /* Şablon 2 - minimal modern */
-        .template-2 {
-            background: #fefaf5;
-        }
-        .template-2 .cv-header {
-            background: #2c3e50;
-            color: white;
-            margin: -28px -28px 20px -28px;
-            padding: 28px 28px 20px 28px;
-            border-radius: 36px 36px 30px 30px;
-        }
-        .template-2 .cv-name {
-            font-size: 1.9rem;
-        }
-        .template-2 .section-title {
-            font-weight: 800;
-            letter-spacing: -0.3px;
-            border-bottom: 2px solid #e0b354;
-            display: inline-block;
-            margin: 15px 0 10px 0;
-        }
-
-        /* Şablon 3 - yan panel + grid */
-        .template-3 {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-        }
-        .template-3 .sidebar {
-            flex: 1;
-            background: #eef2fa;
-            padding: 18px;
-            border-radius: 28px;
-        }
-        .template-3 .main-content {
-            flex: 2;
-        }
-        .template-3 .section-title {
             font-weight: bold;
-            margin: 12px 0 8px 0;
-            color: #1a5d7a;
-        }
-
-        .info-line {
-            margin: 6px 0;
-        }
-
-        hr {
-            margin: 12px 0;
-        }
-
-        .badge {
-            background: #e9ecef;
-            padding: 4px 12px;
-            border-radius: 40px;
-            display: inline-block;
-            margin: 4px 6px 4px 0;
+            padding: 6px 18px;
+            border-radius: 2rem;
+            cursor: pointer;
+            font-family: monospace;
             font-size: 0.85rem;
+            letter-spacing: 0.5px;
+            transition: all 0.1s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
         }
 
-        @media (max-width: 780px) {
-            .cv-builder {
-                flex-direction: column;
-            }
-            .template-3 {
-                flex-direction: column;
-            }
+        button:active {
+            transform: scale(0.96);
+            background: #1f2c46;
         }
-        footer {
-            text-align: center;
-            margin-top: 40px;
-            color: #2c3e50;
+
+        .status {
+            background: #1e2a3a;
+            padding: 5px 14px;
+            border-radius: 2rem;
+            font-size: 0.8rem;
             font-weight: 500;
+            color: #bbe1ff;
+        }
+
+        .fps-meter {
+            font-family: monospace;
+            font-weight: bold;
+            background: #000000aa;
+            padding: 4px 12px;
+            border-radius: 2rem;
+        }
+
+        @media (max-width: 700px) {
+            .stats { gap: 0.8rem; font-size: 0.7rem;}
+            .stats span { font-size: 1rem;}
+            .info-panel { padding: 0.5rem 1rem; }
         }
     </style>
 </head>
 <body>
-<div class="container">
-    <div class="header">
-        <h1>📄 CV Creator • Azərbaycanca</h1>
-        <p>Məlumatlarını daxil et, öz CV-ni seçdiyin şablonla avtomatik yarat!</p>
-    </div>
-
-    <div class="cv-builder">
-        <!-- SOL TƏRƏF: MƏLUMAT SORĞUSU -->
-        <div class="form-panel">
-            <h2>📋 Məlumatlarını daxil et</h2>
-            <div class="input-group">
-                <label>Ad və Soyad:</label>
-                <input type="text" id="fullname" placeholder="Məs: Aysel Məmmədova" value="Aysel Məmmədova">
-            </div>
-            <div class="input-group">
-                <label>Yaş (rəqəmlə):</label>
-                <input type="number" id="age" placeholder="Məs: 26" value="26">
-            </div>
-            <div class="input-group">
-                <label>Peşə / Vəzifə (başlıq):</label>
-                <input type="text" id="profession" placeholder="Frontend Developer" value="Frontend Developer">
-            </div>
-            <div class="input-group">
-                <label>Email:</label>
-                <input type="email" id="email" placeholder="example@mail.com" value="aysel.m@code.az">
-            </div>
-            <div class="input-group">
-                <label>Telefon:</label>
-                <input type="text" id="phone" placeholder="+994 50 123 45 67" value="+994 50 123 45 67">
-            </div>
-            <div class="input-group">
-                <label>Bio / Haqqımda (qısa):</label>
-                <textarea id="bio" rows="2">Texnologiyalara maraqlı, komandada işləməyi bacaran, çevik inkişaf tərəfdarı.</textarea>
-            </div>
-
-            <!-- İş yerləri (dinamik) -->
-            <div class="input-group">
-                <label>💼 İş təcrübələri (şirkət & vəzifə):</label>
-                <div id="jobsContainer" class="dynamic-list">
-                    <div class="list-item" data-job-index="0">
-                        <input type="text" class="job-input" placeholder="Şirkət adı, Vəzifə" value="AzSoft, Frontend Dev">
-                        <button class="remove-item" onclick="removeJob(this)">✖</button>
-                    </div>
-                    <div class="list-item" data-job-index="1">
-                        <input type="text" class="job-input" placeholder="Şirkət adı, Vəzifə" value="DataLab, Junior Developer">
-                        <button class="remove-item" onclick="removeJob(this)">✖</button>
-                    </div>
-                </div>
-                <button type="button" class="add-btn" onclick="addJobField()">+ Əlavə iş yeri</button>
-            </div>
-
-            <!-- Dil bilgiləri dinamik -->
-            <div class="input-group">
-                <label>🌐 Dillər (dil və səviyyə):</label>
-                <div id="langsContainer" class="dynamic-list">
-                    <div class="list-item" data-lang-index="0">
-                        <input type="text" class="lang-input" placeholder="Məs: Azərbaycan dili (Ana dili)" value="Azərbaycan dili (Ana dili)">
-                        <button class="remove-item" onclick="removeLang(this)">✖</button>
-                    </div>
-                    <div class="list-item" data-lang-index="1">
-                        <input type="text" class="lang-input" placeholder="Məs: İngilis dili (C1)" value="İngilis dili (Advanced C1)">
-                        <button class="remove-item" onclick="removeLang(this)">✖</button>
-                    </div>
-                </div>
-                <button type="button" class="add-btn" onclick="addLangField()">+ Dil əlavə et</button>
-            </div>
-
-            <!-- Bacarıqlar (isteğe bağlı) -->
-            <div class="input-group">
-                <label>⚙️ Texniki bacarıqlar (vergüllə yaz, və ya hər birini):</label>
-                <input type="text" id="skills" placeholder="React, Python, UI/UX, Git" value="React, JavaScript, Python, UI/UX">
-            </div>
-
-            <button class="generate-btn" id="generateCVBtn">✨ CV-ni yenilə / Şablonlara tətbiq et</button>
+<div>
+    <div class="container">
+        <div class="video-wrapper" style="position: relative; width: 85vw; max-width: 1100px; aspect-ratio: 16 / 9; margin: 0 auto;">
+            <video id="video" autoplay playsinline muted style="width:100%; height:100%; object-fit: cover;"></video>
+            <canvas id="overlayCanvas" style="width:100%; height:100%; object-fit: cover;"></canvas>
         </div>
-
-        <!-- SAĞ TƏRƏF: Şablonlar (3 fərqli şablon) -->
-        <div class="templates-area">
-            <div class="template-tabs">
-                <button class="tab-btn active" data-template="temp1">📘 Şablon 1 - Klassik</button>
-                <button class="tab-btn" data-template="temp2">🌟 Şablon 2 - Modern</button>
-                <button class="tab-btn" data-template="temp3">🎨 Şablon 3 - Yan panel</button>
+        <div class="info-panel">
+            <div class="stats">
+                <div>🎯 HEDEFLER: <span id="objectCount">0</span></div>
+                <div>⚡ HAREKET SKOR: <span id="motionScore">0</span></div>
             </div>
-            <div class="cv-card" id="cvPreviewCard">
-                <!-- Dinamik məzmun burada javascript ilə doldurulacaq -->
-                <div id="cvDynamicContent" class="template-content template-1">
-                    <!-- default şablon 1 məzmunu js ilə yazılacaq -->
-                </div>
-            </div>
+            <div class="status" id="camStatus">📷 KAMERA BAŞLATILIYOR...</div>
+            <div class="fps-meter" id="fpsDisplay">⚡ 0 FPS</div>
+            <button id="resetBtn">⟳ YENİDEN BAŞLAT</button>
         </div>
+        <div style="font-size: 11px; text-align: center; margin-top: 12px; color:#7f8c9a;">✨ Hareketli nesneleri anında takip eder — yeşil çerçeveler ile işaretler ✨</div>
     </div>
-    <footer>💡 Məlumatlarını dəyiş → "CV-ni yenilə" düyməsi → istənilən şablonu seç. Avtomatik dolur!</footer>
 </div>
 
 <script>
-    // --- Dinamik iş yeri və dil idarəsi ---
-    function addJobField() {
-        const container = document.getElementById('jobsContainer');
-        const newDiv = document.createElement('div');
-        newDiv.className = 'list-item';
-        const idx = container.children.length;
-        newDiv.setAttribute('data-job-index', idx);
-        newDiv.innerHTML = `<input type="text" class="job-input" placeholder="Şirkət adı, Vəzifə" value="Yeni iş yeri, Vəzifə">
-                            <button class="remove-item" onclick="removeJob(this)">✖</button>`;
-        container.appendChild(newDiv);
-    }
+    (function(){
+        // ---- DOM ELEMANLARI ----
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('overlayCanvas');
+        const ctx = canvas.getContext('2d');
+        const objectCountSpan = document.getElementById('objectCount');
+        const motionScoreSpan = document.getElementById('motionScore');
+        const camStatusDiv = document.getElementById('camStatus');
+        const fpsDisplaySpan = document.getElementById('fpsDisplay');
+        const resetBtn = document.getElementById('resetBtn');
 
-    function removeJob(btn) {
-        const item = btn.parentElement;
-        if (document.getElementById('jobsContainer').children.length > 1) {
-            item.remove();
-        } else {
-            alert("Ən azı bir iş yeri olmalıdır.");
-        }
-    }
+        // ---- PERFORMANS AYARLARI (gecikmesiz takip) ----
+        let animationFrameId = null;
+        let processingFrame = false;       // Çakışma önleme
+        let lastTimestamp = 0;
+        let frameCount = 0;
+        let fps = 0;
+        
+        // ---- HAREKET ALGILAMA DEĞİŞKENLERİ ----
+        let previousFrame = null;           // gri tonlamalı önceki kare (ImageData)
+        let motionData = null;              // eşiklenmiş fark haritası (ImageData)
+        
+        // ayarlar (hızlı & hassas)
+        const BLUR_SIZE = 3;                // küçük gürültü azaltma (performans için çok büyük değil)
+        const MOTION_THRESHOLD = 28;        // piksel fark eşiği (0-255) - düşük gecikme
+        const MIN_CONTOUR_AREA = 280;       // minimum takip edilecek alan (piksel) - küçük hareketleri de yakala
+        const MAX_OBJECTS = 12;              // maksimum takip sayısı
+            
+        // çerçeve boyutları
+        let width = 0, height = 0;
+        let active = true;
 
-    function addLangField() {
-        const container = document.getElementById('langsContainer');
-        const newDiv = document.createElement('div');
-        newDiv.className = 'list-item';
-        newDiv.innerHTML = `<input type="text" class="lang-input" placeholder="Məs: Rus dili (B2)" value="Yeni dil, Səviyyə">
-                            <button class="remove-item" onclick="removeLang(this)">✖</button>`;
-        container.appendChild(newDiv);
-    }
-
-    function removeLang(btn) {
-        const item = btn.parentElement;
-        if (document.getElementById('langsContainer').children.length > 1) {
-            item.remove();
-        } else {
-            alert("Ən azı bir dil məlumatı olmalıdır.");
-        }
-    }
-
-    // --- Məlumatları toplayan funksiya (obyekt qaytarır) ---
-    function gatherCVData() {
-        const fullname = document.getElementById('fullname').value.trim() || "Ad Soyad";
-        const age = document.getElementById('age').value || "?";
-        const profession = document.getElementById('profession').value.trim() || "Peşə";
-        const email = document.getElementById('email').value.trim() || "email@example.com";
-        const phone = document.getElementById('phone').value.trim() || "+994 XX XXX XX XX";
-        const bio = document.getElementById('bio').value.trim() || "Bio məlumatı yoxdur.";
-        const skillsRaw = document.getElementById('skills').value;
-        const skillsList = skillsRaw.split(',').map(s => s.trim()).filter(s => s !== "");
-
-        // İş yerlərini array şəklində al
-        const jobInputs = document.querySelectorAll('#jobsContainer .job-input');
-        let jobs = [];
-        jobInputs.forEach(inp => {
-            if (inp.value.trim() !== "") jobs.push(inp.value.trim());
-        });
-        if (jobs.length === 0) jobs = ["Təcrübə daxil edilməyib"];
-
-        // Dillər
-        const langInputs = document.querySelectorAll('#langsContainer .lang-input');
-        let languages = [];
-        langInputs.forEach(inp => {
-            if (inp.value.trim() !== "") languages.push(inp.value.trim());
-        });
-        if (languages.length === 0) languages = ["Məlumat daxil edilməyib"];
-
-        return { fullname, age, profession, email, phone, bio, skillsList, jobs, languages };
-    }
-
-    // --- Ümumi render funksiyası (templateId = 'temp1', 'temp2', 'temp3') ---
-    function renderCV(templateId) {
-        const data = gatherCVData();
-        const container = document.getElementById('cvDynamicContent');
-        let html = '';
-
-        if (templateId === 'temp1') {
-            // Şablon 1 - Klassik
-            html = `<div class="template-1">
-                        <div class="cv-header">
-                            <div class="cv-name">${escapeHtml(data.fullname)}</div>
-                            <div style="color:#2c7da0; font-weight:500;">${escapeHtml(data.profession)}</div>
-                            <div>📧 ${escapeHtml(data.email)} &nbsp; 📞 ${escapeHtml(data.phone)}</div>
-                            <div>🎂 Yaş: ${escapeHtml(data.age)}</div>
-                        </div>
-                        <div class="section-title">👤 Haqqımda</div>
-                        <p>${escapeHtml(data.bio)}</p>
-                        <div class="section-title">💼 İş təcrübəsi</div>
-                        <ul>${data.jobs.map(job => `<li>${escapeHtml(job)}</li>`).join('')}</ul>
-                        <div class="section-title">🌐 Dillər</div>
-                        <div>${data.languages.map(lang => `<span class="badge">${escapeHtml(lang)}</span>`).join('')}</div>
-                        <div class="section-title">⚙️ Bacarıqlar</div>
-                        <div>${data.skillsList.map(skill => `<span class="badge">${escapeHtml(skill)}</span>`).join('')}</div>
-                    </div>`;
-        } 
-        else if (templateId === 'temp2') {
-            // Şablon 2 - Modern (altın vurgulu)
-            html = `<div class="template-2">
-                        <div class="cv-header">
-                            <div class="cv-name">✨ ${escapeHtml(data.fullname)}</div>
-                            <div style="font-size:1.1rem; opacity:0.9;">${escapeHtml(data.profession)} | Yaş ${escapeHtml(data.age)}</div>
-                            <div>📧 ${escapeHtml(data.email)}  •  📞 ${escapeHtml(data.phone)}</div>
-                        </div>
-                        <div class="section-title">📌 Profil</div>
-                        <p>${escapeHtml(data.bio)}</p>
-                        <div class="section-title">📂 Təcrübələr</div>
-                        <ul style="list-style-type: square; padding-left: 20px;">
-                            ${data.jobs.map(job => `<li>${escapeHtml(job)}</li>`).join('')}
-                        </ul>
-                        <div class="section-title">🗣️ Dillər</div>
-                        <div>${data.languages.map(lang => `<span class="badge" style="background:#f0dbb2;">${escapeHtml(lang)}</span>`).join('')}</div>
-                        <div class="section-title">🛠️ Texniki bacarıqlar</div>
-                        <div>${data.skillsList.map(skill => `<span class="badge" style="background:#e1ecf4;">${escapeHtml(skill)}</span>`).join('')}</div>
-                    </div>`;
-        } 
-        else if (templateId === 'temp3') {
-            // Şablon 3 - yan panel + əsas məzmun
-            html = `<div class="template-3">
-                        <div class="sidebar">
-                            <div style="font-size: 1.8rem; font-weight: bold;">${escapeHtml(data.fullname)}</div>
-                            <div>🎂 ${escapeHtml(data.age)} yaş</div>
-                            <div>💼 ${escapeHtml(data.profession)}</div>
-                            <hr>
-                            <div class="section-title">📞 Əlaqə</div>
-                            <div class="info-line">📧 ${escapeHtml(data.email)}</div>
-                            <div class="info-line">📱 ${escapeHtml(data.phone)}</div>
-                            <hr>
-                            <div class="section-title">🌐 Dillər</div>
-                            <ul style="margin-left: 18px;">${data.languages.map(lang => `<li>${escapeHtml(lang)}</li>`).join('')}</ul>
-                        </div>
-                        <div class="main-content">
-                            <div class="section-title">📖 Haqqımda</div>
-                            <p>${escapeHtml(data.bio)}</p>
-                            <div class="section-title">💼 İş təcrübələri</div>
-                            <ul>${data.jobs.map(job => `<li>${escapeHtml(job)}</li>`).join('')}</ul>
-                            <div class="section-title">⚙️ Bacarıqlar</div>
-                            <div>${data.skillsList.map(skill => `<span class="badge">${escapeHtml(skill)}</span>`).join('')}</div>
-                        </div>
-                    </div>`;
-        }
-        container.innerHTML = html;
-        // Template sinfini əlavə et (stil fərqliliyi üçün)
-        container.className = `template-content ${templateId === 'temp1' ? 'template-1' : (templateId === 'temp2' ? 'template-2' : 'template-3-style')}`;
-    }
-
-    // XSS qorunması üçün sadə funksiya
-    function escapeHtml(str) {
-        if (!str) return '';
-        return str.replace(/[&<>]/g, function(m) {
-            if (m === '&') return '&amp;';
-            if (m === '<') return '&lt;';
-            if (m === '>') return '&gt;';
-            return m;
-        }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
-            return c;
-        });
-    }
-
-    // --- Aktiv şablonu izləmək ---
-    let currentTemplate = 'temp1';
-
-    function setActiveTab(templateId) {
-        currentTemplate = templateId;
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            if (btn.getAttribute('data-template') === templateId) {
-                btn.classList.add('active');
-            } else {
-                btn.classList.remove('active');
+        // ---- KAMERA BAŞLAT (düşük gecikmeli ayarlar) ----
+        async function initCamera() {
+            try {
+                camStatusDiv.innerHTML = "📷 İzin isteniyor...";
+                // Düşük gecikme için ideal ayarlar: resolution 640x480 veya mevcut ideal, fakat hızlı işlem için max 720p
+                // Mobil ve masaüstünde en düşük gecikmeyi sağlamak için ideal çözünürlük: 640x480 veya cihazın desteklediği hızlı mod.
+                // "advanced" constraint ile düşük gecikme tercihi.
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        width: { ideal: 640, max: 800 },
+                        height: { ideal: 480, max: 600 },
+                        frameRate: { ideal: 30, max: 60 },
+                        facingMode: "environment" // arka kamera öncelikli (tablet/telefon)
+                    },
+                    audio: false
+                });
+                
+                video.srcObject = stream;
+                await video.play();
+                
+                // video metadata yüklendiğinde canvas boyutlarını ayarla
+                video.addEventListener('loadedmetadata', () => {
+                    // videonun gerçek görüntü boyutları
+                    width = video.videoWidth;
+                    height = video.videoHeight;
+                    
+                    // canvas elementinin boyutlarını tam eşitle (çözünürlük takibi için)
+                    canvas.width = width;
+                    canvas.height = height;
+                    // video elementinin boyut CSS ile kontrol ediliyor, ama çizim buffer'ı tam boy olmalı
+                    
+                    // önceki frame buffer'ları temizle
+                    if(previousFrame) previousFrame = null;
+                    
+                    camStatusDiv.innerHTML = "✅ TAKİP AKTİF | HAREKET BEKLENİYOR";
+                    
+                    // ilk kareyi bekleyerek işlem döngüsünü başlat
+                    if(animationFrameId) cancelAnimationFrame(animationFrameId);
+                    animationFrameId = requestAnimationFrame(detectMotionLoop);
+                });
+                
+            } catch (err) {
+                console.error("Kamera hatası:", err);
+                camStatusDiv.innerHTML = "❌ KAMERA ERİŞİM HATASI | İzin verin";
+                alert("Kamera erişimi gerekli! Lütfen izin verin ve sayfayı yenileyin.");
             }
-        });
-        renderCV(currentTemplate);
-    }
-
-    // Yeniləmə düyməsi: hər dəfə mövcud şablona məlumatları tətbiq edir.
-    document.getElementById('generateCVBtn').addEventListener('click', () => {
-        renderCV(currentTemplate);
-    });
-
-    // Tab dəyişmə hadisələri
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const templateId = btn.getAttribute('data-template');
-            setActiveTab(templateId);
-        });
-    });
-
-    // Səhifə yüklənəndə default məlumatlarla render (yaş, iş yerləri, dil bilgiləri öncədən formda var)
-    window.addEventListener('DOMContentLoaded', () => {
-        setActiveTab('temp1');
-        // Formda dəyişiklik olduqda avtomatik yeniləmə istəyən ola bilər, amma əl ilə düymə tələb olunur.
-        // İstifadəçi rahatlığı üçün generate düyməsi əsasdır.
-    });
-
-    // opsional: inputlarda enter basılanda generate etmək istəyənlər üçün (isteğe bağlı)
-    const inputs = document.querySelectorAll('input, textarea');
-    inputs.forEach(inp => {
-        inp.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                renderCV(currentTemplate);
+        }
+        
+        // ---- HIZLI GRAYSCALE DÖNÜŞÜMÜ (ImageData -> Uint8Array) ----
+        function toGrayscaleFast(imageData) {
+            const data = imageData.data;
+            const len = data.length;
+            // yeni bir Uint8ClampedArray oluştur (gri ton, her piksel 1 byte)
+            const gray = new Uint8Array(imageData.width * imageData.height);
+            for (let i = 0, j = 0; i < len; i += 4, j++) {
+                // luminance formülü: 0.299R + 0.587G + 0.114B
+                // tamsayı hızı için shift & toplama tercih edilebilir, ancak modern JS yeterince hızlı
+                const r = data[i];
+                const g = data[i+1];
+                const b = data[i+2];
+                // gri = (r*0.299 + g*0.587 + b*0.114)
+                gray[j] = (r * 0.299 + g * 0.587 + b * 0.114) | 0;
             }
+            return gray;
+        }
+        
+        // ----- Basit Kutu (blur) ile gürültü azaltma: 3x3 ortalama filtresi (performans optimizasyonu) -----
+        function applyFastBlur(gray, w, h) {
+            // ortalama blur 3x3, sınırlarda koruma
+            const blurred = new Uint8Array(w * h);
+            for (let y = 1; y < h-1; y++) {
+                const rowOff = y * w;
+                for (let x = 1; x < w-1; x++) {
+                    let sum = 0;
+                    let idx = rowOff + x;
+                    // 3x3 kernel
+                    sum += gray[idx - w - 1]; // üst sol
+                    sum += gray[idx - w];     // üst
+                    sum += gray[idx - w + 1]; // üst sağ
+                    sum += gray[idx - 1];     // sol
+                    sum += gray[idx];         // merkez
+                    sum += gray[idx + 1];     // sağ
+                    sum += gray[idx + w - 1]; // alt sol
+                    sum += gray[idx + w];     // alt
+                    sum += gray[idx + w + 1]; // alt sağ
+                    blurred[idx] = (sum / 9) | 0;
+                }
+            }
+            // sınır kopyalama (basit)
+            for (let y = 0; y < h; y++) {
+                for (let x = 0; x < w; x++) {
+                    if (y === 0 || y === h-1 || x === 0 || x === w-1) {
+                        blurred[y*w + x] = gray[y*w + x];
+                    }
+                }
+            }
+            return blurred;
+        }
+        
+        // ----- Hareket farkı hesapla (Frame differencing) ve binary maske oluştur (Uint8Array)-----
+        function computeMotionMask(prevGray, currGray, w, h, threshold) {
+            const mask = new Uint8Array(w * h);
+            let motionPixelCount = 0;
+            const totalPixels = w * h;
+            for (let i = 0; i < totalPixels; i++) {
+                const diff = Math.abs(currGray[i] - prevGray[i]);
+                if (diff > threshold) {
+                    mask[i] = 255;
+                    motionPixelCount++;
+                } else {
+                    mask[i] = 0;
+                }
+            }
+            return { mask, motionPixelCount };
+        }
+        
+        // ----- Bileşen Etiketleme (Connected Components) hızlı 2-pass (basit union-find) -----
+        // Bu fonksiyon binary mask üzerinde bağlı bileşenleri bulur, her bileşenin bounding box'ını döndürür
+        function findConnectedComponents(mask, w, h, minArea) {
+            const parent = new Array(w * h);
+            for (let i = 0; i < w*h; i++) parent[i] = i;
+            
+            function find(a) {
+                while(parent[a] !== a) {
+                    parent[a] = parent[parent[a]];
+                    a = parent[a];
+                }
+                return a;
+            }
+            function union(a,b) {
+                const ra = find(a);
+                const rb = find(b);
+                if(ra !== rb) parent[rb] = ra;
+            }
+            
+            // first pass: 4-komşuluk (hızlı bağlantı, yeterli)
+            for (let y = 0; y < h; y++) {
+                for (let x = 0; x < w; x++) {
+                    const idx = y * w + x;
+                    if (mask[idx] === 255) {
+                        // sol komşu
+                        if (x > 0 && mask[idx-1] === 255) union(idx, idx-1);
+                        // üst komşu
+                        if (y > 0 && mask[idx-w] === 255) union(idx, idx-w);
+                    }
+                }
+            }
+            
+            // component toplama ve bounding box hesaplama
+            const compMap = new Map(); // root -> {minX,minY,maxX,maxY, count}
+            for (let y = 0; y < h; y++) {
+                for (let x = 0; x < w; x++) {
+                    const idx = y * w + x;
+                    if (mask[idx] === 255) {
+                        const root = find(idx);
+                        if (!compMap.has(root)) {
+                            compMap.set(root, {
+                                minX: x, maxX: x,
+                                minY: y, maxY: y,
+                                count: 1
+                            });
+                        } else {
+                            const box = compMap.get(root);
+                            box.minX = Math.min(box.minX, x);
+                            box.maxX = Math.max(box.maxX, x);
+                            box.minY = Math.min(box.minY, y);
+                            box.maxY = Math.max(box.maxY, y);
+                            box.count++;
+                        }
+                    }
+                }
+            }
+            
+            // bounding box listesi (alan minArea üzeri)
+            const boxes = [];
+            for (let [_, box] of compMap.entries()) {
+                const area = (box.maxX - box.minX + 1) * (box.maxY - box.minY + 1);
+                if (area >= minArea && box.count >= 8) { // en az 8 piksel ile anlamlı
+                    boxes.push({
+                        x: box.minX,
+                        y: box.minY,
+                        w: box.maxX - box.minX + 1,
+                        h: box.maxY - box.minY + 1,
+                        area: area,
+                        pixelCount: box.count
+                    });
+                }
+            }
+            // büyükten küçüğe sıralama (isteğe bağlı) ama karışıklık olmasın
+            boxes.sort((a,b) => b.area - a.area);
+            if(boxes.length > MAX_OBJECTS) boxes.length = MAX_OBJECTS;
+            return boxes;
+        }
+        
+        // ---- ÇERÇEVE ÇİZİM: yeşil dikdörtgenler ile takip ----
+        function drawTrackingBoxes(boxes, motionScore) {
+            if(!ctx) return;
+            ctx.clearRect(0, 0, width, height);
+            if(!boxes.length) {
+                // hiçbir hedef yoksa hafif yazı göster
+                ctx.font = "bold 18px 'Segoe UI'";
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = "#88aaffcc";
+                ctx.shadowColor = "black";
+                ctx.fillText("⚡ hareket bekleniyor...", 20, 40);
+                ctx.shadowBlur = 0;
+                return;
+            }
+            
+            // her bir takip edilen nesneyi çerçevele
+            for(let i=0; i<boxes.length; i++) {
+                const b = boxes[i];
+                // neon yeşil çerçeve, kalın
+                ctx.beginPath();
+                ctx.strokeStyle = "#1eff6e";
+                ctx.lineWidth = Math.max(2, Math.min(5, Math.floor(b.w / 20) + 2));
+                ctx.shadowBlur = 0;
+                ctx.strokeRect(b.x, b.y, b.w, b.h);
+                // köşe vurgusu
+                ctx.fillStyle = "#1eff6ecc";
+                ctx.font = `bold ${Math.max(12, Math.floor(b.h/5))}px monospace`;
+                ctx.shadowBlur = 4;
+                ctx.fillText(`●`, b.x+3, b.y+15);
+                ctx.font = "bold 13px monospace";
+                ctx.fillStyle = "#ffffffdd";
+                ctx.fillText(`${i+1}`, b.x+5, b.y+14);
+            }
+            
+            // eğer çok fazla hareket varsa skor göstergesi çiz
+            if(motionScore > 1200) {
+                ctx.font = "bold 14px monospace";
+                ctx.fillStyle = "#ffd966";
+                ctx.fillText("🔥 YOĞUN HAREKET", width-130, 30);
+            }
+        }
+        
+        // ---- ANA İŞLEME DÖNGÜSÜ (gecikmesiz, hızlı frameler) ----
+        let frameSkipGuard = false;
+        async function detectMotionLoop(timestamp) {
+            if (!active) return;
+            if (!video.videoWidth || !video.videoHeight) {
+                // video hazır değil, tekrar dene
+                animationFrameId = requestAnimationFrame(detectMotionLoop);
+                return;
+            }
+            
+            // Eğer önceki kare işleniyorsa atla (frame drop yaparak gecikmeyi önle)
+            if (processingFrame) {
+                animationFrameId = requestAnimationFrame(detectMotionLoop);
+                return;
+            }
+            
+            processingFrame = true;
+            
+            // FPS hesaplama
+            frameCount++;
+            const now = performance.now();
+            if (now - lastTimestamp >= 1000) {
+                fps = frameCount;
+                frameCount = 0;
+                lastTimestamp = now;
+                fpsDisplaySpan.innerText = `⚡ ${fps} FPS`;
+            }
+            
+            try {
+                // Canvas'a video karesini çizip ImageData al (hızlı yakalama)
+                // Geçici canvas oluşturmak yerine doğrudan video üzerinden imagedata almak daha hızlı değil.
+                // OffscreenCanvas kullanarak daha hızlı işlem:
+                const offCanvas = new OffscreenCanvas(width, height);
+                const offCtx = offCanvas.getContext('2d');
+                offCtx.drawImage(video, 0, 0, width, height);
+                const currentImageData = offCtx.getImageData(0, 0, width, height);
+                
+                // gri tonlamaya çevir
+                const currGray = toGrayscaleFast(currentImageData);
+                
+                // ilk frame durumu: sadece kaydet
+                if (previousFrame === null) {
+                    previousFrame = currGray;
+                    processingFrame = false;
+                    animationFrameId = requestAnimationFrame(detectMotionLoop);
+                    return;
+                }
+                
+                // blur ile gürültü azalt (hızlı)
+                const currBlurred = applyFastBlur(currGray, width, height);
+                const prevBlurred = applyFastBlur(previousFrame, width, height);
+                
+                // hareket maskesi oluştur
+                const { mask, motionPixelCount } = computeMotionMask(prevBlurred, currBlurred, width, height, MOTION_THRESHOLD);
+                
+                // hareket skorunu güncelle (UI)
+                motionScoreSpan.innerText = motionPixelCount;
+                
+                // bağlı bileşenler (nesneleri) bul
+                let boxes = [];
+                if (motionPixelCount > 40) {  // yeterli hareket varsa takip et
+                    boxes = findConnectedComponents(mask, width, height, MIN_CONTOUR_AREA);
+                }
+                
+                // UI güncelleme: hedef sayısı
+                objectCountSpan.innerText = boxes.length;
+                
+                // CANVAS üzerine çizim yap (takip çerçeveleri)
+                drawTrackingBoxes(boxes, motionPixelCount);
+                
+                // bir sonraki frame için şimdiki kareyi kaydet (referans)
+                previousFrame = currBlurred;
+                
+            } catch(err) {
+                console.warn("İşleme hatası:", err);
+            } finally {
+                processingFrame = false;
+            }
+            
+            // döngüyü devam ettir
+            animationFrameId = requestAnimationFrame(detectMotionLoop);
+        }
+        
+        // ---- YENİDEN BAŞLAT (kamera ve frame sıfırlama) ----
+        function fullReset() {
+            if(animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+            // mevcut stream'i durdur
+            if(video.srcObject) {
+                const tracks = video.srcObject.getTracks();
+                tracks.forEach(track => track.stop());
+                video.srcObject = null;
+            }
+            previousFrame = null;
+            processingFrame = false;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            objectCountSpan.innerText = "0";
+            motionScoreSpan.innerText = "0";
+            fpsDisplaySpan.innerText = "⚡ 0 FPS";
+            camStatusDiv.innerHTML = "🔄 SIFIRLANIYOR...";
+            setTimeout(() => {
+                initCamera();
+            }, 100);
+        }
+        
+        resetBtn.addEventListener('click', () => {
+            fullReset();
         });
-    });
+        
+        // sayfa kapanırken stream'i serbest bırak
+        window.addEventListener('beforeunload', () => {
+            if(video.srcObject) {
+                video.srcObject.getTracks().forEach(track => track.stop());
+            }
+            if(animationFrameId) cancelAnimationFrame(animationFrameId);
+        });
+        
+        // Başlat
+        initCamera();
+    })();
 </script>
 </body>
 </html>
