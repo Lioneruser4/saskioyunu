@@ -3,242 +3,698 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Saski Mafia - Vampir Köylü</title>
+    <title>Word Wonder Pro - Sonsuz Kelime Bulmaca</title>
     <style>
         * {
-            box-sizing: border-box;
             user-select: none;
             -webkit-tap-highlight-color: transparent;
+            box-sizing: border-box;
         }
+
         body {
             margin: 0;
-            background: linear-gradient(145deg, #0a0f1e 0%, #0c1222 100%);
-            font-family: 'Segoe UI', 'Poppins', system-ui, -apple-system, 'Inter', sans-serif;
-            color: #f0f3fa;
-            overflow: hidden;
-            height: 100vh;
-            width: 100vw;
-        }
-        /* Ana container */
-        .app {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0f1724 0%, #1a2a3f 100%);
+            font-family: 'Segoe UI', 'Poppins', system-ui, -apple-system, 'Roboto', sans-serif;
             display: flex;
-            flex-direction: column;
-            height: 100%;
-            width: 100%;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
             position: relative;
         }
-        /* HEADER */
-        .header {
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(12px);
-            padding: 12px 16px;
+
+        /* Lobi / Ana Menü */
+        .lobby {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(145deg, #0a0f1c, #121a2a);
+            z-index: 100;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .lobby.hide {
+            display: none;
+        }
+
+        .lobby-card {
+            background: rgba(30, 40, 55, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 64px;
+            padding: 40px 30px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 25px 45px rgba(0,0,0,0.5), inset 0 1px 2px rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,215,0,0.3);
+        }
+
+        .game-title {
+            font-size: 3rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #FFD966, #FFA500);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .lobby-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-top: 30px;
+        }
+
+        .lobby-btn {
+            background: linear-gradient(135deg, #f3cd81, #e6b450);
+            border: none;
+            padding: 16px 24px;
+            border-radius: 60px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #1e2a1f;
+            cursor: pointer;
+            transition: 0.1s linear;
+            box-shadow: 0 5px 0 #8b6946;
+        }
+
+        .lobby-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 2px 0 #8b6946;
+        }
+
+        /* Oyun konteynırı */
+        .game-container {
+            max-width: 650px;
+            width: 100%;
+            background: rgba(255,255,255,0.08);
+            backdrop-filter: blur(4px);
+            border-radius: 64px;
+            padding: 20px 16px 30px;
+            box-shadow: 0 25px 45px rgba(0,0,0,0.3);
+            transition: all 0.2s;
+        }
+
+        /* Stats paneli */
+        .stats-panel {
+            background: linear-gradient(135deg, #1f3b2c, #0e2a1f);
+            border-radius: 100px;
+            padding: 12px 20px;
+            margin-bottom: 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            z-index: 20;
-        }
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        .avatar {
-            width: 44px;
-            height: 44px;
-            border-radius: 100px;
-            background: #2a2f3f;
-            object-fit: cover;
-            border: 2px solid #ffd966;
-        }
-        .username {
-            font-weight: bold;
-            font-size: 1.1rem;
-        }
-        .room-code {
-            background: #1e2438;
-            padding: 6px 14px;
-            border-radius: 30px;
-            font-family: monospace;
-            font-size: 1.2rem;
-            letter-spacing: 1px;
-        }
-        /* lobby & oda */
-        .screen {
-            flex: 1;
-            overflow-y: auto;
-            padding: 16px;
-            transition: all 0.2s;
-        }
-        .hidden {
-            display: none;
-        }
-        /* kartlar */
-        .lobby-card, .room-panel {
-            background: rgba(20, 25, 40, 0.7);
-            backdrop-filter: blur(8px);
-            border-radius: 32px;
-            padding: 20px;
-            margin-bottom: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-        }
-        button {
-            background: #3b4b6e;
-            border: none;
-            padding: 12px 18px;
-            border-radius: 40px;
-            font-weight: bold;
-            color: white;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: 0.2s;
-            margin: 4px;
-        }
-        button:active { transform: scale(0.97); background: #2c3a55; }
-        .primary-btn { background: #7c3aed; box-shadow: 0 4px 12px rgba(124,58,237,0.4);}
-        .danger-btn { background: #b91c1c; }
-        .success-btn { background: #10b981; }
-        .vote-btn { background: #f59e0b; }
-        input, select {
-            background: #0f1422;
-            border: 1px solid #2d3748;
-            padding: 12px 16px;
-            border-radius: 40px;
-            color: white;
-            width: 100%;
-            margin: 8px 0;
-        }
-        .players-grid {
-            display: flex;
             flex-wrap: wrap;
-            gap: 12px;
-            margin: 20px 0;
-        }
-        .player-card {
-            background: #1e1f2c;
-            border-radius: 24px;
-            padding: 10px;
-            width: 90px;
-            text-align: center;
-            transition: 0.1s;
-            border: 1px solid #2e3a5e;
-        }
-        .player-card.dead { opacity: 0.5; filter: grayscale(0.5); background: #1a1111; }
-        .player-card.selected { border: 3px solid #facc15; background: #2a2f44; }
-        .role-icon { font-size: 1.7rem; margin: 5px 0; }
-        .vote-timer {
-            font-size: 2rem;
-            font-weight: bold;
-            text-align: center;
-            background: #00000070;
-            border-radius: 60px;
-            padding: 8px;
-        }
-        .chat-area {
-            background: #0b0e18cc;
-            border-radius: 28px;
-            padding: 12px;
-            margin-top: 16px;
-            max-height: 200px;
-            overflow-y: auto;
-        }
-        .message { margin: 6px 0; font-size: 0.85rem; word-break: break-word; }
-        .chat-input-row {
-            display: flex;
-            gap: 8px;
-            margin-top: 8px;
-        }
-        .sound-controls {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: #000000aa;
-            border-radius: 50px;
-            padding: 8px;
-            display: flex;
             gap: 10px;
-            z-index: 30;
         }
-        .sound-btn { background: #2d3748; border-radius: 40px; padding: 8px 12px; font-size: 0.7rem;}
-        .animation-overlay {
-            position: fixed;
-            top:0;left:0;width:100%;height:100%;
-            background: rgba(0,0,0,0.8);
+
+        .stat {
+            background: #00000055;
+            padding: 6px 16px;
+            border-radius: 40px;
+            font-weight: bold;
+            color: #f9e7b3;
+            font-size: 1rem;
+        }
+
+        .stat span {
+            font-size: 0.75rem;
+            margin-right: 6px;
+        }
+
+        .health {
+            color: #ff8888;
+        }
+
+        /* Harf ızgarası */
+        .letters-grid {
+            background: #ecd9b4;
+            border-radius: 48px;
+            padding: 20px 12px;
+            margin-bottom: 20px;
+            box-shadow: inset 0 0 0 3px #fff8e7, inset 0 0 0 8px #cbad7a, 0 12px 28px black;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px 8px;
+            justify-items: center;
+            align-items: center;
+        }
+
+        .letter-tile {
+            background: radial-gradient(ellipse at 30% 35%, #fff3cf, #ffdd99);
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            max-width: 85px;
+            border-radius: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 100;
+            font-size: 2rem;
+            font-weight: 800;
+            color: #3b2a1f;
+            box-shadow: 0 8px 0 #9b6e42;
+            transition: 0.05s linear;
+            cursor: pointer;
+            touch-action: none;
+        }
+
+        .letter-tile.active {
+            background: #ffe6a3;
+            box-shadow: 0 3px 0 #9b6e42;
+            transform: translateY(4px);
+            scale: 0.97;
+        }
+
+        /* Kelime alanı */
+        .word-area {
+            background: #1f2a24cc;
+            backdrop-filter: blur(12px);
+            border-radius: 60px;
+            margin: 15px 0;
+            padding: 12px 20px;
+            text-align: center;
+        }
+
+        .current-word {
+            font-size: 2rem;
+            font-weight: bold;
+            letter-spacing: 4px;
+            color: #ffefb9;
+            background: #00000066;
+            padding: 10px;
+            border-radius: 48px;
+            min-height: 70px;
+        }
+
+        /* Butonlar */
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 15px 0;
+        }
+
+        .game-btn {
+            background: #f3cd81;
+            border: none;
+            font-size: 1rem;
+            font-weight: bold;
+            padding: 10px 20px;
+            border-radius: 40px;
+            box-shadow: 0 4px 0 #8b6946;
+            cursor: pointer;
+            transition: 0.05s linear;
+        }
+
+        .game-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 1px 0 #8b6946;
+        }
+
+        .hint-btn {
+            background: linear-gradient(135deg, #6c5ce7, #4834d4);
+            color: white;
+            box-shadow: 0 4px 0 #2d1b8a;
+        }
+
+        /* Bulunan kelimeler */
+        .found-words {
+            background: #00000077;
+            border-radius: 32px;
+            padding: 12px;
+            margin-top: 20px;
+            max-height: 140px;
+            overflow-y: auto;
+        }
+
+        .words-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .word-badge {
+            background: #2f4436;
+            padding: 5px 14px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            color: #ffefb9;
+        }
+
+        /* Modal (ipucu vb) */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
             backdrop-filter: blur(8px);
+            z-index: 200;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            visibility: hidden;
+            opacity: 0;
             transition: 0.2s;
         }
-        .death-skull {
-            font-size: 5rem;
-            animation: shake 0.5s infinite;
+
+        .modal.show {
+            visibility: visible;
+            opacity: 1;
         }
-        @keyframes shake {
-            0% { transform: translate(0,0);}
-            25% { transform: translate(5px,5px);}
-            75% { transform: translate(-5px,-3px);}
+
+        .modal-content {
+            background: #2a3b2e;
+            border-radius: 48px;
+            padding: 30px;
+            max-width: 300px;
+            text-align: center;
+            color: white;
         }
-        .waiting-spinner {
-            border: 6px solid #3b4b6e;
-            border-top: 6px solid #facc15;
+
+        /* Ayarlar paneli */
+        .settings-panel {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 50;
+        }
+
+        .settings-icon {
+            background: #000000aa;
             border-radius: 50%;
-            width: 60px;
-            height: 60px;
-            animation: spin 1s linear infinite;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            cursor: pointer;
+            backdrop-filter: blur(4px);
         }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .flex-between { display: flex; justify-content: space-between; align-items: center;}
     </style>
 </head>
 <body>
-<div class="app">
-    <div class="header">
-        <div class="user-info">
-            <img id="userAvatar" class="avatar" src="https://api.dicebear.com/7.x/avataaars/svg?seed=default">
-            <span id="userName" class="username">Oyuncu</span>
+
+<!-- Lobi Menüsü -->
+<div id="lobby" class="lobby">
+    <div class="lobby-card">
+        <div class="game-title">📖 WORD WONDER PRO</div>
+        <div style="margin: 20px 0; color:#ddd;">Sonsuz Kelime Macerası</div>
+        <div class="lobby-buttons">
+            <button class="lobby-btn" id="startGameBtn">🎮 OYNA</button>
+            <button class="lobby-btn" id="settingsLobbyBtn">⚙️ AYARLAR</button>
         </div>
-        <div class="room-code" id="roomCodeDisplay">---</div>
-        <button id="leaveRoomBtn" style="background:#4a2c2c;">Çık</button>
-    </div>
-    <div id="lobbyScreen" class="screen">
-        <div class="lobby-card">
-            <h2>🏰 Mafia - Vampir Köylü</h2>
-            <input type="text" id="roomNameInput" placeholder="Oda Adı / Kodu">
-            <input type="password" id="roomPassword" placeholder="Şifre (opsiyonel)">
-            <button id="createRoomBtn" class="primary-btn">➕ Oda Oluştur (Admin)</button>
-            <button id="joinRoomBtn">🔑 Odaya Katıl</button>
-            <hr>
-            <h3>📋 Mevcut Odalar</h3>
-            <div id="roomsList"></div>
-        </div>
-    </div>
-    <div id="gameScreen" class="screen hidden">
-        <div class="room-panel">
-            <div class="flex-between"><h3 id="phaseTitle">⚔️ Oyun Bekliyor</h3><span id="timerSpan" class="vote-timer">--</span></div>
-            <div id="playersContainer" class="players-grid"></div>
-            <div id="actionArea">
-                <!-- oy eylemleri buraya gelir -->
-            </div>
-            <div id="chatPanel" class="chat-area">
-                <div id="chatMessages"></div>
-                <div class="chat-input-row">
-                    <input type="text" id="chatInput" placeholder="Sohbet..." maxlength="100">
-                    <button id="sendChatBtn">📨</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="sound-controls">
-        <button id="muteAllBtn" class="sound-btn">🔇 Tümü Kapalı</button>
-        <button id="unmuteAllBtn" class="sound-btn">🔊 Tümü Aç</button>
-    </div>
-    <div id="animationOverlay" class="animation-overlay hidden">
-        <div id="animContent"></div>
     </div>
 </div>
-<script src="/socket.io/socket.io.js"></script>
-<script src="/game.js"></script>
+
+<!-- Oyun Konteynırı (başlangıçta gizli) -->
+<div id="gameContainer" class="game-container" style="display: none;">
+    <div class="stats-panel">
+        <div class="stat">🎯 SEVİYE <span id="levelValue">1</span></div>
+        <div class="stat">🏆 PUAN <span id="scoreValue">0</span></div>
+        <div class="stat health">❤️ CAN <span id="healthValue">3</span></div>
+        <div class="stat">🍀 ŞANS <span id="chanceValue">2</span></div>
+    </div>
+
+    <div class="letters-grid">
+        <div class="grid" id="letterGrid"></div>
+    </div>
+
+    <div class="word-area">
+        <div class="current-word" id="currentWordDisplay">_______</div>
+    </div>
+
+    <div class="action-buttons">
+        <button class="game-btn" id="submitBtn">✅ BUL</button>
+        <button class="game-btn" id="clearBtn">🗑️ TEMİZLE</button>
+        <button class="game-btn" id="shuffleBtn">🔄 KARIŞTIR</button>
+        <button class="game-btn hint-btn" id="hintBtn">💡 İPUCU</button>
+    </div>
+
+    <div class="found-words">
+        <div style="font-size:0.8rem; margin-bottom:6px;">✨ BULUNAN KELİMELER ✨</div>
+        <div class="words-list" id="foundWordsList"></div>
+    </div>
+</div>
+
+<!-- Ayarlar Modalı -->
+<div id="settingsModal" class="modal">
+    <div class="modal-content">
+        <h3>⚙️ AYARLAR</h3>
+        <p>Ses: <button id="toggleSoundBtn" style="margin:10px">🔊 AÇ/KAPA</button></p>
+        <p>Zorluk: 
+            <select id="difficultySelect">
+                <option value="easy">Kolay</option>
+                <option value="normal" selected>Normal</option>
+                <option value="hard">Zor</option>
+            </select>
+        </p>
+        <button id="closeSettingsBtn" class="game-btn">Kapat</button>
+    </div>
+</div>
+
+<!-- İpucu Modalı -->
+<div id="hintModal" class="modal">
+    <div class="modal-content">
+        <h3>💡 İPUCU</h3>
+        <p id="hintText">Bir kelime dene: </p>
+        <button id="closeHintBtn" class="game-btn">Tamam</button>
+    </div>
+</div>
+
+<script>
+    // ---------- PRO OYUN SİSTEMİ ----------
+    // Sonsuz level + can + şans + ipucu
+    
+    let currentLevel = 1;
+    let currentScore = 0;
+    let currentHealth = 3;
+    let currentChance = 2;      // şans hakkı (yanlış kelimede can kaybını önler)
+    let currentLetters = [];
+    let validWordsForLevel = [];
+    let foundWords = [];
+    let selectedIndices = [];
+    let isDragging = false;
+    let soundEnabled = true;
+    let difficulty = "normal";
+    
+    // Kelime havuzu (sonsuz level üreteci)
+    const wordBank = [
+        "ELMA", "ARMUT", "KİRAZ", "PORTAKAL", "MASA", "SANDALYE", "BİLGİSAYAR", "TELEFON", "KALEM", "DEFTER",
+        "GÜNEŞ", "AY", "YILDIZ", "GEZEGEN", "OKYANUS", "DAĞ", "NEHİR", "GÖL", "ORMAN", "ÇİÇEK",
+        "KEDİ", "KÖPEK", "KUŞ", "BALIK", "AT", "İNEK", "ARABA", "UÇAK", "GEMİ", "TREN"
+    ];
+    
+    // Rastgele harfler üret (6 harf)
+    function generateRandomLetters() {
+        const alphabet = "ABCDEFGHİJKLMNOPRSTUVYZ";
+        let letters = [];
+        for(let i=0; i<6; i++) {
+            let randomLetter = alphabet[Math.floor(Math.random() * alphabet.length)];
+            letters.push(randomLetter);
+        }
+        return letters;
+    }
+    
+    // Verilen harflerden oluşabilecek geçerli kelimeleri bul (basit filtre)
+    function findValidWordsFromLetters(letters, bank) {
+        let possible = [];
+        for(let word of bank) {
+            let tempLetters = [...letters];
+            let canForm = true;
+            for(let ch of word) {
+                let idx = tempLetters.indexOf(ch);
+                if(idx === -1) { canForm = false; break; }
+                tempLetters.splice(idx,1);
+            }
+            if(canForm && word.length >= 2 && !possible.includes(word)) possible.push(word);
+        }
+        // en az 3 kelime olsun yoksa ekstra üret
+        if(possible.length < 3) {
+            possible.push(letters.slice(0,3).join(''));
+            possible.push(letters[0]+letters[1]);
+        }
+        return possible.slice(0,12);
+    }
+    
+    // Seviyeyi yükle veya oluştur
+    function loadLevel(level) {
+        // Sonsuz seviye: her seviyede rastgele harfler ve kelimeler
+        currentLetters = generateRandomLetters();
+        validWordsForLevel = findValidWordsFromLetters(currentLetters, wordBank);
+        if(validWordsForLevel.length === 0) validWordsForLevel = [currentLetters[0]+currentLetters[1], currentLetters[2]+currentLetters[3]];
+        
+        // Zorluk etkisi
+        if(difficulty === "hard") {
+            validWordsForLevel = validWordsForLevel.filter(w => w.length >= 4);
+            if(validWordsForLevel.length < 2) validWordsForLevel.push(currentLetters[0]+currentLetters[1]+currentLetters[2]);
+        } else if(difficulty === "easy") {
+            // ekstra kolaylık
+        }
+        
+        shuffleArray(currentLetters);
+        renderGrid();
+        clearSelected();
+        updateUI();
+    }
+    
+    function shuffleArray(arr) {
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+    }
+    
+    function renderGrid() {
+        const grid = document.getElementById('letterGrid');
+        grid.innerHTML = '';
+        currentLetters.forEach((letter, idx) => {
+            const tile = document.createElement('div');
+            tile.className = 'letter-tile';
+            if(selectedIndices.includes(idx)) tile.classList.add('active');
+            tile.textContent = letter;
+            tile.setAttribute('data-index', idx);
+            tile.addEventListener('mousedown', (e) => startSelection(e, idx));
+            tile.addEventListener('mouseenter', (e) => dragOverSelection(e, idx));
+            tile.addEventListener('touchstart', (e) => { e.preventDefault(); startSelection(e, idx); });
+            tile.addEventListener('touchmove', (e) => { e.preventDefault(); handleTouchMove(e); });
+            tile.addEventListener('touchend', () => endDrag());
+            grid.appendChild(tile);
+        });
+        document.removeEventListener('mouseup', endDrag);
+        document.addEventListener('mouseup', endDrag);
+    }
+    
+    function startSelection(e, idx) {
+        isDragging = true;
+        selectedIndices = [idx];
+        updateHighlightsAndWord();
+        e.preventDefault();
+    }
+    
+    function dragOverSelection(e, idx) {
+        if (!isDragging) return;
+        if(selectedIndices.length === 0) { selectedIndices = [idx]; }
+        else {
+            const lastIdx = selectedIndices[selectedIndices.length-1];
+            const cols = 5;
+            const rowLast = Math.floor(lastIdx / cols);
+            const colLast = lastIdx % cols;
+            const rowCur = Math.floor(idx / cols);
+            const colCur = idx % cols;
+            const isAdjacent = (Math.abs(rowLast - rowCur) + Math.abs(colLast - colCur)) === 1;
+            if(isAdjacent && !selectedIndices.includes(idx)) {
+                selectedIndices.push(idx);
+                updateHighlightsAndWord();
+            } else if(idx === selectedIndices[selectedIndices.length-2] && selectedIndices.length > 1) {
+                selectedIndices.pop();
+                updateHighlightsAndWord();
+            }
+        }
+    }
+    
+    function handleTouchMove(e) {
+        if(!isDragging) return;
+        const touch = e.touches[0];
+        const elem = document.elementFromPoint(touch.clientX, touch.clientY);
+        if(elem && elem.classList && elem.classList.contains('letter-tile')) {
+            const idxAttr = elem.getAttribute('data-index');
+            if(idxAttr !== null) dragOverSelection(e, parseInt(idxAttr));
+        }
+    }
+    
+    function endDrag() { isDragging = false; }
+    
+    function updateHighlightsAndWord() {
+        const tiles = document.querySelectorAll('.letter-tile');
+        tiles.forEach((tile, i) => {
+            if(selectedIndices.includes(i)) tile.classList.add('active');
+            else tile.classList.remove('active');
+        });
+        const word = selectedIndices.map(i => currentLetters[i]).join('');
+        document.getElementById('currentWordDisplay').innerText = word || "_______";
+    }
+    
+    function getCurrentWord() {
+        return selectedIndices.map(i => currentLetters[i]).join('');
+    }
+    
+    function clearSelected() {
+        selectedIndices = [];
+        updateHighlightsAndWord();
+    }
+    
+    function updateUI() {
+        document.getElementById('levelValue').innerText = currentLevel;
+        document.getElementById('scoreValue').innerText = currentScore;
+        document.getElementById('healthValue').innerText = currentHealth;
+        document.getElementById('chanceValue').innerText = currentChance;
+        renderFoundWords();
+    }
+    
+    function renderFoundWords() {
+        const container = document.getElementById('foundWordsList');
+        container.innerHTML = foundWords.map(w => `<div class="word-badge">${w}</div>`).join('');
+    }
+    
+    function showMessage(msg, isError=false) {
+        const msgDiv = document.createElement('div');
+        msgDiv.style.position = 'fixed';
+        msgDiv.style.bottom = '30%';
+        msgDiv.style.left = '50%';
+        msgDiv.style.transform = 'translateX(-50%)';
+        msgDiv.style.background = isError ? '#b91c1ccc' : '#2e7d32cc';
+        msgDiv.style.color = 'white';
+        msgDiv.style.padding = '12px 24px';
+        msgDiv.style.borderRadius = '40px';
+        msgDiv.style.zIndex = '300';
+        msgDiv.style.backdropFilter = 'blur(10px)';
+        msgDiv.innerText = msg;
+        document.body.appendChild(msgDiv);
+        setTimeout(() => msgDiv.remove(), 1500);
+        if(soundEnabled && !isError) new Audio('data:audio/wav;base64,U3RlYWx0aCBzb3VuZA==').play().catch(e=>{});
+    }
+    
+    function submitWord() {
+        const word = getCurrentWord();
+        if(word.length < 2) { showMessage("En az 2 harfli kelime!", true); return; }
+        if(foundWords.includes(word)) { showMessage(`"${word}" zaten bulundu!`, true); clearSelected(); return; }
+        
+        if(validWordsForLevel.includes(word)) {
+            foundWords.push(word);
+            let points = word.length===2?10 : word.length===3?20 : word.length===4?40 : 70;
+            currentScore += points;
+            showMessage(`🎉 +${points} puan! (${word})`);
+            clearSelected();
+            updateUI();
+            
+            // Tüm kelimeler bulundu mu?
+            const allFound = validWordsForLevel.every(w => foundWords.includes(w));
+            if(allFound) {
+                showMessage("🌟 SEVİYE ATLADIN! +1 Can & +1 Şans 🌟");
+                currentLevel++;
+                currentHealth = Math.min(currentHealth+1, 5);
+                currentChance = Math.min(currentChance+1, 3);
+                nextLevelReset();
+            }
+        } else {
+            // Yanlış kelime: şans hakkı kontrolü
+            if(currentChance > 0) {
+                currentChance--;
+                showMessage(`⚠️ Yanlış kelime! Şans hakkı kullandın. Kalan şans: ${currentChance}`, true);
+                clearSelected();
+                updateUI();
+            } else {
+                currentHealth--;
+                showMessage(`💔 Yanlış kelime! Can kaybettin. Kalan can: ${currentHealth}`, true);
+                clearSelected();
+                updateUI();
+                if(currentHealth <= 0) {
+                    gameOver();
+                }
+            }
+        }
+    }
+    
+    function nextLevelReset() {
+        foundWords = [];
+        loadLevel(currentLevel);
+        updateUI();
+    }
+    
+    function gameOver() {
+        showMessage("💀 OYUN BİTTI! Lobiye yönlendiriliyorsun...", true);
+        setTimeout(() => {
+            document.getElementById('gameContainer').style.display = 'none';
+            document.getElementById('lobby').classList.remove('hide');
+            resetGameStats();
+        }, 2000);
+    }
+    
+    function resetGameStats() {
+        currentLevel = 1;
+        currentScore = 0;
+        currentHealth = 3;
+        currentChance = 2;
+        foundWords = [];
+        loadLevel(1);
+        updateUI();
+    }
+    
+    function hint() {
+        // Bulunmamış geçerli bir kelime öner
+        let notFound = validWordsForLevel.filter(w => !foundWords.includes(w));
+        if(notFound.length === 0) { showMessage("Tüm kelimeler bulundu! Seviye atla!", true); return; }
+        let randomHint = notFound[Math.floor(Math.random() * notFound.length)];
+        document.getElementById('hintText').innerHTML = `🔍 Dene: <strong>${randomHint}</strong> (uzunluk: ${randomHint.length})`;
+        document.getElementById('hintModal').classList.add('show');
+    }
+    
+    function shuffleLetters() {
+        shuffleArray(currentLetters);
+        renderGrid();
+        clearSelected();
+        showMessage("Harfler karıştırıldı!");
+    }
+    
+    // ----- Oyun başlatma ve lobby -----
+    function startGame() {
+        resetGameStats();
+        document.getElementById('lobby').classList.add('hide');
+        document.getElementById('gameContainer').style.display = 'block';
+        loadLevel(1);
+    }
+    
+    // Event listeners
+    document.getElementById('startGameBtn').addEventListener('click', startGame);
+    document.getElementById('submitBtn').addEventListener('click', submitWord);
+    document.getElementById('clearBtn').addEventListener('click', clearSelected);
+    document.getElementById('shuffleBtn').addEventListener('click', shuffleLetters);
+    document.getElementById('hintBtn').addEventListener('click', hint);
+    document.getElementById('closeHintBtn').addEventListener('click', () => document.getElementById('hintModal').classList.remove('show'));
+    
+    // Ayarlar
+    const settingsIcon = document.createElement('div');
+    settingsIcon.className = 'settings-icon';
+    settingsIcon.innerHTML = '⚙️';
+    settingsIcon.onclick = () => document.getElementById('settingsModal').classList.add('show');
+    document.body.appendChild(settingsIcon);
+    
+    document.getElementById('closeSettingsBtn').addEventListener('click', () => document.getElementById('settingsModal').classList.remove('show'));
+    document.getElementById('toggleSoundBtn').addEventListener('click', () => {
+        soundEnabled = !soundEnabled;
+        document.getElementById('toggleSoundBtn').innerText = soundEnabled ? "🔊 AÇIK" : "🔇 KAPALI";
+        showMessage(`Ses ${soundEnabled ? "açıldı" : "kapatıldı"}`);
+    });
+    document.getElementById('difficultySelect').addEventListener('change', (e) => {
+        difficulty = e.target.value;
+        if(document.getElementById('gameContainer').style.display === 'block') loadLevel(currentLevel);
+        showMessage(`Zorluk: ${difficulty === 'easy' ? 'Kolay' : difficulty === 'hard' ? 'Zor' : 'Normal'}`);
+    });
+    
+    // Başlangıçta lobby açık, oyun kapalı
+    document.getElementById('gameContainer').style.display = 'none';
+    document.getElementById('lobby').classList.remove('hide');
+    
+    // Bonus: Lobi ayarlar butonu
+    document.getElementById('settingsLobbyBtn').addEventListener('click', () => document.getElementById('settingsModal').classList.add('show'));
+    
+    // Mobil kaydırmayı engelleme ekstra
+    document.body.addEventListener('touchmove', (e) => { if(e.target.closest('.letter-tile')) e.preventDefault(); }, {passive: false});
+</script>
 </body>
 </html>
