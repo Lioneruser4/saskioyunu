@@ -2,531 +2,485 @@
 <html lang="az">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>KELİMƏ TAP - Azerbaycan Söz Oyunu</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>8 Ball Bilyard - Pro Animasiyalı Oyun</title>
     <style>
         * {
             user-select: none;
             -webkit-tap-highlight-color: transparent;
-            box-sizing: border-box;
         }
-
         body {
             margin: 0;
             min-height: 100vh;
-            background: linear-gradient(145deg, #1a472a 0%, #0e2a1a 100%);
-            font-family: 'Segoe UI', 'Roboto', system-ui, sans-serif;
+            background: linear-gradient(145deg, #0a3f1f, #052010);
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 12px;
+            font-family: 'Segoe UI', 'Poppins', system-ui, sans-serif;
+            padding: 20px;
         }
-
-        .game-box {
-            max-width: 600px;
-            width: 100%;
-            background: rgba(0,0,0,0.2);
-            border-radius: 60px;
-            padding: 20px 16px 30px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-        }
-
-        /* başlıq və stat */
-        .header {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .title {
-            font-size: 2rem;
-            font-weight: bold;
-            color: #ffd966;
-            text-shadow: 0 2px 5px #000;
-            letter-spacing: 2px;
-        }
-        .stats {
-            display: flex;
-            justify-content: space-between;
-            background: #2c5a2ed9;
-            border-radius: 50px;
-            padding: 10px 20px;
-            margin: 15px 0;
-            color: #f9e7b3;
-            font-weight: bold;
-        }
-        .stat {
-            background: #00000066;
-            padding: 5px 18px;
+        .game-container {
+            background: #2c2418;
             border-radius: 40px;
+            padding: 20px;
+            box-shadow: 0 20px 35px rgba(0,0,0,0.5);
         }
-
-        /* hərflər grid */
-        .grid-area {
-            background: #ecd9b4;
-            border-radius: 48px;
-            padding: 20px 12px;
-            box-shadow: inset 0 0 0 3px #fff3cf, inset 0 0 0 8px #b58b4b, 0 10px 20px black;
-            margin-bottom: 20px;
-        }
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 12px 8px;
-            justify-items: center;
-            align-items: center;
-        }
-        .letter {
-            background: radial-gradient(ellipse at 35% 35%, #fff0c0, #ffdd99);
-            width: 100%;
-            aspect-ratio: 1 / 1;
-            max-width: 80px;
+        canvas {
+            display: block;
+            margin: 0 auto;
             border-radius: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2rem;
-            font-weight: 800;
-            color: #3b2a1f;
-            box-shadow: 0 8px 0 #9b6e42;
-            transition: 0.03s linear;
+            box-shadow: 0 0 0 8px #5a3e2a, 0 15px 30px black;
             cursor: pointer;
-            touch-action: none;
-            font-family: monospace;
         }
-        .letter.selected {
-            background: #ffe6a3;
-            box-shadow: 0 3px 0 #9b6e42;
-            transform: translateY(5px);
-            filter: brightness(1.05);
-        }
-
-        /* seçilmiş söz */
-        .word-panel {
-            background: #1f2a24cc;
-            backdrop-filter: blur(12px);
-            border-radius: 50px;
-            padding: 12px 20px;
-            text-align: center;
-            margin: 15px 0;
-        }
-        .current-word {
-            font-size: 2rem;
-            font-weight: bold;
-            letter-spacing: 6px;
-            color: #fff0b5;
-            background: #00000077;
-            padding: 12px;
-            border-radius: 48px;
-            min-height: 75px;
-            word-break: break-all;
-        }
-        .info {
-            font-size: 0.8rem;
-            color: #c7f0b0;
-            margin-top: 6px;
-        }
-
-        /* düymələr */
-        .buttons {
+        .panel {
+            margin-top: 20px;
             display: flex;
-            gap: 12px;
             justify-content: center;
+            gap: 15px;
             flex-wrap: wrap;
-            margin: 15px 0;
         }
         button {
-            background: #f3cd81;
+            background: #f5c542;
             border: none;
             font-size: 1rem;
             font-weight: bold;
-            padding: 12px 24px;
+            padding: 10px 24px;
             border-radius: 40px;
-            box-shadow: 0 4px 0 #8b6946;
             cursor: pointer;
-            transition: 0.05s linear;
+            transition: 0.07s linear;
+            box-shadow: 0 4px 0 #8b6946;
             font-family: inherit;
         }
         button:active {
             transform: translateY(3px);
             box-shadow: 0 1px 0 #8b6946;
         }
-        .hint-btn {
-            background: linear-gradient(135deg, #5a4fcf, #3a2ea0);
-            color: white;
-            box-shadow: 0 4px 0 #241b6e;
+        .mode-buttons {
+            display: flex;
+            gap: 10px;
+            background: #00000099;
+            padding: 8px 15px;
+            border-radius: 60px;
+            backdrop-filter: blur(4px);
         }
-
-        /* tapılan sözlər */
-        .found-box {
-            background: #00000077;
-            border-radius: 32px;
-            padding: 12px;
-            margin-top: 20px;
-            max-height: 150px;
-            overflow-y: auto;
+        .mode-btn {
+            background: #3a2a1a;
+            color: #ffdd99;
+            box-shadow: none;
+            padding: 6px 18px;
         }
-        .found-title {
-            font-size: 0.8rem;
+        .mode-btn.active {
+            background: #f5c542;
+            color: #1e2a1f;
+            box-shadow: 0 2px 0 #8b6946;
+        }
+        .score-board {
+            background: #000000aa;
+            border-radius: 40px;
+            padding: 8px 20px;
             color: #ffefb9;
-            border-bottom: 1px solid #ffd966;
+            font-weight: bold;
+            display: inline-flex;
+            gap: 25px;
+            margin-bottom: 12px;
+            backdrop-filter: blur(4px);
+        }
+        .turn-indicator {
+            font-size: 1.2rem;
+            font-weight: bold;
+            background: #000000aa;
+            padding: 5px 20px;
+            border-radius: 40px;
             display: inline-block;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
         }
-        .word-list {
+        .controls {
             display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-        .word-chip {
-            background: #2f6b3a;
-            padding: 5px 15px;
-            border-radius: 30px;
-            color: #fff0c0;
-            font-size: 0.9rem;
-        }
-
-        .modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.85);
-            backdrop-filter: blur(6px);
-            display: flex;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
-            visibility: hidden;
-            opacity: 0;
-            transition: 0.2s;
-            z-index: 100;
-        }
-        .modal.show {
-            visibility: visible;
-            opacity: 1;
-        }
-        .modal-card {
-            background: #2d3e2a;
-            border-radius: 48px;
-            padding: 30px;
-            text-align: center;
-            color: white;
-            max-width: 280px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 10px;
         }
     </style>
 </head>
 <body>
-<div class="game-box">
-    <div class="header">
-        <div class="title">📖 KELİMƏ TAP</div>
-    </div>
-    <div class="stats">
-        <div class="stat">🎯 SƏVİYYƏ <span id="levelNum">1</span></div>
-        <div class="stat">🏆 XAL <span id="scoreNum">0</span></div>
-    </div>
-
-    <div class="grid-area">
-        <div class="grid" id="letterGrid"></div>
-    </div>
-
-    <div class="word-panel">
-        <div class="current-word" id="selectedWord">_____</div>
-        <div class="info">👉 Barmağınızla hərflərin üzərində sürüşdürün 👈</div>
-    </div>
-
-    <div class="buttons">
-        <button id="submitBtn">✅ TAP</button>
-        <button id="clearBtn">🗑 TƏMİZLƏ</button>
-        <button id="shuffleBtn">🔄 QARIŞDIR</button>
-        <button id="hintBtn" class="hint-btn">💡 İPUCU</button>
-    </div>
-
-    <div class="found-box">
-        <div class="found-title">✨ TAPILMIŞ SÖZLƏR ✨</div>
-        <div class="word-list" id="foundList"></div>
-    </div>
-</div>
-
-<div id="hintModal" class="modal">
-    <div class="modal-card">
-        <h3>💡 İPUCU</h3>
-        <p id="hintText" style="font-size:1.3rem; font-weight:bold;">SÖZ</p>
-        <button id="closeHint" style="margin-top:15px;">BAĞLA</button>
+<div>
+    <div class="game-container">
+        <div class="controls">
+            <div class="score-board">
+                <span>🎯 SİZ: <span id="playerScore">0</span></span>
+                <span>🤖 BOT: <span id="botScore">0</span></span>
+            </div>
+            <div class="mode-buttons">
+                <button class="mode-btn" data-mode="easy">😊 EASY</button>
+                <button class="mode-btn active" data-mode="normal">⚖️ NORMAL</button>
+                <button class="mode-btn" data-mode="hard">🔥 HARD</button>
+            </div>
+        </div>
+        <div style="text-align: center;">
+            <div class="turn-indicator" id="turnText">🎱 SİZİN NÖVBƏNİZ</div>
+        </div>
+        <canvas id="gameCanvas" width="1000" height="550" style="width:100%; height:auto; max-width:1000px; aspect-ratio:1000/550"></canvas>
+        <div class="panel">
+            <button id="resetBtn">🔄 YENİ OYUN</button>
+            <button id="modeToggleBtn">🤖 VS BOT / 👥 2 OYUNÇU</button>
+        </div>
     </div>
 </div>
 
 <script>
-    // ================= AZƏRBAYCANCA KELİMƏLƏR (BİNLƏRLƏ) =================
-    // Həqiqi söz verilənlər bazası (200+ əl söz, amma sistem dinamik olaraq minlərlə kombinasiya yaradır)
-    const AZERBAIJANI_WORDS = [
-        "ALMA", "ARMUD", "BAL", "BALIQ", "ÇİÇƏK", "DƏNİZ", "EV", "GÜNƏŞ", "HAVA", "İL", "KƏND", "KİTAB",
-        "MEYVƏ", "OD", "OTAQ", "QUŞ", "SU", "ŞƏHƏR", "TAXIL", "UŞAQ", "YOL", "ZAMAN", "ANA", "ATA", "QARDAŞ",
-        "BACİ", "DOST", "BAĞ", "GÜL", "AĞAC", "BULUD", "YAĞIŞ", "QAR", "KÜLƏK", "DAĞ", "ÇAY", "KÖPRÜ",
-        "MƏKTƏB", "MÜƏLLİM", "ŞAGİRD", "RƏNG", "QIRMIZI", "YAŞIL", "MAVİ", "SARI", "QARA", "AĞ", "BOZ",
-        "SÜD", "ÇÖRƏK", "YAĞ", "PENDİR", "ƏT", "TOYUQ", "YUMURTA", "BALIQ", "ÜZÜM", "NAR", "XURMA", "ŞƏFTALİ",
-        "KOKTEYL", "TELEFON", "KOMPYUTER", "STOL", "STUL", "QAPI", "PƏNCƏRƏ", "DİVAR", "EV", "HƏYƏT",
-        "İTLİK", "MEHƏBBƏT", "SEVGİ", "XEYAL", "HƏYAT", "SƏADƏT", "NUR", "İŞIQ", "KÖLGƏ", "SƏS", "SÖZ"
-    ];
-    
-    // genişlədilmiş sözlər (daha çox)
-    for(let i=0;i<100;i++) AZERBAIJANI_WORDS.push("KƏLİMƏ","BİLGİ","MƏNALI","SÖZLÜK","HƏRF","DİL","AZƏRBAYCAN","BAKI","SUMQAYIT","GƏNCƏ");
-    
-    // unikal et
-    const uniqueWords = [...new Map(AZERBAIJANI_WORDS.map(w=>[w,w])).values()];
-    
-    // Seviyyə sistemi
-    let currentLevel = 1;
-    let currentScore = 0;
-    let currentLetters = [];      // 6 hərf
-    let levelWords = [];          // bu səviyyədə tapılacaq bütün sözlər
-    let foundWords = [];
-    let selectedIndices = [];
-    let isDragging = false;
-    
-    const gridEl = document.getElementById('letterGrid');
-    const selectedWordSpan = document.getElementById('selectedWord');
-    const levelSpan = document.getElementById('levelNum');
-    const scoreSpan = document.getElementById('scoreNum');
-    const foundListDiv = document.getElementById('foundList');
-    
-    // Rastgele 6 hərf yarat (A-Z Azərbaycan əlifbası)
-    function getRandomLetters() {
-        const alphabet = "ABCDEFGHİJKLMNOPQRSTUVXYZ";
-        let letters = [];
-        for(let i=0;i<6;i++) {
-            let rand = alphabet[Math.floor(Math.random() * alphabet.length)];
-            letters.push(rand);
-        }
-        return letters;
-    }
-    
-    // verilmiş hərflərdən düzəldilə bilən bütün sözləri tap (AZE söz bazasından)
-    function findPossibleWords(letters, wordBank) {
-        let possible = [];
-        for(let word of wordBank) {
-            if(word.length < 2) continue;
-            let temp = [...letters];
-            let ok = true;
-            for(let ch of word) {
-                let idx = temp.indexOf(ch);
-                if(idx === -1) { ok=false; break; }
-                temp.splice(idx,1);
-            }
-            if(ok && !possible.includes(word) && word.length>=2) {
-                possible.push(word);
-            }
-        }
-        // ən az 5 söz olsun, yoxsa süni söz əlavə et
-        if(possible.length < 4) {
-            possible.push(letters[0]+letters[1]);
-            possible.push(letters[2]+letters[3]);
-            possible.push(letters[0]+letters[2]+letters[4]);
-        }
-        // təkrarsız
-        return [...new Map(possible.map(w=>[w,w])).values()].slice(0, 15);
-    }
-    
-    // Səviyyəni yüklə
-    function loadLevel(level) {
-        // hər dəfə təzə hərflər və sözlər yarat (sonsuz)
-        currentLetters = getRandomLetters();
-        levelWords = findPossibleWords(currentLetters, uniqueWords);
-        // bəzən təkrarlar ola bilər, təmizlə
-        levelWords = [...new Set(levelWords)];
-        if(levelWords.length === 0) levelWords = [currentLetters[0]+currentLetters[1], currentLetters[2]+currentLetters[3]];
+    (function(){
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
         
-        foundWords = [];
-        shuffleArray(currentLetters);
-        renderGrid();
-        clearSelection();
-        updateUI();
-        renderFoundWords();
-    }
-    
-    function shuffleArray(arr) {
-        for(let i=arr.length-1;i>0;i--) {
-            const j = Math.floor(Math.random()*(i+1));
-            [arr[i], arr[j]] = [arr[j], arr[i]];
+        // Oyun parametrləri
+        let width = 1000, height = 550;
+        canvas.width = width; canvas.height = height;
+        
+        // Toplar
+        let balls = [];
+        let cueBall = null;
+        let pocketRadius = 14;
+        let pockets = [];
+        
+        // Oyun vəziyyəti
+        let currentPlayer = "player"; // "player" və ya "bot"
+        let gameMode = "vsBot";       // "vsBot" və ya "twoPlayer"
+        let botDifficulty = "normal";  // easy, normal, hard
+        let playerScore = 0;
+        let botScore = 0;
+        let shooting = false;
+        let aimAngle = 0;
+        let power = 0;
+        let charging = false;
+        let mouseX = 0, mouseY = 0;
+        let cueStartX, cueStartY;
+        let gameOver = false;
+        let winner = null;
+        
+        // Stol ölçüləri
+        const tableMargin = 60;
+        const ballRadius = 8;
+        
+        // Dəliklər (8 dəlik - klassik 8ball)
+        function initPockets(){
+            pockets = [
+                {x: tableMargin-5, y: tableMargin-5}, // sol üst
+                {x: width/2, y: tableMargin-8},        // üst orta
+                {x: width-tableMargin+5, y: tableMargin-5}, // sağ üst
+                {x: tableMargin-5, y: height-tableMargin+5}, // sol alt
+                {x: width/2, y: height-tableMargin+8},       // alt orta
+                {x: width-tableMargin+5, y: height-tableMargin+5} // sağ alt
+            ];
         }
-    }
-    
-    function renderGrid() {
-        gridEl.innerHTML = '';
-        currentLetters.forEach((letter, idx) => {
-            const tile = document.createElement('div');
-            tile.className = 'letter';
-            if(selectedIndices.includes(idx)) tile.classList.add('selected');
-            tile.textContent = letter;
-            tile.setAttribute('data-idx', idx);
+        
+        // Topların ilkin düzülüşü
+        function initBalls(){
+            balls = [];
+            // Ağ top (istiqamət)
+            cueBall = { x: width/2, y: height-80, vx:0, vy:0, radius: ballRadius, type:"cue", id:0 };
+            balls.push(cueBall);
             
-            // siçan/dokunmatik sürükləmə
-            tile.addEventListener('mousedown', (e) => startDrag(e, idx));
-            tile.addEventListener('mouseenter', (e) => dragOver(e, idx));
-            tile.addEventListener('touchstart', (e) => { e.preventDefault(); startDrag(e, idx); });
-            tile.addEventListener('touchmove', (e) => { e.preventDefault(); handleTouchMove(e); });
-            tile.addEventListener('touchend', () => endDrag());
+            // Rəngli toplar (1-7, 9-15) sadələşdirilmiş
+            const colors = ["#ffaa33","#33ff33","#ff3333","#3333ff","#ff33ff","#33ffff","#ff9933","#aa66ff","#66ff66","#ff6666","#6666ff","#ff66ff","#66ffff","#ffcc66"];
+            const startX = width/2 + 40;
+            const startY = height/2 - 20;
+            let idx=0;
+            for(let row=0; row<5; row++){
+                for(let col=0; col<=row; col++){
+                    if(idx>=14) break;
+                    let x = startX + col*ballRadius*2.1 - (row*ballRadius);
+                    let y = startY + row*ballRadius*1.8;
+                    balls.push({ x:x, y:y, vx:0, vy:0, radius:ballRadius, type:"colored", color:colors[idx%colors.length], id:idx+1 });
+                    idx++;
+                }
+            }
+            // 8 topu (qara)
+            balls.push({ x: startX + ballRadius*2, y: startY + ballRadius*4, vx:0, vy:0, radius:ballRadius, type:"eight", color:"#222", id:8 });
+        }
+        
+        // Stol və topların çəkilməsi
+        function drawTable(){
+            // Masa fonu
+            ctx.fillStyle = "#1a7340";
+            ctx.fillRect(0,0,width,height);
+            ctx.fillStyle = "#0d4525";
+            ctx.fillRect(tableMargin-8, tableMargin-8, width-(tableMargin-8)*2, height-(tableMargin-8)*2);
+            ctx.fillStyle = "#2e8b57";
+            ctx.fillRect(tableMargin-4, tableMargin-4, width-(tableMargin-4)*2, height-(tableMargin-4)*2);
+            ctx.fillStyle = "#3cb371";
+            ctx.fillRect(tableMargin, tableMargin, width-tableMargin*2, height-tableMargin*2);
             
-            gridEl.appendChild(tile);
-        });
-        document.removeEventListener('mouseup', endDrag);
-        document.addEventListener('mouseup', endDrag);
-    }
-    
-    function startDrag(e, idx) {
-        isDragging = true;
-        selectedIndices = [idx];
-        updateSelectionAndWord();
-        e.preventDefault();
-    }
-    
-    function dragOver(e, idx) {
-        if(!isDragging) return;
-        if(selectedIndices.length===0) {
-            selectedIndices = [idx];
-        } else {
-            const last = selectedIndices[selectedIndices.length-1];
-            const cols=5;
-            const lastRow = Math.floor(last/cols);
-            const lastCol = last%cols;
-            const curRow = Math.floor(idx/cols);
-            const curCol = idx%cols;
-            const adjacent = (Math.abs(lastRow-curRow)+Math.abs(lastCol-curCol))===1;
-            
-            if(adjacent && !selectedIndices.includes(idx)) {
-                selectedIndices.push(idx);
-                updateSelectionAndWord();
-            } else if(idx === selectedIndices[selectedIndices.length-2] && selectedIndices.length>1) {
-                selectedIndices.pop();
-                updateSelectionAndWord();
+            // Dəliklər
+            for(let p of pockets){
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, pocketRadius, 0, Math.PI*2);
+                ctx.fillStyle = "#000";
+                ctx.shadowBlur=0;
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, pocketRadius-4, 0, Math.PI*2);
+                ctx.fillStyle = "#111";
+                ctx.fill();
+            }
+            ctx.shadowBlur = 0;
+        }
+        
+        function drawBalls(){
+            for(let b of balls){
+                ctx.beginPath();
+                ctx.arc(b.x, b.y, b.radius-1, 0, Math.PI*2);
+                ctx.fillStyle = b.type==="cue" ? "#fff" : (b.type==="eight" ? "#222" : b.color);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(b.x, b.y, b.radius-2, 0, Math.PI*2);
+                ctx.fillStyle = b.type==="cue" ? "#eee" : (b.type==="eight" ? "#444" : "#ffdd99");
+                ctx.fill();
+                if(b.type==="eight"){
+                    ctx.font = "bold 12px monospace";
+                    ctx.fillStyle = "white";
+                    ctx.fillText("8", b.x-4, b.y+4);
+                }
             }
         }
-    }
-    
-    function handleTouchMove(e) {
-        if(!isDragging) return;
-        const touch = e.touches[0];
-        const elem = document.elementFromPoint(touch.clientX, touch.clientY);
-        if(elem && elem.classList && elem.classList.contains('letter')) {
-            const idxAttr = elem.getAttribute('data-idx');
-            if(idxAttr !== null) dragOver(e, parseInt(idxAttr));
-        }
-    }
-    
-    function endDrag() {
-        isDragging = false;
-    }
-    
-    function updateSelectionAndWord() {
-        const tiles = document.querySelectorAll('.letter');
-        tiles.forEach((tile,i)=>{
-            if(selectedIndices.includes(i)) tile.classList.add('selected');
-            else tile.classList.remove('selected');
-        });
-        const word = selectedIndices.map(i=>currentLetters[i]).join('');
-        selectedWordSpan.innerText = word || "_____";
-    }
-    
-    function getCurrentWord() {
-        return selectedIndices.map(i=>currentLetters[i]).join('');
-    }
-    
-    function clearSelection() {
-        selectedIndices = [];
-        updateSelectionAndWord();
-    }
-    
-    function submitWord() {
-        const word = getCurrentWord();
-        if(word.length < 2) {
-            showToast("⚠️ Ən az 2 hərfli söz olmalıdır!");
-            return;
-        }
-        if(foundWords.includes(word)) {
-            showToast(`"${word}" artıq tapılıb!`);
-            clearSelection();
-            return;
-        }
-        if(levelWords.includes(word)) {
-            foundWords.push(word);
-            let points = word.length===2?10 : word.length===3?20 : word.length===4?35 : 60;
-            currentScore += points;
-            showToast(`🎉 TƏBRİKLƏR! +${points} xal (${word})`);
-            clearSelection();
-            updateUI();
-            renderFoundWords();
-            
-            // bütün sözlər tapıldı?
-            const allFound = levelWords.every(w => foundWords.includes(w));
-            if(allFound && levelWords.length>0) {
-                showToast("🌟 MÜKƏMMƏL! NÖVBƏTİ SƏVİYYƏ 🌟");
-                currentLevel++;
-                loadLevel(currentLevel);
+        
+        function drawAim(){
+            if(currentPlayer==="player" && !shooting && !gameOver && cueBall && !cueBall.vx){
+                let dx = mouseX - cueBall.x;
+                let dy = mouseY - cueBall.y;
+                let angle = Math.atan2(dy, dx);
+                let powerRatio = Math.min(1, Math.hypot(dx,dy)/80);
+                let lineLen = 40 + powerRatio*50;
+                let endX = cueBall.x + Math.cos(angle)*lineLen;
+                let endY = cueBall.y + Math.sin(angle)*lineLen;
+                ctx.beginPath();
+                ctx.moveTo(cueBall.x, cueBall.y);
+                ctx.lineTo(endX, endY);
+                ctx.strokeStyle = "#ffaa33";
+                ctx.lineWidth = 4;
+                ctx.stroke();
+                for(let i=0;i<5;i++){
+                    ctx.beginPath();
+                    ctx.arc(cueBall.x+Math.cos(angle)*(i*8), cueBall.y+Math.sin(angle)*(i*8), 3,0,Math.PI*2);
+                    ctx.fillStyle = `rgba(255,200,100,${0.8-i*0.15})`;
+                    ctx.fill();
+                }
             }
-        } else {
-            showToast(`❌ "${word}" keçərli söz deyil!`);
-            clearSelection();
         }
-    }
-    
-    function showToast(msg, duration=1500) {
-        let div = document.createElement('div');
-        div.innerText = msg;
-        div.style.position = 'fixed';
-        div.style.bottom = '35%';
-        div.style.left = '50%';
-        div.style.transform = 'translateX(-50%)';
-        div.style.backgroundColor = '#000000cc';
-        div.style.color = '#ffefb0';
-        div.style.padding = '12px 24px';
-        div.style.borderRadius = '50px';
-        div.style.zIndex = '200';
-        div.style.backdropFilter = 'blur(8px)';
-        div.style.fontWeight = 'bold';
-        div.style.fontSize = '1rem';
-        document.body.appendChild(div);
-        setTimeout(()=> div.remove(), duration);
-    }
-    
-    function shuffleLetters() {
-        shuffleArray(currentLetters);
-        renderGrid();
-        clearSelection();
-        showToast("🔀 Hərflər qarışdırıldı");
-    }
-    
-    function giveHint() {
-        let notFound = levelWords.filter(w => !foundWords.includes(w));
-        if(notFound.length === 0) {
-            showToast("Bütün sözlər tapıldı! Yeni səviyyəyə keçin.");
-            return;
+        
+        // Fizika və topların hərəkəti
+        function updatePhysics(){
+            let anyMoving = false;
+            for(let b of balls){
+                if(Math.abs(b.vx)>0.05 || Math.abs(b.vy)>0.05) anyMoving=true;
+                b.x += b.vx;
+                b.y += b.vy;
+                b.vx *= 0.985;
+                b.vy *= 0.985;
+                // Divarlarla toqquşma
+                if(b.x - b.radius < tableMargin){ b.x = tableMargin + b.radius; b.vx = -b.vx*0.9; }
+                if(b.x + b.radius > width-tableMargin){ b.x = width-tableMargin - b.radius; b.vx = -b.vx*0.9; }
+                if(b.y - b.radius < tableMargin){ b.y = tableMargin + b.radius; b.vy = -b.vy*0.9; }
+                if(b.y + b.radius > height-tableMargin){ b.y = height-tableMargin - b.radius; b.vy = -b.vy*0.9; }
+            }
+            // Dəliklərə düşmə
+            for(let i=0;i<balls.length;i++){
+                let b = balls[i];
+                for(let p of pockets){
+                    let dist = Math.hypot(b.x-p.x, b.y-p.y);
+                    if(dist < pocketRadius+ballRadius-2){
+                        if(b.type==="cue"){
+                            // ağ top dəlikdə - cərimə
+                            b.x = width/2; b.y = height-80; b.vx=0; b.vy=0;
+                            if(currentPlayer==="player") playerScore--;
+                            else botScore--;
+                        } else {
+                            balls.splice(i,1);
+                            if(b.type==="eight") gameEnded(currentPlayer);
+                            else {
+                                if(currentPlayer==="player") playerScore++;
+                                else botScore++;
+                            }
+                            i--;
+                        }
+                        break;
+                    }
+                }
+            }
+            // Toplar arası toqquşma
+            for(let i=0;i<balls.length;i++){
+                for(let j=i+1;j<balls.length;j++){
+                    let dx = balls[i].x - balls[j].x;
+                    let dy = balls[i].y - balls[j].y;
+                    let dist = Math.hypot(dx,dy);
+                    let minDist = balls[i].radius + balls[j].radius;
+                    if(dist < minDist){
+                        let angle = Math.atan2(dy,dx);
+                        let sin = Math.sin(angle);
+                        let cos = Math.cos(angle);
+                        let vx1 = balls[i].vx, vy1 = balls[i].vy;
+                        let vx2 = balls[j].vx, vy2 = balls[j].vy;
+                        let v1 = {x:vx1*cos+vy1*sin, y:vy1*cos - vx1*sin};
+                        let v2 = {x:vx2*cos+vy2*sin, y:vy2*cos - vx2*sin};
+                        let exchange = (v1.x - v2.x)*0.5;
+                        v1.x -= exchange; v2.x += exchange;
+                        balls[i].vx = v1.x*cos - v1.y*sin;
+                        balls[i].vy = v1.x*sin + v1.y*cos;
+                        balls[j].vx = v2.x*cos - v2.y*sin;
+                        balls[j].vy = v2.x*sin + v2.y*cos;
+                        let overlap = minDist - dist;
+                        let move = overlap/2;
+                        balls[i].x += Math.cos(angle)*move;
+                        balls[i].y += Math.sin(angle)*move;
+                        balls[j].x -= Math.cos(angle)*move;
+                        balls[j].y -= Math.sin(angle)*move;
+                    }
+                }
+            }
+            return anyMoving;
         }
-        let randomHint = notFound[Math.floor(Math.random() * notFound.length)];
-        document.getElementById('hintText').innerHTML = `🔍 Bu sözü dənəyin:<br><span style="font-size:1.8rem;">${randomHint}</span> (${randomHint.length} hərf)`;
-        document.getElementById('hintModal').classList.add('show');
-    }
-    
-    function updateUI() {
-        levelSpan.innerText = currentLevel;
-        scoreSpan.innerText = currentScore;
-    }
-    
-    function renderFoundWords() {
-        foundListDiv.innerHTML = foundWords.map(w => `<div class="word-chip">${w}</div>`).join('');
-    }
-    
-    // event listeners
-    document.getElementById('submitBtn').addEventListener('click', submitWord);
-    document.getElementById('clearBtn').addEventListener('click', clearSelection);
-    document.getElementById('shuffleBtn').addEventListener('click', shuffleLetters);
-    document.getElementById('hintBtn').addEventListener('click', giveHint);
-    document.getElementById('closeHint').addEventListener('click', ()=> document.getElementById('hintModal').classList.remove('show'));
-    
-    // OYUNU BAŞLAT
-    loadLevel(1);
-    
-    // mobil sürüşdürmə zamanı səhifə sürüşməsin deyə
-    document.body.addEventListener('touchmove', (e) => {
-        if(e.target.closest('.letter')) e.preventDefault();
-    }, { passive: false });
+        
+        function shoot(angle, power){
+            if(shooting) return;
+            let force = Math.min(22, power*22);
+            cueBall.vx = Math.cos(angle)*force;
+            cueBall.vy = Math.sin(angle)*force;
+            shooting = true;
+        }
+        
+        function gameEnded(winnerPlayer){
+            gameOver = true;
+            winner = winnerPlayer;
+            alert(`🎉 ${winnerPlayer.toUpperCase()} QALİB OLDU! 🎉`);
+        }
+        
+        // Bot atışı (difficulty)
+        function botShoot(){
+            if(gameOver) return;
+            let targetAngle = Math.random()*Math.PI*2;
+            let targetPower = 0.5+Math.random()*0.5;
+            if(botDifficulty==="easy"){ targetAngle += (Math.random()-0.5)*1.2; targetPower*=0.7; }
+            if(botDifficulty==="hard"){ 
+                let bestBall = balls.find(b=>b.type!=="cue");
+                if(bestBall) targetAngle = Math.atan2(bestBall.y-cueBall.y, bestBall.x-cueBall.x);
+                targetPower = 0.9;
+            }
+            shoot(targetAngle, targetPower);
+            setTimeout(()=>{ if(!gameOver) endTurn(); }, 800);
+        }
+        
+        function endTurn(){
+            shooting = false;
+            if(gameOver) return;
+            if(gameMode==="vsBot"){
+                currentPlayer = currentPlayer==="player" ? "bot" : "player";
+                document.getElementById("turnText").innerHTML = currentPlayer==="player" ? "🎱 SİZİN NÖVBƏNİZ" : "🤖 BOTUN NÖVBƏSİ";
+                if(currentPlayer==="bot") setTimeout(()=>botShoot(), 300);
+            } else {
+                currentPlayer = currentPlayer==="player" ? "player2" : "player";
+                document.getElementById("turnText").innerHTML = currentPlayer==="player" ? "🎱 OYUNÇU 1" : "👥 OYUNÇU 2";
+            }
+            updateScoresUI();
+        }
+        
+        function updateScoresUI(){
+            document.getElementById("playerScore").innerText = playerScore;
+            document.getElementById("botScore").innerText = botScore;
+        }
+        
+        function resetGame(){
+            initBalls();
+            playerScore=0; botScore=0;
+            gameOver=false; winner=null; shooting=false;
+            currentPlayer="player";
+            updateScoresUI();
+            document.getElementById("turnText").innerHTML = gameMode==="vsBot" ? "🎱 SİZİN NÖVBƏNİZ" : "🎱 OYUNÇU 1";
+        }
+        
+        // İdarəetmə
+        function handleMouseMove(e){
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width/rect.width;
+            const scaleY = canvas.height/rect.height;
+            let canvasX = (e.clientX - rect.left)*scaleX;
+            let canvasY = (e.clientY - rect.top)*scaleY;
+            mouseX = Math.min(width-tableMargin, Math.max(tableMargin, canvasX));
+            mouseY = Math.min(height-tableMargin, Math.max(tableMargin, canvasY));
+        }
+        
+        function handleMouseDown(e){
+            if(gameOver) return;
+            if(currentPlayer==="player" && !shooting){
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width/rect.width;
+                const scaleY = canvas.height/rect.height;
+                let x = (e.clientX - rect.left)*scaleX;
+                let y = (e.clientY - rect.top)*scaleY;
+                if(cueBall && Math.hypot(x-cueBall.x, y-cueBall.y)<ballRadius+10){
+                    charging=true;
+                    cueStartX = x; cueStartY = y;
+                }
+            }
+        }
+        
+        function handleMouseUp(e){
+            if(charging && currentPlayer==="player" && !shooting && !gameOver){
+                let dx = mouseX - cueBall.x;
+                let dy = mouseY - cueBall.y;
+                let angle = Math.atan2(dy,dx);
+                let power = Math.min(1, Math.hypot(dx,dy)/80);
+                shoot(angle, power);
+                charging=false;
+                setTimeout(()=>{ if(!gameOver && !shooting) endTurn(); else if(!gameOver) setTimeout(()=>{if(!shooting)endTurn();},600); }, 400);
+            }
+            charging=false;
+        }
+        
+        // Animasiya döngüsü
+        function animate(){
+            let moving = updatePhysics();
+            drawTable();
+            drawBalls();
+            drawAim();
+            if(!moving && shooting){
+                shooting=false;
+                if(!gameOver) endTurn();
+            }
+            requestAnimationFrame(animate);
+        }
+        
+        // Eventlər
+        function bindEvents(){
+            canvas.addEventListener('mousemove', handleMouseMove);
+            canvas.addEventListener('mousedown', handleMouseDown);
+            canvas.addEventListener('mouseup', handleMouseUp);
+            canvas.addEventListener('touchmove', (e)=>{ e.preventDefault(); let touch=e.touches[0]; handleMouseMove(touch); });
+            canvas.addEventListener('touchstart', (e)=>{ e.preventDefault(); handleMouseDown(e.touches[0]); });
+            canvas.addEventListener('touchend', (e)=>{ e.preventDefault(); handleMouseUp(e); });
+        }
+        
+        // Mode dəyişmə
+        document.querySelectorAll('.mode-btn').forEach(btn=>{
+            btn.addEventListener('click',()=>{
+                document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('active'));
+                btn.classList.add('active');
+                botDifficulty = btn.getAttribute('data-mode');
+            });
+        });
+        document.getElementById('resetBtn').addEventListener('click',()=>resetGame());
+        document.getElementById('modeToggleBtn').addEventListener('click',()=>{
+            gameMode = gameMode==="vsBot" ? "twoPlayer" : "vsBot";
+            document.getElementById('modeToggleBtn').innerHTML = gameMode==="vsBot" ? "🤖 VS BOT / 👥 2 OYUNÇU" : "👥 2 OYUNÇU / 🤖 VS BOT";
+            resetGame();
+        });
+        
+        initPockets();
+        initBalls();
+        bindEvents();
+        animate();
+        resetGame();
+    })();
 </script>
 </body>
 </html>
