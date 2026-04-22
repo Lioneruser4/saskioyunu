@@ -589,4 +589,294 @@
             if (distToExit < 80 && Math.abs(angleDiff) < Math.PI / 2.5) {
                 const screenX = screenW / 2 + (angleDiff / (Math.PI / 2.5)) * (screenW / 3);
                 if (screenX > 0 && screenX < screenW) {
-                    ctx.font
+                    ctx.font = `${Math.max(18, Math.min(36, Math.floor(80 / distToExit)))}px monospace`;
+                    ctx.fillStyle = '#2ecc71';
+                    ctx.shadowBlur = 10;
+                    ctx.shadowColor = '#2ecc71';
+                    ctx.fillText('🚪', screenX - 15, screenH / 2 - 40);
+                    ctx.shadowBlur = 0;
+                }
+            }
+        }
+        
+        // Crosshair
+        ctx.beginPath();
+        ctx.strokeStyle = '#d4a017';
+        ctx.lineWidth = 2;
+        ctx.moveTo(screenW / 2 - 10, screenH / 2);
+        ctx.lineTo(screenW / 2 - 4, screenH / 2);
+        ctx.moveTo(screenW / 2 + 4, screenH / 2);
+        ctx.lineTo(screenW / 2 + 10, screenH / 2);
+        ctx.moveTo(screenW / 2, screenH / 2 - 10);
+        ctx.lineTo(screenW / 2, screenH / 2 - 4);
+        ctx.moveTo(screenW / 2, screenH / 2 + 4);
+        ctx.lineTo(screenW / 2, screenH / 2 + 10);
+        ctx.stroke();
+        
+        requestAnimationFrame(draw);
+    }
+    
+    // ─────────────────────────────────────────────────────────────────
+    // MOUSE & CONTROLS
+    // ─────────────────────────────────────────────────────────────────
+    function setupControls() {
+        // Mouse lock
+        canvas.addEventListener('click', () => {
+            if (gameActive && !mouseLocked) {
+                canvas.requestPointerLock();
+            }
+        });
+        
+        document.addEventListener('pointerlockchange', () => {
+            mouseLocked = document.pointerLockElement === canvas;
+        });
+        
+        document.addEventListener('mousemove', (e) => {
+            if (mouseLocked && gameActive) {
+                player.angle += e.movementX * 0.003;
+                player.pitch += e.movementY * 0.002;
+                player.pitch = Math.max(-0.8, Math.min(0.8, player.pitch));
+            }
+        });
+        
+        // Keyboard
+        window.addEventListener('keydown', (e) => {
+            const code = e.code;
+            if (keys.hasOwnProperty(code)) {
+                keys[code] = true;
+                e.preventDefault();
+            }
+            if (code === 'KeyE') {
+                interact();
+                e.preventDefault();
+            }
+            if (code === 'Space') {
+                e.preventDefault();
+            }
+        });
+        
+        window.addEventListener('keyup', (e) => {
+            const code = e.code;
+            if (keys.hasOwnProperty(code)) keys[code] = false;
+        });
+        
+        // Mobile joystick
+        const joystickArea = document.getElementById('joystick-area');
+        const joystickHandle = document.getElementById('joystick-handle');
+        
+        if (joystickArea) {
+            joystickArea.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const rect = joystickArea.getBoundingClientRect();
+                joystickCenter.x = rect.left + rect.width / 2;
+                joystickCenter.y = rect.top + rect.height / 2;
+                joystickActive = true;
+            });
+            
+            joystickArea.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                if (!joystickActive) return;
+                const touch = e.touches[0];
+                const dx = touch.clientX - joystickCenter.x;
+                const dy = touch.clientY - joystickCenter.y;
+                const distance = Math.min(Math.hypot(dx, dy), 50);
+                const angle = Math.atan2(dy, dx);
+                joystickDir.x = Math.cos(angle) * (distance / 50);
+                joystickDir.y = Math.sin(angle) * (distance / 50);
+                joystickHandle.style.transform = `translate(${Math.cos(angle) * distance}px, ${Math.sin(angle) * distance}px)`;
+            });
+            
+            joystickArea.addEventListener('touchend', () => {
+                joystickActive = false;
+                joystickDir = { x: 0, y: 0 };
+                joystickHandle.style.transform = 'translate(0px, 0px)';
+            });
+        }
+        
+        // Mobile jump
+        const jumpBtn = document.getElementById('jump-btn');
+        if (jumpBtn) {
+            jumpBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                mobileJump = true;
+            });
+        }
+        
+        // Mobile run
+        const runBtn = document.getElementById('run-btn');
+        if (runBtn) {
+            runBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                mobileRun = true;
+            });
+            runBtn.addEventListener('touchend', () => {
+                mobileRun = false;
+            });
+        }
+    }
+    
+    // ─────────────────────────────────────────────────────────────────
+    // GAME LOOP
+    // ─────────────────────────────────────────────────────────────────
+    let lastTime = 0;
+    
+    function gameLoop(currentTime) {
+        if (!frameRequest) return;
+        
+        let deltaTime = Math.min(0.033, (currentTime - lastTime) / 1000);
+        if (deltaTime <= 0) deltaTime = 0.016;
+        lastTime = currentTime;
+        
+        if (gameActive) {
+            updateMovement(deltaTime);
+            updateMonster(deltaTime);
+            updateMonsterSound();
+        }
+        
+        frameRequest = requestAnimationFrame(gameLoop);
+    }
+    
+    function startGameLoop() {
+        lastTime = performance.now();
+        frameRequest = requestAnimationFrame(gameLoop);
+        draw();
+    }
+    
+    // ─────────────────────────────────────────────────────────────────
+    // SCREEN MANAGEMENT
+    // ─────────────────────────────────────────────────────────────────
+    function showScreen(screenName) {
+        document.getElementById('loading-screen').classList.add('hidden');
+        document.getElementById('menu-screen').classList.add('hidden');
+        document.getElementById('caught-screen').classList.add('hidden');
+        document.getElementById('win-screen').classList.add('hidden');
+        
+        if (screenName === 'menu') document.getElementById('menu-screen').classList.remove('hidden');
+        else if (screenName === 'loading') document.getElementById('loading-screen').classList.remove('hidden');
+        else if (screenName === 'caught') document.getElementById('caught-screen').classList.remove('hidden');
+        else if (screenName === 'win') document.getElementById('win-screen').classList.remove('hidden');
+    }
+    
+    function startGame() {
+        // Reset game state
+        gameActive = true;
+        gameWin = false;
+        
+        player.x = 400;
+        player.z = 400;
+        player.angle = 0;
+        player.pitch = 0;
+        player.height = 1.65;
+        player.velocityY = 0;
+        player.hasKey = false;
+        player.isRunning = false;
+        
+        monster.x = 750;
+        monster.z = 750;
+        monster.state = 'idle';
+        monster.lastSeenX = null;
+        monster.lastSeenZ = null;
+        
+        key.collected = false;
+        exitDoor.unlocked = false;
+        
+        // Reset UI
+        const keyStatus = document.getElementById('key-status');
+        keyStatus.innerHTML = '🔑 ANAHTAR YOK';
+        keyStatus.classList.remove('has-key');
+        
+        document.getElementById('danger-overlay').style.opacity = 0;
+        document.getElementById('danger-overlay').classList.remove('active');
+        
+        // Resume audio
+        if (audioContext && audioContext.state === 'suspended') {
+            audioContext.resume();
+        }
+        
+        showScreen('loading');
+        
+        setTimeout(() => {
+            showScreen('menu');
+        }, 500);
+    }
+    
+    function beginGame() {
+        gameActive = true;
+        gameWin = false;
+        
+        player.x = 400;
+        player.z = 400;
+        player.angle = 0;
+        player.pitch = 0;
+        player.hasKey = false;
+        
+        monster.x = 750;
+        monster.z = 750;
+        monster.state = 'idle';
+        
+        key.collected = false;
+        
+        const keyStatus = document.getElementById('key-status');
+        keyStatus.innerHTML = '🔑 ANAHTAR YOK';
+        keyStatus.classList.remove('has-key');
+        
+        document.getElementById('danger-overlay').style.opacity = 0;
+        
+        showScreen('loading');
+        
+        setTimeout(() => {
+            document.getElementById('loading-screen').classList.add('hidden');
+            document.getElementById('menu-screen').classList.add('hidden');
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+        }, 300);
+    }
+    
+    // ─────────────────────────────────────────────────────────────────
+    // INITIALIZATION
+    // ─────────────────────────────────────────────────────────────────
+    function init() {
+        updateResolution();
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            updateResolution();
+        });
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        setupControls();
+        initAudio();
+        startGameLoop();
+        
+        // Loading animation
+        let progress = 0;
+        const loadInterval = setInterval(() => {
+            progress += Math.random() * 15 + 5;
+            const loadProgress = document.getElementById('loadProgress');
+            const loadText = document.getElementById('loadText');
+            if (loadProgress) loadProgress.style.width = Math.min(progress, 100) + '%';
+            if (loadText) {
+                const tips = ['LABİRENT HAZIRLANIYOR...', 'CANAVAR BEKLİYOR...', 'SESSİZ OL...', 'KAÇMAYA HAZIRLAN...'];
+                loadText.innerHTML = tips[Math.floor(Math.random() * tips.length)];
+            }
+            if (progress >= 100) {
+                clearInterval(loadInterval);
+                setTimeout(() => {
+                    showScreen('menu');
+                }, 500);
+            }
+        }, 80);
+        
+        // Button events
+        document.getElementById('playBtn')?.addEventListener('click', () => beginGame());
+        document.getElementById('retryBtn')?.addEventListener('click', () => beginGame());
+        document.getElementById('menuBtn')?.addEventListener('click', () => showScreen('menu'));
+        document.getElementById('winRetryBtn')?.addEventListener('click', () => beginGame());
+        document.getElementById('winMenuBtn')?.addEventListener('click', () => showScreen('menu'));
+    }
+    
+    init();
+})();
