@@ -1,441 +1,159 @@
 <!DOCTYPE html>
+
 <html lang="tr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>BACKROOMS - LEVEL 0</title>
-<style>
-  * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    user-select: none;
-    -webkit-tap-highlight-color: transparent;
-  }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>BACKROOMS</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #000; overflow: hidden; font-family: 'Courier New', monospace; }
+    #canvas { display: block; width: 100vw; height: 100vh; }
 
-  body {
-    background: #000;
-    overflow: hidden;
-    font-family: 'Courier New', monospace;
-    touch-action: none;
-  }
+```
+#ui {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  pointer-events: none; z-index: 10;
+}
 
-  canvas {
-    display: block;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    touch-action: none;
-  }
+#crosshair {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 20px; height: 20px;
+}
+#crosshair::before, #crosshair::after {
+  content: ''; position: absolute; background: rgba(255,255,200,0.8);
+}
+#crosshair::before { width: 2px; height: 100%; left: 50%; transform: translateX(-50%); }
+#crosshair::after  { width: 100%; height: 2px; top: 50%; transform: translateY(-50%); }
 
-  /* HUD */
-  #hud {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    padding: 15px 20px;
-    display: flex;
-    justify-content: space-between;
-    pointer-events: none;
-    z-index: 10;
-    background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent);
-  }
+#hud {
+  position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+  color: #c8b560; font-size: 13px; letter-spacing: 2px; text-align: center;
+  text-shadow: 0 0 10px #c8b560;
+}
 
-  .hud-item {
-    background: rgba(0,0,0,0.65);
-    border: 1px solid #d4a017;
-    border-radius: 8px;
-    padding: 6px 14px;
-    color: #d4a017;
-    font-size: 13px;
-    font-weight: bold;
-    letter-spacing: 1px;
-    backdrop-filter: blur(4px);
-    font-family: monospace;
-  }
+#danger {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  background: radial-gradient(ellipse at center, transparent 40%, rgba(255,0,0,0.35) 100%);
+  opacity: 0; transition: opacity 0.3s;
+  pointer-events: none;
+}
 
-  #key-status {
-    transition: all 0.3s;
-  }
+#startScreen {
+  position: fixed; inset: 0; background: #111100;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  z-index: 100; color: #c8b560;
+}
+#startScreen h1 {
+  font-size: clamp(36px, 8vw, 80px); letter-spacing: 12px;
+  text-shadow: 0 0 40px #c8b560, 0 0 80px #a09040;
+  margin-bottom: 20px; animation: flicker 3s infinite;
+}
+#startScreen p {
+  font-size: 14px; letter-spacing: 3px; color: #807040;
+  margin-bottom: 40px; text-align: center; padding: 0 20px;
+}
+#startBtn {
+  padding: 14px 40px; font-size: 16px; letter-spacing: 4px;
+  background: transparent; border: 2px solid #c8b560;
+  color: #c8b560; cursor: pointer; font-family: inherit;
+  transition: all 0.3s; text-transform: uppercase;
+}
+#startBtn:hover { background: #c8b560; color: #111100; }
 
-  #key-status.has-key {
-    color: #2ecc71;
-    border-color: #2ecc71;
-  }
+/* Mobile Controls */
+#mobileControls {
+  position: fixed; bottom: 0; left: 0; width: 100%; height: 220px;
+  pointer-events: none; z-index: 20; display: none;
+}
+#joystick {
+  position: absolute; bottom: 30px; left: 30px;
+  width: 120px; height: 120px; pointer-events: all;
+}
+#joystickBase {
+  width: 120px; height: 120px; border-radius: 50%;
+  background: rgba(200,181,96,0.15); border: 2px solid rgba(200,181,96,0.4);
+  position: relative;
+}
+#joystickThumb {
+  width: 50px; height: 50px; border-radius: 50%;
+  background: rgba(200,181,96,0.6); border: 2px solid #c8b560;
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+  transition: none;
+}
+#lookPad {
+  position: absolute; bottom: 30px; right: 30px;
+  width: 150px; height: 150px; border-radius: 50%;
+  background: rgba(200,181,96,0.08); border: 2px solid rgba(200,181,96,0.2);
+  pointer-events: all;
+}
+#jumpBtn {
+  position: absolute; bottom: 150px; right: 30px;
+  width: 60px; height: 60px; border-radius: 50%;
+  background: rgba(200,181,96,0.2); border: 2px solid #c8b560;
+  color: #c8b560; font-size: 22px; display: flex;
+  align-items: center; justify-content: center;
+  pointer-events: all; user-select: none; cursor: pointer;
+}
 
-  #danger-overlay {
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 5;
-    transition: all 0.05s;
-  }
+@keyframes flicker {
+  0%,95%,100%{opacity:1} 96%{opacity:0.4} 97%{opacity:1} 98%{opacity:0.6}
+}
 
-  #danger-overlay.active {
-    background: radial-gradient(circle, rgba(192,57,43,0) 40%, rgba(192,57,43,0.4) 100%);
-    animation: pulse 0.2s infinite;
-  }
+#gameOver {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+  display: none; flex-direction: column; align-items: center; justify-content: center;
+  z-index: 200; color: #ff2200;
+}
+#gameOver h2 { font-size: 48px; letter-spacing: 8px; text-shadow: 0 0 30px #ff2200; margin-bottom: 20px; }
+#gameOver p  { color: #888; letter-spacing: 2px; margin-bottom: 30px; }
+#retryBtn {
+  padding: 12px 32px; font-size: 14px; letter-spacing: 3px;
+  background: transparent; border: 2px solid #ff2200;
+  color: #ff2200; cursor: pointer; font-family: inherit;
+  transition: all 0.3s;
+}
+#retryBtn:hover { background: #ff2200; color: #000; }
+```
 
-  /* Screens */
-  .screen {
-    position: fixed;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    z-index: 20;
-    transition: opacity 0.3s;
-  }
-
-  .screen.hidden {
-    display: none;
-  }
-
-  #menu-screen {
-    background: radial-gradient(ellipse at center, #0a0800 0%, #000 100%);
-  }
-
-  #lobby-screen {
-    background: radial-gradient(ellipse at center, #0d0b00 0%, #020100 100%);
-    overflow-y: auto;
-  }
-
-  #loading-screen {
-    background: #000;
-  }
-
-  #caught-screen, #win-screen {
-    background: rgba(0,0,0,0.96);
-    backdrop-filter: blur(12px);
-  }
-
-  .game-title {
-    font-size: clamp(42px, 12vw, 110px);
-    color: #d4a017;
-    text-shadow: 0 0 30px #d4a017, 0 0 60px rgba(212,160,23,0.5);
-    font-family: 'Courier New', monospace;
-    font-weight: bold;
-    letter-spacing: 8px;
-    margin-bottom: 20px;
-    animation: flicker 3s infinite;
-  }
-
-  .game-sub {
-    color: #8a6800;
-    font-size: 13px;
-    letter-spacing: 4px;
-    margin-bottom: 40px;
-  }
-
-  .btn {
-    background: #d4a017;
-    border: none;
-    padding: 14px 48px;
-    font-size: 18px;
-    font-weight: bold;
-    color: #000;
-    border-radius: 40px;
-    cursor: pointer;
-    margin: 10px;
-    font-family: monospace;
-    transition: all 0.1s;
-    letter-spacing: 2px;
-  }
-
-  .btn:active {
-    transform: scale(0.96);
-    background: #b8860b;
-  }
-
-  .btn-secondary {
-    background: transparent;
-    border: 2px solid #d4a017;
-    color: #d4a017;
-  }
-
-  .btn-secondary:active {
-    background: rgba(212,160,23,0.2);
-  }
-
-  .loading-bar {
-    width: 320px;
-    height: 4px;
-    background: #1a1400;
-    border-radius: 2px;
-    overflow: hidden;
-    margin: 20px;
-  }
-
-  .loading-progress {
-    width: 0%;
-    height: 100%;
-    background: #d4a017;
-    transition: width 0.2s;
-    box-shadow: 0 0 10px #d4a017;
-  }
-
-  /* Lobby Styles */
-  .lobby-container {
-    width: 90%;
-    max-width: 500px;
-    background: rgba(0,0,0,0.7);
-    border: 1px solid #d4a017;
-    border-radius: 20px;
-    padding: 30px;
-    backdrop-filter: blur(10px);
-  }
-
-  .lobby-title {
-    font-size: 24px;
-    color: #d4a017;
-    text-align: center;
-    margin-bottom: 30px;
-    letter-spacing: 3px;
-  }
-
-  .player-info {
-    background: rgba(212,160,23,0.1);
-    border-radius: 12px;
-    padding: 15px;
-    margin-bottom: 20px;
-    text-align: center;
-  }
-
-  .player-name {
-    font-size: 18px;
-    color: #d4a017;
-  }
-
-  .stats {
-    display: flex;
-    justify-content: center;
-    gap: 30px;
-    margin-top: 10px;
-  }
-
-  .stat {
-    text-align: center;
-  }
-
-  .stat-value {
-    font-size: 24px;
-    color: #d4a017;
-    font-weight: bold;
-  }
-
-  .stat-label {
-    font-size: 10px;
-    color: #8a6800;
-  }
-
-  .level-select {
-    margin: 20px 0;
-  }
-
-  .level-option {
-    background: rgba(212,160,23,0.1);
-    border: 1px solid #d4a017;
-    border-radius: 10px;
-    padding: 12px;
-    margin: 8px 0;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
-  .level-option.selected {
-    background: rgba(212,160,23,0.3);
-    border-color: #d4a017;
-    box-shadow: 0 0 15px rgba(212,160,23,0.3);
-  }
-
-  .level-name {
-    color: #d4a017;
-    font-weight: bold;
-  }
-
-  .level-desc {
-    font-size: 11px;
-    color: #8a6800;
-    margin-top: 5px;
-  }
-
-  /* Mobile Controls */
-  #mobile-controls {
-    position: fixed;
-    bottom: 20px;
-    left: 0;
-    right: 0;
-    display: flex;
-    justify-content: space-between;
-    padding: 0 20px;
-    pointer-events: none;
-    z-index: 15;
-  }
-
-  .joystick-container {
-    width: 130px;
-    height: 130px;
-    border-radius: 50%;
-    background: rgba(0,0,0,0.5);
-    border: 2px solid rgba(212,160,23,0.4);
-    position: relative;
-    pointer-events: auto;
-    touch-action: none;
-  }
-
-  .joystick-base {
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    position: relative;
-  }
-
-  .joystick-handle {
-    width: 55px;
-    height: 55px;
-    border-radius: 50%;
-    background: radial-gradient(circle at 30% 30%, #d4a017, #8a6800);
-    position: absolute;
-    top: 37.5px;
-    left: 37.5px;
-    pointer-events: none;
-    box-shadow: 0 0 10px rgba(212,160,23,0.5);
-  }
-
-  .action-buttons {
-    display: flex;
-    gap: 15px;
-    pointer-events: auto;
-  }
-
-  .action-btn {
-    width: 70px;
-    height: 70px;
-    border-radius: 50%;
-    background: rgba(0,0,0,0.5);
-    border: 2px solid rgba(212,160,23,0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 28px;
-    color: #d4a017;
-    touch-action: none;
-  }
-
-  .action-btn:active {
-    background: rgba(212,160,23,0.3);
-    transform: scale(0.95);
-  }
-
-  .controls-hint {
-    position: fixed;
-    bottom: 20px;
-    left: 20px;
-    color: #5a4a1a;
-    font-size: 9px;
-    background: rgba(0,0,0,0.5);
-    padding: 5px 10px;
-    border-radius: 5px;
-    pointer-events: none;
-    z-index: 15;
-    font-family: monospace;
-  }
-
-  @keyframes flicker {
-    0%, 95%, 100% { opacity: 1; text-shadow: 0 0 30px #d4a017; }
-    96% { opacity: 0.7; text-shadow: 0 0 10px #d4a017; }
-    98% { opacity: 0.9; text-shadow: 0 0 20px #d4a017; }
-  }
-
-  @keyframes pulse {
-    0%, 100% { opacity: 0.4; }
-    50% { opacity: 0.8; }
-  }
-
-  @media (pointer: fine) {
-    #mobile-controls { display: none; }
-    .controls-hint { display: block; }
-  }
-
-  @media (pointer: coarse) {
-    .controls-hint { display: none; }
-  }
-</style>
+  </style>
 </head>
 <body>
 
-<canvas id="gameCanvas"></canvas>
+<canvas id="canvas"></canvas>
 
-<div id="hud">
-  <div class="hud-item" id="key-status">🔑 ANAHTAR YOK</div>
-  <div class="hud-item" id="distance">📏 ---</div>
-</div>
-<div id="danger-overlay"></div>
-
-<div id="mobile-controls">
-  <div class="joystick-container" id="joystickArea">
-    <div class="joystick-base"></div>
-    <div class="joystick-handle" id="joystickHandle"></div>
-  </div>
-  <div class="action-buttons">
-    <div class="action-btn" id="jumpBtn">▲</div>
-    <div class="action-btn" id="runBtn">⚡</div>
-  </div>
-</div>
-<div class="controls-hint">WASD + MOUSE | SPACE Zıpla | SHIFT Koş | E Etkileşim</div>
-
-<div id="loading-screen" class="screen">
-  <div class="game-title">BACKROOMS</div>
-  <div class="loading-bar"><div class="loading-progress" id="loadProgress"></div></div>
-  <div class="game-sub" id="loadText">YÜKLENİYOR...</div>
-</div>
-
-<div id="menu-screen" class="screen hidden">
-  <div class="game-title">BACKROOMS</div>
-  <div class="game-sub">LEVEL 0 — THE POOLROOMS</div>
-  <button class="btn" id="playBtn">🎮 OFFLINE OYNA</button>
-</div>
-
-<div id="lobby-screen" class="screen hidden">
-  <div class="lobby-container">
-    <div class="lobby-title">⚡ BACKROOMS LOBBY ⚡</div>
-    <div class="player-info">
-      <div class="player-name">🏃‍♂️ PLAYER_01</div>
-      <div class="stats">
-        <div class="stat"><div class="stat-value" id="playCount">0</div><div class="stat-label">OYUN</div></div>
-        <div class="stat"><div class="stat-value" id="escapeCount">0</div><div class="stat-label">KAÇIŞ</div></div>
-        <div class="stat"><div class="stat-value" id="deathCount">0</div><div class="stat-label">ÖLÜM</div></div>
-      </div>
-    </div>
-    <div class="level-select">
-      <div class="level-option selected" data-level="0">
-        <div class="level-name">🏚️ LEVEL 0 - THE POOLROOMS</div>
-        <div class="level-desc">Sonsuz sarı odalar, nemli halılar, floresan ışıklar</div>
-      </div>
-    </div>
-    <button class="btn" id="startGameBtn">🔓 OYUNA BAŞLA</button>
-    <button class="btn-secondary" id="lobbyMenuBtn">🏠 ANA MENÜ</button>
+<div id="ui">
+  <div id="crosshair"></div>
+  <div id="danger"></div>
+  <div id="hud">
+    <span id="hudText">BACKROOMS — LEVEL 0</span>
   </div>
 </div>
 
-<div id="caught-screen" class="screen hidden">
-  <div class="game-title" style="color:#c0392b; text-shadow:0 0 30px #c0392b;">YAKALANDIN</div>
-  <div class="game-sub">CANAVAR SENİ BULDU</div>
-  <button class="btn" id="retryBtn">🔄 TEKRAR DENE</button>
-  <button class="btn-secondary" id="caughtMenuBtn">🏠 ANA MENÜ</button>
+<div id="startScreen">
+  <h1>BACKROOMS</h1>
+  <p>Sıkışıp kaldın. Kaçış yok.<br>O seni buluyor.</p>
+  <button id="startBtn">BAŞLA</button>
 </div>
 
-<div id="win-screen" class="screen hidden">
-  <div class="game-title" style="color:#2ecc71; text-shadow:0 0 30px #2ecc71;">KAÇTIN!</div>
-  <div class="game-sub">ANAHTARI ALIP ÇIKMAYI BAŞARDIN</div>
-  <button class="btn" id="winRetryBtn">🔄 TEKRAR OYNA</button>
-  <button class="btn-secondary" id="winMenuBtn">🏠 ANA MENÜ</button>
+<div id="gameOver">
+  <h2>YAKALANDIN</h2>
+  <p>O seni buldu...</p>
+  <button id="retryBtn">YENİDEN DENE</button>
 </div>
+
+<div id="mobileControls">
+  <div id="joystick">
+    <div id="joystickBase"><div id="joystickThumb"></div></div>
+  </div>
+  <div id="lookPad"></div>
+  <div id="jumpBtn">↑</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
 <script src="game.js"></script>
+
 </body>
 </html>
