@@ -1,486 +1,326 @@
 <!DOCTYPE html>
-<html lang="az">
+<html lang="tr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>8 Ball Bilyard - Pro Animasiyalı Oyun</title>
-    <style>
-        * {
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
-        }
-        body {
-            margin: 0;
-            min-height: 100vh;
-            background: linear-gradient(145deg, #0a3f1f, #052010);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-family: 'Segoe UI', 'Poppins', system-ui, sans-serif;
-            padding: 20px;
-        }
-        .game-container {
-            background: #2c2418;
-            border-radius: 40px;
-            padding: 20px;
-            box-shadow: 0 20px 35px rgba(0,0,0,0.5);
-        }
-        canvas {
-            display: block;
-            margin: 0 auto;
-            border-radius: 20px;
-            box-shadow: 0 0 0 8px #5a3e2a, 0 15px 30px black;
-            cursor: pointer;
-        }
-        .panel {
-            margin-top: 20px;
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            flex-wrap: wrap;
-        }
-        button {
-            background: #f5c542;
-            border: none;
-            font-size: 1rem;
-            font-weight: bold;
-            padding: 10px 24px;
-            border-radius: 40px;
-            cursor: pointer;
-            transition: 0.07s linear;
-            box-shadow: 0 4px 0 #8b6946;
-            font-family: inherit;
-        }
-        button:active {
-            transform: translateY(3px);
-            box-shadow: 0 1px 0 #8b6946;
-        }
-        .mode-buttons {
-            display: flex;
-            gap: 10px;
-            background: #00000099;
-            padding: 8px 15px;
-            border-radius: 60px;
-            backdrop-filter: blur(4px);
-        }
-        .mode-btn {
-            background: #3a2a1a;
-            color: #ffdd99;
-            box-shadow: none;
-            padding: 6px 18px;
-        }
-        .mode-btn.active {
-            background: #f5c542;
-            color: #1e2a1f;
-            box-shadow: 0 2px 0 #8b6946;
-        }
-        .score-board {
-            background: #000000aa;
-            border-radius: 40px;
-            padding: 8px 20px;
-            color: #ffefb9;
-            font-weight: bold;
-            display: inline-flex;
-            gap: 25px;
-            margin-bottom: 12px;
-            backdrop-filter: blur(4px);
-        }
-        .turn-indicator {
-            font-size: 1.2rem;
-            font-weight: bold;
-            background: #000000aa;
-            padding: 5px 20px;
-            border-radius: 40px;
-            display: inline-block;
-            margin-bottom: 10px;
-        }
-        .controls {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>BACKROOMS - THE POOLROOMS</title>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    background: #000;
+    overflow: hidden;
+    font-family: 'Courier New', monospace;
+  }
+
+  canvas {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    touch-action: none;
+  }
+
+  /* HUD */
+  #hud {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    pointer-events: none;
+    z-index: 10;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent);
+  }
+
+  .hud-item {
+    background: rgba(0,0,0,0.6);
+    border: 1px solid #d4a017;
+    border-radius: 8px;
+    padding: 6px 14px;
+    color: #d4a017;
+    font-size: 14px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    backdrop-filter: blur(4px);
+  }
+
+  #key-status {
+    color: #d4a017;
+  }
+
+  #key-status.has-key {
+    color: #2ecc71;
+    border-color: #2ecc71;
+  }
+
+  #danger-overlay {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 5;
+    background: radial-gradient(circle, transparent 30%, rgba(192,57,43,0) 70%);
+    transition: all 0.1s;
+  }
+
+  #danger-overlay.active {
+    background: radial-gradient(circle, rgba(192,57,43,0.3) 0%, rgba(192,57,43,0.6) 100%);
+    animation: pulse 0.3s infinite;
+  }
+
+  /* Screens */
+  .screen {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 20;
+    transition: all 0.3s;
+  }
+
+  .screen.hidden {
+    display: none;
+  }
+
+  #menu-screen {
+    background: radial-gradient(ellipse at center, #0a0800 0%, #000 100%);
+  }
+
+  #loading-screen {
+    background: #000;
+  }
+
+  #caught-screen, #win-screen {
+    background: rgba(0,0,0,0.95);
+    backdrop-filter: blur(8px);
+  }
+
+  .game-title {
+    font-size: clamp(48px, 15vw, 120px);
+    color: #d4a017;
+    text-shadow: 0 0 30px #d4a017, 0 0 60px rgba(212,160,23,0.5);
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    letter-spacing: 8px;
+    margin-bottom: 20px;
+    animation: flicker 3s infinite;
+  }
+
+  .game-sub {
+    color: #8a6800;
+    font-size: 14px;
+    letter-spacing: 4px;
+    margin-bottom: 40px;
+  }
+
+  .btn {
+    background: #d4a017;
+    border: none;
+    padding: 14px 48px;
+    font-size: 20px;
+    font-weight: bold;
+    color: #000;
+    border-radius: 8px;
+    cursor: pointer;
+    margin: 10px;
+    font-family: 'Courier New', monospace;
+    transition: transform 0.1s, background 0.2s;
+  }
+
+  .btn:active {
+    transform: scale(0.96);
+    background: #b8860b;
+  }
+
+  .btn-secondary {
+    background: transparent;
+    border: 2px solid #d4a017;
+    color: #d4a017;
+  }
+
+  .loading-bar {
+    width: 300px;
+    height: 4px;
+    background: #1a1400;
+    border-radius: 2px;
+    overflow: hidden;
+    margin: 20px;
+  }
+
+  .loading-progress {
+    width: 0%;
+    height: 100%;
+    background: #d4a017;
+    transition: width 0.2s;
+    box-shadow: 0 0 10px #d4a017;
+  }
+
+  .caught-icon, .win-icon {
+    font-size: 80px;
+    margin-bottom: 20px;
+  }
+
+  .caught-title {
+    font-size: 48px;
+    color: #c0392b;
+    margin-bottom: 10px;
+  }
+
+  .win-title {
+    font-size: 48px;
+    color: #2ecc71;
+    margin-bottom: 10px;
+  }
+
+  /* Mobile controls */
+  #mobile-controls {
+    position: fixed;
+    bottom: 20px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 20px;
+    pointer-events: none;
+    z-index: 15;
+  }
+
+  .control-btn {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.5);
+    border: 2px solid rgba(212,160,23,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+    color: #d4a017;
+    pointer-events: auto;
+    touch-action: none;
+    backdrop-filter: blur(4px);
+  }
+
+  .control-btn:active {
+    background: rgba(212,160,23,0.3);
+    transform: scale(0.95);
+  }
+
+  #joystick-area {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.4);
+    border: 2px solid rgba(212,160,23,0.3);
+    position: relative;
+    pointer-events: auto;
+    touch-action: none;
+  }
+
+  #joystick-handle {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #d4a017, #8a6800);
+    position: absolute;
+    top: 35px;
+    left: 35px;
+    pointer-events: none;
+  }
+
+  .controls-hint {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    color: #5a4a1a;
+    font-size: 10px;
+    background: rgba(0,0,0,0.5);
+    padding: 5px 10px;
+    border-radius: 5px;
+    pointer-events: none;
+    z-index: 15;
+  }
+
+  @keyframes flicker {
+    0%, 95%, 100% { opacity: 1; text-shadow: 0 0 30px #d4a017; }
+    96% { opacity: 0.7; text-shadow: 0 0 10px #d4a017; }
+    98% { opacity: 0.9; text-shadow: 0 0 20px #d4a017; }
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+  }
+
+  @media (pointer: fine) {
+    #mobile-controls { display: none; }
+    .controls-hint { display: block; }
+  }
+
+  @media (pointer: coarse) {
+    .controls-hint { display: none; }
+  }
+</style>
 </head>
 <body>
-<div>
-    <div class="game-container">
-        <div class="controls">
-            <div class="score-board">
-                <span>🎯 SİZ: <span id="playerScore">0</span></span>
-                <span>🤖 BOT: <span id="botScore">0</span></span>
-            </div>
-            <div class="mode-buttons">
-                <button class="mode-btn" data-mode="easy">😊 EASY</button>
-                <button class="mode-btn active" data-mode="normal">⚖️ NORMAL</button>
-                <button class="mode-btn" data-mode="hard">🔥 HARD</button>
-            </div>
-        </div>
-        <div style="text-align: center;">
-            <div class="turn-indicator" id="turnText">🎱 SİZİN NÖVBƏNİZ</div>
-        </div>
-        <canvas id="gameCanvas" width="1000" height="550" style="width:100%; height:auto; max-width:1000px; aspect-ratio:1000/550"></canvas>
-        <div class="panel">
-            <button id="resetBtn">🔄 YENİ OYUN</button>
-            <button id="modeToggleBtn">🤖 VS BOT / 👥 2 OYUNÇU</button>
-        </div>
-    </div>
+
+<canvas id="gameCanvas"></canvas>
+
+<div id="hud">
+  <div class="hud-item" id="key-status">🔑 ANAHTAR YOK</div>
+  <div class="hud-item" id="distance">📏 ?</div>
+</div>
+<div id="danger-overlay"></div>
+
+<div id="mobile-controls">
+  <div id="joystick-area">
+    <div id="joystick-handle"></div>
+  </div>
+  <div class="control-btn" id="jump-btn">▲</div>
+  <div class="control-btn" id="run-btn">⚡</div>
+</div>
+<div class="controls-hint">WASD + MOUSE | SPACE Zıpla | SHIFT Koş | E Etkileşim</div>
+
+<div id="loading-screen" class="screen">
+  <div class="game-title">BACKROOMS</div>
+  <div class="loading-bar"><div class="loading-progress" id="loadProgress"></div></div>
+  <div class="game-sub" id="loadText">YÜKLENİYOR...</div>
 </div>
 
-<script>
-    (function(){
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        
-        // Oyun parametrləri
-        let width = 1000, height = 550;
-        canvas.width = width; canvas.height = height;
-        
-        // Toplar
-        let balls = [];
-        let cueBall = null;
-        let pocketRadius = 14;
-        let pockets = [];
-        
-        // Oyun vəziyyəti
-        let currentPlayer = "player"; // "player" və ya "bot"
-        let gameMode = "vsBot";       // "vsBot" və ya "twoPlayer"
-        let botDifficulty = "normal";  // easy, normal, hard
-        let playerScore = 0;
-        let botScore = 0;
-        let shooting = false;
-        let aimAngle = 0;
-        let power = 0;
-        let charging = false;
-        let mouseX = 0, mouseY = 0;
-        let cueStartX, cueStartY;
-        let gameOver = false;
-        let winner = null;
-        
-        // Stol ölçüləri
-        const tableMargin = 60;
-        const ballRadius = 8;
-        
-        // Dəliklər (8 dəlik - klassik 8ball)
-        function initPockets(){
-            pockets = [
-                {x: tableMargin-5, y: tableMargin-5}, // sol üst
-                {x: width/2, y: tableMargin-8},        // üst orta
-                {x: width-tableMargin+5, y: tableMargin-5}, // sağ üst
-                {x: tableMargin-5, y: height-tableMargin+5}, // sol alt
-                {x: width/2, y: height-tableMargin+8},       // alt orta
-                {x: width-tableMargin+5, y: height-tableMargin+5} // sağ alt
-            ];
-        }
-        
-        // Topların ilkin düzülüşü
-        function initBalls(){
-            balls = [];
-            // Ağ top (istiqamət)
-            cueBall = { x: width/2, y: height-80, vx:0, vy:0, radius: ballRadius, type:"cue", id:0 };
-            balls.push(cueBall);
-            
-            // Rəngli toplar (1-7, 9-15) sadələşdirilmiş
-            const colors = ["#ffaa33","#33ff33","#ff3333","#3333ff","#ff33ff","#33ffff","#ff9933","#aa66ff","#66ff66","#ff6666","#6666ff","#ff66ff","#66ffff","#ffcc66"];
-            const startX = width/2 + 40;
-            const startY = height/2 - 20;
-            let idx=0;
-            for(let row=0; row<5; row++){
-                for(let col=0; col<=row; col++){
-                    if(idx>=14) break;
-                    let x = startX + col*ballRadius*2.1 - (row*ballRadius);
-                    let y = startY + row*ballRadius*1.8;
-                    balls.push({ x:x, y:y, vx:0, vy:0, radius:ballRadius, type:"colored", color:colors[idx%colors.length], id:idx+1 });
-                    idx++;
-                }
-            }
-            // 8 topu (qara)
-            balls.push({ x: startX + ballRadius*2, y: startY + ballRadius*4, vx:0, vy:0, radius:ballRadius, type:"eight", color:"#222", id:8 });
-        }
-        
-        // Stol və topların çəkilməsi
-        function drawTable(){
-            // Masa fonu
-            ctx.fillStyle = "#1a7340";
-            ctx.fillRect(0,0,width,height);
-            ctx.fillStyle = "#0d4525";
-            ctx.fillRect(tableMargin-8, tableMargin-8, width-(tableMargin-8)*2, height-(tableMargin-8)*2);
-            ctx.fillStyle = "#2e8b57";
-            ctx.fillRect(tableMargin-4, tableMargin-4, width-(tableMargin-4)*2, height-(tableMargin-4)*2);
-            ctx.fillStyle = "#3cb371";
-            ctx.fillRect(tableMargin, tableMargin, width-tableMargin*2, height-tableMargin*2);
-            
-            // Dəliklər
-            for(let p of pockets){
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, pocketRadius, 0, Math.PI*2);
-                ctx.fillStyle = "#000";
-                ctx.shadowBlur=0;
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, pocketRadius-4, 0, Math.PI*2);
-                ctx.fillStyle = "#111";
-                ctx.fill();
-            }
-            ctx.shadowBlur = 0;
-        }
-        
-        function drawBalls(){
-            for(let b of balls){
-                ctx.beginPath();
-                ctx.arc(b.x, b.y, b.radius-1, 0, Math.PI*2);
-                ctx.fillStyle = b.type==="cue" ? "#fff" : (b.type==="eight" ? "#222" : b.color);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(b.x, b.y, b.radius-2, 0, Math.PI*2);
-                ctx.fillStyle = b.type==="cue" ? "#eee" : (b.type==="eight" ? "#444" : "#ffdd99");
-                ctx.fill();
-                if(b.type==="eight"){
-                    ctx.font = "bold 12px monospace";
-                    ctx.fillStyle = "white";
-                    ctx.fillText("8", b.x-4, b.y+4);
-                }
-            }
-        }
-        
-        function drawAim(){
-            if(currentPlayer==="player" && !shooting && !gameOver && cueBall && !cueBall.vx){
-                let dx = mouseX - cueBall.x;
-                let dy = mouseY - cueBall.y;
-                let angle = Math.atan2(dy, dx);
-                let powerRatio = Math.min(1, Math.hypot(dx,dy)/80);
-                let lineLen = 40 + powerRatio*50;
-                let endX = cueBall.x + Math.cos(angle)*lineLen;
-                let endY = cueBall.y + Math.sin(angle)*lineLen;
-                ctx.beginPath();
-                ctx.moveTo(cueBall.x, cueBall.y);
-                ctx.lineTo(endX, endY);
-                ctx.strokeStyle = "#ffaa33";
-                ctx.lineWidth = 4;
-                ctx.stroke();
-                for(let i=0;i<5;i++){
-                    ctx.beginPath();
-                    ctx.arc(cueBall.x+Math.cos(angle)*(i*8), cueBall.y+Math.sin(angle)*(i*8), 3,0,Math.PI*2);
-                    ctx.fillStyle = `rgba(255,200,100,${0.8-i*0.15})`;
-                    ctx.fill();
-                }
-            }
-        }
-        
-        // Fizika və topların hərəkəti
-        function updatePhysics(){
-            let anyMoving = false;
-            for(let b of balls){
-                if(Math.abs(b.vx)>0.05 || Math.abs(b.vy)>0.05) anyMoving=true;
-                b.x += b.vx;
-                b.y += b.vy;
-                b.vx *= 0.985;
-                b.vy *= 0.985;
-                // Divarlarla toqquşma
-                if(b.x - b.radius < tableMargin){ b.x = tableMargin + b.radius; b.vx = -b.vx*0.9; }
-                if(b.x + b.radius > width-tableMargin){ b.x = width-tableMargin - b.radius; b.vx = -b.vx*0.9; }
-                if(b.y - b.radius < tableMargin){ b.y = tableMargin + b.radius; b.vy = -b.vy*0.9; }
-                if(b.y + b.radius > height-tableMargin){ b.y = height-tableMargin - b.radius; b.vy = -b.vy*0.9; }
-            }
-            // Dəliklərə düşmə
-            for(let i=0;i<balls.length;i++){
-                let b = balls[i];
-                for(let p of pockets){
-                    let dist = Math.hypot(b.x-p.x, b.y-p.y);
-                    if(dist < pocketRadius+ballRadius-2){
-                        if(b.type==="cue"){
-                            // ağ top dəlikdə - cərimə
-                            b.x = width/2; b.y = height-80; b.vx=0; b.vy=0;
-                            if(currentPlayer==="player") playerScore--;
-                            else botScore--;
-                        } else {
-                            balls.splice(i,1);
-                            if(b.type==="eight") gameEnded(currentPlayer);
-                            else {
-                                if(currentPlayer==="player") playerScore++;
-                                else botScore++;
-                            }
-                            i--;
-                        }
-                        break;
-                    }
-                }
-            }
-            // Toplar arası toqquşma
-            for(let i=0;i<balls.length;i++){
-                for(let j=i+1;j<balls.length;j++){
-                    let dx = balls[i].x - balls[j].x;
-                    let dy = balls[i].y - balls[j].y;
-                    let dist = Math.hypot(dx,dy);
-                    let minDist = balls[i].radius + balls[j].radius;
-                    if(dist < minDist){
-                        let angle = Math.atan2(dy,dx);
-                        let sin = Math.sin(angle);
-                        let cos = Math.cos(angle);
-                        let vx1 = balls[i].vx, vy1 = balls[i].vy;
-                        let vx2 = balls[j].vx, vy2 = balls[j].vy;
-                        let v1 = {x:vx1*cos+vy1*sin, y:vy1*cos - vx1*sin};
-                        let v2 = {x:vx2*cos+vy2*sin, y:vy2*cos - vx2*sin};
-                        let exchange = (v1.x - v2.x)*0.5;
-                        v1.x -= exchange; v2.x += exchange;
-                        balls[i].vx = v1.x*cos - v1.y*sin;
-                        balls[i].vy = v1.x*sin + v1.y*cos;
-                        balls[j].vx = v2.x*cos - v2.y*sin;
-                        balls[j].vy = v2.x*sin + v2.y*cos;
-                        let overlap = minDist - dist;
-                        let move = overlap/2;
-                        balls[i].x += Math.cos(angle)*move;
-                        balls[i].y += Math.sin(angle)*move;
-                        balls[j].x -= Math.cos(angle)*move;
-                        balls[j].y -= Math.sin(angle)*move;
-                    }
-                }
-            }
-            return anyMoving;
-        }
-        
-        function shoot(angle, power){
-            if(shooting) return;
-            let force = Math.min(22, power*22);
-            cueBall.vx = Math.cos(angle)*force;
-            cueBall.vy = Math.sin(angle)*force;
-            shooting = true;
-        }
-        
-        function gameEnded(winnerPlayer){
-            gameOver = true;
-            winner = winnerPlayer;
-            alert(`🎉 ${winnerPlayer.toUpperCase()} QALİB OLDU! 🎉`);
-        }
-        
-        // Bot atışı (difficulty)
-        function botShoot(){
-            if(gameOver) return;
-            let targetAngle = Math.random()*Math.PI*2;
-            let targetPower = 0.5+Math.random()*0.5;
-            if(botDifficulty==="easy"){ targetAngle += (Math.random()-0.5)*1.2; targetPower*=0.7; }
-            if(botDifficulty==="hard"){ 
-                let bestBall = balls.find(b=>b.type!=="cue");
-                if(bestBall) targetAngle = Math.atan2(bestBall.y-cueBall.y, bestBall.x-cueBall.x);
-                targetPower = 0.9;
-            }
-            shoot(targetAngle, targetPower);
-            setTimeout(()=>{ if(!gameOver) endTurn(); }, 800);
-        }
-        
-        function endTurn(){
-            shooting = false;
-            if(gameOver) return;
-            if(gameMode==="vsBot"){
-                currentPlayer = currentPlayer==="player" ? "bot" : "player";
-                document.getElementById("turnText").innerHTML = currentPlayer==="player" ? "🎱 SİZİN NÖVBƏNİZ" : "🤖 BOTUN NÖVBƏSİ";
-                if(currentPlayer==="bot") setTimeout(()=>botShoot(), 300);
-            } else {
-                currentPlayer = currentPlayer==="player" ? "player2" : "player";
-                document.getElementById("turnText").innerHTML = currentPlayer==="player" ? "🎱 OYUNÇU 1" : "👥 OYUNÇU 2";
-            }
-            updateScoresUI();
-        }
-        
-        function updateScoresUI(){
-            document.getElementById("playerScore").innerText = playerScore;
-            document.getElementById("botScore").innerText = botScore;
-        }
-        
-        function resetGame(){
-            initBalls();
-            playerScore=0; botScore=0;
-            gameOver=false; winner=null; shooting=false;
-            currentPlayer="player";
-            updateScoresUI();
-            document.getElementById("turnText").innerHTML = gameMode==="vsBot" ? "🎱 SİZİN NÖVBƏNİZ" : "🎱 OYUNÇU 1";
-        }
-        
-        // İdarəetmə
-        function handleMouseMove(e){
-            const rect = canvas.getBoundingClientRect();
-            const scaleX = canvas.width/rect.width;
-            const scaleY = canvas.height/rect.height;
-            let canvasX = (e.clientX - rect.left)*scaleX;
-            let canvasY = (e.clientY - rect.top)*scaleY;
-            mouseX = Math.min(width-tableMargin, Math.max(tableMargin, canvasX));
-            mouseY = Math.min(height-tableMargin, Math.max(tableMargin, canvasY));
-        }
-        
-        function handleMouseDown(e){
-            if(gameOver) return;
-            if(currentPlayer==="player" && !shooting){
-                const rect = canvas.getBoundingClientRect();
-                const scaleX = canvas.width/rect.width;
-                const scaleY = canvas.height/rect.height;
-                let x = (e.clientX - rect.left)*scaleX;
-                let y = (e.clientY - rect.top)*scaleY;
-                if(cueBall && Math.hypot(x-cueBall.x, y-cueBall.y)<ballRadius+10){
-                    charging=true;
-                    cueStartX = x; cueStartY = y;
-                }
-            }
-        }
-        
-        function handleMouseUp(e){
-            if(charging && currentPlayer==="player" && !shooting && !gameOver){
-                let dx = mouseX - cueBall.x;
-                let dy = mouseY - cueBall.y;
-                let angle = Math.atan2(dy,dx);
-                let power = Math.min(1, Math.hypot(dx,dy)/80);
-                shoot(angle, power);
-                charging=false;
-                setTimeout(()=>{ if(!gameOver && !shooting) endTurn(); else if(!gameOver) setTimeout(()=>{if(!shooting)endTurn();},600); }, 400);
-            }
-            charging=false;
-        }
-        
-        // Animasiya döngüsü
-        function animate(){
-            let moving = updatePhysics();
-            drawTable();
-            drawBalls();
-            drawAim();
-            if(!moving && shooting){
-                shooting=false;
-                if(!gameOver) endTurn();
-            }
-            requestAnimationFrame(animate);
-        }
-        
-        // Eventlər
-        function bindEvents(){
-            canvas.addEventListener('mousemove', handleMouseMove);
-            canvas.addEventListener('mousedown', handleMouseDown);
-            canvas.addEventListener('mouseup', handleMouseUp);
-            canvas.addEventListener('touchmove', (e)=>{ e.preventDefault(); let touch=e.touches[0]; handleMouseMove(touch); });
-            canvas.addEventListener('touchstart', (e)=>{ e.preventDefault(); handleMouseDown(e.touches[0]); });
-            canvas.addEventListener('touchend', (e)=>{ e.preventDefault(); handleMouseUp(e); });
-        }
-        
-        // Mode dəyişmə
-        document.querySelectorAll('.mode-btn').forEach(btn=>{
-            btn.addEventListener('click',()=>{
-                document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('active'));
-                btn.classList.add('active');
-                botDifficulty = btn.getAttribute('data-mode');
-            });
-        });
-        document.getElementById('resetBtn').addEventListener('click',()=>resetGame());
-        document.getElementById('modeToggleBtn').addEventListener('click',()=>{
-            gameMode = gameMode==="vsBot" ? "twoPlayer" : "vsBot";
-            document.getElementById('modeToggleBtn').innerHTML = gameMode==="vsBot" ? "🤖 VS BOT / 👥 2 OYUNÇU" : "👥 2 OYUNÇU / 🤖 VS BOT";
-            resetGame();
-        });
-        
-        initPockets();
-        initBalls();
-        bindEvents();
-        animate();
-        resetGame();
-    })();
-</script>
+<div id="menu-screen" class="screen hidden">
+  <div class="game-title">BACKROOMS</div>
+  <div class="game-sub">LEVEL 0 — THE POOLROOMS</div>
+  <button class="btn" id="playBtn">🎮 OFFLINE OYNA</button>
+</div>
+
+<div id="caught-screen" class="screen hidden">
+  <div class="caught-icon">💀</div>
+  <div class="caught-title">YAKALANDIN</div>
+  <div class="game-sub">CANAVAR SENİ BULDU</div>
+  <button class="btn" id="retryBtn">🔄 TEKRAR DENE</button>
+  <button class="btn btn-secondary" id="menuBtn">🏠 ANA MENÜ</button>
+</div>
+
+<div id="win-screen" class="screen hidden">
+  <div class="win-icon">🔑🏃</div>
+  <div class="win-title">KAÇTIN!</div>
+  <div class="game-sub">ANAHTARI ALIP ÇIKMAYI BAŞARDIN</div>
+  <button class="btn" id="winRetryBtn">🔄 TEKRAR OYNA</button>
+  <button class="btn btn-secondary" id="winMenuBtn">🏠 ANA MENÜ</button>
+</div>
+
+<script src="game.js"></script>
 </body>
 </html>
