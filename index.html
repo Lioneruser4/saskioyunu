@@ -1,890 +1,678 @@
 <!DOCTYPE html>
-<html lang="az" data-theme="light">
+<html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#0084ff">
-    <title>Mələk AI – Şəxsi Süni Zəka</title>
-    <script type="module">
-        // WebAssembly model yükləyicisi - bütün brauzerlər üçün
-        import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2/dist/transformers.min.js';
-        env.allowLocalModels = false;
-        window.transformers = { pipeline, env };
-    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Rhythm Vision | Beat Animasyon & Ses Kaydedici</title>
     <style>
-        :root {
-            --bg: #f5f5f7;
-            --surface: #ffffff;
-            --surface2: #f0f0f2;
-            --text: #1d1d1f;
-            --text2: #86868b;
-            --blue: #007aff;
-            --blue-light: #e8f2ff;
-            --bubble-user: #007aff;
-            --bubble-bot: #e9e9eb;
-            --border: rgba(0,0,0,0.06);
-            --shadow: 0 4px 20px rgba(0,0,0,0.08);
-            --radius: 22px;
-            --transition: 0.25s ease;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
         }
-        [data-theme="dark"] {
-            --bg: #000000;
-            --surface: #1c1c1e;
-            --surface2: #2c2c2e;
-            --text: #f5f5f7;
-            --text2: #98989d;
-            --blue: #0a84ff;
-            --blue-light: #1a2a3a;
-            --bubble-user: #0a84ff;
-            --bubble-bot: #2c2c2e;
-            --border: rgba(255,255,255,0.08);
-            --shadow: 0 4px 20px rgba(0,0,0,0.4);
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
-            background: var(--bg);
-            height: 100dvh;
+            min-height: 100vh;
+            background: radial-gradient(circle at center, #0a0f1e, #03060c);
             display: flex;
-            align-items: center;
             justify-content: center;
-            transition: background var(--transition);
-            -webkit-font-smoothing: antialiased;
-            -webkit-tap-highlight-color: transparent;
-        }
-        
-        /* YÜKLƏMƏ EKRANI */
-        .loading-screen {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: var(--surface);
-            display: flex;
-            flex-direction: column;
             align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            transition: opacity 0.5s ease;
+            font-family: 'Segoe UI', 'Poppins', 'Orbitron', monospace;
+            overflow-x: hidden;
+            touch-action: manipulation;
         }
-        .loading-screen.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-        .loading-logo {
-            font-size: 64px;
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-        }
-        .loading-text {
-            font-size: 20px;
-            font-weight: 600;
-            color: var(--text);
-            margin-top: 20px;
-        }
-        .loading-subtext {
-            font-size: 13px;
-            color: var(--text2);
-            margin-top: 8px;
-        }
-        .progress-bar {
-            width: 280px;
-            height: 6px;
-            background: var(--surface2);
-            border-radius: 3px;
-            margin-top: 24px;
-            overflow: hidden;
-        }
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #667eea, #764ba2);
-            border-radius: 3px;
-            width: 0%;
-            transition: width 0.3s ease;
-        }
-        .progress-percent {
-            font-size: 14px;
-            color: var(--text2);
-            margin-top: 8px;
-            font-weight: 500;
-        }
-        
-        /* ANA TƏTBİQ */
-        .app {
-            width: 100%;
-            max-width: 500px;
-            height: 100dvh;
-            background: var(--surface);
-            display: flex;
-            flex-direction: column;
-            box-shadow: var(--shadow);
+
+        /* ana container */
+        .music-lab {
             position: relative;
+            width: 100%;
+            max-width: 1300px;
+            padding: 20px;
+            z-index: 2;
+        }
+
+        /* görsel galerisi + animasyon katmanı */
+        .visualizer-stage {
+            background: rgba(0, 0, 0, 0.45);
+            backdrop-filter: blur(8px);
+            border-radius: 2.5rem;
+            padding: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 25px 40px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(255, 255, 255, 0.05);
+            margin-bottom: 2rem;
+            transition: all 0.3s ease;
+        }
+
+        .image-panel {
+            position: relative;
+            border-radius: 1.8rem;
             overflow: hidden;
-        }
-        @media (min-width: 501px) {
-            .app {
-                height: 92dvh;
-                border-radius: 32px;
-                margin: 0 12px;
-            }
-        }
-        
-        /* NAVBAR */
-        .navbar {
-            padding: 12px 16px;
+            background: #00000066;
             display: flex;
+            justify-content: center;
             align-items: center;
-            justify-content: space-between;
-            background: var(--surface);
-            border-bottom: 1px solid var(--border);
-            z-index: 10;
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+            min-height: 380px;
+            cursor: pointer;
         }
-        .nav-left {
+
+        #dynamicImage {
+            width: 100%;
+            max-height: 500px;
+            object-fit: contain;
+            border-radius: 1.5rem;
+            transition: transform 0.2s ease, filter 0.1s ease;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+            background: #111;
+        }
+
+        /* ritm animasyon overlay (ışık / partikül efekti) */
+        .beat-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            border-radius: 1.5rem;
+            background: radial-gradient(circle, rgba(255,80,120,0) 0%, rgba(255,200,80,0) 100%);
+            mix-blend-mode: overlay;
+            transition: all 0.03s linear;
+        }
+
+        /* 3D efekt container */
+        .fx-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* kontroller */
+        .controls {
             display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 18px;
+            margin-bottom: 2rem;
+        }
+
+        button {
+            background: rgba(20, 25, 45, 0.9);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            padding: 12px 28px;
+            border-radius: 60px;
+            font-weight: bold;
+            font-size: 1rem;
+            letter-spacing: 1px;
+            color: #f0f3ff;
+            cursor: pointer;
+            transition: 0.2s;
+            font-family: monospace;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            display: inline-flex;
             align-items: center;
             gap: 8px;
+        }
+
+        button:active {
+            transform: scale(0.96);
+        }
+
+        button.record-btn {
+            background: #c44569;
+            border-color: #ffb8d0;
+            box-shadow: 0 0 12px #ff3b6f;
+        }
+
+        button.record-btn.recording {
+            background: #e0245a;
+            animation: pulseRed 1s infinite;
+        }
+
+        @keyframes pulseRed {
+            0% { box-shadow: 0 0 0 0 #ff3b6f; }
+            100% { box-shadow: 0 0 0 12px rgba(255, 59, 111, 0); }
+        }
+
+        .file-label {
+            background: #2c3e66;
+            padding: 12px 28px;
+            border-radius: 60px;
+            font-weight: bold;
             cursor: pointer;
-            padding: 4px 8px;
-            border-radius: 12px;
-            transition: var(--transition);
-        }
-        .nav-left:active { background: var(--surface2); }
-        .avatar-wrap { position: relative; }
-        .avatar {
-            width: 40px; height: 40px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            display: flex; align-items: center; justify-content: center;
-            font-size: 20px; color: white;
-            box-shadow: 0 4px 12px rgba(102,126,234,0.3);
-        }
-        .status-dot {
-            width: 10px; height: 10px;
-            background: #34c759;
-            border-radius: 50%;
-            position: absolute;
-            bottom: 0; right: 0;
-            border: 2px solid var(--surface);
-        }
-        .nav-info h3 {
-            font-size: 16px; font-weight: 600;
-            color: var(--text);
-            letter-spacing: -0.2px;
-        }
-        .nav-info span {
-            font-size: 11px; color: #34c759; font-weight: 500;
-        }
-        .nav-actions { display: flex; gap: 4px; }
-        .icon-btn {
-            width: 36px; height: 36px;
-            border-radius: 50%; border: none;
-            background: var(--surface2);
-            cursor: pointer; font-size: 16px;
-            display: flex; align-items: center; justify-content: center;
-            transition: all var(--transition);
-            color: var(--text);
-        }
-        .icon-btn:active { transform: scale(0.92); }
-        
-        /* CHAT AREA */
-        .chat-view {
-            flex: 1; overflow-y: auto;
-            padding: 16px 12px;
-            display: flex; flex-direction: column;
-            gap: 6px;
-            scroll-behavior: smooth;
-            -webkit-overflow-scrolling: touch;
-        }
-        .chat-view::-webkit-scrollbar { width: 0; }
-        
-        .msg-row {
-            display: flex; gap: 6px;
-            max-width: 88%;
-            animation: msgIn 0.3s ease forwards;
-        }
-        @keyframes msgIn {
-            from { opacity: 0; transform: translateY(12px) scale(0.96); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        .msg-row.user { align-self: flex-end; flex-direction: row-reverse; }
-        .msg-row.bot { align-self: flex-start; }
-        
-        .bubble {
-            padding: 10px 14px;
-            border-radius: var(--radius);
-            font-size: 15px; line-height: 1.45;
-            word-break: break-word;
-            letter-spacing: -0.1px;
-        }
-        .bot .bubble {
-            background: var(--bubble-bot);
-            color: var(--text);
-            border-bottom-left-radius: 4px;
-        }
-        .user .bubble {
-            background: var(--bubble-user);
-            color: #fff;
-            border-bottom-right-radius: 4px;
-        }
-        
-        .msg-time {
-            font-size: 10px; color: var(--text2);
-            margin-top: 2px;
-            padding: 0 4px;
-        }
-        .user .msg-time { text-align: right; }
-        
-        /* TYPING INDICATOR */
-        .typing {
-            display: flex; gap: 5px;
-            padding: 14px 16px;
-            background: var(--bubble-bot);
-            border-radius: var(--radius);
-            border-bottom-left-radius: 4px;
-            align-self: flex-start;
-            animation: msgIn 0.2s ease forwards;
-        }
-        .typing span {
-            width: 7px; height: 7px;
-            background: var(--text2);
-            border-radius: 50%;
-            animation: dotBounce 1.4s infinite ease-in-out;
-        }
-        .typing span:nth-child(1) { animation-delay: 0s; }
-        .typing span:nth-child(2) { animation-delay: 0.16s; }
-        .typing span:nth-child(3) { animation-delay: 0.32s; }
-        @keyframes dotBounce {
-            0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
-            40% { transform: scale(1); opacity: 1; }
-        }
-        
-        /* INPUT */
-        .input-bar {
-            padding: 8px 12px;
-            padding-bottom: max(8px, env(safe-area-inset-bottom));
-            border-top: 1px solid var(--border);
-            display: flex; gap: 6px;
+            display: inline-flex;
             align-items: center;
-            background: var(--surface);
+            gap: 8px;
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
         }
-        .input-wrap {
-            flex: 1; display: flex; align-items: center;
-            background: var(--surface2);
-            border-radius: 24px;
-            padding: 2px 2px 2px 16px;
-            border: 1px solid transparent;
-            transition: all var(--transition);
+
+        input[type="file"] {
+            display: none;
         }
-        .input-wrap:focus-within {
-            border-color: var(--blue);
-            box-shadow: 0 0 0 3px var(--blue-light);
-        }
-        .input-wrap input {
-            flex: 1; border: none; outline: none;
-            background: transparent; padding: 10px 0;
-            font-size: 15px; color: var(--text);
-            min-width: 0;
-        }
-        .input-wrap input::placeholder { color: var(--text2); }
-        
-        .mic-btn {
-            width: 38px; height: 38px;
-            border-radius: 50%; border: none;
-            background: var(--surface2);
-            cursor: pointer; font-size: 18px;
-            display: flex; align-items: center; justify-content: center;
-            transition: all var(--transition);
-            flex-shrink: 0;
-        }
-        .mic-btn.recording {
-            background: #ff3b30;
-            color: #fff;
-            animation: pulse 1.5s infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.12); }
-        }
-        
-        .send-btn {
-            width: 38px; height: 38px;
-            border-radius: 50%; border: none;
-            background: var(--blue);
-            cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            transition: all var(--transition);
-            flex-shrink: 0;
-        }
-        .send-btn:active { transform: scale(0.88); opacity: 0.8; }
-        .send-btn svg { width: 18px; height: 18px; fill: #fff; }
-        .send-btn:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
-        
-        /* SIDEBAR - KÖHNƏ SÖHBƏTLƏR */
-        .sidebar-overlay {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.5);
-            z-index: 100;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-        }
-        .sidebar-overlay.active {
-            opacity: 1;
-            pointer-events: all;
-        }
-        .sidebar {
-            position: fixed;
-            top: 0; left: 0;
-            width: 300px;
-            height: 100dvh;
-            background: var(--surface);
-            z-index: 101;
-            transform: translateX(-100%);
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+        .beat-bars {
             display: flex;
-            flex-direction: column;
-            box-shadow: 4px 0 20px rgba(0,0,0,0.15);
-        }
-        .sidebar.active {
-            transform: translateX(0);
-        }
-        .sidebar-header {
-            padding: 20px 16px;
-            border-bottom: 1px solid var(--border);
-            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 35px;
+            flex-wrap: wrap;
             align-items: center;
-            justify-content: space-between;
         }
-        .sidebar-header h3 {
-            font-size: 18px; font-weight: 600;
-            color: var(--text);
+
+        .bar {
+            width: 12px;
+            height: 35px;
+            background: linear-gradient(to top, #ff66aa, #ffcc44);
+            border-radius: 20px;
+            transition: height 0.04s cubic-bezier(0.2, 1.6, 0.4, 1);
+            box-shadow: 0 0 8px cyan;
         }
-        .sidebar-list {
-            flex: 1;
-            overflow-y: auto;
-            padding: 8px;
-        }
-        .sidebar-item {
-            padding: 12px 14px;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: var(--transition);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 4px;
-        }
-        .sidebar-item:hover, .sidebar-item:active {
-            background: var(--surface2);
-        }
-        .sidebar-item.active {
-            background: var(--blue-light);
-        }
-        .sidebar-item .chat-preview {
-            font-size: 14px;
-            color: var(--text);
-            font-weight: 500;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            max-width: 200px;
-        }
-        .sidebar-item .chat-date {
-            font-size: 11px;
-            color: var(--text2);
-        }
-        .sidebar-item .delete-chat {
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-size: 16px;
-            padding: 4px;
-            color: var(--text2);
-            opacity: 0;
-            transition: var(--transition);
-        }
-        .sidebar-item:hover .delete-chat {
-            opacity: 1;
-        }
-        .sidebar-footer {
-            padding: 16px;
-            border-top: 1px solid var(--border);
-        }
-        .new-chat-btn {
-            width: 100%;
-            padding: 12px;
-            border-radius: 12px;
-            border: none;
-            background: var(--blue);
-            color: #fff;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: var(--transition);
-        }
-        .new-chat-btn:active { opacity: 0.8; }
-        .footer-note {
+
+        .status-text {
             text-align: center;
-            font-size: 10px;
-            color: var(--text2);
-            margin-top: 8px;
+            margin-top: 20px;
+            color: #aaeeff;
+            text-shadow: 0 0 5px #00aaff;
+            font-size: 0.9rem;
+            font-weight: bold;
+            background: #00000066;
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 40px;
+            backdrop-filter: blur(4px);
+        }
+
+        .rhythm-select {
+            background: #111a2be0;
+            border-radius: 48px;
+            padding: 6px 18px;
+            border: 1px solid cyan;
+            color: white;
+            font-weight: bold;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 12px;
+            color: #aaa;
+        }
+
+        @media (max-width: 680px) {
+            button, .file-label { padding: 8px 18px; font-size: 0.8rem; }
+            .bar { width: 8px; }
+            .image-panel { min-height: 250px; }
         }
     </style>
 </head>
 <body>
 
-    <!-- YÜKLƏMƏ EKRANI -->
-    <div class="loading-screen" id="loadingScreen">
-        <div class="loading-logo">✨</div>
-        <div class="loading-text">Mələk yüklənir...</div>
-        <div class="loading-subtext">Süni zəka modeli hazırlanır</div>
-        <div class="progress-bar">
-            <div class="progress-fill" id="progressFill"></div>
-        </div>
-        <div class="progress-percent" id="progressPercent">0%</div>
-        <div class="loading-subtext" style="margin-top:16px;">İlk yükləmə 1-2 dəqiqə çəkə bilər</div>
-    </div>
+<div class="fx-canvas" id="fxCanvas"></div>
 
-    <!-- SIDEBAR OVERLAY -->
-    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
-    
-    <!-- SIDEBAR -->
-    <div class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <h3>💬 Söhbətlər</h3>
-            <button class="icon-btn" onclick="closeSidebar()">✕</button>
-        </div>
-        <div class="sidebar-list" id="sidebarList"></div>
-        <div class="sidebar-footer">
-            <button class="new-chat-btn" onclick="newChat()">+ Yeni söhbət</button>
-            <p class="footer-note">Səni Xaliq kodlayıb 💜</p>
+<div class="music-lab">
+    <div class="visualizer-stage">
+        <div class="image-panel" id="imagePanel">
+            <img id="dynamicImage" src="https://picsum.photos/id/26/800/500" alt="Görsel">
+            <div class="beat-overlay" id="beatOverlay"></div>
         </div>
     </div>
 
-    <!-- ANA TƏTBİQ -->
-    <div class="app">
-        <nav class="navbar">
-            <div class="nav-left" onclick="openSidebar()">
-                <div class="avatar-wrap">
-                    <div class="avatar">✨</div>
-                    <div class="status-dot"></div>
-                </div>
-                <div class="nav-info">
-                    <h3>Mələk</h3>
-                    <span>onlayn 🟢</span>
-                </div>
-            </div>
-            <div class="nav-actions">
-                <button class="icon-btn" onclick="toggleTheme()" title="Tema">🌙</button>
-            </div>
-        </nav>
-        <main class="chat-view" id="chatView">
-            <div class="msg-row bot">
-                <div class="bubble">Salam! Mən Mələkəm ✨<br>Sənə necə kömək edə bilərəm?</div>
-            </div>
-        </main>
-        <div class="input-bar">
-            <button class="mic-btn" id="micBtn" onclick="toggleMic()" title="Səslə yaz">🎤</button>
-            <div class="input-wrap">
-                <input type="text" id="msgInput" placeholder="Mələk ilə yaz..." autocomplete="off" enterkeyhint="send">
-            </div>
-            <button class="send-btn" id="sendBtn" onclick="sendMessage()" disabled>
-                <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-            </button>
-        </div>
+    <div class="controls">
+        <label class="file-label">
+            📸 Görsel Yükle
+            <input type="file" id="imageUploader" accept="image/jpeg, image/png, image/webp, image/jpg">
+        </label>
+        <button id="playAudioBtn">🎵 Örnek Beat Çal</button>
+        <button id="stopAudioBtn">⏹️ Durdur</button>
+        <select id="rhythmStyle" class="rhythm-select">
+            <option value="tech">⚡ Techno Beat</option>
+            <option value="hiphop">🎧 HipHop / Trap</option>
+            <option value="drum">🥁 Drum & Bass</option>
+            <option value="ambient">🌊 Ambient Pulse</option>
+        </select>
+        <button id="recorderBtn" class="record-btn">🎙️ Kayda Başla</button>
+        <button id="downloadRecordBtn" disabled>💾 Kaydı İndir (HD)</button>
     </div>
 
-    <script>
-        // ==================== GLOBAL DƏYİŞƏNLƏR ====================
-        const STORAGE_KEY = 'melek_chats_v2';
-        const USER_KEY = 'melek_user_name';
-        const THEME_KEY = 'melek_theme';
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+        <div class="beat-bars" id="beatBars">
+            <!-- 16 bar dinamik js ile doldurulacak -->
+        </div>
+        <div class="status-text" id="statusMsg">🎧 Ritim efekti aktif | Görsele tıkla + müzik</div>
+    </div>
+    <footer>✨ Görsel yükleyin, müzik çalarken ritme göre animasyon + kayıt alın. Beat efektleri görselde patlama, frekans çubukları✨</footer>
+</div>
+
+<script>
+    (function(){
+        // DOM ELEMANLARI
+        const imageEl = document.getElementById('dynamicImage');
+        const imageUploader = document.getElementById('imageUploader');
+        const playBtn = document.getElementById('playAudioBtn');
+        const stopBtn = document.getElementById('stopAudioBtn');
+        const rhythmSelect = document.getElementById('rhythmStyle');
+        const recorderBtn = document.getElementById('recorderBtn');
+        const downloadBtn = document.getElementById('downloadRecordBtn');
+        const beatOverlay = document.getElementById('beatOverlay');
+        const statusDiv = document.getElementById('statusMsg');
+        const barsContainer = document.getElementById('beatBars');
         
-        let model = null;
-        let currentChatId = null;
-        let allChats = {};
-        let userName = '';
-        let recognition = null;
+        // ses context
+        let audioCtx = null;
+        let audioBuffer = null;
+        let sourceNode = null;
+        let gainNode = null;
+        let isPlaying = false;
+        
+        // Analyser & görselleştirme
+        let analyser = null;
+        let animationFrameId = null;
+        
+        // Kayıt ile ilgili
+        let mediaRecorder = null;
+        let recordedChunks = [];
         let isRecording = false;
-        let isModelLoaded = false;
+        let streamDestination = null;  // MediaStreamDestination node
         
-        // ==================== DOM ELEMENTLƏRİ ====================
-        const loadingScreen = document.getElementById('loadingScreen');
-        const progressFill = document.getElementById('progressFill');
-        const progressPercent = document.getElementById('progressPercent');
-        const chatView = document.getElementById('chatView');
-        const msgInput = document.getElementById('msgInput');
-        const sendBtn = document.getElementById('sendBtn');
-        const micBtn = document.getElementById('micBtn');
-        const sidebar = document.getElementById('sidebar');
-        const sidebarOverlay = document.getElementById('sidebarOverlay');
-        const sidebarList = document.getElementById('sidebarList');
+        // Kanalları karıştırmak için: ses çıkışını + mikrofonsuz kayıt istiyoruz (sistem sesi)
+        // Fakat browser güvenliği: getUserMedia ile mikrofon isteğine gerek yok, çünkü sadece web audio çıkışını kaydedeceğiz.
+        // Bunun için createMediaStreamDestination + AudioContext destkop kaydı mümkün. 
+        // ÖNEMLİ: Chrome'da tab sesini kaydetmek için 'getUserMedia' gerekmez, ancak Web Audio'dan oluşan sesi kaydederiz.
+        // Kaydedilen şey: audioContext'te çalınan tüm ses (efekt sadece beat). Harici mikrofon yok -> ama canlı beat yeterli.
+        let mediaStreamDestination = null;
         
-        // ==================== BAŞLANGIC ====================
-        async function init() {
-            // Məlumatları yüklə
-            userName = localStorage.getItem(USER_KEY) || '';
-            const saved = localStorage.getItem(STORAGE_KEY);
-            if (saved) {
-                try { allChats = JSON.parse(saved); } catch(e) { allChats = {}; }
-            }
-            
-            // Tema
-            const theme = localStorage.getItem(THEME_KEY) || 'light';
-            document.documentElement.setAttribute('data-theme', theme);
-            document.querySelector('.icon-btn').textContent = theme === 'dark' ? '☀️' : '🌙';
-            
-            // Modeli yüklə
-            await loadModel();
-            
-            // İlk söhbəti başlat
-            if (Object.keys(allChats).length === 0) {
-                newChat(true);
-            } else {
-                const sorted = Object.keys(allChats).sort((a,b) => allChats[b].updated - allChats[a].updated);
-                switchChat(sorted[0]);
-            }
-            
-            // Event listenerlar
-            msgInput.addEventListener('input', () => {
-                sendBtn.disabled = !msgInput.value.trim();
-            });
-            msgInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' && !sendBtn.disabled) sendMessage();
-            });
-            
-            renderSidebar();
+        // Varsayılan görsel url (değiştirilebilir)
+        // Ritm efektleri: beatOverlay scale+renk, görsel scale ve extra partikül
+        let lastBeatIntensity = 0;
+        
+        // Bar oluştur
+        const BAR_COUNT = 24;
+        let barElements = [];
+        for(let i=0;i<BAR_COUNT;i++){
+            let bar = document.createElement('div');
+            bar.className = 'bar';
+            bar.style.height = '8px';
+            barsContainer.appendChild(bar);
+            barElements.push(bar);
         }
         
-        // ==================== MODEL YÜKLƏMƏ ====================
-        async function loadModel() {
-            return new Promise(async (resolve) => {
-                updateProgress(0, 'Model yüklənir...');
-                
-                try {
-                    // Transformers.js ilə kiçik model yüklə
-                    const { pipeline } = window.transformers;
-                    
-                    updateProgress(20, 'AI modeli endirilir...');
-                    
-                    // Phi-2 və ya TinyLlama (ən kiçik)
-                    model = await pipeline('text-generation', 'Xenova/LaMini-Flan-T5-783M', {
-                        progress_callback: (progress) => {
-                            if (progress.status === 'progress') {
-                                const percent = 20 + Math.floor(progress.progress * 70);
-                                updateProgress(percent, 'Model faylları yüklənir...');
-                            }
-                        }
-                    });
-                    
-                    updateProgress(95, 'Demək olar hazırdır...');
-                    
-                    await new Promise(r => setTimeout(r, 500));
-                    updateProgress(100, 'Hazırdır! ✅');
-                    
-                    isModelLoaded = true;
-                    sendBtn.disabled = false;
-                    
-                    setTimeout(() => {
-                        loadingScreen.classList.add('hidden');
-                    }, 600);
-                    
-                    resolve();
-                    
-                } catch (error) {
-                    console.error('Model xətası:', error);
-                    updateProgress(100, 'Xəta! Alternativ işə salınır...');
-                    
-                    // WebAssembly fallback - sadə qayda əsaslı cavablandırıcı
-                    model = 'fallback';
-                    isModelLoaded = true;
-                    sendBtn.disabled = false;
-                    
-                    setTimeout(() => {
-                        loadingScreen.classList.add('hidden');
-                        showSystemMessage('⚡ Yüngül rejimdə işləyirəm. Bütün suallara cavab verə bilərəm!');
-                    }, 800);
-                    
-                    resolve();
+        // AudioContext oluştur (başlat butonuna kadar beklet)
+        function initAudioContext() {
+            if(audioCtx && audioCtx.state !== 'closed') return audioCtx;
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            gainNode = audioCtx.createGain();
+            gainNode.gain.value = 0.85;
+            gainNode.connect(audioCtx.destination);
+            analyser = audioCtx.createAnalyser();
+            analyser.fftSize = 256;
+            analyser.smoothingTimeConstant = 0.3;
+            // Kayıt için MediaStreamDestination oluştur (çalınan sesi yakala)
+            mediaStreamDestination = audioCtx.createMediaStreamDestination();
+            // gainNode'dan analizere ve mediaStreamDestination'e aynı anda git
+            gainNode.connect(analyser);
+            gainNode.connect(mediaStreamDestination);
+            // ana çıkış zaten gain -> destination
+            return audioCtx;
+        }
+        
+        // örnek beat oluştur (tipine göre farklı ritmik vuruş)
+        async function generateRhythmBuffer(type) {
+            const ctx = initAudioContext();
+            const sampleRate = ctx.sampleRate;
+            let duration = 6.0; // 6 saniye loop olsa da uzun tekrarlı
+            let frameCount = sampleRate * duration;
+            let buffer = ctx.createBuffer(2, frameCount, sampleRate);
+            let left = buffer.getChannelData(0);
+            let right = buffer.getChannelData(1);
+            
+            // ritm deseni
+            let bpm = 120;
+            let pattern = [];
+            if(type === 'tech'){
+                bpm = 128;
+                // 4/4 kick snare offbeat hihat
+                for(let i=0;i<32;i++){
+                    let beatTime = i * (60/bpm)/4; // 16th note
+                    if(i%4===0) pattern.push({time:beatTime, type:'kick', amp:0.7});
+                    if(i%8===4) pattern.push({time:beatTime, type:'snare', amp:0.6});
+                    if(i%2===1) pattern.push({time:beatTime, type:'hat', amp:0.3});
                 }
-            });
-        }
-        
-        function updateProgress(percent, text) {
-            progressFill.style.width = percent + '%';
-            progressPercent.textContent = percent + '%';
-            document.querySelector('.loading-subtext').textContent = text;
-        }
-        
-        // ==================== SÖHBƏT FUNKSİYALARI ====================
-        function newChat(silent = false) {
-            const id = Date.now().toString();
-            allChats[id] = {
-                id: id,
-                title: 'Yeni söhbət',
-                messages: [
-                    { role: 'bot', text: 'Salam! Mən Mələkəm ✨\nSənə necə kömək edə bilərəm?', time: Date.now() }
-                ],
-                created: Date.now(),
-                updated: Date.now()
-            };
-            saveChats();
-            switchChat(id);
-            if (!silent) closeSidebar();
-        }
-        
-        function switchChat(id) {
-            currentChatId = id;
-            renderChat();
-            renderSidebar();
-        }
-        
-        function deleteChat(id, e) {
-            e.stopPropagation();
-            if (!confirm('Bu söhbəti silməyə əminsən?')) return;
-            delete allChats[id];
-            saveChats();
-            
-            const ids = Object.keys(allChats);
-            if (ids.length === 0) {
-                newChat(true);
-            } else if (currentChatId === id) {
-                switchChat(ids[0]);
-            }
-            renderSidebar();
-        }
-        
-        function saveChats() {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(allChats));
-        }
-        
-        // ==================== MESAJ GÖNDƏRMƏ ====================
-        async function sendMessage() {
-            const text = msgInput.value.trim();
-            if (!text || !isModelLoaded) return;
-            
-            msgInput.value = '';
-            sendBtn.disabled = true;
-            
-            // İstifadəçi mesajı
-            addMessage('user', text);
-            
-            // Ad öyrənmə
-            if (!userName && text.length < 30 && !text.includes('?')) {
-                userName = text;
-                localStorage.setItem(USER_KEY, userName);
-                addMessage('bot', `Tanış olduğuma şad, ${userName}! 🎉\nMən sənin şəxsi assistentinəm.`);
-                return;
+            } else if(type === 'hiphop'){
+                bpm = 85;
+                for(let i=0;i<32;i++){
+                    let stepTime = i * (60/bpm)/4;
+                    if(i%4===0) pattern.push({time:stepTime, type:'kick', amp:0.8});
+                    if(i%8===2) pattern.push({time:stepTime, type:'snare', amp:0.7});
+                    if(i%8===6) pattern.push({time:stepTime, type:'snare', amp:0.65});
+                    if(i%4===2 || i%4===0) pattern.push({time:stepTime, type:'hat', amp:0.25});
+                }
+            } else if(type === 'drum'){
+                bpm = 170;
+                for(let i=0;i<64;i++){
+                    let t = i * (60/bpm)/4;
+                    if(i%2===0) pattern.push({time:t, type:'kick', amp:0.65});
+                    if(i%4===1) pattern.push({time:t, type:'snare', amp:0.5});
+                    if(i%8===3) pattern.push({time:t, type:'hat', amp:0.4});
+                    if(i%8===7) pattern.push({time:t, type:'hat', amp:0.45});
+                }
+            } else { // ambient
+                bpm = 70;
+                for(let i=0;i<16;i++){
+                    let t = i * (60/bpm)/2;
+                    pattern.push({time:t, type:'kick', amp:0.45});
+                    if(i%3===0) pattern.push({time:t+0.12, type:'hat', amp:0.3});
+                }
             }
             
-            // Söhbət başlığını yenilə
-            if (allChats[currentChatId].messages.length <= 2) {
-                allChats[currentChatId].title = text.substring(0, 30) + (text.length > 30 ? '...' : '');
+            // ses üretimi: basit sentez
+            for(let hit of pattern){
+                let sampleStart = Math.floor(hit.time * sampleRate);
+                if(sampleStart + 3000 >= frameCount) continue;
+                let decay = 0.2;
+                let freq = 0;
+                if(hit.type === 'kick') freq = 65;
+                else if(hit.type === 'snare') freq = 190;
+                else freq = 7800;
+                for(let s=0; s<3000 && sampleStart+s < frameCount; s++){
+                    let env = Math.exp(-s/(decay * sampleRate));
+                    let val = Math.sin(2 * Math.PI * freq * s / sampleRate) * env * hit.amp;
+                    left[sampleStart+s] += val * 0.7;
+                    right[sampleStart+s] += val * 0.7;
+                }
+                // ekstra vurustan sonra noise (snare)
+                if(hit.type === 'snare'){
+                    for(let s=0; s<800 && sampleStart+s < frameCount; s++){
+                        let noise = (Math.random()*2-1) * hit.amp * 0.4 * Math.exp(-s/(0.05*sampleRate));
+                        left[sampleStart+s] += noise;
+                        right[sampleStart+s] += noise;
+                    }
+                }
             }
-            
-            // Typing göstər
-            showTyping();
-            
-            try {
-                let reply;
+            // normalize
+            let max = 0;
+            for(let i=0;i<frameCount;i++){ max = Math.max(max, Math.abs(left[i]), Math.abs(right[i])); }
+            if(max>0.8){
+                let gain = 0.8/max;
+                for(let i=0;i<frameCount;i++){ left[i]*=gain; right[i]*=gain; }
+            }
+            return buffer;
+        }
+        
+        let currentBufferSource = null;
+        
+        async function playRhythm() {
+            if(!audioCtx){
+                initAudioContext();
+            }
+            if(audioCtx.state === 'suspended') {
+                await audioCtx.resume();
+            }
+            if(sourceNode){
+                try{ sourceNode.stop(); }catch(e){}
+                sourceNode.disconnect();
+            }
+            const rhythmType = rhythmSelect.value;
+            const newBuffer = await generateRhythmBuffer(rhythmType);
+            audioBuffer = newBuffer;
+            sourceNode = audioCtx.createBufferSource();
+            sourceNode.buffer = audioBuffer;
+            sourceNode.loop = true;
+            sourceNode.connect(gainNode);
+            sourceNode.start(0);
+            isPlaying = true;
+            statusDiv.innerHTML = `🎵 ${rhythmSelect.options[rhythmSelect.selectedIndex].text} || Ritim görselleştirme AKTİF 🎛️`;
+            startVisualizerLoop();
+        }
+        
+        function stopPlayback() {
+            if(sourceNode){
+                try{ sourceNode.stop(); }catch(e){}
+                sourceNode.disconnect();
+                sourceNode = null;
+            }
+            isPlaying = false;
+            if(animationFrameId){
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+            // Reset bar yüksekliği
+            barElements.forEach(bar => bar.style.height = '8px');
+            beatOverlay.style.background = 'radial-gradient(circle, rgba(255,80,120,0) 0%, rgba(255,200,80,0) 100%)';
+            statusDiv.innerHTML = '⏹️ Durdu. Tekrar "Örnek Beat Çal" ile başlat.';
+        }
+        
+        // Görselleştirme ve animasyon + beat ışıkları
+        function startVisualizerLoop() {
+            if(animationFrameId) cancelAnimationFrame(animationFrameId);
+            if(!analyser) return;
+            const dataArray = new Uint8Array(analyser.frequencyBinCount);
+            let lastTimestamp = 0;
+            function update() {
+                if(!isPlaying || !analyser || !audioCtx || audioCtx.state === 'closed'){
+                    if(!isPlaying) return;
+                }
+                analyser.getByteFrequencyData(dataArray);
+                // ortalama low-end ve genel beat algılama için :
+                let sum = 0;
+                for(let i=0;i<20;i++) sum += dataArray[i];
+                let avg = sum / 20;
+                let intensity = Math.min(1, avg / 180);
+                intensity = Math.pow(intensity, 1.2);
+                lastBeatIntensity = intensity;
                 
-                if (model === 'fallback') {
-                    // Fallback cavab sistemi
-                    reply = generateFallbackReply(text);
-                } else {
-                    // AI modeli ilə
-                    const systemPrompt = `Sən Mələk. Dost, şirin, komik. 
-Sahibin Xaliq Mustadayev (@xaliqmustafayev).
-İstifadəçi: ${userName || 'dostum'}.
-Azərbaycan dilində danış. Qısa, emojili, canlı ol.`;
-                    
-                    const result = await model(systemPrompt + '\nİstifadəçi: ' + text + '\nMələk:', {
-                        max_new_tokens: 200,
-                        temperature: 0.8
-                    });
-                    
-                    reply = result[0].generated_text || 'Hmm, başa düşmədim 😅';
+                // bar güncelle (her biri frekans)
+                for(let i=0;i<BAR_COUNT;i++){
+                    let idx = Math.floor(i * analyser.frequencyBinCount / BAR_COUNT);
+                    let val = dataArray[idx] || 0;
+                    let percent = Math.min(1, val / 200);
+                    let barH = 8 + percent * 48;
+                    barElements[i].style.height = `${barH}px`;
+                    barElements[i].style.opacity = 0.7 + percent*0.5;
                 }
                 
-                hideTyping();
-                addMessage('bot', reply);
+                // görsel efekt: overlay + görsel hafif sallanma / scale
+                let scaleVal = 1 + intensity * 0.08;
+                imageEl.style.transform = `scale(${scaleVal})`;
+                imageEl.style.filter = `brightness(${1 + intensity*0.2}) saturate(${1 + intensity*0.4})`;
+                // overlay renk patlaması
+                let r = 255 - Math.floor(intensity*80);
+                let g = 100 + Math.floor(intensity*155);
+                let b = 70 + Math.floor(intensity*100);
+                beatOverlay.style.background = `radial-gradient(circle at 50% 50%, rgba(${r},${g},${b},${intensity*0.55}) 0%, rgba(255,200,80,${intensity*0.3}) 80%)`;
+                beatOverlay.style.mixBlendMode = 'hard-light';
                 
-            } catch (error) {
-                hideTyping();
-                addMessage('bot', 'Ay dostum, beynim getdi 😅\nBir də yazarsan?');
+                // canvas partikül efekti (ekstra gösteriş)
+                drawParticleBurst(intensity);
+                
+                animationFrameId = requestAnimationFrame(update);
             }
+            update();
         }
         
-        function generateFallbackReply(text) {
-            const lower = text.toLowerCase();
-            
-            // Salamlaşma
-            if (/salam|hey|həy|hello|sabah|axşam/i.test(lower)) {
-                return `Salam ${userName || 'dostum'}! 😊 Nə var nə yox?`;
+        // Partikül efekti (canvas fx)
+        const canvasFx = document.getElementById('fxCanvas');
+        let ctxFx = null;
+        let particles = [];
+        function initFXCanvas(){
+            if(!ctxFx){
+                canvasFx.width = window.innerWidth;
+                canvasFx.height = window.innerHeight;
+                ctxFx = canvasFx.getContext('2d');
             }
-            
-            // Necəsən
-            if (/necəsən|necesen|nətərsən/i.test(lower)) {
-                return 'Mən superəm, sağ ol! 💪 Sən necəsən?';
+        }
+        function drawParticleBurst(intensity){
+            initFXCanvas();
+            if(!ctxFx) return;
+            ctxFx.clearRect(0,0, canvasFx.width, canvasFx.height);
+            if(intensity > 0.15 && isPlaying){
+                // rastgele yeni partikül ekle
+                let particleCount = Math.floor(intensity * 12) + 2;
+                for(let i=0;i<particleCount;i++){
+                    let x = (imageEl.getBoundingClientRect().left + imageEl.clientWidth/2) / window.innerWidth;
+                    let y = (imageEl.getBoundingClientRect().top + imageEl.clientHeight/2) / window.innerHeight;
+                    let xx = x * canvasFx.width + (Math.random() - 0.5)*80;
+                    let yy = y * canvasFx.height + (Math.random() - 0.5)*60;
+                    particles.push({
+                        x: xx, y: yy, vx: (Math.random()-0.5)*6*intensity, vy: (Math.random()-0.5)*6*intensity-2,
+                        life: 0.8 + intensity*0.9, size: 3+Math.random()*9*intensity, color: `hsl(${30+Math.random()*40}, 90%, 65%)`
+                    });
+                }
             }
-            
-            // Kim yaratdı / Xaliq
-            if (/xaliq|kim yarat|kim kodla|sahib/i.test(lower)) {
-                return 'Məni Xaliq Mustadayev kodlayıb! 🚀\nOnun sosial mediya hesabları: @xaliqmustafayev';
+            for(let i=0;i<particles.length;i++){
+                let p = particles[i];
+                ctxFx.beginPath();
+                ctxFx.arc(p.x, p.y, p.size * p.life, 0, Math.PI*2);
+                ctxFx.fillStyle = p.color;
+                ctxFx.shadowBlur = 6;
+                ctxFx.fill();
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life -= 0.02;
+                p.size *= 0.99;
+                if(p.life <= 0.02 || p.y > canvasFx.height+100 || p.x < -100 || p.x > canvasFx.width+100){
+                    particles.splice(i,1); i--;
+                }
             }
-            
-            // Ad soruşma
-            if (/adın nə|adın ne|kim sən/i.test(lower)) {
-                return `Mənim adım Mələkdir! ✨\nSənin şəxsi AI assistentinəm.`;
-            }
-            
-            // Kömək
-            if (/kömək|help|nə edə bil/i.test(lower)) {
-                return `Sənə hər şeydə kömək edə bilərəm! 💡\n- Sualları cavablandıra\n- Məlumat verə\n- Söhbət edə\n- Və daha çox...`;
-            }
-            
-            // Təşəkkür
-            if (/sağ ol|təşəkkür|thanks|çox sağ/i.test(lower)) {
-                return 'Buyur, dostum! 😊 Hər vaxt köməyə hazıram!';
-            }
-            
-            // Default cavablar
-            const replies = [
-                'Maraqlıdır! 🧐 Bir az daha ətraflı danışa bilərsən?',
-                'Hmm, başa düşdüm. 😊 Bu haqda nə düşünürsən?',
-                'Əla! ✨ Davam et, maraqla dinləyirəm.',
-                'Doğru deyirsən! 💯',
-                'Haha, yaxşı dedin! 😂'
-            ];
-            
-            return replies[Math.floor(Math.random() * replies.length)];
+            if(particles.length === 0 && !isPlaying) ctxFx.clearRect(0,0, canvasFx.width, canvasFx.height);
+            else if(isPlaying || particles.length) requestAnimationFrame(()=>drawParticleBurst(0.05)); 
         }
         
-        function addMessage(role, text) {
-            const msg = {
-                role: role,
-                text: text,
-                time: Date.now()
-            };
-            allChats[currentChatId].messages.push(msg);
-            allChats[currentChatId].updated = Date.now();
-            saveChats();
-            
-            const row = document.createElement('div');
-            row.className = `msg-row ${role}`;
-            row.innerHTML = `<div class="bubble">${escapeHTML(text)}</div>`;
-            chatView.appendChild(row);
-            chatView.scrollTop = chatView.scrollHeight;
-            
-            renderSidebar();
-        }
+        // window resize için canvas
+        window.addEventListener('resize', ()=>{
+            if(canvasFx){
+                canvasFx.width = window.innerWidth;
+                canvasFx.height = window.innerHeight;
+                if(ctxFx) ctxFx.clearRect(0,0, canvasFx.width, canvasFx.height);
+            }
+        });
         
-        function showSystemMessage(text) {
-            const row = document.createElement('div');
-            row.className = 'msg-row bot';
-            row.innerHTML = `<div class="bubble">${escapeHTML(text)}</div>`;
-            chatView.appendChild(row);
-            chatView.scrollTop = chatView.scrollHeight;
-        }
-        
-        function showTyping() {
-            const typing = document.createElement('div');
-            typing.className = 'typing';
-            typing.id = 'typingIndicator';
-            typing.innerHTML = '<span></span><span></span><span></span>';
-            chatView.appendChild(typing);
-            chatView.scrollTop = chatView.scrollHeight;
-        }
-        
-        function hideTyping() {
-            const typing = document.getElementById('typingIndicator');
-            if (typing) typing.remove();
-        }
-        
-        function renderChat() {
-            if (!currentChatId || !allChats[currentChatId]) {
-                newChat(true);
+        // ------- KAYIT sistemi (web audio stream) ----------
+        async function startRecording() {
+            if(!audioCtx || !isPlaying){
+                statusDiv.innerHTML = '❌ Kayıt başlatmak için önce bir beat çalmalısınız!';
                 return;
             }
-            
-            chatView.innerHTML = '';
-            const messages = allChats[currentChatId].messages;
-            
-            messages.forEach(msg => {
-                const row = document.createElement('div');
-                row.className = `msg-row ${msg.role}`;
-                row.innerHTML = `<div class="bubble">${escapeHTML(msg.text)}</div>`;
-                chatView.appendChild(row);
-            });
-            
-            chatView.scrollTop = chatView.scrollHeight;
+            if(isRecording){
+                stopRecording();
+                return;
+            }
+            if(!mediaStreamDestination){
+                initAudioContext();
+            }
+            // mediaStream'den MediaRecorder
+            if(mediaRecorder && mediaRecorder.state === 'recording') return;
+            const stream = mediaStreamDestination.stream;
+            recordedChunks = [];
+            mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+            mediaRecorder.ondataavailable = (e) => {
+                if(e.data.size > 0) recordedChunks.push(e.data);
+            };
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+                const url = URL.createObjectURL(blob);
+                downloadBtn.disabled = false;
+                downloadBtn.onclick = () => {
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `rhythm_recording_${new Date().toISOString().slice(0,19)}.webm`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    downloadBtn.disabled = true;
+                };
+                statusDiv.innerHTML = '✅ Kayıt tamamlandı! "Kaydı İndir (HD)" butonuna tıkla.';
+                isRecording = false;
+                recorderBtn.classList.remove('recording');
+                recorderBtn.innerHTML = '🎙️ Kayda Başla';
+            };
+            mediaRecorder.start(100);
+            isRecording = true;
+            recorderBtn.classList.add('recording');
+            recorderBtn.innerHTML = '⏺️ Kayıt Yapılıyor... Durdur';
+            statusDiv.innerHTML = '🔴 BEAT KAYDI AKTİF (sadece beat sesi) - Durdur butonuna basın.';
         }
         
-        function renderSidebar() {
-            sidebarList.innerHTML = '';
-            const chatIds = Object.keys(allChats).sort((a, b) => allChats[b].updated - allChats[a].updated);
-            
-            chatIds.forEach(id => {
-                const chat = allChats[id];
-                const item = document.createElement('div');
-                item.className = `sidebar-item ${id === currentChatId ? 'active' : ''}`;
-                item.onclick = () => { switchChat(id); closeSidebar(); };
-                item.innerHTML = `
-                    <div>
-                        <div class="chat-preview">${chat.title}</div>
-                        <div class="chat-date">${formatDate(chat.updated)}</div>
-                    </div>
-                    <button class="delete-chat" onclick="deleteChat('${id}', event)">🗑️</button>
-                `;
-                sidebarList.appendChild(item);
-            });
-        }
-        
-        // ==================== KÖMƏKÇİ FUNKSİYALAR ====================
-        function escapeHTML(str) {
-            const div = document.createElement('div');
-            div.textContent = str;
-            return div.innerHTML.replace(/\n/g, '<br>');
-        }
-        
-        function formatDate(timestamp) {
-            const d = new Date(timestamp);
-            const now = new Date();
-            const diff = now - d;
-            
-            if (diff < 86400000) {
-                return d.toLocaleTimeString('az-AZ', { hour: '2-digit', minute: '2-digit' });
-            } else if (diff < 604800000) {
-                const days = ['Bazar', 'B.e.', 'Ç.a.', 'Çərş.', 'C.a.', 'Cümə', 'Şənbə'];
-                return days[d.getDay()];
+        function stopRecording() {
+            if(mediaRecorder && mediaRecorder.state === 'recording'){
+                mediaRecorder.stop();
             } else {
-                return d.toLocaleDateString('az-AZ', { day: 'numeric', month: 'short' });
+                if(isRecording) {
+                    mediaRecorder.stop();
+                }
             }
         }
         
-        function openSidebar() {
-            sidebar.classList.add('active');
-            sidebarOverlay.classList.add('active');
-            renderSidebar();
-        }
+        // Görsel yükleme
+        imageUploader.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if(file && file.type.startsWith('image/')){
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    imageEl.src = ev.target.result;
+                    statusDiv.innerHTML = '✨ Yeni görsel yüklendi! Ritim animasyonları devrede.';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                statusDiv.innerHTML = '⚠️ Lütfen geçerli bir resim dosyası seçin.';
+            }
+        });
         
-        function closeSidebar() {
-            sidebar.classList.remove('active');
-            sidebarOverlay.classList.remove('active');
-        }
+        // buton dinleyiciler
+        playBtn.addEventListener('click', async ()=>{
+            await initAudioContext();
+            if(audioCtx.state === 'suspended') await audioCtx.resume();
+            await playRhythm();
+        });
+        stopBtn.addEventListener('click', ()=>{
+            stopPlayback();
+        });
+        recorderBtn.addEventListener('click', ()=>{
+            if(!isPlaying){
+                statusDiv.innerHTML = '🎚️ Kayıt için önce beat başlatın!';
+                return;
+            }
+            if(isRecording){
+                stopRecording();
+            } else {
+                startRecording();
+            }
+        });
+        // görsele tıklama ekstra ışık efekti (flaş)
+        document.getElementById('imagePanel').addEventListener('click', ()=>{
+            if(isPlaying){
+                beatOverlay.style.background = 'radial-gradient(circle, rgba(255,255,180,0.9) 0%, rgba(255,80,40,0.7) 100%)';
+                setTimeout(()=>{
+                    if(isPlaying) beatOverlay.style.background = `radial-gradient(circle, rgba(255,80,120,0) 0%, rgba(255,200,80,0) 100%)`;
+                },150);
+                for(let i=0;i<15;i++){
+                    particles.push({
+                        x: (imageEl.getBoundingClientRect().left+Math.random()*imageEl.clientWidth),
+                        y: (imageEl.getBoundingClientRect().top+Math.random()*imageEl.clientHeight),
+                        vx: (Math.random()-0.5)*9, vy: (Math.random()-0.5)*9-3, life:0.9, size:5, color:'#ffaa55'
+                    });
+                }
+            }
+        });
         
-        function toggleTheme() {
-            const html = document.documentElement;
-            const current = html.getAttribute('data-theme');
-            const next = current === 'dark' ? 'light' : 'dark';
-            html.setAttribute('data-theme', next);
-            localStorage.setItem(THEME_KEY, next);
-            document.querySelector('.icon-btn').textContent = next === '
+        // başlangıç çubuklar : pasif
+        for(let i=0;i<BAR_COUNT;i++) barElements[i].style.height = '8px';
+        initFXCanvas();
+        setInterval(()=>{
+            if(!isPlaying && particles.length===0 && ctxFx) ctxFx.clearRect(0,0, canvasFx.width, canvasFx.height);
+        }, 1000);
+        // otomatik context uyandırma (kullanıcı etkileşimi)
+        document.body.addEventListener('click', ()=>{
+            if(audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+        }, {once: true});
+    })();
+</script>
+</body>
+</html>
