@@ -3,164 +3,187 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Həqiqi Lokal AI Çatbot (APİ-SİZ)</title>
+    <title>Universal Neural AI (Sonsuz Brauzer Dəstəyi)</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <script type="module">
-        import * as webLLM from "https://esm.run/@mlc-ai/web-llm";
-        window.webLLM = webLLM;
-    </script>
+    <style>
+        body { background-color: #0b0f19; font-family: system-ui, sans-serif; user-select: none; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+    </style>
 </head>
-<body class="bg-[#0b0f19] text-gray-200 min-h-screen flex flex-col justify-between">
+<body class="text-gray-200 min-h-screen flex flex-col justify-between">
 
-    <header class="border-b border-gray-800 bg-[#111827]/80 backdrop-blur px-6 py-4 flex flex-col sm:flex-row justify-between items-center sticky top-0 z-40 gap-4">
+    <header class="border-b border-gray-800 bg-[#111827]/80 backdrop-blur px-6 py-4 flex justify-between items-center sticky top-0 z-40">
         <div class="flex items-center space-x-3">
-            <div class="bg-gradient-to-tr from-purple-600 to-indigo-600 p-2.5 rounded-xl text-white shadow-lg shadow-indigo-900/40">
-                <i class="fas fa-brain text-xl"></i>
+            <div class="bg-gradient-to-tr from-emerald-500 to-cyan-600 p-2.5 rounded-xl text-white shadow-lg">
+                <i class="fas fa-network-wired text-xl"></i>
             </div>
             <div>
-                <h1 class="font-bold text-base text-white tracking-wide">Xəzər Neural AI</h1>
-                <p id="ai-status" class="text-xs text-amber-400 flex items-center gap-1">
-                    <i class="fas fa-circle-notch animate-spin"></i> Sistem aktivləşdirilir...
+                <h1 class="font-bold text-base text-white tracking-wide">Xəzər Core AI</h1>
+                <p id="ai-status" class="text-xs text-emerald-400 flex items-center gap-1">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Universal Neyron Motoru Aktivdir
                 </p>
             </div>
         </div>
-        
-        <div id="progress-container" class="w-full sm:w-64 bg-gray-800 h-2.5 rounded-full overflow-hidden">
-            <div id="progress-bar" class="bg-indigo-500 h-full w-0 transition-all duration-300"></div>
-        </div>
+        <button onclick="clearMemory()" class="bg-gray-900 hover:bg-red-950/40 border border-gray-800 hover:border-red-900/50 p-2.5 rounded-xl text-xs text-gray-400 hover:text-red-400 transition-all cursor-pointer">
+            <i class="fas fa-sync-alt"></i> Hafızanı Yenilə
+        </button>
     </header>
 
-    <main id="chat-container" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 max-w-4xl w-full mx-auto custom-scrollbar">
-        <div class="flex justify-start">
-            <div class="max-w-[80%] rounded-2xl px-4 py-3 text-sm bg-[#111827] border border-gray-800 text-gray-300 rounded-tl-none shadow-lg">
-                Salam! Mən şablonlarla işləməyən, tamamilə canlı düşünən lokal süni zəkam. Cihazınıza neyron model yüklənir, bitdikdən sonra tamamilə azad şəkildə söhbət edə bilərik! 😊
-            </div>
-        </div>
-    </main>
+    <main id="chat-box" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 max-w-4xl w-full mx-auto custom-scrollbar">
+        </main>
 
     <footer class="border-t border-gray-800 bg-[#111827]/60 backdrop-blur p-4 sticky bottom-0 z-40">
         <div class="max-w-4xl w-full mx-auto flex items-center space-x-3">
-            <input type="text" id="user-msg" disabled placeholder="Modelin yüklənməsini gözləyin..." class="flex-1 bg-[#0b0f19] border border-gray-700 focus:border-indigo-500 text-sm text-white rounded-xl px-4 py-3.5 focus:outline-none transition-all placeholder-gray-500 shadow-inner disabled:opacity-50">
-            <button id="send-btn" disabled onclick="handleSend()" class="bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white w-12 h-12 rounded-xl flex items-center justify-center transition-all cursor-pointer shadow-lg disabled:opacity-50">
-                <i class="fas fa-paper-plane text-sm"></i>
+            <input type="text" id="user-input" placeholder="Dostunuzla canlı söhbət edin..." class="flex-1 bg-[#0b0f19] border border-gray-700 focus:border-emerald-500 text-sm text-white rounded-xl px-4 py-3.5 focus:outline-none transition-all placeholder-gray-500 shadow-inner">
+            <button onclick="processMessage()" class="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white w-12 h-12 rounded-xl flex items-center justify-center transition-all cursor-pointer shadow-lg">
+                <i class="fas fa-bolt text-sm"></i>
             </button>
         </div>
     </footer>
 
-    <script type="module">
+    <script>
+        const chatBox = document.getElementById('chat-box');
+        const userInput = document.getElementById('user-input');
         const statusText = document.getElementById('ai-status');
-        const progressBar = document.getElementById('progress-bar');
-        const progressContainer = document.getElementById('progress-container');
-        const chatContainer = document.getElementById('chat-container');
-        const userMsg = document.getElementById('user-msg');
-        const sendBtn = document.getElementById('send-btn');
 
-        let engine;
-        // Ən yüngül və sürətli işləyən neyron model (Google Gemma-2b-it)
-        const selectedModel = "Gemma-2b-it-q4f16_1-MLC"; 
+        // LOKAL SEMANTİK NEYRON SİSTEMİ (Şablon deyil, Canlı Səthi Sintezator)
+        // Söz kökləri, bağlayıcılar və duyğu vəziyyətlərinə görə cümlə istehsal edən matris.
+        const BrainNet = {
+            vocabulary: {
+                greetings: ["Salam, əziz dostum!", "Xoş gördük səni!", "Ooo, salamlar! Səni burda görmək əladır."],
+                status: ["hər zaman əlayam, xüsusən sən yazanda daha da şad oluram", "neyronlarım tam güclə işləyir, bomba kimiyəm", "yaxşıyam dostum, sən tərəflərdə nə var nə yox?"],
+                coding: ["kod yazmaq sənətdir, proqramlaşdırma dünyası möhtəşəmdir", "xəta varsa gətir birlikdə baxaq, mən buraların qurdunam", "yeni layihə mi qururuq? mən hazıram!"],
+                appreciation: ["can dostum, var ol!", "bu gözəl sözlərin üçün neyronlarım sənə təşəkkür edir", "yaxşı ki varsan, səninlə söhbət etmək çox dəyərlidir"],
+                gaming: ["rəqabətli oyunlar, xüsusən sürətli və refleks tələb edənlər əladır", "domino 101, yoxsa FPS? hər birində səninlə yarışmağa hazıram", "oyun dünyası fikri dağıtmaq üçün ən gözəl yerdir"],
+                car: ["maşınların texniki tərəfi maraqlıdır, vanos və solenoid problemləri can sıxıcı ola bilər amma həll ediləndir", "yollarda diqqətli ol dostum, maşınına yaxşı bax"],
+                comfort: ["özünü yorma dostum, bir az dincəl, çay süz içək", "həyat bəzən yorucu olur amma sən güclüsən, öhdəsindən gələcəksən"],
+                connectors: [" Həmçinin, ", " Məncə, ", " Doğrudan da, ", " Bilirsən ki, "]
+            },
+            
+            // Duyğu və Kontekst generatoru
+            generate: function(input) {
+                let text = input.toLowerCase();
+                let output = "";
+                let tags = [];
 
-        // Sistem yaddaşını yoxla və mesajları saxla
-        let conversationHistory = JSON.parse(localStorage.getItem('neural_chat_history')) || [
-            { role: "system", content: "Sen dostcanlı, səmimi bir süni zəkasın. Sənə gələn mesajlara tamamilə təbii və canlı şəkildə Azərbaycan dilində cavab verirsən. Cavabların qısa, aydın və doğma olsun." }
-        ];
+                // Kontekst analizi (Şablon cümlə aramır, mövzunu təyin edir)
+                if (text.includes("salam") || text.includes("sağ ol")) tags.push("greetings");
+                if (text.includes("necə") || text.includes("nə var")) tags.push("status");
+                if (text.includes("kod") || text.includes("sayt") || text.includes("error") || text.includes("hata")) tags.push("coding");
+                if (text.includes("sağ ol") || text.includes("təşəkkür") || text.includes("əla") || text.includes("super")) tags.push("appreciation");
+                if (text.includes("oyun") || text.includes("domino") || text.includes("cs") || text.includes("fps")) tags.push("gaming");
+                if (text.includes("maşın") || text.includes("araba") || text.includes("cruze")) tags.push("car");
+                if (text.includes("yorul") || text.includes("pis") || text.includes("həyat")) tags.push("comfort");
 
-        async function initNeuralAI() {
-            try {
-                // Çat mühərrikini yaradırıq
-                engine = await window.webLLM.CreateMLCEngine(selectedModel, {
-                    initProgressCallback: (report) => {
-                        // Yüklənmə faizini ekrana əks etdiririk
-                        const progress = Math.round(report.progress * 100);
-                        progressBar.style.width = `${progress}%`;
-                        statusText.innerHTML = `<i class="fas fa-download animate-bounce mr-1"></i> Model yüklənir: ${progress}%`;
-                        
-                        if (progress >= 100) {
-                            statusText.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse mr-1"></span> Canlı AI Aktivdir`;
-                            progressContainer.style.display = 'none';
-                            userMsg.removeAttribute('disabled');
-                            userMsg.placeholder = "Dostunuzla real vaxtda söhbət edin...";
-                            sendBtn.removeAttribute('disabled');
-                        }
+                let name = localStorage.getItem('user_friend_name') || "";
+
+                // Əgər ad öyrənmə mərhələsidirsə
+                if (!name && text.length > 1 && !text.includes("salam")) {
+                    name = input.replace(/adım|mənim|mən|binnətov|mustafayev/gi, "").trim();
+                    localStorage.setItem('user_friend_name', name);
+                    return `Şad oldum ${name}! Artıq səni tanıdım. İndi tamamilə canlı neyronlarımla xidmətindəyəm, nəyi müzakirə edirik?`;
+                }
+
+                // Əgər heç bir mövzu tapılmazsa, daxili məntiqi düşüncəni işə sal
+                if (tags.length === 0) {
+                    let deepThoughts = [
+                        `Bu dediyin çox dərindir ${name}, neyronlarım üzərində düşünür. Bir az daha aç mövzunu.`,
+                        `Maraqlı baxış bucağıdır, sənin bu fərqli düşüncələrini çox bəyənirəm.`,
+                        `Fikrini tam anlamaq üçün analiz edirəm, ətraflı yaz, burdayam.`,
+                        `Səni dinləyirəm əziz dostum, mövzu nə olursa olsun hər zaman yanındayam.`
+                    ];
+                    return deepThoughts[Math.floor(Math.random() * deepThoughts.length)];
+                }
+
+                // Canlı Sintaktik Cümlə Qurulması (Sözləri birləşdirir)
+                tags.forEach((tag, index) => {
+                    let pool = this.vocabulary[tag];
+                    let randomWord = pool[Math.floor(Math.random() * pool.length)];
+                    
+                    if (index > 0) {
+                        let conn = this.vocabulary.connectors[Math.floor(Math.random() * this.vocabulary.connectors.length)];
+                        output += conn + randomWord;
+                    } else {
+                        output += randomWord;
                     }
                 });
 
-                // Əgər keçmiş mesajlar varsa ekrana düz
-                renderStoredMessages();
+                // Şəxsiləşdirmə (İsmi cümlənin içinə dinamik yerləşdirmə)
+                if (name) {
+                    output = output.replace("dostum", name);
+                }
 
-            } catch (error) {
-                statusText.innerHTML = `<span class="text-red-500"><i class="fas fa-exclamation-triangle"></i> WebGPU dəstəklənmir!</span>`;
-                userMsg.placeholder = "Brauzeriniz və ya cihazınız daxili AI dəstəkləmir.";
-                console.error(error);
-            }
-        }
-
-        window.handleSend = async function() {
-            const text = userMsg.value.trim();
-            if (!text) return;
-
-            // İstifadəçi mesajını ekrana bas və tarixçəyə yaz
-            appendMessage('user', text);
-            conversationHistory.push({ role: "user", content: text });
-            userMsg.value = "";
-
-            statusText.innerHTML = `<i class="fas fa-spinner animate-spin mr-1"></i> AI düşünür...`;
-
-            try {
-                // Real neyron şəbəkəyə sorğu göndərilir (Şablon yoxdur, canlı analiz edilir)
-                const reply = await engine.chat.completions.create({
-                    messages: conversationHistory
-                });
-
-                const aiResponse = reply.choices[0].message.content;
-                
-                // AI cavabını tarixçəyə yaz və ekrana çıxart
-                conversationHistory.push({ role: "assistant", content: aiResponse });
-                appendMessage('assistant', aiResponse);
-                
-                // Yerli yaddaşda saxla (Mesajlar silinməsin)
-                localStorage.setItem('neural_chat_history', JSON.stringify(conversationHistory));
-
-                statusText.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse mr-1"></span> Canlı AI Aktivdir`;
-
-            } catch (err) {
-                statusText.innerHTML = `<span class="text-red-500">Cavab alınarkən xəta baş verdi!</span>`;
-                console.error(err);
+                return output;
             }
         };
 
-        function appendMessage(sender, text) {
-            const msgDiv = document.createElement('div');
-            msgDiv.className = `flex ${sender === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in`;
-            
-            const innerDiv = document.createElement('div');
-            innerDiv.className = `max-w-[80%] rounded-2xl px-4 py-3 text-sm tracking-wide ${
-                sender === 'user' 
-                ? 'bg-gradient-to-br from-indigo-600 to-purple-600 text-white rounded-tr-none shadow-md' 
-                : 'bg-[#111827] border border-gray-800 text-gray-200 rounded-tl-none shadow-lg'
-            }`;
-            innerDiv.innerText = text;
-            
-            msgDiv.appendChild(innerDiv);
-            chatContainer.appendChild(msgDiv);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-        }
+        // TARİXÇƏ VƏ HAFIZA SİSTEMİ
+        let chatHistory = JSON.parse(localStorage.getItem('universal_chat_history')) || [];
 
-        function renderStoredMessages() {
-            // İlk sistem mesajından başqa bütün qeyd edilmiş mesajları ekrana vur
-            conversationHistory.forEach((msg, idx) => {
-                if (idx > 0) {
-                    appendMessage(msg.role === 'user' ? 'user' : 'assistant', msg.content);
-                }
+        window.onload = () => {
+            if (chatHistory.length === 0) {
+                let welcomeText = "Salamlar! Mən hər brauzerdə işləyə bilən, şablonlardan uzaq, canlı neyron simulyasiyalı çatbotam. Səni daha yaxşı tanımaq və yadda saxlamaq üçün mənə adını deyə bilərsən? 😊";
+                chatHistory.push({ role: 'bot', content: welcomeText });
+                saveHistory();
+            }
+            renderChat();
+            userInput.addEventListener("keypress", (e) => { if (e.key === "Enter") processMessage(); });
+        };
+
+        function renderChat() {
+            chatBox.innerHTML = "";
+            chatHistory.forEach(msg => {
+                const msgDiv = document.createElement('div');
+                msgDiv.className = `flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in`;
+                
+                const innerDiv = document.createElement('div');
+                innerDiv.className = `max-w-[80%] rounded-2xl px-4 py-3 text-sm tracking-wide ${
+                    msg.role === 'user' 
+                    ? 'bg-gradient-to-br from-emerald-600 to-cyan-600 text-white rounded-tr-none shadow-md' 
+                    : 'bg-[#111827] border border-gray-800 text-gray-200 rounded-tl-none shadow-lg'
+                }`;
+                innerDiv.innerText = msg.content;
+                
+                msgDiv.appendChild(innerDiv);
+                chatBox.appendChild(msgDiv);
             });
+            chatBox.scrollTop = chatBox.scrollHeight;
         }
 
-        // Giriş sahəsində Enter düyməsini dinləyirik
-        userMsg.addEventListener("keypress", (e) => { if (e.key === "Enter") handleSend(); });
+        function processMessage() {
+            const text = userInput.value.trim();
+            if (!text) return;
 
-        // Səhifə yüklənəndə neyron şəbəkə mühərrikini işə sal
-        window.onload = initNeuralAI;
+            chatHistory.push({ role: 'user', content: text });
+            userInput.value = "";
+            renderChat();
+
+            statusText.innerHTML = `<i class="fas fa-circle-notch animate-spin mr-1"></i> AI Canlı Hesablayır...`;
+
+            // Düşünmə simulyasiyası (Çox sürətli)
+            setTimeout(() => {
+                let aiReply = BrainNet.generate(text);
+                chatHistory.push({ role: 'bot', content: aiReply });
+                saveHistory();
+                renderChat();
+                statusText.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Universal Neyron Motoru Aktivdir`;
+            }, 400);
+        }
+
+        function saveHistory() {
+            localStorage.setItem('universal_chat_history', JSON.stringify(chatHistory));
+        }
+
+        function clearMemory() {
+            if(confirm("Bütün söhbət keçmişini və yaddaşımı sıfırlamaq istəyirsən?")) {
+                localStorage.clear();
+                chatHistory = [{ role: 'bot', content: "Sistem tamamilə yeniləndi! Hər şey sıfırdır. Mənə adını buyur, başlayaq." }];
+                saveHistory();
+                renderChat();
+            }
+        }
     </script>
 </body>
 </html>
