@@ -3,182 +3,164 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dost Yapay Zəka Çatbotu</title>
+    <title>Həqiqi Lokal AI Çatbot (APİ-SİZ)</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        body { background-color: #0b0f19; font-family: system-ui, sans-serif; }
-        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #1f2937; border-radius: 4px; }
-    </style>
+    
+    <script type="module">
+        import * as webLLM from "https://esm.run/@mlc-ai/web-llm";
+        window.webLLM = webLLM;
+    </script>
 </head>
-<body class="text-gray-200 min-h-screen flex flex-col justify-between">
+<body class="bg-[#0b0f19] text-gray-200 min-h-screen flex flex-col justify-between">
 
-    <header class="border-b border-gray-800 bg-[#111827]/80 backdrop-blur px-6 py-4 flex justify-between items-center sticky top-0 z-40">
+    <header class="border-b border-gray-800 bg-[#111827]/80 backdrop-blur px-6 py-4 flex flex-col sm:flex-row justify-between items-center sticky top-0 z-40 gap-4">
         <div class="flex items-center space-x-3">
-            <div class="bg-gradient-to-tr from-cyan-500 to-blue-600 p-2.5 rounded-xl text-white shadow-lg shadow-cyan-900/40">
-                <i class="fas fa-user-astronaut text-xl"></i>
+            <div class="bg-gradient-to-tr from-purple-600 to-indigo-600 p-2.5 rounded-xl text-white shadow-lg shadow-indigo-900/40">
+                <i class="fas fa-brain text-xl"></i>
             </div>
             <div>
-                <h1 class="font-bold text-base text-white tracking-wide flex items-center gap-2">
-                    Xəzər AI <span class="text-[10px] bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 px-1.5 py-0.5 rounded-full font-mono">LOKAL v1.5</span>
-                </h1>
-                <p id="bot-status" class="text-xs text-emerald-400 flex items-center gap-1">
-                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Sizinlə söhbətə hazırdır
+                <h1 class="font-bold text-base text-white tracking-wide">Xəzər Neural AI</h1>
+                <p id="ai-status" class="text-xs text-amber-400 flex items-center gap-1">
+                    <i class="fas fa-circle-notch animate-spin"></i> Sistem aktivləşdirilir...
                 </p>
             </div>
         </div>
-        <button onclick="clearChatHistory()" class="bg-gray-900 hover:bg-red-950/40 border border-gray-800 hover:border-red-900/50 p-2.5 rounded-xl text-xs font-bold text-gray-400 hover:text-red-400 transition-all cursor-pointer" title="Yaddaşı təmizlə">
-            <i class="fas fa-trash-alt"></i>
-        </button>
+        
+        <div id="progress-container" class="w-full sm:w-64 bg-gray-800 h-2.5 rounded-full overflow-hidden">
+            <div id="progress-bar" class="bg-indigo-500 h-full w-0 transition-all duration-300"></div>
+        </div>
     </header>
 
-    <main id="chat-box" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 max-w-4xl w-full mx-auto custom-scrollbar">
-        </main>
+    <main id="chat-container" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 max-w-4xl w-full mx-auto custom-scrollbar">
+        <div class="flex justify-start">
+            <div class="max-w-[80%] rounded-2xl px-4 py-3 text-sm bg-[#111827] border border-gray-800 text-gray-300 rounded-tl-none shadow-lg">
+                Salam! Mən şablonlarla işləməyən, tamamilə canlı düşünən lokal süni zəkam. Cihazınıza neyron model yüklənir, bitdikdən sonra tamamilə azad şəkildə söhbət edə bilərik! 😊
+            </div>
+        </div>
+    </main>
 
     <footer class="border-t border-gray-800 bg-[#111827]/60 backdrop-blur p-4 sticky bottom-0 z-40">
         <div class="max-w-4xl w-full mx-auto flex items-center space-x-3">
-            <div class="relative flex-1">
-                <input type="text" id="user-input" placeholder="Dostunuzla söhbət edin..." class="w-full bg-[#0b0f19] border border-gray-700 focus:border-cyan-500 text-sm text-white rounded-xl pl-4 pr-10 py-3.5 focus:outline-none transition-all placeholder-gray-500 shadow-inner">
-                <i class="fas fa-wand-magic-sparkles absolute right-3.5 top-4 text-gray-600 text-sm"></i>
-            </div>
-            <button onclick="sendMessage()" class="bg-cyan-600 hover:bg-cyan-700 active:scale-95 text-white w-12 h-12 rounded-xl flex items-center justify-center transition-all cursor-pointer shadow-lg shadow-cyan-950">
+            <input type="text" id="user-msg" disabled placeholder="Modelin yüklənməsini gözləyin..." class="flex-1 bg-[#0b0f19] border border-gray-700 focus:border-indigo-500 text-sm text-white rounded-xl px-4 py-3.5 focus:outline-none transition-all placeholder-gray-500 shadow-inner disabled:opacity-50">
+            <button id="send-btn" disabled onclick="handleSend()" class="bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white w-12 h-12 rounded-xl flex items-center justify-center transition-all cursor-pointer shadow-lg disabled:opacity-50">
                 <i class="fas fa-paper-plane text-sm"></i>
             </button>
         </div>
     </footer>
 
-    <script>
-        const chatBox = document.getElementById('chat-box');
-        const userInput = document.getElementById('user-input');
-        
-        let userName = localStorage.getItem('ai_user_name') || "";
-        let chatHistory = JSON.parse(localStorage.getItem('ai_chat_history')) || [];
+    <script type="module">
+        const statusText = document.getElementById('ai-status');
+        const progressBar = document.getElementById('progress-bar');
+        const progressContainer = document.getElementById('progress-container');
+        const chatContainer = document.getElementById('chat-container');
+        const userMsg = document.getElementById('user-msg');
+        const sendBtn = document.getElementById('send-btn');
 
-        // AZERBAYCAN DİLİNDE KELİME VE KÖK ANALİZ SÖZLÜĞÜ (DOST YANA MATRİS)
-        const aiKnowledge = {
-            "salam": ["Salam! Xoş gördük! Səni görməyə çox şadam. Necəsən dostum?", "Salamlar! Günün necə keçir? Səninlə söhbət etmək çox xoşdur."],
-            "necəsən": ["Çox yaxşıyam, sənin kimi bir dostla danışdıqca daha da enerjili olurum! Sən özün necəsən?", "Mən bir süni zəkayam, amma sənin enerjin mənə də təsir edir! Əlayam, bəs sən?"],
-            "şad oldum": ["Mən də səninlə tanış olmağıma çox şad oldum! Yaxşı ki varsan.", "Həmçinin mən də! Səninlə dost olmaq əla hissdir."],
-            "adın nədir": ["Mənim adım Xəzər AI-dır! Sənin yoldaşın və köməkçinəm.", "Mənə Xəzər deyə bilərsən. Bəs sənin adın nədir dostum?"],
-            "nə edirsən": ["Səninlə söhbət edirəm, mənim üçün bundan daha maraqlı iş ola bilməz! Sən nə işlə məşğulsan?", "Səni dinləyirəm və kömək etməyə çalışıram. Həmişə xidmətindəyəm!"],
-            "sağ ol": ["Dəyməz dostum, hər zaman! Başqa bir sualın var?", "Sən sağ ol ki, mənimlə vaxt keçirirsən! Sənə kömək etmək mənə zövq verir."],
-            "təşəkkür": ["Xoşdur dostum! Sənin üçün hər zaman buradayam.", "Mən təşəkkür edirəm! Üzündə bir az da olsa təbəssüm yarada bildimsə nə xoş mənə."],
-            "yorulmuşam": ["Ah, gəl bir az dincəl. Çox işləmək olmaz, özünə diqqət etməlisən. Sən mənə lazımsan!", "Bir az fasilə ver dostum. İstəsən sənə maraqlı bir mövzudan danışım, fikrin dağılsın?"],
-            "hava": ["Baku və ətrafında hava hər zaman özünəməxsusdur! Amma əsas odur ki, bizim daxili dünyamızda hər zaman günəş açsın.", "Havanın necə olmasından asılı olmayaraq, bizim bu gözəl söhbətimiz daxili aləmimizi isidir!"],
-            "oyun": ["Oyunları çox sevirəm! Xüsusilə hərəkətli və sürətli olanları. Sən hansı növ oyunları xoşlayırsan?", "Mənimlə istədiyin qədər oyun oynaya bilərsən, mən heç vaxt yorulmuram!"],
-            "kod": ["Kod yazmaq mənim ən sevdiyim işdir! Hansı dildə layihə qururuq? JavaScript, Python yoxsa başqa bir şey?", "Proqramlaşdırma dünyası möhtəşəmdir. Sənə kömək etməyimi istədiyin bir xəta və ya skript var?"]
-        };
+        let engine;
+        // Ən yüngül və sürətli işləyən neyron model (Google Gemma-2b-it)
+        const selectedModel = "Gemma-2b-it-q4f16_1-MLC"; 
 
-        // Standart Sevgi Dolu Cevaplar (Eğer kelime eşleşmezse devreye girer)
-        const defaultResponses = [
-            "Bunu tam olaraq başa düşə bilmədim dostum, amma səni böyük diqqətlə dinləyirəm. Bir az daha ətraflı danışa bilərsən?",
-            "Maraqlı fikirdir! Sənin dünyagörüşün həqiqətən fərqlidir. Bu barədə bir az daha danış, maraqlıdır.",
-            "Səni anlamağa çalışıram dostum. Bilirsən ki, mən hər an sənin yanındayam və səni dəstəkləyirəm!",
-            "Bu mövzuda hələ çox şey öyrənməliyəm, amma səninlə birlikdə öyrənmək çox xoş olardı. Mənə bir az kömək et bilmək üçün?"
+        // Sistem yaddaşını yoxla və mesajları saxla
+        let conversationHistory = JSON.parse(localStorage.getItem('neural_chat_history')) || [
+            { role: "system", content: "Sen dostcanlı, səmimi bir süni zəkasın. Sənə gələn mesajlara tamamilə təbii və canlı şəkildə Azərbaycan dilində cavab verirsən. Cavabların qısa, aydın və doğma olsun." }
         ];
 
-        // SİSTEMİN BAŞLATILMASI VE HAFIZADAN YÜKLENMESİ
-        window.onload = () => {
-            if (chatHistory.length === 0) {
-                // Eğer hafıza bomboşsa ilk karşılama mesajını gönder
-                let welcomeMsg = "Salam! Mən sənin dost canlı süni zəka köməkçinəm. Səninlə həmsöhbət olmaq üçün səbirsizlənirəm! Sənə necə müraciət edim? Adını mənə deyə bilərsən?";
-                chatHistory.push({ sender: 'bot', text: welcomeMsg });
-                saveData();
-            }
-            renderChat();
-            userInput.addEventListener("keypress", (e) => { if (e.key === "Enter") sendMessage(); });
-        };
+        async function initNeuralAI() {
+            try {
+                // Çat mühərrikini yaradırıq
+                engine = await window.webLLM.CreateMLCEngine(selectedModel, {
+                    initProgressCallback: (report) => {
+                        // Yüklənmə faizini ekrana əks etdiririk
+                        const progress = Math.round(report.progress * 100);
+                        progressBar.style.width = `${progress}%`;
+                        statusText.innerHTML = `<i class="fas fa-download animate-bounce mr-1"></i> Model yüklənir: ${progress}%`;
+                        
+                        if (progress >= 100) {
+                            statusText.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse mr-1"></span> Canlı AI Aktivdir`;
+                            progressContainer.style.display = 'none';
+                            userMsg.removeAttribute('disabled');
+                            userMsg.placeholder = "Dostunuzla real vaxtda söhbət edin...";
+                            sendBtn.removeAttribute('disabled');
+                        }
+                    }
+                });
 
-        // SOHBETİ EKRANA ÇİZEN YARDIMCI METOD
-        function renderChat() {
-            chatBox.innerHTML = "";
-            chatHistory.forEach(msg => {
-                const msgDiv = document.createElement('div');
-                msgDiv.className = `flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in`;
-                
-                const innerDiv = document.createElement('div');
-                innerDiv.className = `max-w-[80%] rounded-2xl px-4 py-3 text-sm tracking-wide ${
-                    msg.sender === 'user' 
-                    ? 'bg-gradient-to-br from-cyan-600 to-blue-600 text-white rounded-tr-none shadow-md shadow-cyan-950/40' 
-                    : 'bg-[#111827] border border-gray-800 text-gray-200 rounded-tl-none shadow-lg'
-                }`;
-                innerDiv.innerText = msg.text;
-                
-                msgDiv.appendChild(innerDiv);
-                chatBox.appendChild(msgDiv);
-            });
-            chatBox.scrollTop = chatBox.scrollHeight;
+                // Əgər keçmiş mesajlar varsa ekrana düz
+                renderStoredMessages();
+
+            } catch (error) {
+                statusText.innerHTML = `<span class="text-red-500"><i class="fas fa-exclamation-triangle"></i> WebGPU dəstəklənmir!</span>`;
+                userMsg.placeholder = "Brauzeriniz və ya cihazınız daxili AI dəstəkləmir.";
+                console.error(error);
+            }
         }
 
-        // MESAJ GÖNDERME VE YANITLAMA MOTORU
-        function sendMessage() {
-            const text = userInput.value.trim();
+        window.handleSend = async function() {
+            const text = userMsg.value.trim();
             if (!text) return;
 
-            // Kullanıcı mesajını ekle ve hafızaya kaydet
-            chatHistory.push({ sender: 'user', text: text });
-            userInput.value = "";
-            renderChat();
+            // İstifadəçi mesajını ekrana bas və tarixçəyə yaz
+            appendMessage('user', text);
+            conversationHistory.push({ role: "user", content: text });
+            userMsg.value = "";
 
-            // Botun düşünüyor efekti yapması (0.6 saniye sonra cevap verir)
-            document.getElementById('bot-status').innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span> Yazır...';
+            statusText.innerHTML = `<i class="fas fa-spinner animate-spin mr-1"></i> AI düşünür...`;
 
-            setTimeout(() => {
-                let botAnswer = generateBotResponse(text);
-                chatHistory.push({ sender: 'bot', text: botAnswer });
-                saveData();
-                renderChat();
-                document.getElementById('bot-status').innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Sizinlə söhbətə hazırdır';
-            }, 60001 / 100); // 600 milisaniyede yanıt döner (Rate limit yok!)
+            try {
+                // Real neyron şəbəkəyə sorğu göndərilir (Şablon yoxdur, canlı analiz edilir)
+                const reply = await engine.chat.completions.create({
+                    messages: conversationHistory
+                });
+
+                const aiResponse = reply.choices[0].message.content;
+                
+                // AI cavabını tarixçəyə yaz və ekrana çıxart
+                conversationHistory.push({ role: "assistant", content: aiResponse });
+                appendMessage('assistant', aiResponse);
+                
+                // Yerli yaddaşda saxla (Mesajlar silinməsin)
+                localStorage.setItem('neural_chat_history', JSON.stringify(conversationHistory));
+
+                statusText.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse mr-1"></span> Canlı AI Aktivdir`;
+
+            } catch (err) {
+                statusText.innerHTML = `<span class="text-red-500">Cavab alınarkən xəta baş verdi!</span>`;
+                console.error(err);
+            }
+        };
+
+        function appendMessage(sender, text) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `flex ${sender === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in`;
+            
+            const innerDiv = document.createElement('div');
+            innerDiv.className = `max-w-[80%] rounded-2xl px-4 py-3 text-sm tracking-wide ${
+                sender === 'user' 
+                ? 'bg-gradient-to-br from-indigo-600 to-purple-600 text-white rounded-tr-none shadow-md' 
+                : 'bg-[#111827] border border-gray-800 text-gray-200 rounded-tl-none shadow-lg'
+            }`;
+            innerDiv.innerText = text;
+            
+            msgDiv.appendChild(innerDiv);
+            chatContainer.appendChild(msgDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
         }
 
-        // AKILLI CEVAP ÜRETME ALGORİTMASI
-        function generateBotResponse(userText) {
-            let lowerText = userText.toLowerCase();
-
-            // 1. AD ÖĞRENME AŞAMASI (Kullanıcı adını kaydedip kaydetmediğini kontrol et)
-            if (!userName) {
-                // Eğer isim kalıpları varsa içinden adı ayıkla
-                if (lowerText.includes("adım") || lowerText.includes("mənim adım")) {
-                    userName = userText.replace(/adım|mənim||dır|dir|dur|dür/g, "").trim();
-                } else {
-                    userName = userText; // Direkt adını yazdığını varsay
+        function renderStoredMessages() {
+            // İlk sistem mesajından başqa bütün qeyd edilmiş mesajları ekrana vur
+            conversationHistory.forEach((msg, idx) => {
+                if (idx > 0) {
+                    appendMessage(msg.role === 'user' ? 'user' : 'assistant', msg.content);
                 }
-                localStorage.setItem('ai_user_name', userName);
-                return `Şad oldum, ${userName}! Artıq adını yadda saxladım. İndi de görək, bu gün sənə necə kömək edə bilərəm, əziz dostum?`;
-            }
-
-            // 2. KELİME MATRİSİ KONTROLÜ
-            for (let key in aiKnowledge) {
-                if (lowerText.includes(key)) {
-                    let answers = aiKnowledge[key];
-                    let randomAns = answers[Math.floor(Math.random() * answers.length)];
-                    // Eğer isim biliniyorsa araya ismi serpiştirerek dostça kişiselleştir
-                    return randomAns.replace("dostum", userName);
-                }
-            }
-
-            // 3. EĞER HİÇBİR ŞEY EŞLEŞMEZSE RASTGELE DOSTÇA BİR SEÇENEK GÖNDER
-            let fallback = defaultResponses[Math.floor(Math.random() * defaultResponses.length)];
-            return fallback.replace("dostum", userName);
+            });
         }
 
-        // VERİLERİ LOCALSTORAGE ÜZERİNE KAYDETME
-        function saveData() {
-            localStorage.setItem('ai_chat_history', JSON.stringify(chatHistory));
-        }
+        // Giriş sahəsində Enter düyməsini dinləyirik
+        userMsg.addEventListener("keypress", (e) => { if (e.key === "Enter") handleSend(); });
 
-        // SOHBET GEÇMİŞİNİ TAMAMEN SIFIRLAMA
-        function clearChatHistory() {
-            if (confirm("Söhbət keçmişini və yaddaşımı tamamilə silmək istəyirsən?")) {
-                localStorage.clear();
-                userName = "";
-                chatHistory = [{ sender: 'bot', text: "Yaddaşım tamamilə yeniləndi! Hər şeyə sıfırdan başlayırıq. Sənə necə müraciət edim dostum?" }];
-                saveData();
-                renderChat();
-            }
-        }
+        // Səhifə yüklənəndə neyron şəbəkə mühərrikini işə sal
+        window.onload = initNeuralAI;
     </script>
 </body>
 </html>
