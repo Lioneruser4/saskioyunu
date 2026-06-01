@@ -1,643 +1,184 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="az">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>🎱 Grand Billiards - 8 Pool & Russian Piramit</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dost Yapay Zəka Çatbotu</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        * {
-            user-select: none;
-            touch-action: none;
-            box-sizing: border-box;
-        }
-
-        body {
-            margin: 0;
-            min-height: 100vh;
-            background: linear-gradient(135deg, #1a472a 0%, #0e2a1a 100%);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-family: 'Segoe UI', 'Poppins', system-ui, sans-serif;
-            overflow: hidden;
-            touch-action: none;
-        }
-
-        .game-wrapper {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            width: 100vw;
-            height: 100vh;
-            background: #0a2a1a;
-            position: relative;
-        }
-
-        canvas {
-            display: block;
-            background: #0a5c3e;
-            border-radius: 20px;
-            box-shadow: 0 20px 35px rgba(0,0,0,0.5), inset 0 0 0 2px rgba(255,215,150,0.3);
-            cursor: crosshair;
-            touch-action: none;
-        }
-
-        .menu-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.92);
-            backdrop-filter: blur(15px);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 30;
-            transition: all 0.3s;
-        }
-
-        .menu-title {
-            font-size: 3.5rem;
-            font-weight: bold;
-            background: linear-gradient(135deg, #FFD966, #C77E2A);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            text-shadow: 0 2px 5px rgba(0,0,0,0.3);
-            margin-bottom: 1rem;
-        }
-
-        .game-modes {
-            display: flex;
-            gap: 25px;
-            flex-wrap: wrap;
-            justify-content: center;
-            margin: 20px;
-        }
-
-        .mode-card {
-            background: #2c2b2f;
-            padding: 20px 35px;
-            border-radius: 60px;
-            font-size: 1.6rem;
-            font-weight: bold;
-            color: #FFE2A4;
-            border: none;
-            box-shadow: 0 10px 0 #5a3e2e;
-            cursor: pointer;
-            transition: 0.07s linear;
-            min-width: 200px;
-            text-align: center;
-        }
-
-        .mode-card:active {
-            transform: translateY(4px);
-            box-shadow: 0 4px 0 #5a3e2e;
-        }
-
-        .difficulty-bar {
-            display: flex;
-            gap: 20px;
-            margin: 20px;
-        }
-        .difficulty-btn {
-            background: #1f3a2f;
-            padding: 10px 25px;
-            border-radius: 40px;
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: #dddddd;
-            cursor: pointer;
-            transition: 0.1s;
-        }
-        .difficulty-btn.active {
-            background: #e67e22;
-            color: white;
-            box-shadow: 0 0 12px #ffae70;
-        }
-
-        .settings-panel {
-            background: #1e1a1ecc;
-            border-radius: 50px;
-            padding: 15px 30px;
-            margin: 15px;
-            display: flex;
-            gap: 30px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-        .setting-item {
-            color: #f0e6a0;
-            font-size: 1rem;
-        }
-        .back-game-btn {
-            position: absolute;
-            bottom: 15px;
-            left: 15px;
-            background: #ff8c42;
-            border: none;
-            font-size: 1.2rem;
-            padding: 8px 25px;
-            border-radius: 40px;
-            font-weight: bold;
-            z-index: 20;
-            cursor: pointer;
-            color: white;
-        }
-        .turn-status {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: #000000aa;
-            padding: 8px 20px;
-            border-radius: 40px;
-            color: #f5cb7e;
-            font-weight: bold;
-            font-size: 1rem;
-            backdrop-filter: blur(4px);
-            z-index: 15;
-        }
-        .scoreboard {
-            position: absolute;
-            top: 15px;
-            left: 15px;
-            background: #000000aa;
-            padding: 6px 18px;
-            border-radius: 30px;
-            color: #ffe5a3;
-            font-weight: bold;
-            font-family: monospace;
-            font-size: 1.2rem;
-        }
-        @media (max-width: 700px) {
-            .mode-card { font-size: 1rem; padding: 12px 20px; min-width: 140px; }
-            .menu-title { font-size: 2rem; }
-        }
+        body { background-color: #0b0f19; font-family: system-ui, sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #1f2937; border-radius: 4px; }
     </style>
 </head>
-<body>
-<div class="game-wrapper">
-    <canvas id="gameCanvas" width="1100" height="650"></canvas>
-    <div class="scoreboard" id="scoreboard">🎱 Oyuncu: 0 - Bot: 0</div>
-    <div class="turn-status" id="turnStatus">🏆 Tur: Oyuncu</div>
-    <button class="back-game-btn" id="menuBtn">🏠 Ana Menü</button>
+<body class="text-gray-200 min-h-screen flex flex-col justify-between">
 
-    <div id="mainMenu" class="menu-overlay">
-        <div class="menu-title">🎯 GRAND BILLIARDS 🎯</div>
-        <div class="game-modes">
-            <button class="mode-card" data-mode="8pool">🎱 8-BALL POOL</button>
-            <button class="mode-card" data-mode="russian">🇷🇺 RUS PİRAMİDİ</button>
+    <header class="border-b border-gray-800 bg-[#111827]/80 backdrop-blur px-6 py-4 flex justify-between items-center sticky top-0 z-40">
+        <div class="flex items-center space-x-3">
+            <div class="bg-gradient-to-tr from-cyan-500 to-blue-600 p-2.5 rounded-xl text-white shadow-lg shadow-cyan-900/40">
+                <i class="fas fa-user-astronaut text-xl"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-base text-white tracking-wide flex items-center gap-2">
+                    Xəzər AI <span class="text-[10px] bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 px-1.5 py-0.5 rounded-full font-mono">LOKAL v1.5</span>
+                </h1>
+                <p id="bot-status" class="text-xs text-emerald-400 flex items-center gap-1">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Sizinlə söhbətə hazırdır
+                </p>
+            </div>
         </div>
-        <div class="difficulty-bar" id="difficultyMenu">
-            <div class="difficulty-btn" data-diff="easy">🟢 EASY</div>
-            <div class="difficulty-btn active" data-diff="normal">🟡 NORMAL</div>
-            <div class="difficulty-btn" data-diff="hard">🔴 HARD</div>
-        </div>
-        <div class="settings-panel">
-            <div class="setting-item">🎯 Fare/Sürükle → Nişan al | ⬅️ Güç barı solda</div>
-            <div class="setting-item">💥 Vuruş için Bırak | Bot zorluk pozisyon etkiler</div>
-        </div>
-        <div style="color:#bbaa77; margin-top:15px;">★ Sıralı oyun (oyuncu-bot) ★ Profesyonel fizik ★</div>
-    </div>
-</div>
+        <button onclick="clearChatHistory()" class="bg-gray-900 hover:bg-red-950/40 border border-gray-800 hover:border-red-900/50 p-2.5 rounded-xl text-xs font-bold text-gray-400 hover:text-red-400 transition-all cursor-pointer" title="Yaddaşı təmizlə">
+            <i class="fas fa-trash-alt"></i>
+        </button>
+    </header>
 
-<script>
-    (function(){
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        const scoreDiv = document.getElementById('scoreboard');
-        const turnSpan = document.getElementById('turnStatus');
-        const menuBtn = document.getElementById('menuBtn');
-        const mainMenuDiv = document.getElementById('mainMenu');
+    <main id="chat-box" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 max-w-4xl w-full mx-auto custom-scrollbar">
+        </main>
+
+    <footer class="border-t border-gray-800 bg-[#111827]/60 backdrop-blur p-4 sticky bottom-0 z-40">
+        <div class="max-w-4xl w-full mx-auto flex items-center space-x-3">
+            <div class="relative flex-1">
+                <input type="text" id="user-input" placeholder="Dostunuzla söhbət edin..." class="w-full bg-[#0b0f19] border border-gray-700 focus:border-cyan-500 text-sm text-white rounded-xl pl-4 pr-10 py-3.5 focus:outline-none transition-all placeholder-gray-500 shadow-inner">
+                <i class="fas fa-wand-magic-sparkles absolute right-3.5 top-4 text-gray-600 text-sm"></i>
+            </div>
+            <button onclick="sendMessage()" class="bg-cyan-600 hover:bg-cyan-700 active:scale-95 text-white w-12 h-12 rounded-xl flex items-center justify-center transition-all cursor-pointer shadow-lg shadow-cyan-950">
+                <i class="fas fa-paper-plane text-sm"></i>
+            </button>
+        </div>
+    </footer>
+
+    <script>
+        const chatBox = document.getElementById('chat-box');
+        const userInput = document.getElementById('user-input');
         
-        let W = 1100, H = 650;
-        canvas.width = W; canvas.height = H;
-        
-        // ---------- OYUN DURUMU ----------
-        let gameMode = null; // '8pool' or 'russian'
-        let difficulty = 'normal'; // easy, normal, hard
-        let balls = [];
-        let pockets = [];
-        let cueBall = null;
-        let isPlayerTurn = true;
-        let playerScore = 0;
-        let botScore = 0;
-        let gameActive = true;
-        let aiming = false;
-        let aimAngle = 0;
-        let power = 0;
-        let powerCharging = false;
-        let mouseX = 0, mouseY = 0;
-        let cueBallMoving = false;
-        let pocketedBalls = [];
-        let currentTurnPotted = false;
-        let turnEnded = false;
-        
-        // 8-ball özel
-        let playerType = null; // 'stripes' or 'solids' for 8pool, null at start
-        let tableFelt = '#2b6e4a';
-        
-        // Rus Piramidi özel (her top 1 puan)
-        
-        // Fizik parametreleri
-        const friction = 0.985;
-        const cushionLoss = 0.92;
-        const collisionElasticity = 0.92;
-        
-        // Topların başlangıç pozisyonları
-        function initBallsFor8Pool() {
-            let arr = [];
-            // Beyaz top
-            arr.push({x: 200, y: H/2, vx:0, vy:0, radius:8, type:'cue', id:0});
-            // Üçgen düzeni (1-7 katı , 9-15 çizgili, 8 siyah)
-            let startX = W-250;
-            let startY = H/2;
-            let rows = 5;
-            let spacing = 17;
-            let ballsData = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15];
-            let idx=0;
-            for(let row=0; row<rows; row++) {
-                for(let col=0; col<=row; col++) {
-                    if(idx>=ballsData.length) break;
-                    let x = startX + row*spacing;
-                    let y = startY + (col - row/2)*spacing;
-                    let type = (ballsData[idx] === 8) ? 'eight' : (ballsData[idx]<=7 ? 'solid' : 'stripe');
-                    arr.push({x:x, y:y, vx:0, vy:0, radius:8, type:type, value:ballsData[idx], id:idx+1});
-                    idx++;
-                }
+        let userName = localStorage.getItem('ai_user_name') || "";
+        let chatHistory = JSON.parse(localStorage.getItem('ai_chat_history')) || [];
+
+        // AZERBAYCAN DİLİNDE KELİME VE KÖK ANALİZ SÖZLÜĞÜ (DOST YANA MATRİS)
+        const aiKnowledge = {
+            "salam": ["Salam! Xoş gördük! Səni görməyə çox şadam. Necəsən dostum?", "Salamlar! Günün necə keçir? Səninlə söhbət etmək çox xoşdur."],
+            "necəsən": ["Çox yaxşıyam, sənin kimi bir dostla danışdıqca daha da enerjili olurum! Sən özün necəsən?", "Mən bir süni zəkayam, amma sənin enerjin mənə də təsir edir! Əlayam, bəs sən?"],
+            "şad oldum": ["Mən də səninlə tanış olmağıma çox şad oldum! Yaxşı ki varsan.", "Həmçinin mən də! Səninlə dost olmaq əla hissdir."],
+            "adın nədir": ["Mənim adım Xəzər AI-dır! Sənin yoldaşın və köməkçinəm.", "Mənə Xəzər deyə bilərsən. Bəs sənin adın nədir dostum?"],
+            "nə edirsən": ["Səninlə söhbət edirəm, mənim üçün bundan daha maraqlı iş ola bilməz! Sən nə işlə məşğulsan?", "Səni dinləyirəm və kömək etməyə çalışıram. Həmişə xidmətindəyəm!"],
+            "sağ ol": ["Dəyməz dostum, hər zaman! Başqa bir sualın var?", "Sən sağ ol ki, mənimlə vaxt keçirirsən! Sənə kömək etmək mənə zövq verir."],
+            "təşəkkür": ["Xoşdur dostum! Sənin üçün hər zaman buradayam.", "Mən təşəkkür edirəm! Üzündə bir az da olsa təbəssüm yarada bildimsə nə xoş mənə."],
+            "yorulmuşam": ["Ah, gəl bir az dincəl. Çox işləmək olmaz, özünə diqqət etməlisən. Sən mənə lazımsan!", "Bir az fasilə ver dostum. İstəsən sənə maraqlı bir mövzudan danışım, fikrin dağılsın?"],
+            "hava": ["Baku və ətrafında hava hər zaman özünəməxsusdur! Amma əsas odur ki, bizim daxili dünyamızda hər zaman günəş açsın.", "Havanın necə olmasından asılı olmayaraq, bizim bu gözəl söhbətimiz daxili aləmimizi isidir!"],
+            "oyun": ["Oyunları çox sevirəm! Xüsusilə hərəkətli və sürətli olanları. Sən hansı növ oyunları xoşlayırsan?", "Mənimlə istədiyin qədər oyun oynaya bilərsən, mən heç vaxt yorulmuram!"],
+            "kod": ["Kod yazmaq mənim ən sevdiyim işdir! Hansı dildə layihə qururuq? JavaScript, Python yoxsa başqa bir şey?", "Proqramlaşdırma dünyası möhtəşəmdir. Sənə kömək etməyimi istədiyin bir xəta və ya skript var?"]
+        };
+
+        // Standart Sevgi Dolu Cevaplar (Eğer kelime eşleşmezse devreye girer)
+        const defaultResponses = [
+            "Bunu tam olaraq başa düşə bilmədim dostum, amma səni böyük diqqətlə dinləyirəm. Bir az daha ətraflı danışa bilərsən?",
+            "Maraqlı fikirdir! Sənin dünyagörüşün həqiqətən fərqlidir. Bu barədə bir az daha danış, maraqlıdır.",
+            "Səni anlamağa çalışıram dostum. Bilirsən ki, mən hər an sənin yanındayam və səni dəstəkləyirəm!",
+            "Bu mövzuda hələ çox şey öyrənməliyəm, amma səninlə birlikdə öyrənmək çox xoş olardı. Mənə bir az kömək et bilmək üçün?"
+        ];
+
+        // SİSTEMİN BAŞLATILMASI VE HAFIZADAN YÜKLENMESİ
+        window.onload = () => {
+            if (chatHistory.length === 0) {
+                // Eğer hafıza bomboşsa ilk karşılama mesajını gönder
+                let welcomeMsg = "Salam! Mən sənin dost canlı süni zəka köməkçinəm. Səninlə həmsöhbət olmaq üçün səbirsizlənirəm! Sənə necə müraciət edim? Adını mənə deyə bilərsən?";
+                chatHistory.push({ sender: 'bot', text: welcomeMsg });
+                saveData();
             }
-            return arr;
-        }
-        
-        function initBallsRussian() {
-            let arr = [];
-            arr.push({x: 200, y: H/2, vx:0, vy:0, radius:8, type:'cue', id:0});
-            // Piramit 15 top
-            let startX = W-240;
-            let startY = H/2;
-            let rows=5;
-            let spacing=16;
-            let cnt=1;
-            for(let row=0; row<rows; row++) {
-                for(let col=0; col<=row; col++) {
-                    if(cnt>15) break;
-                    let x = startX + row*spacing;
-                    let y = startY + (col - row/2)*spacing;
-                    arr.push({x:x, y:y, vx:0, vy:0, radius:8, type:'normal', value:cnt, id:cnt});
-                    cnt++;
-                }
-            }
-            return arr;
-        }
-        
-        function initPockets() {
-            let r = 14;
-            return [
-                {x: 30, y: 30}, {x: W/2, y: 28}, {x: W-30, y: 30},
-                {x: 30, y: H-30}, {x: W/2, y: H-28}, {x: W-30, y: H-30}
-            ].map(p => ({x:p.x, y:p.y, r:r}));
-        }
-        
-        // Çizgi collision vs
-        function resolveCollision(b1, b2) {
-            let dx = b2.x - b1.x, dy = b2.y - b1.y;
-            let dist = Math.hypot(dx,dy);
-            let minDist = b1.radius + b2.radius;
-            if(dist < minDist) {
-                let angle = Math.atan2(dy, dx);
-                let overlap = minDist - dist;
-                let correctionX = Math.cos(angle) * overlap/2;
-                let correctionY = Math.sin(angle) * overlap/2;
-                if(!b1.isPocketed) { b1.x -= correctionX; b1.y -= correctionY; }
-                if(!b2.isPocketed) { b2.x += correctionX; b2.y += correctionY; }
-                let nx = dx/dist, ny = dy/dist;
-                let vrelx = b2.vx - b1.vx, vrely = b2.vy - b1.vy;
-                let dot = vrelx*nx + vrely*ny;
-                if(dot < 0) {
-                    let e = collisionElasticity;
-                    let m1 = 1, m2 = 1;
-                    let imp = (1+e)*dot / ( (1/m1)+(1/m2) );
-                    b1.vx += imp*nx/m1; b1.vy += imp*ny/m1;
-                    b2.vx -= imp*nx/m2; b2.vy -= imp*ny/m2;
-                }
-            }
-        }
-        
-        function updatePhysics() {
-            if(!gameActive) return;
-            let anyMoving = false;
-            for(let b of balls) {
-                if(b.isPocketed) continue;
-                b.x += b.vx;
-                b.y += b.vy;
-                b.vx *= friction;
-                b.vy *= friction;
-                if(Math.abs(b.vx) < 0.05 && Math.abs(b.vy) < 0.05) { b.vx=0; b.vy=0; }
-                else anyMoving=true;
-                // border
-                if(b.x - b.radius < 5) { b.x = 5+b.radius; b.vx = -b.vx*cushionLoss; }
-                if(b.x + b.radius > W-5) { b.x = W-5-b.radius; b.vx = -b.vx*cushionLoss; }
-                if(b.y - b.radius < 5) { b.y = 5+b.radius; b.vy = -b.vy*cushionLoss; }
-                if(b.y + b.radius > H-5) { b.y = H-5-b.radius; b.vy = -b.vy*cushionLoss; }
-            }
-            for(let i=0;i<balls.length;i++) for(let j=i+1;j<balls.length;j++) resolveCollision(balls[i],balls[j]);
-            
-            // cebe düşme
-            for(let b of balls) {
-                if(b.isPocketed) continue;
-                for(let p of pockets) {
-                    let dx = b.x - p.x, dy = b.y - p.y;
-                    if(Math.hypot(dx,dy) < p.r) {
-                        b.isPocketed = true;
-                        pocketedBalls.push(b);
-                        if(b.type === 'cue') { // beyaz düşerse faul
-                            cueBallMoving = false;
-                            isPlayerTurn = false;
-                            turnEnded = true;
-                            botScore += (gameMode === 'russian'? 1 : 0);
-                            if(gameMode==='8pool') { /* faul cezası */ }
-                            resetCueBall();
-                        }
-                        break;
-                    }
-                }
-            }
-            cueBallMoving = anyMoving;
-            if(!anyMoving && !turnEnded && (cueBallMoving===false) && (pocketedBalls.length>0 || currentTurnPotted)) {
-                endTurnAfterPocket();
-            }
-            if(!anyMoving && !turnEnded && pocketedBalls.length===0 && !currentTurnPotted && cueBall && cueBall.vx===0 && cueBall.vy===0) {
-                // sıra biter
-                if(!turnEnded) endTurn(false);
-            }
-        }
-        
-        function endTurnAfterPocket() {
-            if(turnEnded) return;
-            let scored = 0;
-            for(let b of pocketedBalls) {
-                if(gameMode === 'russian') {
-                    if(b.type !== 'cue') playerScore++;
-                }
-                else if(gameMode === '8pool') {
-                    if(isPlayerTurn && b.type !== 'cue') {
-                        if(b.type === 'eight') { /* special win condition */ gameActive=false; alert("Oyuncu 8 topu bitirdi! Kazandı!"); }
-                        else playerScore++;
-                    } else if(!isPlayerTurn && b.type !== 'cue') botScore++;
-                }
-            }
-            pocketedBalls = [];
-            updateScoreUI();
-            if(!gameActive) return;
-            // devam hakkı kontrolü (normalde pot yapınca devam)
-            if(currentTurnPotted) {
-                // devam
-            } else {
-                endTurn(true);
-            }
-            currentTurnPotted = true;
-        }
-        
-        function endTurn(pottedSomething) {
-            turnEnded = true;
-            if(!pottedSomething) {
-                isPlayerTurn = !isPlayerTurn;
-                currentTurnPotted=false;
-                turnEnded=false;
-                updateTurnUI();
-            } else {
-                if(!gameActive) return;
-                isPlayerTurn = !isPlayerTurn;
-                currentTurnPotted=false;
-                turnEnded=false;
-                updateTurnUI();
-            }
-        }
-        
-        function resetCueBall() {
-            let cue = balls.find(b=>b.type==='cue');
-            if(cue) { cue.x = 200; cue.y = H/2; cue.vx=0; cue.vy=0; cue.isPocketed=false; }
-        }
-        
-        function updateScoreUI() {
-            scoreDiv.innerText = `🎱 Oyuncu: ${playerScore} - Bot: ${botScore}`;
-        }
-        function updateTurnUI() {
-            turnSpan.innerText = isPlayerTurn ? "🎯 Tur: Oyuncu" : "🤖 Tur: Bot (AI vuruş yapıyor)";
-        }
-        
-        // Bot karar mekaniği
-        function botShoot() {
-            if(!gameActive || isPlayerTurn || cueBallMoving) return;
-            let cue = balls.find(b=>b.type==='cue');
-            if(!cue) return;
-            // Hedef top seçimi (en yakın veya zorluğa göre)
-            let targetBalls = balls.filter(b=>b.type!=='cue' && !b.isPocketed);
-            if(targetBalls.length===0) return;
-            let target = targetBalls[0];
-            let bestAngle = 0;
-            let dx = target.x - cue.x;
-            let dy = target.y - cue.y;
-            let angleToTarget = Math.atan2(dy, dx);
-            let randomOffset = 0;
-            if(difficulty==='easy') randomOffset = (Math.random()-0.5)*0.8;
-            else if(difficulty==='normal') randomOffset = (Math.random()-0.5)*0.35;
-            else randomOffset = (Math.random()-0.5)*0.12;
-            aimAngle = angleToTarget + randomOffset;
-            let maxPower = difficulty==='hard'? 19 : (difficulty==='normal'?16:12);
-            power = 11 + Math.random()*maxPower;
-            setTimeout(()=>{
-                if(!isPlayerTurn && !cueBallMoving){
-                    cue.vx = Math.cos(aimAngle)*power;
-                    cue.vy = Math.sin(aimAngle)*power;
-                    cueBallMoving=true;
-                    currentTurnPotted=false;
-                    turnEnded=false;
-                }
-            }, 50);
-        }
-        
-        // İşaretleme ve power bar
-        function drawPowerBar() {
-            let barX = 20, barY = H-120, barW = 28, barH = 100;
-            ctx.fillStyle = '#332211';
-            ctx.fillRect(barX, barY, barW, barH);
-            let fillH = (power/24)*barH;
-            ctx.fillStyle = '#ffaa44';
-            ctx.fillRect(barX, barY+barH-fillH, barW, fillH);
-            ctx.strokeStyle = 'white';
-            ctx.strokeRect(barX, barY, barW, barH);
-        }
-        
-        function drawAimingLine() {
-            if(aiming && !cueBallMoving && isPlayerTurn) {
-                let cue = balls.find(b=>b.type==='cue');
-                if(cue){
-                    let endX = cue.x + Math.cos(aimAngle)*200;
-                    let endY = cue.y + Math.sin(aimAngle)*200;
-                    ctx.beginPath();
-                    ctx.moveTo(cue.x, cue.y);
-                    ctx.lineTo(endX, endY);
-                    ctx.strokeStyle = '#ffd966';
-                    ctx.lineWidth = 3;
-                    ctx.setLineDash([6, 8]);
-                    ctx.stroke();
-                    ctx.setLineDash([]);
-                }
-            }
-        }
-        
-        function drawTableAndBalls() {
-            ctx.fillStyle = tableFelt;
-            ctx.fillRect(0,0,W,H);
-            ctx.strokeStyle = '#bc9a6c';
-            ctx.lineWidth = 8;
-            ctx.strokeRect(8,8,W-16,H-16);
-            for(let p of pockets){
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.r-2,0,Math.PI*2);
-                ctx.fillStyle = '#0a0a0ae0';
-                ctx.fill();
-            }
-            for(let b of balls){
-                if(b.isPocketed) continue;
-                let grad = ctx.createRadialGradient(b.x-3, b.y-3, 3, b.x, b.y, b.radius);
-                if(b.type==='cue') grad.addColorStop(0,'#F9F9FC'); else grad.addColorStop(0,'#FFF9E0');
-                grad.addColorStop(1,'#d4b87a');
-                ctx.fillStyle = grad;
-                ctx.beginPath();
-                ctx.arc(b.x, b.y, b.radius-1, 0, Math.PI*2);
-                ctx.fill();
-                if(b.type !== 'cue'){
-                    ctx.fillStyle = '#2f2e2e';
-                    ctx.font = "bold 12px monospace";
-                    ctx.fillText(b.value, b.x-4, b.y+5);
-                }
-                if(b.type==='eight'){ ctx.fillStyle='black'; ctx.beginPath(); ctx.arc(b.x,b.y,5,0,Math.PI*2); ctx.fill();}
-            }
-            drawAimingLine();
-            if(isPlayerTurn && !cueBallMoving) drawPowerBar();
-        }
-        
-        // Mouse kontrolleri nişan
-        function getMouseAngle(cx, cy) {
-            let dx = mouseX - cx, dy = mouseY - cy;
-            return Math.atan2(dy, dx);
-        }
-        
-        function handleMouseMove(e) {
-            let rect = canvas.getBoundingClientRect();
-            let scaleX = W/rect.width, scaleY=H/rect.height;
-            let mx = (e.clientX - rect.left)*scaleX;
-            let my = (e.clientY - rect.top)*scaleY;
-            mouseX = Math.min(Math.max(mx,0),W);
-            mouseY = Math.min(Math.max(my,0),H);
-            if(aiming && isPlayerTurn && !cueBallMoving){
-                let cue = balls.find(b=>b.type==='cue');
-                if(cue) aimAngle = getMouseAngle(cue.x, cue.y);
-            }
-        }
-        
-        function onPointerDown(e) {
-            e.preventDefault();
-            if(!isPlayerTurn || cueBallMoving || !gameActive) return;
-            aiming = true;
-        }
-        
-        function onPointerUp(e) {
-            if(!isPlayerTurn || cueBallMoving || !gameActive) { aiming=false; return; }
-            if(aiming && power>0){
-                let cue = balls.find(b=>b.type==='cue');
-                if(cue){
-                    cue.vx = Math.cos(aimAngle)*power;
-                    cue.vy = Math.sin(aimAngle)*power;
-                    cueBallMoving = true;
-                    currentTurnPotted = false;
-                    turnEnded = false;
-                    power = 0;
-                }
-            }
-            aiming = false;
-            powerCharging = false;
-        }
-        
-        function onPowerCharge() {
-            if(aiming && isPlayerTurn && !cueBallMoving && gameActive){
-                if(power < 23) power += 0.7;
-                else power = 23;
-            }
-        }
-        
-        // Güncelleme döngüsü
-        let lastTimestamp = 0;
-        function animate() {
-            if(gameActive && !isPlayerTurn && !cueBallMoving && !turnEnded) {
-                botShoot();
-            }
-            if(gameActive) updatePhysics();
-            drawTableAndBalls();
-            requestAnimationFrame(animate);
-        }
-        
-        function startGame(mode, diff) {
-            gameMode = mode;
-            difficulty = diff;
-            playerScore = 0; botScore = 0;
-            isPlayerTurn = true;
-            gameActive = true;
-            currentTurnPotted=false;
-            pocketedBalls=[];
-            if(gameMode === '8pool') {
-                balls = initBallsFor8Pool();
-                playerType = null;
-                tableFelt = '#216b4e';
-            } else {
-                balls = initBallsRussian();
-                tableFelt = '#2b5a4a';
-            }
-            pockets = initPockets();
-            cueBall = balls.find(b=>b.type==='cue');
-            updateScoreUI();
-            updateTurnUI();
-            mainMenuDiv.style.display = 'none';
-        }
-        
-        function exitToMenu() {
-            gameActive = false;
-            mainMenuDiv.style.display = 'flex';
-        }
-        
-        // Difficulty butonları
-        document.querySelectorAll('.difficulty-btn').forEach(btn=>{
-            btn.addEventListener('click',()=>{
-                document.querySelectorAll('.difficulty-btn').forEach(b=>b.classList.remove('active'));
-                btn.classList.add('active');
-                difficulty = btn.getAttribute('data-diff');
+            renderChat();
+            userInput.addEventListener("keypress", (e) => { if (e.key === "Enter") sendMessage(); });
+        };
+
+        // SOHBETİ EKRANA ÇİZEN YARDIMCI METOD
+        function renderChat() {
+            chatBox.innerHTML = "";
+            chatHistory.forEach(msg => {
+                const msgDiv = document.createElement('div');
+                msgDiv.className = `flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in`;
+                
+                const innerDiv = document.createElement('div');
+                innerDiv.className = `max-w-[80%] rounded-2xl px-4 py-3 text-sm tracking-wide ${
+                    msg.sender === 'user' 
+                    ? 'bg-gradient-to-br from-cyan-600 to-blue-600 text-white rounded-tr-none shadow-md shadow-cyan-950/40' 
+                    : 'bg-[#111827] border border-gray-800 text-gray-200 rounded-tl-none shadow-lg'
+                }`;
+                innerDiv.innerText = msg.text;
+                
+                msgDiv.appendChild(innerDiv);
+                chatBox.appendChild(msgDiv);
             });
-        });
-        document.querySelectorAll('[data-mode]').forEach(btn=>{
-            btn.addEventListener('click',()=>{
-                let mode = btn.getAttribute('data-mode');
-                startGame(mode, difficulty);
-            });
-        });
-        menuBtn.addEventListener('click',exitToMenu);
-        
-        canvas.addEventListener('mousemove', handleMouseMove);
-        canvas.addEventListener('mousedown', onPointerDown);
-        window.addEventListener('mouseup', onPointerUp);
-        canvas.addEventListener('touchmove', (e)=>{ let rect = canvas.getBoundingClientRect(); let touch=e.touches[0]; handleMouseMove({clientX:touch.clientX, clientY:touch.clientY}); e.preventDefault();});
-        canvas.addEventListener('touchstart', (e)=>{ e.preventDefault(); onPointerDown(e);});
-        window.addEventListener('touchend', (e)=>{ onPointerUp(e);});
-        setInterval(()=>{ if(aiming && isPlayerTurn && !cueBallMoving && gameActive) onPowerCharge(); }, 30);
-        
-        // başlangıç menü açık
-        mainMenuDiv.style.display = 'flex';
-        animate();
-    })();
-</script>
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        // MESAJ GÖNDERME VE YANITLAMA MOTORU
+        function sendMessage() {
+            const text = userInput.value.trim();
+            if (!text) return;
+
+            // Kullanıcı mesajını ekle ve hafızaya kaydet
+            chatHistory.push({ sender: 'user', text: text });
+            userInput.value = "";
+            renderChat();
+
+            // Botun düşünüyor efekti yapması (0.6 saniye sonra cevap verir)
+            document.getElementById('bot-status').innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span> Yazır...';
+
+            setTimeout(() => {
+                let botAnswer = generateBotResponse(text);
+                chatHistory.push({ sender: 'bot', text: botAnswer });
+                saveData();
+                renderChat();
+                document.getElementById('bot-status').innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Sizinlə söhbətə hazırdır';
+            }, 60001 / 100); // 600 milisaniyede yanıt döner (Rate limit yok!)
+        }
+
+        // AKILLI CEVAP ÜRETME ALGORİTMASI
+        function generateBotResponse(userText) {
+            let lowerText = userText.toLowerCase();
+
+            // 1. AD ÖĞRENME AŞAMASI (Kullanıcı adını kaydedip kaydetmediğini kontrol et)
+            if (!userName) {
+                // Eğer isim kalıpları varsa içinden adı ayıkla
+                if (lowerText.includes("adım") || lowerText.includes("mənim adım")) {
+                    userName = userText.replace(/adım|mənim||dır|dir|dur|dür/g, "").trim();
+                } else {
+                    userName = userText; // Direkt adını yazdığını varsay
+                }
+                localStorage.setItem('ai_user_name', userName);
+                return `Şad oldum, ${userName}! Artıq adını yadda saxladım. İndi de görək, bu gün sənə necə kömək edə bilərəm, əziz dostum?`;
+            }
+
+            // 2. KELİME MATRİSİ KONTROLÜ
+            for (let key in aiKnowledge) {
+                if (lowerText.includes(key)) {
+                    let answers = aiKnowledge[key];
+                    let randomAns = answers[Math.floor(Math.random() * answers.length)];
+                    // Eğer isim biliniyorsa araya ismi serpiştirerek dostça kişiselleştir
+                    return randomAns.replace("dostum", userName);
+                }
+            }
+
+            // 3. EĞER HİÇBİR ŞEY EŞLEŞMEZSE RASTGELE DOSTÇA BİR SEÇENEK GÖNDER
+            let fallback = defaultResponses[Math.floor(Math.random() * defaultResponses.length)];
+            return fallback.replace("dostum", userName);
+        }
+
+        // VERİLERİ LOCALSTORAGE ÜZERİNE KAYDETME
+        function saveData() {
+            localStorage.setItem('ai_chat_history', JSON.stringify(chatHistory));
+        }
+
+        // SOHBET GEÇMİŞİNİ TAMAMEN SIFIRLAMA
+        function clearChatHistory() {
+            if (confirm("Söhbət keçmişini və yaddaşımı tamamilə silmək istəyirsən?")) {
+                localStorage.clear();
+                userName = "";
+                chatHistory = [{ sender: 'bot', text: "Yaddaşım tamamilə yeniləndi! Hər şeyə sıfırdan başlayırıq. Sənə necə müraciət edim dostum?" }];
+                saveData();
+                renderChat();
+            }
+        }
+    </script>
 </body>
 </html>
