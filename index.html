@@ -2,286 +2,370 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pro AI Trainer - Kendi Yapay Zekanı Eğit</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AI Motion Arena - Kamera Tabanlı Yapay Zeka Oyunları</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/knn-classifier"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
 
     <style>
-        body { background-color: #0b0f19; font-family: system-ui, sans-serif; }
-        #video-preview { transform: scaleX(-1); object-fit: cover; }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-thumb { background: #374151; border-radius: 3px; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #090d16; font-family: system-ui, sans-serif; user-select: none; }
+        #canvas-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+        video { transform: scaleX(-1); position: absolute; width: 1px; height: 1px; opacity: 0; }
+        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+        .ui-layer { position: absolute; z-index: 10; pointer-events: none; }
+        .interactive { pointer-events: auto; }
+        #loading-screen { position: fixed; inset: 0; background: #090d16; z-index: 99; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
     </style>
 </head>
-<body class="text-gray-200 min-h-screen flex flex-col">
+<body>
 
-    <div id="loading-screen" class="fixed inset-0 bg-[#0b0f19] z-50 flex flex-col items-center justify-center">
-        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-indigo-500 mb-4"></div>
-        <h2 class="text-xl font-bold tracking-wider animate-pulse text-white">YAPAY ZEKA MOTORU YÜKLENİYOR...</h2>
-        <p class="text-xs text-gray-400 mt-2">MobileNet & KNN Classifier modelleri tarayıcıya indiriliyor.</p>
+    <div id="loading-screen">
+        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-cyan-500 mb-4"></div>
+        <h2 class="text-xl font-bold tracking-wider animate-pulse text-cyan-400">YAPAY ZEKA MOTORU HAZIRLANIYOR...</h2>
+        <p class="text-xs text-gray-400 mt-2">Kamera ve Hareket Takip Modülleri Yükleniyor.</p>
     </div>
 
-    <header class="border-b border-gray-800 bg-[#111827]/80 backdrop-blur px-6 py-4 flex justify-between items-center sticky top-0 z-40">
-        <div class="flex items-center space-x-3">
-            <div class="bg-indigo-600 p-2 rounded-xl text-white shadow-lg shadow-indigo-900/40">
-                <i class="fas fa-brain text-lg"></i>
+    <video id="webcam" playsinline autoplay muted></video>
+    <div id="canvas-container">
+        <canvas id="game-canvas"></canvas>
+    </div>
+
+    <div id="main-menu" class="fixed inset-0 bg-[#090d16]/95 z-40 flex flex-col items-center justify-center p-4">
+        <div class="text-center mb-8">
+            <h1 class="text-4xl sm:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500 tracking-wider mb-2">AI MOTION ARENA</h1>
+            <p class="text-xs sm:text-sm text-gray-400 font-mono">Kameranın Karşısına Geç, Vücudunla Oyunu Yönet!</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl w-full px-4">
+            <div onclick="startGame('volleyball')" class="bg-gray-900/60 border border-gray-800 hover:border-cyan-500/50 p-5 rounded-2xl text-center cursor-pointer transition-all hover:scale-105 group shadow-xl">
+                <div class="w-14 h-14 bg-cyan-950 text-cyan-400 rounded-xl flex items-center justify-center mx-auto text-2xl mb-4 group-hover:bg-cyan-500 group-hover:text-black transition-all">
+                    <i class="fas fa-volleyball"></i>
+                </div>
+                <h3 class="text-white font-bold text-lg mb-1">Voleybol Sektirme</h3>
+                <p class="text-xs text-gray-400">Kafan ve ellerinle topu aşağı düşürmeden yukarı doğru sektir!</p>
             </div>
+
+            <div onclick="startGame('catcher')" class="bg-gray-900/60 border border-gray-800 hover:border-purple-500/50 p-5 rounded-2xl text-center cursor-pointer transition-all hover:scale-105 group shadow-xl">
+                <div class="w-14 h-14 bg-purple-950 text-purple-400 rounded-xl flex items-center justify-center mx-auto text-2xl mb-4 group-hover:bg-purple-500 group-hover:text-black transition-all">
+                    <i class="fas fa-hand-holding-heart"></i>
+                </div>
+                <h3 class="text-white font-bold text-lg mb-1">Mücevher Yakalama</h3>
+                <p class="text-xs text-gray-400">Yukarıdan düşen elmasları ellerinle yakala, bombalardan kaç!</p>
+            </div>
+
+            <div onclick="startGame('ninja')" class="bg-gray-900/60 border border-gray-800 hover:border-rose-500/50 p-5 rounded-2xl text-center cursor-pointer transition-all hover:scale-105 group shadow-xl">
+                <div class="w-14 h-14 bg-rose-950 text-rose-400 rounded-xl flex items-center justify-center mx-auto text-2xl mb-4 group-hover:bg-rose-500 group-hover:text-black transition-all">
+                    <i class="fas fa-slice"></i>
+                </div>
+                <h3 class="text-white font-bold text-lg mb-1">Hareket Ninjası</h3>
+                <p class="text-xs text-gray-400">Ekranda beliren hedefleri ellerinle hızlıca keserek yok et!</p>
+            </div>
+        </div>
+        <p class="text-[11px] text-gray-500 mt-12 font-mono"><i class="fas fa-mobile-alt mr-1"></i> Telefonu yan çevirerek oynamak daha eğlencelidir.</p>
+    </div>
+
+    <div class="ui-layer top-0 left-0 right-0 p-4 flex justify-between items-center bg-gradient-to-b from-black/60 to-transparent w-full">
+        <div class="bg-gray-950/80 border border-gray-800 rounded-xl px-4 py-2 flex items-center space-x-4 interactive shadow-lg">
             <div>
-                <h1 class="font-bold text-lg text-white tracking-wide">LOKAL AI TRAINER <span class="text-xs font-mono text-indigo-400 border border-indigo-500/30 px-1.5 py-0.5 rounded ml-2">EDGE v1.0</span></h1>
-                <p class="text-[11px] text-gray-400">Bulut yok, API yok. Tamamen bilgisayarınızda çalışır.</p>
+                <p class="text-[10px] text-gray-400 font-mono uppercase tracking-wider">Anlık Skor</p>
+                <p id="score-text" class="text-2xl font-black text-cyan-400 font-mono">000</p>
             </div>
-        </div>
-        <div id="status-badge" class="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-2">
-            <i class="fas fa-exclamation-triangle text-[10px]"></i> Veri Bekleniyor
-        </div>
-    </header>
-
-    <main class="flex-1 max-w-7xl w-full mx-auto p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
-        <div class="lg:col-span-7 flex flex-col space-y-4">
-            
-            <div class="bg-[#111827] border border-gray-800 rounded-2xl overflow-hidden shadow-xl relative aspect-video flex items-center justify-center">
-                <video id="video-preview" autoplay playsinline muted class="w-full h-full"></video>
-                <div class="absolute top-3 left-3 bg-black/60 backdrop-blur text-[11px] text-gray-300 font-mono px-2 py-1 rounded border border-gray-700">
-                    <i class="fas fa-video text-emerald-400 mr-1 animate-pulse"></i> CANLI KAMERA GİRİŞİ
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                
-                <div class="bg-[#111827] border border-gray-800 rounded-2xl p-4 flex flex-col justify-between shadow-lg">
-                    <div>
-                        <div class="flex justify-between items-center mb-2">
-                            <input type="text" id="class-a-name" value="Sınıf A (Örn: Telefon)" class="bg-gray-800/50 border border-gray-700 text-sm font-bold text-white rounded-lg px-2 py-1 w-40 focus:outline-none focus:border-indigo-500">
-                            <span id="count-a" class="bg-indigo-950 text-indigo-400 text-xs font-mono px-2 py-0.5 rounded-full border border-indigo-900">0 Örnek</span>
-                        </div>
-                        <p class="text-xs text-gray-400 mb-4">Kameraya 1. nesneyi gösterin ve aşağıdaki butona basılı tutarak örnek toplayın.</p>
-                    </div>
-                    <button id="btn-train-a" class="w-full bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-indigo-950">
-                        <i class="fas fa-plus-circle"></i> VERİ TOPLA (BASILI TUT)
-                    </button>
-                </div>
-
-                <div class="bg-[#111827] border border-gray-800 rounded-2xl p-4 flex flex-col justify-between shadow-lg">
-                    <div>
-                        <div class="flex justify-between items-center mb-2">
-                            <input type="text" id="class-b-name" value="Sınıf B (Örn: Cüzdan)" class="bg-gray-800/50 border border-gray-700 text-sm font-bold text-white rounded-lg px-2 py-1 w-40 focus:outline-none focus:border-emerald-500">
-                            <span id="count-b" class="bg-emerald-950 text-emerald-400 text-xs font-mono px-2 py-0.5 rounded-full border border-emerald-900">0 Örnek</span>
-                        </div>
-                        <p class="text-xs text-gray-400 mb-4">Kameraya 2. nesneyi gösterin ve aşağıdaki butona basılı tutarak örnek toplayın.</p>
-                    </div>
-                    <button id="btn-train-b" class="w-full bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-emerald-950">
-                        <i class="fas fa-plus-circle"></i> VERİ TOPLA (BASILI TUT)
-                    </button>
-                </div>
-
+            <div class="border-l border-gray-800 h-8"></div>
+            <div>
+                <p class="text-[10px] text-gray-400 font-mono uppercase tracking-wider">En Yüksek</p>
+                <p id="highscore-text" class="text-lg font-bold text-amber-500 font-mono">000</p>
             </div>
         </div>
 
-        <div class="lg:col-span-5 flex flex-col space-y-4">
-            
-            <div class="bg-[#111827] border border-gray-800 rounded-2xl p-5 shadow-xl flex flex-col justify-between flex-1">
-                <div>
-                    <h3 class="text-sm font-bold tracking-wide text-white border-b border-gray-800 pb-3 mb-4 flex items-center gap-2">
-                        <i class="fas fa-chart-bar text-indigo-400"></i> CANLI TAHMİN SONUÇLARI
-                    </h3>
-
-                    <div class="space-y-4 mt-2">
-                        <div>
-                            <div class="flex justify-between text-xs font-medium mb-1.5">
-                                <span id="label-a-display" class="text-gray-300 font-bold">Sınıf A</span>
-                                <span id="percent-a" class="font-mono text-indigo-400 font-bold">0%</span>
-                            </div>
-                            <div class="w-full bg-gray-800 h-3 rounded-full overflow-hidden">
-                                <div id="bar-a" class="bg-indigo-500 h-full w-0 transition-all duration-75"></div>
-                            </div>
-                        </div>
-
-                        <div>
-                            <div class="flex justify-between text-xs font-medium mb-1.5">
-                                <span id="label-b-display" class="text-gray-300 font-bold">Sınıf B</span>
-                                <span id="percent-b" class="font-mono text-emerald-400 font-bold">0%</span>
-                            </div>
-                            <div class="w-full bg-gray-800 h-3 rounded-full overflow-hidden">
-                                <div id="bar-b" class="bg-emerald-500 h-full w-0 transition-all duration-75"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-gray-950/60 border border-gray-900 rounded-xl p-6 text-center my-6 shadow-inner">
-                    <p class="text-[10px] text-gray-500 font-mono tracking-widest uppercase">En Yüksek Eşleşme</p>
-                    <h2 id="final-result" class="text-2xl sm:text-3xl font-extrabold text-gray-400 mt-1 tracking-wide uppercase">- RECOGNIZING -</h2>
-                </div>
-
-                <button onclick="resetClassifier()" class="w-full bg-gray-900 hover:bg-red-950/40 text-gray-400 hover:text-red-400 border border-gray-800 hover:border-red-900/50 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2">
-                    <i class="fas fa-undo"></i> Hafızayı Sıfırla & Temizle
-                </button>
-            </div>
-
-        </div>
-    </main>
-
-    <footer class="border-t border-gray-800 py-3 text-center text-xs text-gray-500 font-mono">
-        Tarayıcı tabanlı yapay zeka | TensorFlow.js KNN-Classifier Modeli
-    </footer>
+        <button onclick="exitToMenu()" class="interactive bg-gray-950/80 hover:bg-red-950 text-gray-300 hover:text-red-400 border border-gray-800 hover:border-red-900/50 px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-lg cursor-pointer">
+            <i class="fas fa-bars mr-1.5"></i> Menüye Dön
+        </button>
+    </div>
 
     <script>
-        const video = document.getElementById('video-preview');
-        let mobilenetModule = null;
-        let classifier = null;
+        const video = document.getElementById('webcam');
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
         
-        let isTrainingA = false;
-        let isTrainingB = false;
+        let activeGame = null;
+        let score = 0;
+        let highscores = { volleyball: 0, catcher: 0, ninja: 0 };
+        let poseLandmarks = []; // AI'dan gelen anlık iskelet koordinatları
+
+        // Oyun Nesneleri Dünyası
+        let ball = { x: 0, y: 0, radius: 35, speedX: 5, speedY: -5, type: 'volleyball' };
+        let items = []; // Düşen nesneler
+        let targets = []; // Ninja oyunundaki hedefler
+        let gameTimer = 0;
+
+        // Ekranı tam oturt (Yan çevrilse bile canvas güncellenir)
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 200));
+
+        // 1. MEDIAPIPE POSE YAPAY ZEKA MODEL KURULUMU
+        const pose = new Pose({
+            locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
+        });
         
-        let countA = 0;
-        let countB = 0;
+        pose.setOptions({
+            modelComplexity: 1,
+            smoothLandmarks: true,
+            minDetectionConfidence: 0.5,
+            minTrackingConfidence: 0.5
+        });
 
-        // Elementleri Seç
-        const btnTrainA = document.getElementById('btn-train-a');
-        const btnTrainB = document.getElementById('btn-train-b');
-        const inputAName = document.getElementById('class-a-name');
-        const inputBName = document.getElementById('class-b-name');
+        // Yapay zeka iskeleti her çıkardığında burası tetiklenir
+        pose.onResults((results) => {
+            // Yükleme ekranını ilk veri akışında kapat
+            document.getElementById('loading-screen').style.display = 'none';
+            
+            // Kamera görüntüsünü arka plana çiz (Ayna efekti vererek)
+            ctx.save();
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.translate(canvas.width, 0);
+            ctx.scale(-1, 1);
+            ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+            ctx.restore();
 
-        // Yapay Zeka Modellerini Başlat ve Kamerayı Aç
-        async function initAI() {
-            try {
-                // Sınıflandırıcıyı ve Ana Ağı yükle
-                classifier = knnClassifier.create();
-                mobilenetModule = await mobilenet.load();
-                
-                // Kameraya Bağlan
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: "user" }, 
-                    audio: false 
-                });
-                video.srcObject = stream;
-                
-                // Yükleme ekranını kapat
-                document.getElementById('loading-screen').style.display = 'none';
-                
-                // Canlı Analiz Döngüsünü Başlat
-                startPredicting();
-            } catch (error) {
-                alert("Yapay zeka modelleri yüklenirken veya kameraya erişilirken bir hata oluştu: " + error);
+            // Vücut noktalarını yakala
+            if (results.poseLandmarks) {
+                poseLandmarks = results.poseLandmarks;
+                // Test amaçlı eklemleri görmek istersen buraya çizim eklenebilir, şimdilik sadece interaktif noktaları kullanıyoruz.
             }
+
+            // Seçili olan oyunu çalıştır
+            if (activeGame) {
+                gameLoop();
+            }
+        });
+
+        // Kamerayı Başlat
+        const camera = new Camera(video, {
+            onFrame: async () => {
+                await pose.send({ image: video });
+            },
+            width: 640,
+            height: 480
+        });
+        camera.start();
+
+        // 2. OYUN YÖNETİM MANTIĞI
+        function startGame(gameType) {
+            activeGame = gameType;
+            score = 0;
+            items = [];
+            targets = [];
+            document.getElementById('score-text').innerText = "0";
+            document.getElementById('highscore-text').innerText = highscores[gameType];
+            document.getElementById('main-menu').style.display = 'none';
+            
+            // Voleybol oyunu başlangıç konumu
+            ball.x = canvas.width / 2;
+            ball.y = 100;
+            ball.speedY = 3;
+            ball.speedX = (Math.random() - 0.5) * 6;
         }
 
-        // Basılı Tutma Mantığı İçin Event Listener'lar
-        btnTrainA.addEventListener('mousedown', () => isTrainingA = true);
-        btnTrainA.addEventListener('mouseup', () => isTrainingA = false);
-        btnTrainA.addEventListener('touchstart', (e) => { e.preventDefault(); isTrainingA = true; });
-        btnTrainA.addEventListener('touchend', () => isTrainingA = false);
-
-        btnTrainB.addEventListener('mousedown', () => isTrainingB = true);
-        btnTrainB.addEventListener('mouseup', () => isTrainingB = false);
-        btnTrainB.addEventListener('touchstart', (e) => { e.preventDefault(); isTrainingB = true; });
-        btnTrainB.addEventListener('touchend', () => isTrainingB = false);
-
-        // İsim Değişikliklerini Dinle
-        inputAName.addEventListener('input', updateLabels);
-        inputBName.addEventListener('input', updateLabels);
-
-        function updateLabels() {
-            document.getElementById('label-a-display').innerText = inputAName.value;
-            document.getElementById('label-b-display').innerText = inputBName.value;
+        function exitToMenu() {
+            activeGame = null;
+            document.getElementById('main-menu').style.display = 'flex';
         }
 
-        // GERÇEK ZAMANLI ANALİZ VE EĞİTİM DÖNGÜSÜ
-        async function startPredicting() {
-            while (true) {
-                if (video.srcObject) {
-                    // Kameradan anlık kareyi (tensor) al
-                    const img = tf.browser.fromPixels(video);
-                    
-                    // MobileNet modeli ile kareden özellik çıkarımı (Feature Extraction) yap
-                    const activation = mobilenetModule.infer(img, 'conv_preds');
+        // 3. ANA OYUN DÖNGÜSÜ (FİZİK VE ÇİZİMLER)
+        function gameLoop() {
+            gameTimer++;
 
-                    // Eğer Eğit A butonuna basılı tutuluyorsa örneği Sınıf 0'a ekle
-                    if (isTrainingA) {
-                        classifier.addExample(activation, 0);
-                        countA++;
-                        document.getElementById('count-a').innerText = `${countA} Örnek`;
-                    }
-                    
-                    // Eğer Eğit B butonuna basılı tutuluyorsa örneği Sınıf 1'e ekle
-                    if (isTrainingB) {
-                        classifier.addExample(activation, 1);
-                        countB++;
-                        document.getElementById('count-b').innerText = `${countB} Örnek`;
-                    }
+            // AI Noktalarını al (Ayna moduna göre dönüştür)
+            let leftHand = getJointCoords(15);  // Sol Bilek
+            let rightHand = getJointCoords(16); // Sağ Bilek
+            let head = getJointCoords(0);       // Burun / Baş
 
-                    // Eğer eğitilmiş veri varsa tahmin etmeye başla
-                    const numClasses = classifier.getNumClasses();
-                    if (numClasses > 0) {
-                        document.getElementById('status-badge').className = "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-2 animate-pulse";
-                        document.getElementById('status-badge').innerHTML = '<i class="fas fa-brain text-[10px]"></i> Canlı Tanıma Aktif';
+            // --- MOD 1: VOLEYBOL SEKTİRME OYUNU ---
+            if (activeGame === 'volleyball') {
+                // Topu hareket ettir
+                ball.y += ball.speedY;
+                ball.x += ball.speedX;
+                ball.speedY += 0.12; // Yerçekimi
 
-                        const res = await classifier.predictClass(activation);
-                        const confidences = res.confidences;
+                // Duvarlardan sekme
+                if (ball.x - ball.radius < 0 || ball.x + ball.radius > canvas.width) ball.speedX *= -1;
+                if (ball.y - ball.radius < 0) ball.speedY *= -1;
 
-                        // Güven oranlarını hesapla (0 ile 100 arası)
-                        const probA = Math.round((confidences[0] || 0) * 100);
-                        const probB = Math.round((confidences[1] || 0) * 100);
-
-                        // Barları ve Yüzdeleri Güncelle
-                        document.getElementById('percent-a').innerText = `${probA}%`;
-                        document.getElementById('bar-a').style.width = `${probA}%`;
-                        
-                        document.getElementById('percent-b').innerText = `${probB}%`;
-                        document.getElementById('bar-b').style.width = `${probB}%`;
-
-                        // Kazananı ekrana yazdır
-                        if (probA > probB) {
-                            document.getElementById('final-result').innerText = inputAName.value;
-                            document.getElementById('final-result').className = "text-2xl sm:text-3xl font-extrabold text-indigo-400 mt-1 tracking-wide uppercase";
-                        } else if (probB > probA) {
-                            document.getElementById('final-result').innerText = inputBName.value;
-                            document.getElementById('final-result').className = "text-2xl sm:text-3xl font-extrabold text-emerald-400 mt-1 tracking-wide uppercase";
-                        } else {
-                            document.getElementById('final-result').innerText = "EŞİT VERİ";
-                            document.getElementById('final-result').className = "text-2xl sm:text-3xl font-extrabold text-gray-400 mt-1 tracking-wide uppercase";
+                // YAPAY ZEKA ÇARPIŞMA KONTROLÜ (Baş veya Eller topa değerse)
+                let activePoints = [leftHand, rightHand, head];
+                activePoints.forEach(point => {
+                    if (point) {
+                        let dist = Math.hypot(ball.x - point.x, ball.y - point.y);
+                        if (dist < ball.radius + 40) { // Çarpışma alanı toleransı
+                            ball.speedY = -Math.abs(ball.speedY) - 2; // Yukarı fırlat
+                            if (ball.speedY < -12) ball.speedY = -12; // Maks hız sınırı
+                            ball.speedX = (ball.x - point.x) * 0.3; // Açı ver
+                            score += 10;
+                            updateScore();
                         }
                     }
+                });
 
-                    // Hafıza sızıntısını önlemek için tensörleri yok et
-                    img.dispose();
+                // Top yere düşerse (Kaybetme)
+                if (ball.y > canvas.height) {
+                    ball.y = 100;
+                    ball.speedY = 3;
+                    ball.speedX = (Math.random() - 0.5) * 6;
+                    score = 0;
+                    updateScore();
                 }
-                // Döngünün işlemciyi kilitlememesi için her kareden sonra kısa bir mola ver
-                await tf.nextFrame();
+
+                // Voleybol Topunu Çiz
+                drawVolleyball(ball.x, ball.y, ball.radius);
+            }
+
+            // --- MOD 2: MÜCEVHER YAKALAMA OYUNU ---
+            else if (activeGame === 'catcher') {
+                // Belirli aralıklarla yeni nesne düşür
+                if (gameTimer % 60 === 0) {
+                    let isBomb = Math.random() > 0.7;
+                    items.push({
+                        x: Math.random() * (canvas.width - 60) + 30,
+                        y: -50,
+                        speed: Math.random() * 4 + 4,
+                        type: isBomb ? 'bomb' : 'gem',
+                        color: isBomb ? '#ef4444' : '#a855f7'
+                    });
+                }
+
+                // Nesneleri güncelle ve çiz
+                items.forEach((item, index) => {
+                    item.y += item.speed;
+
+                    // Ellerin nesneye teması
+                    [leftHand, rightHand].forEach(hand => {
+                        if (hand) {
+                            let dist = Math.hypot(item.x - hand.x, item.y - hand.y);
+                            if (dist < 50) { // Yakaladı
+                                if (item.type === 'bomb') {
+                                    score = Math.max(0, score - 50); // Ceza
+                                } else {
+                                    score += 25;
+                                }
+                                items.splice(index, 1);
+                                updateScore();
+                            }
+                        }
+                    });
+
+                    // Ekrandan çıkma kontrolü
+                    if (item.y > canvas.height) items.splice(index, 1);
+
+                    // Çizim
+                    ctx.beginPath();
+                    if (item.type === 'bomb') {
+                        ctx.arc(item.x, item.y, 20, 0, Math.PI * 2);
+                        ctx.fillStyle = '#ef4444';
+                    } else {
+                        ctx.rect(item.x - 15, item.y - 15, 30, 30);
+                        ctx.fillStyle = '#c084fc';
+                    }
+                    ctx.fill();
+                });
+            }
+
+            // --- MOD 3: HAREKET NİNJASI OYUNU ---
+            else if (activeGame === 'ninja') {
+                if (gameTimer % 80 === 0) {
+                    targets.push({
+                        x: Math.random() * (canvas.width - 100) + 50,
+                        y: Math.random() * (canvas.height - 200) + 100,
+                        radius: 40,
+                        life: 150 // Ekranda kalma süresi
+                    });
+                }
+
+                targets.forEach((target, index) => {
+                    target.life--;
+                    if (target.life <= 0) targets.splice(index, 1);
+
+                    // Ellerin hedefi kesmesi
+                    [leftHand, rightHand].forEach(hand => {
+                        if (hand) {
+                            let dist = Math.hypot(target.x - hand.x, target.y - hand.y);
+                            if (dist < target.radius + 20) {
+                                score += 15;
+                                targets.splice(index, 1);
+                                updateScore();
+                            }
+                        }
+                    });
+
+                    // Hedef Daireyi Çiz
+                    ctx.beginPath();
+                    ctx.arc(target.x, target.y, target.radius, 0, Math.PI * 2);
+                    ctx.strokeStyle = '#f43f5e';
+                    ctx.lineWidth = 4;
+                    ctx.fillStyle = 'rgba(244, 63, 94, 0.2)';
+                    ctx.fill();
+                    ctx.stroke();
+                });
+            }
+
+            // Ekranda Ellerin ve Başın Nerede Olduğunu Belirtmek İçin Küçük Işıltılar Çiz
+            drawHandTracker(leftHand, '#3b82f6');
+            drawHandTracker(rightHand, '#10b981');
+        }
+
+        // AI Koordinatlarını Canvas Ölçeğine Çeviren Yardımcı Fonksiyon
+        function getJointCoords(index) {
+            if (!poseLandmarks[index]) return null;
+            let lm = poseLandmarks[index];
+            // MediaPipe x eksenini ters verir (Ayna efektini düzeltmek için 1 - lm.x yapıyoruz)
+            return {
+                x: (1 - lm.x) * canvas.width,
+                y: lm.y * canvas.height
+            };
+        }
+
+        function updateScore() {
+            document.getElementById('score-text').innerText = score;
+            if (score > highscores[activeGame]) {
+                highscores[activeGame] = score;
+                document.getElementById('highscore-text').innerText = score;
             }
         }
 
-        // Yapay Zeka Belleğini Sıfırlama
-        function resetClassifier() {
-            if (classifier) {
-                classifier.clearAllClasses();
-                countA = 0;
-                countB = 0;
-                document.getElementById('count-a').innerText = `0 Örnek`;
-                document.getElementById('count-b').innerText = `0 Örnek`;
-                document.getElementById('percent-a').innerText = `0%`;
-                document.getElementById('bar-a').style.width = `0%`;
-                document.getElementById('percent-b').innerText = `0%`;
-                document.getElementById('bar-b').style.width = `0%`;
-                document.getElementById('final-result').innerText = "- RECOGNIZING -";
-                document.getElementById('final-result').className = "text-2xl sm:text-3xl font-extrabold text-gray-400 mt-1 tracking-wide uppercase";
-                
-                document.getElementById('status-badge').className = "bg-amber-500/10 text-amber-400 border border-amber-500/20 px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-2";
-                document.getElementById('status-badge').innerHTML = '<i class="fas fa-exclamation-triangle text-[10px]"></i> Veri Bekleniyor';
-            }
+        // GÖRSEL ÇİZİM METOTLARI
+        function drawVolleyball(x, y, r) {
+            ctx.beginPath();
+            ctx.arc(x, y, r, 0, Math.PI * 2);
+            ctx.fillStyle = '#fef08a';
+            ctx.fill();
+            ctx.strokeStyle = '#ca8a04';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            
+            // Top çizgileri deseni
+            ctx.beginPath();
+            ctx.arc(x - r/2, y, r/2, 0, Math.PI, true);
+            ctx.stroke();
         }
 
-        // Sayfa yüklendiğinde projeyi başlat
-        window.onload = () => {
-            initAI();
-            updateLabels();
-        };
+        function drawHandTracker(point, color) {
+            if (!point) return;
+            ctx.beginPath();
+            ctx.arc(point.x, point.y, 20, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.globalAlpha = 0.6;
+            ctx.fill();
+            ctx.globalAlpha = 1.0;
+        }
+
+        // Açılış Ayarı
+        resizeCanvas();
     </script>
 </body>
 </html>
