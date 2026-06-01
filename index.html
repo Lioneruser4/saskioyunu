@@ -2,194 +2,402 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>BACKROOMS - The Hunt</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pro SpeedRadar AI - Araç Hız & Plaka Takip Sistemi</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        * {
-            user-select: none;
-            touch-action: none;
-            box-sizing: border-box;
-        }
-
-        body {
+        body, html {
             margin: 0;
-            min-height: 100vh;
-            background: #0a0c12;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-family: 'Segoe UI', 'Poppins', system-ui, -apple-system, sans-serif;
+            padding: 0;
+            width: 100%;
+            height: 100%;
             overflow: hidden;
-            position: fixed;
-            width: 100%;
-            height: 100%;
+            background-color: #0b0f19;
+            font-family: system-ui, -apple-system, sans-serif;
         }
-
-        /* Ana game container - yan ekran için 16/9 oranı, PC'de ortalanır */
-        .game-container {
-            background: #000;
-            position: relative;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            box-shadow: 0 0 40px rgba(0,0,0,0.5);
-        }
-
-        canvas {
+        /* Canlı video arka planı */
+        #video-container {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            object-fit: contain;
-            background: #1a1f2a;
-            cursor: crosshair;
+            z-index: 1;
         }
-
-        /* UI overlay - modern glassmorphism */
-        .ui-panel {
+        video, canvas {
             position: absolute;
-            bottom: 20px;
-            left: 20px;
-            right: 20px;
-            z-index: 20;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 14px;
-            justify-content: center;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        /* UI Katmanları */
+        .ui-layer {
+            position: absolute;
+            z-index: 10;
             pointer-events: none;
         }
-
-        button {
+        .interactive {
             pointer-events: auto;
-            background: rgba(20, 25, 40, 0.85);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 215, 0, 0.4);
-            color: gold;
-            font-weight: bold;
-            padding: 12px 28px;
-            border-radius: 60px;
-            font-size: 1.1rem;
-            letter-spacing: 1px;
-            cursor: pointer;
-            transition: 0.2s;
-            font-family: inherit;
-            box-shadow: 0 6px 14px rgba(0,0,0,0.3);
         }
-
-        button:active {
-            transform: scale(0.96);
-            background: gold;
-            color: black;
-        }
-
-        .top-bar {
-            position: absolute;
-            top: 16px;
-            left: 16px;
-            right: 16px;
-            z-index: 20;
-            display: flex;
-            justify-content: space-between;
-            gap: 12px;
-            pointer-events: none;
-        }
-
-        .top-info {
-            background: rgba(0,0,0,0.6);
-            backdrop-filter: blur(8px);
-            padding: 8px 18px;
-            border-radius: 40px;
-            color: white;
-            font-weight: bold;
-            font-size: 0.9rem;
-            pointer-events: auto;
-            border-left: 3px solid gold;
-        }
-
-        .settings-btn {
-            background: rgba(0,0,0,0.6);
-            backdrop-filter: blur(8px);
-            border: none;
-            padding: 8px 18px;
-            font-size: 0.9rem;
-            border-radius: 40px;
-        }
-
-        .room-list {
-            position: absolute;
-            top: 80px;
-            left: 16px;
-            right: 16px;
-            background: rgba(10, 12, 22, 0.95);
-            backdrop-filter: blur(20px);
-            border-radius: 28px;
-            padding: 16px;
-            z-index: 25;
-            max-height: 60%;
+        /* İhlal Listesi Grid */
+        #violation-log {
+            max-height: calc(100vh - 200px);
             overflow-y: auto;
-            border: 1px solid rgba(255,215,0,0.4);
-            pointer-events: auto;
-            display: none;
-            flex-direction: column;
-            gap: 12px;
         }
-
-        .room-card {
-            background: #1e2436;
-            padding: 12px;
-            border-radius: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-left: 5px solid gold;
-            cursor: pointer;
-            transition: 0.1s;
+        /* İnce Scrollbar */
+        #violation-log::-webkit-scrollbar {
+            width: 4px;
         }
-
-        .room-card:active {
-            background: #2a3248;
-        }
-
-        .close-panel {
-            background: crimson;
-            border: none;
-            padding: 8px;
-            margin-top: 8px;
-            color: white;
-        }
-
-        @media (max-width: 768px) {
-            button { padding: 10px 20px; font-size: 0.9rem; }
-            .top-info { font-size: 0.7rem; padding: 5px 12px; }
+        #violation-log::-webkit-scrollbar-thumb {
+            background: rgba(239, 68, 68, 0.5);
+            border-radius: 2px;
         }
     </style>
 </head>
 <body>
-<div class="game-container">
-    <canvas id="gameCanvas" width="1280" height="720"></canvas>
 
-    <div class="top-bar">
-        <div class="top-info" id="playerNameDisplay">👤 İsim yok</div>
-        <div class="top-info" id="roomStatus">🏠 Oda yok</div>
-        <button class="settings-btn" id="fullscreenBtn">🖥️ Tam Ekran</button>
+    <div id="video-container">
+        <video id="webcam" autoplay playsinline muted></video>
+        <canvas id="canvas-overlay"></canvas>
     </div>
 
-    <div class="ui-panel">
-        <button id="joinGameBtn">🎮 OYUN BUL / BAŞLA</button>
-        <button id="listRoomsBtn">📋 ODALAR</button>
-        <button id="createRoomBtn">✨ YENİ ODA KUR</button>
+    <div class="ui-layer top-0 left-0 right-0 p-4 flex justify-between items-center bg-gradient-to-b from-[#0b0f19]/80 to-transparent w-full">
+        <div class="flex items-center space-x-3 interactive">
+            <div class="bg-red-600 text-white px-3 py-1.5 rounded-md font-bold text-sm tracking-wider flex items-center gap-2 animate-pulse">
+                <i class="fas fa-circle text-xs"></i> CANLI
+            </div>
+            <div class="text-white hidden sm:block">
+                <h1 class="font-bold text-lg tracking-wide">SPEEDRADAR <span class="text-amber-500 font-mono text-xs px-1.5 py-0.5 border border-amber-500 rounded">PRO v2.5</span></h1>
+                <p class="text-xs text-gray-400">AI Tabanlı Hız & Plaka Analizi</p>
+            </div>
+        </div>
+
+        <div class="flex items-center space-x-2 interactive bg-[#111827]/90 p-1.5 rounded-xl border border-gray-800">
+            <span class="text-xs text-gray-400 font-medium px-2 hidden md:inline">HIZ LİMİTİ (KM/H):</span>
+            <div class="flex space-x-1" id="limit-selectors">
+                <button onclick="setSpeedLimit(20)" class="limit-btn px-3 py-1 rounded-lg text-sm font-bold bg-gray-800 text-gray-300 transition-all hover:bg-gray-700" data-limit="20">20</button>
+                <button onclick="setSpeedLimit(50)" class="limit-btn px-3 py-1 rounded-lg text-sm font-bold bg-amber-600 text-white transition-all" data-limit="50">50</button>
+                <button onclick="setSpeedLimit(60)" class="limit-btn px-3 py-1 rounded-lg text-sm font-bold bg-gray-800 text-gray-300 transition-all hover:bg-gray-700" data-limit="60">60</button>
+                <button onclick="setSpeedLimit(80)" class="limit-btn px-3 py-1 rounded-lg text-sm font-bold bg-gray-800 text-gray-300 transition-all hover:bg-gray-700" data-limit="80">80</button>
+                <button onclick="setSpeedLimit(100)" class="limit-btn px-3 py-1 rounded-lg text-sm font-bold bg-gray-800 text-gray-300 transition-all hover:bg-gray-700" data-limit="100">100</button>
+            </div>
+        </div>
     </div>
 
-    <div id="roomListPanel" class="room-list">
-        <h3 style="margin:0 0 8px 0; color:gold;">🔹 MEVCUT ODALAR</h3>
-        <div id="roomsContainer"></div>
-        <button class="close-panel" id="closeRoomPanel">Kapat</button>
+    <div class="ui-layer top-24 right-4 w-72 sm:w-80 interactive">
+        <div class="bg-[#111827]/90 border border-gray-800 rounded-2xl p-4 shadow-2xl backdrop-blur-md">
+            <div class="flex justify-between items-center border-b border-gray-800 pb-2 mb-3">
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-bolt text-red-500"></i>
+                    <h2 class="text-white font-bold text-sm tracking-wide">HIZ İHLAL KAYITLARI</h2>
+                </div>
+                <span id="violation-count" class="bg-red-950 text-red-400 text-xs font-bold px-2 py-0.5 rounded-full border border-red-900">0</span>
+            </div>
+            
+            <div id="violation-log" class="space-y-2.5">
+                <p id="no-violation-text" class="text-gray-500 text-xs text-center py-4">Henüz hız ihlali tespit edilmedi.</p>
+            </div>
+        </div>
     </div>
-</div>
 
-<script src="game.js"></script>
+    <div class="ui-layer bottom-6 left-0 right-0 flex justify-center w-full px-4">
+        <div class="bg-[#111827]/95 border border-gray-800 rounded-2xl p-3 flex flex-wrap items-center justify-between gap-4 w-full max-w-3xl shadow-2xl interactive backdrop-blur-md">
+            
+            <div class="flex items-center space-x-2">
+                <button onclick="initCamera()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shadow-lg shadow-emerald-900/30">
+                    <i class="fas fa-camera"></i> Canlı Kamera
+                </button>
+                
+                <label class="bg-gray-800 hover:bg-gray-700 text-gray-200 px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-2 cursor-pointer transition-all border border-gray-700">
+                    <i class="fas fa-file-video text-amber-500"></i> Video Yükle
+                    <input type="file" id="video-uploader" accept="video/*" class="hidden" onchange="handleVideoUpload(event)">
+                </label>
+            </div>
+
+            <div class="flex items-center space-x-2">
+                <button onclick="toggleFullScreen()" class="bg-gray-800 hover:bg-gray-700 text-gray-300 p-2.5 rounded-xl text-xs font-bold transition-all border border-gray-700" title="Tam Ekran">
+                    <i class="fas fa-expand"></i>
+                </button>
+                <button onclick="clearLogs()" class="bg-gray-900 hover:bg-gray-800 text-red-400 border border-red-950/50 p-2.5 rounded-xl text-xs font-bold transition-all" title="Kayıtları Temizle">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </div>
+
+            <div class="flex items-center space-x-2">
+                <button id="record-btn" onclick="toggleRecording()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shadow-lg shadow-red-900/30">
+                    <div class="w-2 h-2 bg-white rounded-full animate-ping" id="record-dot" style="display:none;"></div>
+                    <i class="fas fa-video" id="record-icon"></i> <span id="record-text">Analizi Kaydet</span>
+                </button>
+                <a id="download-link" class="hidden"></a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const video = document.getElementById('webcam');
+        const canvas = document.getElementById('canvas-overlay');
+        const ctx = canvas.getContext('2d');
+        
+        let selectedLimit = 50;
+        let activeCars = [];
+        let violations = [];
+        let mediaRecorder;
+        let recordedChunks = [];
+        let isRecording = false;
+
+        // Plaka Üretici (Simülasyon için Azerbaycan Formatında)
+        const platePrefixes = ['10', '77', '90', '99', '50 text-emerald-400'];
+        const plateLetters = ['AA', 'OJ', 'FX', 'BL', 'MH', 'TT'];
+        function generateRandomPlate() {
+            const prefix = platePrefixes[Math.floor(Math.random() * platePrefixes.length)];
+            const letter = plateLetters[Math.floor(Math.random() * plateLetters.length)];
+            const num = Math.floor(100 + Math.random() * 900);
+            return `${prefix}-${letter}-${num}`;
+        }
+
+        // Ekran boyutuna göre canvas ayarla (Yan çevrilse bile tam oturur)
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        window.addEventListener('orientationchange', () => {
+            setTimeout(resizeCanvas, 200);
+        });
+
+        // Hız Limiti Değiştirme
+        function setSpeedLimit(limit) {
+            selectedLimit = limit;
+            document.querySelectorAll('.limit-btn').forEach(btn => {
+                if(parseInt(btn.getAttribute('data-limit')) === limit) {
+                    btn.className = "limit-btn px-3 py-1 rounded-lg text-sm font-bold bg-amber-600 text-white transition-all";
+                } else {
+                    btn.className = "limit-btn px-3 py-1 rounded-lg text-sm font-bold bg-gray-800 text-gray-300 transition-all hover:bg-gray-700";
+                }
+            });
+        }
+
+        // Canlı Kamera Başlatma
+        async function initCamera() {
+            if (video.srcObject) {
+                video.srcObject.getTracks().forEach(track => track.stop());
+            }
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } },
+                    audio: false
+                });
+                video.srcObject = stream;
+                video.play();
+                generateSimulatedTraffic();
+            } catch (err) {
+                alert("Kameraya erişilemedi! Dosya Seç seçeneği ile video yükleyebilirsiniz.");
+            }
+        }
+
+        // Video Yükleme ve Oynatma
+        function handleVideoUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                if (video.srcObject) {
+                    video.srcObject.getTracks().forEach(track => track.stop());
+                    video.srcObject = null;
+                }
+                const url = URL.createObjectURL(file);
+                video.src = url;
+                video.loop = true;
+                video.play();
+                generateSimulatedTraffic();
+            }
+        }
+
+        // Tam Ekran Modu
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    alert(`Tam ekran modu hatası: ${err.message}`);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        // Trafik ve Hız Simülasyon Motoru (AI Tracker Simülasyonu)
+        function generateSimulatedTraffic() {
+            activeCars = [];
+            
+            // Periyodik olarak yeni araçlar ekrana girer
+            setInterval(() => {
+                if (video.paused || video.ended) return;
+                
+                // Aynı anda ekranda çok araç olmasın
+                if (activeCars.length < 3) {
+                    const isSpeeding = Math.random() > 0.4;
+                    const speed = isSpeeding 
+                        ? Math.floor(selectedLimit + Math.random() * 45 + 5)
+                        : Math.floor(selectedLimit - Math.random() * 15 - 5);
+
+                    const car = {
+                        id: Date.now() + Math.random(),
+                        x: -100,
+                        y: canvas.height * (0.4 + Math.random() * 0.3),
+                        width: 160,
+                        height: 100,
+                        speed: speed,
+                        plate: generateRandomPlate(),
+                        color: ['#3b82f6', '#eab308', '#ec4899', '#10b981', '#ffffff'][Math.floor(Math.random()*5)],
+                        speedX: Math.random() * 4 + 3, // İlerleme hızı
+                        violationLogged: false
+                    };
+                    activeCars.push(car);
+                }
+            }, 2500);
+
+            // Render Döngüsü
+            function drawFrame() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                activeCars.forEach((car, index) => {
+                    // Aracı sağa doğru hareket ettir
+                    car.x += car.speedX;
+                    
+                    // Ekran genişliğine göre boyut ölçekleme
+                    const scale = (car.x / canvas.width) * 0.5 + 0.8;
+                    const w = car.width * scale;
+                    const h = car.height * scale;
+
+                    // 1. Araç Üzerindeki Yapay Zeka Kutusu (Bounding Box)
+                    const isOverLimit = car.speed > selectedLimit;
+                    ctx.strokeStyle = isOverLimit ? '#ef4444' : '#10b981';
+                    ctx.lineWidth = 3;
+                    ctx.strokeRect(car.x, car.y, w, h);
+
+                    // 2. AI Bilgi Etiketi (Hız ve Plaka)
+                    ctx.fillStyle = isOverLimit ? 'rgba(239, 68, 68, 0.95)' : 'rgba(16, 185, 129, 0.95)';
+                    ctx.fillRect(car.x, car.y - 35, w, 35);
+
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = 'bold 13px sans-serif';
+                    ctx.fillText(`${car.plate} | ${car.speed} KM/H`, car.x + 8, car.y - 12);
+
+                    // 3. Hız Limiti İhlal Takibi
+                    if (isOverLimit && !car.violationLogged) {
+                        car.violationLogged = true;
+                        logViolation(car);
+                    }
+
+                    // Ekrandan çıkan araçları temizle
+                    if (car.x > canvas.width + 200) {
+                        activeCars.splice(index, 1);
+                    }
+                });
+
+                requestAnimationFrame(drawFrame);
+            }
+            requestAnimationFrame(drawFrame);
+        }
+
+        // Sağ Panelde İhlal Kaydı Oluşturma (Küçük Kapatma Butonlu)
+        function logViolation(car) {
+            // Eğer aynı plaka zaten listede varsa ekleme
+            if (violations.some(v => v.plate === car.plate)) return;
+
+            violations.push(car);
+            document.getElementById('no-violation-text').style.display = 'none';
+            
+            const logContainer = document.getElementById('violation-log');
+            const item = document.createElement('div');
+            item.id = `violation-${car.id}`;
+            item.className = "bg-gray-900/90 border-l-4 border-red-500 rounded-xl p-3 flex justify-between items-center shadow-md animate-slide-in relative group border border-gray-800";
+            
+            item.innerHTML = `
+                <div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="bg-gray-800 text-white font-mono font-bold text-xs px-2 py-0.5 rounded border border-gray-700 shadow-inner">${car.plate}</span>
+                        <span class="text-[10px] text-gray-400 font-medium">${new Date().toLocaleTimeString()}</span>
+                    </div>
+                    <div class="text-xs font-semibold text-red-400 mt-1.5 flex items-center gap-1">
+                        <i class="fas fa-gauge-high"></i> Hız: <span class="text-white text-sm font-bold font-mono">${car.speed}</span> km/h
+                    </div>
+                </div>
+                <button onclick="removeViolation('${car.id}')" class="text-gray-500 hover:text-white bg-gray-800 hover:bg-red-600 w-6 h-6 rounded-md flex items-center justify-center transition-all cursor-pointer shadow" title="Kapat">
+                    <i class="fas fa-times text-xs"></i>
+                </button>
+            `;
+            
+            logContainer.prepend(item);
+            updateViolationCount();
+        }
+
+        // İhlal Listesinden Manuel Eleman Silme (Kapatma Butonu)
+        function removeViolation(id) {
+            const item = document.getElementById(`violation-${id}`);
+            if (item) {
+                item.remove();
+                violations = violations.filter(v => v.id !== parseFloat(id));
+                updateViolationCount();
+            }
+            if (violations.length === 0) {
+                document.getElementById('no-violation-text').style.display = 'block';
+            }
+        }
+
+        function updateViolationCount() {
+            document.getElementById('violation-count').innerText = violations.length;
+        }
+
+        function clearLogs() {
+            document.getElementById('violation-log').innerHTML = '<p id="no-violation-text" class="text-gray-500 text-xs text-center py-4">Henüz hız ihlali tespit edilmedi.</p>';
+            violations = [];
+            updateViolationCount();
+        }
+
+        // VİDEO KAYIT SİSTEMİ (Ekrandaki analizi indirmek için)
+        function toggleRecording() {
+            if (!isRecording) {
+                // Kaydı başlat
+                recordedChunks = [];
+                const stream = canvas.captureStream(30); // Canvas akışını saniyede 30 kare yakala
+                
+                // Eğer video/kamera ses veya ek akış veriyorsa birleştirebiliriz
+                mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' });
+                
+                mediaRecorder.ondataavailable = (e) => {
+                    if (e.data.size > 0) recordedChunks.push(e.data);
+                };
+                
+                mediaRecorder.onstop = () => {
+                    const blob = new Blob(recordedChunks, { type: 'video/webm' });
+                    const url = URL.createObjectURL(blob);
+                    
+                    const downloadLink = document.getElementById('download-link');
+                    downloadLink.href = url;
+                    downloadLink.download = `Hiz_Radar_Analiz_${Date.now()}.webm`;
+                    downloadLink.click(); // Otomatik olarak indirir
+                };
+                
+                mediaRecorder.start();
+                isRecording = true;
+                document.getElementById('record-text').innerText = "Kaydı Durdur & İndir";
+                document.getElementById('record-btn').className = "bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all";
+                document.getElementById('record-dot').style.display = "block";
+            } else {
+                // Kaydı durdur ve indir tetiklensin
+                mediaRecorder.stop();
+                isRecording = false;
+                document.getElementById('record-text').innerText = "Analizi Kaydet";
+                document.getElementById('record-btn').className = "bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all";
+                document.getElementById('record-dot').style.display = "none";
+            }
+        }
+
+        // Açılış kurulumu
+        resizeCanvas();
+        // Varsayılan olarak simülasyonu başlat (kamera açılmasa bile çalışır)
+        generateSimulatedTraffic();
+    </script>
 </body>
 </html>
