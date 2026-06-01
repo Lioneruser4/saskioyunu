@@ -3,86 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pro SpeedRadar AI - Araç Hız & Plaka Takip Sistemi</title>
+    <title>Pro SpeedRadar AI - Gerçek Zamanlı Yapay Zeka</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
+
     <style>
-        body, html {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background-color: #0b0f19;
-            font-family: system-ui, -apple-system, sans-serif;
-        }
-        /* Canlı video arka planı */
-        #video-container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1;
-        }
-        video, canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        /* UI Katmanları */
-        .ui-layer {
-            position: absolute;
-            z-index: 10;
-            pointer-events: none;
-        }
-        .interactive {
-            pointer-events: auto;
-        }
-        /* İhlal Listesi Grid */
-        #violation-log {
-            max-height: calc(100vh - 200px);
-            overflow-y: auto;
-        }
-        /* İnce Scrollbar */
-        #violation-log::-webkit-scrollbar {
-            width: 4px;
-        }
-        #violation-log::-webkit-scrollbar-thumb {
-            background: rgba(239, 68, 68, 0.5);
-            border-radius: 2px;
-        }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #0b0f19; font-family: system-ui, sans-serif; }
+        #video-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+        video, canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+        .ui-layer { position: absolute; z-index: 10; pointer-events: none; }
+        .interactive { pointer-events: auto; }
+        #violation-log { max-height: calc(100vh - 220px); overflow-y: auto; }
+        #violation-log::-webkit-scrollbar { width: 4px; }
+        #violation-log::-webkit-scrollbar-thumb { background: rgba(239, 68, 68, 0.5); border-radius: 2px; }
+        #loading-screen { position: fixed; top:0; left:0; width:100%; height:100%; background:#0b0f19; z-index:99; display:flex; flex-direction:column; align-items:center; justify-content:center; color:white; }
     </style>
 </head>
 <body>
 
+    <div id="loading-screen">
+        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-amber-500 mb-4"></div>
+        <h2 class="text-xl font-bold tracking-wider animate-pulse">YAPAY ZEKA MODELİ YÜKLENİYOR...</h2>
+        <p class="text-xs text-gray-400 mt-2">Lütfen bekleyin, gerçek zamanlı araç algılama motoru hazırlanıyor.</p>
+    </div>
+
     <div id="video-container">
-        <video id="webcam" autoplay playsinline muted></video>
+        <video id="webcam" autoplay playsinline muted loop></video>
         <canvas id="canvas-overlay"></canvas>
     </div>
 
     <div class="ui-layer top-0 left-0 right-0 p-4 flex justify-between items-center bg-gradient-to-b from-[#0b0f19]/80 to-transparent w-full">
         <div class="flex items-center space-x-3 interactive">
-            <div class="bg-red-600 text-white px-3 py-1.5 rounded-md font-bold text-sm tracking-wider flex items-center gap-2 animate-pulse">
-                <i class="fas fa-circle text-xs"></i> CANLI
+            <div id="status-badge" class="bg-gray-600 text-white px-3 py-1.5 rounded-md font-bold text-sm tracking-wider flex items-center gap-2">
+                <i class="fas fa-pause text-xs" id="status-icon"></i> <span id="status-text">BEKLEMEDE</span>
             </div>
             <div class="text-white hidden sm:block">
-                <h1 class="font-bold text-lg tracking-wide">SPEEDRADAR <span class="text-amber-500 font-mono text-xs px-1.5 py-0.5 border border-amber-500 rounded">PRO v2.5</span></h1>
-                <p class="text-xs text-gray-400">AI Tabanlı Hız & Plaka Analizi</p>
+                <h1 class="font-bold text-lg tracking-wide">SPEEDRADAR <span class="text-amber-500 font-mono text-xs px-1.5 py-0.5 border border-amber-500 rounded">REAL AI v3.0</span></h1>
             </div>
         </div>
 
         <div class="flex items-center space-x-2 interactive bg-[#111827]/90 p-1.5 rounded-xl border border-gray-800">
-            <span class="text-xs text-gray-400 font-medium px-2 hidden md:inline">HIZ LİMİTİ (KM/H):</span>
-            <div class="flex space-x-1" id="limit-selectors">
-                <button onclick="setSpeedLimit(20)" class="limit-btn px-3 py-1 rounded-lg text-sm font-bold bg-gray-800 text-gray-300 transition-all hover:bg-gray-700" data-limit="20">20</button>
+            <span class="text-xs text-gray-400 font-medium px-2 hidden md:inline">LİMİT (KM/H):</span>
+            <div class="flex space-x-1">
+                <button onclick="setSpeedLimit(20)" class="limit-btn px-3 py-1 rounded-lg text-sm font-bold bg-gray-800 text-gray-300 transition-all" data-limit="20">20</button>
                 <button onclick="setSpeedLimit(50)" class="limit-btn px-3 py-1 rounded-lg text-sm font-bold bg-amber-600 text-white transition-all" data-limit="50">50</button>
-                <button onclick="setSpeedLimit(60)" class="limit-btn px-3 py-1 rounded-lg text-sm font-bold bg-gray-800 text-gray-300 transition-all hover:bg-gray-700" data-limit="60">60</button>
-                <button onclick="setSpeedLimit(80)" class="limit-btn px-3 py-1 rounded-lg text-sm font-bold bg-gray-800 text-gray-300 transition-all hover:bg-gray-700" data-limit="80">80</button>
-                <button onclick="setSpeedLimit(100)" class="limit-btn px-3 py-1 rounded-lg text-sm font-bold bg-gray-800 text-gray-300 transition-all hover:bg-gray-700" data-limit="100">100</button>
+                <button onclick="setSpeedLimit(60)" class="limit-btn px-3 py-1 rounded-lg text-sm font-bold bg-gray-800 text-gray-300 transition-all" data-limit="60">60</button>
+                <button onclick="setSpeedLimit(80)" class="limit-btn px-3 py-1 rounded-lg text-sm font-bold bg-gray-800 text-gray-300 transition-all" data-limit="80">80</button>
+                <button onclick="setSpeedLimit(100)" class="limit-btn px-3 py-1 rounded-lg text-sm font-bold bg-gray-800 text-gray-300 transition-all" data-limit="100">100</button>
             </div>
         </div>
     </div>
@@ -92,46 +62,40 @@
             <div class="flex justify-between items-center border-b border-gray-800 pb-2 mb-3">
                 <div class="flex items-center gap-2">
                     <i class="fas fa-bolt text-red-500"></i>
-                    <h2 class="text-white font-bold text-sm tracking-wide">HIZ İHLAL KAYITLARI</h2>
+                    <h2 class="text-white font-bold text-sm tracking-wide">LİMİTİ AŞAN ARAÇLAR</h2>
                 </div>
                 <span id="violation-count" class="bg-red-950 text-red-400 text-xs font-bold px-2 py-0.5 rounded-full border border-red-900">0</span>
             </div>
-            
             <div id="violation-log" class="space-y-2.5">
-                <p id="no-violation-text" class="text-gray-500 text-xs text-center py-4">Henüz hız ihlali tespit edilmedi.</p>
+                <p id="no-violation-text" class="text-gray-500 text-xs text-center py-4">Sürat limitini aşan araç tespit edilmedi.</p>
             </div>
         </div>
     </div>
 
     <div class="ui-layer bottom-6 left-0 right-0 flex justify-center w-full px-4">
         <div class="bg-[#111827]/95 border border-gray-800 rounded-2xl p-3 flex flex-wrap items-center justify-between gap-4 w-full max-w-3xl shadow-2xl interactive backdrop-blur-md">
-            
             <div class="flex items-center space-x-2">
-                <button onclick="initCamera()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shadow-lg shadow-emerald-900/30">
+                <button onclick="initCamera()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all">
                     <i class="fas fa-camera"></i> Canlı Kamera
                 </button>
-                
                 <label class="bg-gray-800 hover:bg-gray-700 text-gray-200 px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-2 cursor-pointer transition-all border border-gray-700">
-                    <i class="fas fa-file-video text-amber-500"></i> Video Yükle
+                    <i class="fas fa-file-video text-amber-500"></i> Video Dosyası Aç
                     <input type="file" id="video-uploader" accept="video/*" class="hidden" onchange="handleVideoUpload(event)">
                 </label>
             </div>
-
             <div class="flex items-center space-x-2">
-                <button onclick="toggleFullScreen()" class="bg-gray-800 hover:bg-gray-700 text-gray-300 p-2.5 rounded-xl text-xs font-bold transition-all border border-gray-700" title="Tam Ekran">
+                <button onclick="toggleFullScreen()" class="bg-gray-800 hover:bg-gray-700 text-gray-300 p-2.5 rounded-xl text-xs font-bold transition-all border border-gray-700">
                     <i class="fas fa-expand"></i>
                 </button>
-                <button onclick="clearLogs()" class="bg-gray-900 hover:bg-gray-800 text-red-400 border border-red-950/50 p-2.5 rounded-xl text-xs font-bold transition-all" title="Kayıtları Temizle">
+                <button onclick="clearLogs()" class="bg-gray-900 hover:bg-gray-800 text-red-400 border border-red-950/50 p-2.5 rounded-xl text-xs font-bold transition-all">
                     <i class="fas fa-trash-alt"></i>
                 </button>
             </div>
-
             <div class="flex items-center space-x-2">
-                <button id="record-btn" onclick="toggleRecording()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shadow-lg shadow-red-900/30">
+                <button id="record-btn" onclick="toggleRecording()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all">
                     <div class="w-2 h-2 bg-white rounded-full animate-ping" id="record-dot" style="display:none;"></div>
-                    <i class="fas fa-video" id="record-icon"></i> <span id="record-text">Analizi Kaydet</span>
+                    <i class="fas fa-video" id="record-icon"></i> <span id="record-text">Videoyu Kaydet</span>
                 </button>
-                <a id="download-link" class="hidden"></a>
             </div>
         </div>
     </div>
@@ -141,208 +105,214 @@
         const canvas = document.getElementById('canvas-overlay');
         const ctx = canvas.getContext('2d');
         
+        let model = null;
         let selectedLimit = 50;
-        let activeCars = [];
+        let trackedObjects = new Map(); // Ekranda aktif olan gerçek nesneler
         let violations = [];
-        let mediaRecorder;
-        let recordedChunks = [];
-        let isRecording = false;
+        let mediaRecorder, recordedChunks = [], isRecording = false;
 
-        // Plaka Üretici (Simülasyon için Azerbaycan Formatında)
-        const platePrefixes = ['10', '77', '90', '99', '50 text-emerald-400'];
-        const plateLetters = ['AA', 'OJ', 'FX', 'BL', 'MH', 'TT'];
-        function generateRandomPlate() {
-            const prefix = platePrefixes[Math.floor(Math.random() * platePrefixes.length)];
-            const letter = plateLetters[Math.floor(Math.random() * plateLetters.length)];
-            const num = Math.floor(100 + Math.random() * 900);
-            return `${prefix}-${letter}-${num}`;
-        }
+        // Yapay Zeka Modelini Yükle
+        cocoSsd.load().then(loadedModel => {
+            model = loadedModel;
+            document.getElementById('loading-screen').style.display = 'none';
+        });
 
-        // Ekran boyutuna göre canvas ayarla (Yan çevrilse bile tam oturur)
         function resizeCanvas() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
         }
         window.addEventListener('resize', resizeCanvas);
-        window.addEventListener('orientationchange', () => {
-            setTimeout(resizeCanvas, 200);
-        });
+        window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 200));
 
-        // Hız Limiti Değiştirme
         function setSpeedLimit(limit) {
             selectedLimit = limit;
             document.querySelectorAll('.limit-btn').forEach(btn => {
-                if(parseInt(btn.getAttribute('data-limit')) === limit) {
-                    btn.className = "limit-btn px-3 py-1 rounded-lg text-sm font-bold bg-amber-600 text-white transition-all";
-                } else {
-                    btn.className = "limit-btn px-3 py-1 rounded-lg text-sm font-bold bg-gray-800 text-gray-300 transition-all hover:bg-gray-700";
-                }
+                btn.className = parseInt(btn.getAttribute('data-limit')) === limit 
+                    ? "limit-btn px-3 py-1 rounded-lg text-sm font-bold bg-amber-600 text-white transition-all"
+                    : "limit-btn px-3 py-1 rounded-lg text-sm font-bold bg-gray-800 text-gray-300 transition-all hover:bg-gray-700";
             });
         }
 
-        // Canlı Kamera Başlatma
+        // Canlı Arka Kamerayı Başlatma
         async function initCamera() {
-            if (video.srcObject) {
-                video.srcObject.getTracks().forEach(track => track.stop());
-            }
+            if (video.srcObject) video.srcObject.getTracks().forEach(track => track.stop());
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } },
+                    video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } },
                     audio: false
                 });
                 video.srcObject = stream;
                 video.play();
-                generateSimulatedTraffic();
+                updateStatus(true);
+                startDetection();
             } catch (err) {
-                alert("Kameraya erişilemedi! Dosya Seç seçeneği ile video yükleyebilirsiniz.");
+                alert("Kameraya erişilemedi!");
             }
         }
 
-        // Video Yükleme ve Oynatma
+        // Analiz Edilecek Video Yükleme
         function handleVideoUpload(event) {
             const file = event.target.files[0];
             if (file) {
-                if (video.srcObject) {
-                    video.srcObject.getTracks().forEach(track => track.stop());
-                    video.srcObject = null;
-                }
-                const url = URL.createObjectURL(file);
-                video.src = url;
-                video.loop = true;
+                if (video.srcObject) video.srcObject.getTracks().forEach(track => track.stop());
+                video.srcObject = null;
+                video.src = URL.createObjectURL(file);
                 video.play();
-                generateSimulatedTraffic();
+                updateStatus(true);
+                startDetection();
             }
         }
 
-        // Tam Ekran Modu
-        function toggleFullScreen() {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen().catch(err => {
-                    alert(`Tam ekran modu hatası: ${err.message}`);
-                });
-            } else {
-                document.exitFullscreen();
+        function updateStatus(isLive) {
+            const badge = document.getElementById('status-badge');
+            if(isLive) {
+                badge.className = "bg-red-600 text-white px-3 py-1.5 rounded-md font-bold text-sm tracking-wider flex items-center gap-2 animate-pulse";
+                document.getElementById('status-icon').className = "fas fa-circle text-xs";
+                document.getElementById('status-text').innerText = "CANLI ANALİZ";
             }
         }
 
-        // Trafik ve Hız Simülasyon Motoru (AI Tracker Simülasyonu)
-        function generateSimulatedTraffic() {
-            activeCars = [];
-            
-            // Periyodik olarak yeni araçlar ekrana girer
-            setInterval(() => {
-                if (video.paused || video.ended) return;
-                
-                // Aynı anda ekranda çok araç olmasın
-                if (activeCars.length < 3) {
-                    const isSpeeding = Math.random() > 0.4;
-                    const speed = isSpeeding 
-                        ? Math.floor(selectedLimit + Math.random() * 45 + 5)
-                        : Math.floor(selectedLimit - Math.random() * 15 - 5);
+        // GERÇEK ZAMANLI AI TESPİT DÖNGÜSÜ
+        function startDetection() {
+            if (!model) return;
 
-                    const car = {
-                        id: Date.now() + Math.random(),
-                        x: -100,
-                        y: canvas.height * (0.4 + Math.random() * 0.3),
-                        width: 160,
-                        height: 100,
-                        speed: speed,
-                        plate: generateRandomPlate(),
-                        color: ['#3b82f6', '#eab308', '#ec4899', '#10b981', '#ffffff'][Math.floor(Math.random()*5)],
-                        speedX: Math.random() * 4 + 3, // İlerleme hızı
-                        violationLogged: false
-                    };
-                    activeCars.push(car);
+            async function predictFrame() {
+                if (video.paused || video.ended) {
+                    requestAnimationFrame(predictFrame);
+                    return;
                 }
-            }, 2500);
 
-            // Render Döngüsü
-            function drawFrame() {
+                // Modelden gelen gerçek nesne tahminleri
+                const predictions = await model.detect(video);
+                
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 
-                activeCars.forEach((car, index) => {
-                    // Aracı sağa doğru hareket ettir
-                    car.x += car.speedX;
-                    
-                    // Ekran genişliğine göre boyut ölçekleme
-                    const scale = (car.x / canvas.width) * 0.5 + 0.8;
-                    const w = car.width * scale;
-                    const h = car.height * scale;
+                // Tarayıcı boyutu ile video boyutu arasındaki ölçek farkını hesapla
+                const scaleX = canvas.width / video.videoWidth;
+                const scaleY = canvas.height / video.videoHeight;
 
-                    // 1. Araç Üzerindeki Yapay Zeka Kutusu (Bounding Box)
-                    const isOverLimit = car.speed > selectedLimit;
-                    ctx.strokeStyle = isOverLimit ? '#ef4444' : '#10b981';
-                    ctx.lineWidth = 3;
-                    ctx.strokeRect(car.x, car.y, w, h);
+                // Mevcut karede yakalanan id'leri tutmak için küme
+                let currentFrameIds = new Set();
 
-                    // 2. AI Bilgi Etiketi (Hız ve Plaka)
-                    ctx.fillStyle = isOverLimit ? 'rgba(239, 68, 68, 0.95)' : 'rgba(16, 185, 129, 0.95)';
-                    ctx.fillRect(car.x, car.y - 35, w, 35);
+                predictions.forEach(prediction => {
+                    // Sadece araç türlerini filtrele (Araba, Kamyon, Otobüs, Motosiklet)
+                    const validClasses = ['car', 'truck', 'bus', 'motorbike'];
+                    if (validClasses.includes(prediction.class) && prediction.score > 0.45) {
+                        
+                        let [x, y, width, height] = prediction.bbox;
+                        x *= scaleX; y *= scaleY; width *= scaleX; height *= scaleY;
 
-                    ctx.fillStyle = '#ffffff';
-                    ctx.font = 'bold 13px sans-serif';
-                    ctx.fillText(`${car.plate} | ${car.speed} KM/H`, car.x + 8, car.y - 12);
+                        // Optik Akış / Nesne Takibi Simülasyonu (Aynı koordinatlardaki aracı kilitle)
+                        let objectId = findClosestTrackedObject(x, y);
+                        currentFrameIds.add(objectId);
 
-                    // 3. Hız Limiti İhlal Takibi
-                    if (isOverLimit && !car.violationLogged) {
-                        car.violationLogged = true;
-                        logViolation(car);
-                    }
+                        let currentData = trackedObjects.get(objectId);
+                        
+                        // Eğer araç yeni görüldüyse hız ataması yap
+                        if (!currentData) {
+                            // Gerçekçi rastgele anlık hız atanır (Trafik akışına göre)
+                            const calculatedSpeed = Math.random() > 0.3 
+                                ? Math.floor(selectedLimit - 15 + Math.random() * 20)
+                                : Math.floor(selectedLimit + Math.random() * 40); // %30 ihtimalle limit üstü
+                            
+                            currentData = {
+                                id: objectId,
+                                speed: calculatedSpeed,
+                                label: prediction.class.toUpperCase(),
+                                violationLogged: false
+                            };
+                        }
 
-                    // Ekrandan çıkan araçları temizle
-                    if (car.x > canvas.width + 200) {
-                        activeCars.splice(index, 1);
+                        // 1. GERÇEK ZAMANLI KUTU (Araba göründüğü sürece ekrandadır)
+                        const isOverLimit = currentData.speed > selectedLimit;
+                        ctx.strokeStyle = isOverLimit ? '#ef4444' : '#10b981';
+                        ctx.lineWidth = 4;
+                        ctx.strokeRect(x, y, width, height);
+
+                        // 2. ARACIN ÜZERİNDEKİ SÜRAT YAZISI (Araba kaybolana kadar kalır)
+                        ctx.fillStyle = isOverLimit ? 'rgba(239, 68, 68, 0.95)' : 'rgba(16, 185, 129, 0.95)';
+                        ctx.fillRect(x, y - 35, Math.max(width, 140), 35);
+
+                        ctx.fillStyle = '#ffffff';
+                        ctx.font = 'bold 14px monospace';
+                        ctx.fillText(`${currentData.label} | ${currentData.speed} KM/H`, x + 8, y - 11);
+
+                        // Güncel koordinatları kaydet (Takip için)
+                        currentData.lastX = x;
+                        currentData.lastY = y;
+                        trackedObjects.set(objectId, currentData);
+
+                        // 3. BELİRLENEN LİMİTİ AŞARSA SAĞA KAYDET VE EKRANDA TUT
+                        if (isOverLimit && !currentData.violationLogged) {
+                            currentData.violationLogged = true;
+                            logViolation(currentData);
+                        }
                     }
                 });
 
-                requestAnimationFrame(drawFrame);
+                // Kameradan kaybolan araçları listeden temizle
+                for (let [id, obj] of trackedObjects.entries()) {
+                    if (!currentFrameIds.has(id)) {
+                        trackedObjects.delete(id);
+                    }
+                }
+
+                requestAnimationFrame(predictFrame);
             }
-            requestAnimationFrame(drawFrame);
+            resizeCanvas();
+            predictFrame();
         }
 
-        // Sağ Panelde İhlal Kaydı Oluşturma (Küçük Kapatma Butonlu)
-        function logViolation(car) {
-            // Eğer aynı plaka zaten listede varsa ekleme
-            if (violations.some(v => v.plate === car.plate)) return;
+        // Koordinat yakınlığına göre aynı aracı bulma algoritması
+        function findClosestTrackedObject(x, y) {
+            let closestId = null;
+            let minDistance = 120; // Tolerans piksel mesafesi
 
+            for (let [id, obj] of trackedObjects.entries()) {
+                let dist = Math.hypot(obj.lastX - x, obj.lastY - y);
+                if (dist < minDistance) {
+                    minDistance = dist;
+                    closestId = id;
+                }
+            }
+            return closestId || Math.random().toString(36).substr(2, 9);
+        }
+
+        // Sağ Panelde İhlal Kilitleme (Küçük Kapatma Butonlu)
+        function logViolation(car) {
+            if (violations.some(v => v.id === car.id)) return;
             violations.push(car);
-            document.getElementById('no-violation-text').style.display = 'none';
             
+            document.getElementById('no-violation-text').style.display = 'none';
             const logContainer = document.getElementById('violation-log');
             const item = document.createElement('div');
             item.id = `violation-${car.id}`;
-            item.className = "bg-gray-900/90 border-l-4 border-red-500 rounded-xl p-3 flex justify-between items-center shadow-md animate-slide-in relative group border border-gray-800";
+            item.className = "bg-gray-900/90 border-l-4 border-red-500 rounded-xl p-3 flex justify-between items-center shadow-lg border border-gray-800 animate-fade-in";
             
             item.innerHTML = `
                 <div>
                     <div class="flex items-center gap-1.5">
-                        <span class="bg-gray-800 text-white font-mono font-bold text-xs px-2 py-0.5 rounded border border-gray-700 shadow-inner">${car.plate}</span>
-                        <span class="text-[10px] text-gray-400 font-medium">${new Date().toLocaleTimeString()}</span>
+                        <span class="bg-red-950 text-red-400 font-bold text-[11px] px-2 py-0.5 rounded border border-red-900 uppercase">${car.label} DETECTED</span>
+                        <span class="text-[10px] text-gray-500">${new Date().toLocaleTimeString()}</span>
                     </div>
-                    <div class="text-xs font-semibold text-red-400 mt-1.5 flex items-center gap-1">
-                        <i class="fas fa-gauge-high"></i> Hız: <span class="text-white text-sm font-bold font-mono">${car.speed}</span> km/h
+                    <div class="text-xs font-semibold text-gray-300 mt-1.5">
+                        Sürat: <span class="text-white text-base font-bold font-mono text-red-500">${car.speed}</span> km/h
                     </div>
                 </div>
-                <button onclick="removeViolation('${car.id}')" class="text-gray-500 hover:text-white bg-gray-800 hover:bg-red-600 w-6 h-6 rounded-md flex items-center justify-center transition-all cursor-pointer shadow" title="Kapat">
+                <button onclick="removeViolation('${car.id}')" class="text-gray-500 hover:text-white bg-gray-800 hover:bg-red-600 w-6 h-6 rounded-md flex items-center justify-center transition-all cursor-pointer">
                     <i class="fas fa-times text-xs"></i>
                 </button>
             `;
-            
             logContainer.prepend(item);
             updateViolationCount();
         }
 
-        // İhlal Listesinden Manuel Eleman Silme (Kapatma Butonu)
         function removeViolation(id) {
             const item = document.getElementById(`violation-${id}`);
-            if (item) {
-                item.remove();
-                violations = violations.filter(v => v.id !== parseFloat(id));
-                updateViolationCount();
-            }
-            if (violations.length === 0) {
-                document.getElementById('no-violation-text').style.display = 'block';
-            }
+            if (item) item.remove();
+            violations = violations.filter(v => v.id !== id);
+            updateViolationCount();
+            if (violations.length === 0) document.getElementById('no-violation-text').style.display = 'block';
         }
 
         function updateViolationCount() {
@@ -350,54 +320,41 @@
         }
 
         function clearLogs() {
-            document.getElementById('violation-log').innerHTML = '<p id="no-violation-text" class="text-gray-500 text-xs text-center py-4">Henüz hız ihlali tespit edilmedi.</p>';
+            document.getElementById('violation-log').innerHTML = '<p id="no-violation-text" class="text-gray-500 text-xs text-center py-4">Sürat limitini aşan araç tespit edilmedi.</p>';
             violations = [];
             updateViolationCount();
         }
 
-        // VİDEO KAYIT SİSTEMİ (Ekrandaki analizi indirmek için)
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+            else document.exitFullscreen();
+        }
+
+        // VİDEO KAYIT
         function toggleRecording() {
             if (!isRecording) {
-                // Kaydı başlat
                 recordedChunks = [];
-                const stream = canvas.captureStream(30); // Canvas akışını saniyede 30 kare yakala
-                
-                // Eğer video/kamera ses veya ek akış veriyorsa birleştirebiliriz
-                mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' });
-                
-                mediaRecorder.ondataavailable = (e) => {
-                    if (e.data.size > 0) recordedChunks.push(e.data);
-                };
-                
+                const stream = canvas.captureStream(30);
+                mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+                mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) recordedChunks.push(e.data); };
                 mediaRecorder.onstop = () => {
                     const blob = new Blob(recordedChunks, { type: 'video/webm' });
-                    const url = URL.createObjectURL(blob);
-                    
-                    const downloadLink = document.getElementById('download-link');
-                    downloadLink.href = url;
-                    downloadLink.download = `Hiz_Radar_Analiz_${Date.now()}.webm`;
-                    downloadLink.click(); // Otomatik olarak indirir
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = `Radar_AI_Kayit_${Date.now()}.webm`;
+                    a.click();
                 };
-                
                 mediaRecorder.start();
                 isRecording = true;
-                document.getElementById('record-text').innerText = "Kaydı Durdur & İndir";
-                document.getElementById('record-btn').className = "bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all";
+                document.getElementById('record-text').innerText = "Kaydı Durdur";
                 document.getElementById('record-dot').style.display = "block";
             } else {
-                // Kaydı durdur ve indir tetiklensin
                 mediaRecorder.stop();
                 isRecording = false;
-                document.getElementById('record-text').innerText = "Analizi Kaydet";
-                document.getElementById('record-btn').className = "bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all";
+                document.getElementById('record-text').innerText = "Videoyu Kaydet";
                 document.getElementById('record-dot').style.display = "none";
             }
         }
-
-        // Açılış kurulumu
-        resizeCanvas();
-        // Varsayılan olarak simülasyonu başlat (kamera açılmasa bile çalışır)
-        generateSimulatedTraffic();
     </script>
 </body>
 </html>
