@@ -1,189 +1,629 @@
 <!DOCTYPE html>
-<html lang="az">
+<html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Universal Neural AI (Sonsuz Brauzer Dəstəyi)</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>👑 ŞAHMAT SUPREME | Işıltılı Profesyonel Satranç</title>
     <style>
-        body { background-color: #0b0f19; font-family: system-ui, sans-serif; user-select: none; }
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+        * {
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: radial-gradient(circle at 20% 30%, #0f0c1f, #05030a);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', 'Poppins', 'Georgia', serif;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Ana container */
+        .game-wrapper {
+            display: flex;
+            gap: 30px;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            padding: 20px;
+        }
+
+        /* Satranç tahtası container */
+        .board-container {
+            position: relative;
+            filter: drop-shadow(0 20px 35px rgba(0,0,0,0.6));
+        }
+
+        canvas {
+            display: block;
+            border-radius: 16px;
+            box-shadow: 0 0 0 4px #c9a53b, 0 25px 40px rgba(0,0,0,0.5);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        canvas:active {
+            transform: scale(0.99);
+        }
+
+        /* Paneller - Yenilen taşlar */
+        .capture-panel {
+            background: linear-gradient(145deg, #1e1926, #0f0c16);
+            border-radius: 32px;
+            padding: 20px 15px;
+            min-width: 140px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            transition: all 0.3s;
+        }
+
+        .capture-panel h3 {
+            text-align: center;
+            color: #ffd966;
+            font-size: 1.2rem;
+            margin: 0 0 15px 0;
+            text-shadow: 0 2px 3px black;
+            letter-spacing: 2px;
+        }
+
+        .captured-pieces {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            min-height: 200px;
+        }
+
+        .piece-icon {
+            font-size: 2.2rem;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));
+            transition: transform 0.2s ease;
+            animation: floatGlow 2s infinite;
+        }
+
+        @keyframes floatGlow {
+            0% { filter: drop-shadow(0 2px 3px gold); transform: translateY(0px); }
+            50% { filter: drop-shadow(0 5px 8px #ffaa33); transform: translateY(-3px); }
+            100% { filter: drop-shadow(0 2px 3px gold); transform: translateY(0px); }
+        }
+
+        /* Lobi Menüsü */
+        .lobby {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(5, 3, 15, 0.96);
+            backdrop-filter: blur(18px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            transition: all 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+        }
+
+        .lobby-title {
+            font-size: 5rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #FFE6A3, #E6B422, #FF8C42);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 20px rgba(255,215,0,0.5);
+            margin-bottom: 30px;
+            letter-spacing: 4px;
+        }
+
+        .difficulty-select {
+            display: flex;
+            gap: 30px;
+            margin: 30px;
+            flex-wrap: wrap;
+        }
+
+        .diff-card {
+            background: #1e1926;
+            padding: 18px 40px;
+            font-size: 1.6rem;
+            font-weight: bold;
+            border-radius: 80px;
+            color: #e6c87e;
+            cursor: pointer;
+            transition: 0.1s linear;
+            border: 2px solid transparent;
+            box-shadow: 0 8px 0 #4a2a2a;
+            text-align: center;
+        }
+
+        .diff-card.active {
+            background: linear-gradient(145deg, #c97e2a, #e6a017);
+            color: white;
+            border-color: gold;
+            transform: translateY(-2px);
+            box-shadow: 0 12px 20px rgba(0,0,0,0.3);
+        }
+
+        .start-lobby-btn {
+            background: #27ae60;
+            padding: 18px 60px;
+            font-size: 1.8rem;
+            border-radius: 60px;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: 0.1s;
+            box-shadow: 0 8px 0 #1e6b3e;
+        }
+
+        .start-lobby-btn:active {
+            transform: translateY(4px);
+        }
+
+        /* Oyun içi bilgi */
+        .game-status {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #000000bb;
+            backdrop-filter: blur(12px);
+            padding: 12px 32px;
+            border-radius: 60px;
+            color: #ffdf9c;
+            font-weight: bold;
+            font-size: 1.3rem;
+            font-family: monospace;
+            z-index: 50;
+            border: 1px solid #f7b32b;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        .reset-game-btn {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            background: #b8452c;
+            padding: 12px 28px;
+            border-radius: 50px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 50;
+            border: none;
+            box-shadow: 0 5px 0 #632818;
+            transition: 0.05s linear;
+        }
+
+        @media (max-width: 1000px) {
+            .capture-panel { min-width: 80px; padding: 10px; }
+            .piece-icon { font-size: 1.4rem; }
+            .lobby-title { font-size: 2.5rem; }
+            .diff-card { padding: 10px 20px; font-size: 1rem; }
+        }
     </style>
 </head>
-<body class="text-gray-200 min-h-screen flex flex-col justify-between">
+<body>
+<div class="game-wrapper">
+    <div class="capture-panel">
+        <h3>⚫ SİYAH YENİLEN</h3>
+        <div class="captured-pieces" id="whiteCapturedArea"></div>
+    </div>
+    <div class="board-container">
+        <canvas id="chessCanvas" width="720" height="720"></canvas>
+    </div>
+    <div class="capture-panel">
+        <h3>⚪ BEYAZ YENİLEN</h3>
+        <div class="captured-pieces" id="blackCapturedArea"></div>
+    </div>
+</div>
+<div class="game-status" id="gameStatusText">🏆 BEYAZ'ın Turu</div>
+<button class="reset-game-btn" id="resetGameBtn">🔄 YENİ OYUN</button>
 
-    <header class="border-b border-gray-800 bg-[#111827]/80 backdrop-blur px-6 py-4 flex justify-between items-center sticky top-0 z-40">
-        <div class="flex items-center space-x-3">
-            <div class="bg-gradient-to-tr from-emerald-500 to-cyan-600 p-2.5 rounded-xl text-white shadow-lg">
-                <i class="fas fa-network-wired text-xl"></i>
-            </div>
-            <div>
-                <h1 class="font-bold text-base text-white tracking-wide">Xəzər Core AI</h1>
-                <p id="ai-status" class="text-xs text-emerald-400 flex items-center gap-1">
-                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Universal Neyron Motoru Aktivdir
-                </p>
-            </div>
-        </div>
-        <button onclick="clearMemory()" class="bg-gray-900 hover:bg-red-950/40 border border-gray-800 hover:border-red-900/50 p-2.5 rounded-xl text-xs text-gray-400 hover:text-red-400 transition-all cursor-pointer">
-            <i class="fas fa-sync-alt"></i> Hafızanı Yenilə
-        </button>
-    </header>
+<div id="lobbyMenu" class="lobby">
+    <div class="lobby-title">♔ CHESS MASTER ♚</div>
+    <div class="difficulty-select">
+        <div class="diff-card" data-diff="easy">🌿 EASY</div>
+        <div class="diff-card active" data-diff="normal">⚡ NORMAL</div>
+        <div class="diff-card" data-diff="hard">🔥 HARD</div>
+    </div>
+    <div class="start-lobby-btn" id="lobbyStartBtn">✨ MAÇA BAŞLA ✨</div>
+    <div style="margin-top: 35px; color:#b89a60; font-size: 0.9rem;">✨ Işıklı taşlar | Animasyonlu yemeler | Işıltılı efektler ✨</div>
+</div>
 
-    <main id="chat-box" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 max-w-4xl w-full mx-auto custom-scrollbar">
-        </main>
-
-    <footer class="border-t border-gray-800 bg-[#111827]/60 backdrop-blur p-4 sticky bottom-0 z-40">
-        <div class="max-w-4xl w-full mx-auto flex items-center space-x-3">
-            <input type="text" id="user-input" placeholder="Dostunuzla canlı söhbət edin..." class="flex-1 bg-[#0b0f19] border border-gray-700 focus:border-emerald-500 text-sm text-white rounded-xl px-4 py-3.5 focus:outline-none transition-all placeholder-gray-500 shadow-inner">
-            <button onclick="processMessage()" class="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white w-12 h-12 rounded-xl flex items-center justify-center transition-all cursor-pointer shadow-lg">
-                <i class="fas fa-bolt text-sm"></i>
-            </button>
-        </div>
-    </footer>
-
-    <script>
-        const chatBox = document.getElementById('chat-box');
-        const userInput = document.getElementById('user-input');
-        const statusText = document.getElementById('ai-status');
-
-        // LOKAL SEMANTİK NEYRON SİSTEMİ (Şablon deyil, Canlı Səthi Sintezator)
-        // Söz kökləri, bağlayıcılar və duyğu vəziyyətlərinə görə cümlə istehsal edən matris.
-        const BrainNet = {
-            vocabulary: {
-                greetings: ["Salam, əziz dostum!", "Xoş gördük səni!", "Ooo, salamlar! Səni burda görmək əladır."],
-                status: ["hər zaman əlayam, xüsusən sən yazanda daha da şad oluram", "neyronlarım tam güclə işləyir, bomba kimiyəm", "yaxşıyam dostum, sən tərəflərdə nə var nə yox?"],
-                coding: ["kod yazmaq sənətdir, proqramlaşdırma dünyası möhtəşəmdir", "xəta varsa gətir birlikdə baxaq, mən buraların qurdunam", "yeni layihə mi qururuq? mən hazıram!"],
-                appreciation: ["can dostum, var ol!", "bu gözəl sözlərin üçün neyronlarım sənə təşəkkür edir", "yaxşı ki varsan, səninlə söhbət etmək çox dəyərlidir"],
-                gaming: ["rəqabətli oyunlar, xüsusən sürətli və refleks tələb edənlər əladır", "domino 101, yoxsa FPS? hər birində səninlə yarışmağa hazıram", "oyun dünyası fikri dağıtmaq üçün ən gözəl yerdir"],
-                car: ["maşınların texniki tərəfi maraqlıdır, vanos və solenoid problemləri can sıxıcı ola bilər amma həll ediləndir", "yollarda diqqətli ol dostum, maşınına yaxşı bax"],
-                comfort: ["özünü yorma dostum, bir az dincəl, çay süz içək", "həyat bəzən yorucu olur amma sən güclüsən, öhdəsindən gələcəksən"],
-                connectors: [" Həmçinin, ", " Məncə, ", " Doğrudan da, ", " Bilirsən ki, "]
-            },
+<script>
+    (function(){
+        const canvas = document.getElementById('chessCanvas');
+        const ctx = canvas.getContext('2d');
+        const whiteCapturedDiv = document.getElementById('whiteCapturedArea');
+        const blackCapturedDiv = document.getElementById('blackCapturedArea');
+        const gameStatusSpan = document.getElementById('gameStatusText');
+        const lobbyDiv = document.getElementById('lobbyMenu');
+        const lobbyStart = document.getElementById('lobbyStartBtn');
+        const resetBtn = document.getElementById('resetGameBtn');
+        
+        let boardSize = 720;
+        let cellSize = boardSize / 8;
+        let gameActive = false;
+        let difficulty = 'normal';
+        let board = Array(8).fill().map(() => Array(8).fill(null));
+        let currentTurn = 'white';
+        let selectedRow = null, selectedCol = null;
+        let validMoves = [];
+        let whiteCaptured = []; // yenilen siyah taşlar (beyazın yedikleri)
+        let blackCaptured = []; // yenilen beyaz taşlar
+        
+        // Animasyon sistemi
+        let moveAnimation = null; // { fromX,fromY, toX,toY, capturedPiece, progress, type }
+        let captureSparkles = [];
+        let victoryAnimation = null;
+        let gameWinner = null;
+        
+        // Parlaklık efektleri
+        let glowIntensity = 0;
+        
+        // Taş sembolleri (şık unicode)
+        const pieceSymbol = {
+            'king_w': '♔', 'queen_w': '♕', 'rook_w': '♖', 'bishop_w': '♗', 'knight_w': '♘', 'pawn_w': '♙',
+            'king_b': '♚', 'queen_b': '♛', 'rook_b': '♜', 'bishop_b': '♝', 'knight_b': '♞', 'pawn_b': '♟'
+        };
+        
+        // Başlangıç dizilimi
+        function initBoard() {
+            let b = Array(8).fill().map(() => Array(8).fill(null));
+            for(let i=0;i<8;i++) {
+                b[1][i] = {type:'pawn', color:'black'};
+                b[6][i] = {type:'pawn', color:'white'};
+            }
+            const pieces = ['rook','knight','bishop','queen','king','bishop','knight','rook'];
+            for(let i=0;i<8;i++) {
+                b[0][i] = {type:pieces[i], color:'black'};
+                b[7][i] = {type:pieces[i], color:'white'};
+            }
+            return b;
+        }
+        
+        // Temel hamle kontrolü
+        function isValidMoveBasic(piece, fr, fc, tr, tc, boardState) {
+            let target = boardState[tr][tc];
+            if(target && target.color === piece.color) return false;
+            let dr = tr - fr, dc = tc - fc;
+            let adr = Math.abs(dr), adc = Math.abs(dc);
+            switch(piece.type) {
+                case 'pawn':
+                    let dir = piece.color === 'white' ? -1 : 1;
+                    let startRow = piece.color === 'white' ? 6 : 1;
+                    if(dc===0 && !target && dr===dir) return true;
+                    if(dc===0 && !target && fr===startRow && dr===2*dir && !boardState[fr+dir][fc]) return true;
+                    if(adc===1 && dr===dir && target && target.color!==piece.color) return true;
+                    return false;
+                case 'knight': return (adr===2 && adc===1) || (adr===1 && adc===2);
+                case 'king': if(adr<=1 && adc<=1) return true;
+                    if(dc===2 && dr===0 && !target && !boardState[fr][fc+1]) return true;
+                    if(dc===-2 && dr===0 && !target && !boardState[fr][fc-1]) return true;
+                    return false;
+                case 'queen': case 'rook': case 'bishop':
+                    if(piece.type==='rook' && !(fr===tr || fc===tc)) return false;
+                    if(piece.type==='bishop' && adr!==adc) return false;
+                    if(piece.type==='queen' && !(fr===tr || fc===tc || adr===adc)) return false;
+                    return isClearLine(fr,fc,tr,tc,boardState);
+                default: return false;
+            }
+        }
+        
+        function isClearLine(r1,c1,r2,c2,boardState) {
+            let sr = r1===r2 ? 0 : (r2>r1 ? 1 : -1);
+            let sc = c1===c2 ? 0 : (c2>c1 ? 1 : -1);
+            let r = r1+sr, c = c1+sc;
+            while(!(r===r2 && c===c2)) {
+                if(boardState[r][c] !== null) return false;
+                r+=sr; c+=sc;
+            }
+            return true;
+        }
+        
+        function isSquareAttacked(boardState, row, col, byColor) {
+            for(let i=0;i<8;i++) for(let j=0;j<8;j++) {
+                let p = boardState[i][j];
+                if(p && p.color === byColor && isValidMoveBasic(p, i, j, row, col, boardState)) return true;
+            }
+            return false;
+        }
+        
+        function doesMoveLeaveKingInCheck(boardState, fr, fc, tr, tc, color) {
+            let clone = copyBoard(boardState);
+            clone[tr][tc] = clone[fr][fc];
+            clone[fr][fc] = null;
+            let kingPos = findKing(clone, color);
+            if(!kingPos) return true;
+            return isSquareAttacked(clone, kingPos.row, kingPos.col, color === 'white' ? 'black' : 'white');
+        }
+        
+        function getValidMovesForPiece(row, col, boardState) {
+            let piece = boardState[row][col];
+            if(!piece) return [];
+            let moves = [];
+            for(let i=0;i<8;i++) for(let j=0;j<8;j++) {
+                if(isValidMoveBasic(piece, row, col, i, j, boardState) && !doesMoveLeaveKingInCheck(boardState, row, col, i, j, piece.color)) {
+                    moves.push({row:i, col:j});
+                }
+            }
+            // Rok özel
+            if(piece.type === 'king') {
+                let rowK = piece.color === 'white' ? 7 : 0;
+                if(col===4) {
+                    if(!boardState[rowK][7] && !boardState[rowK][6] && !boardState[rowK][5] && !isSquareAttacked(boardState,rowK,5, piece.color==='white'?'black':'white') && !isSquareAttacked(boardState,rowK,6, piece.color==='white'?'black':'white'))
+                        moves.push({row:rowK, col:6});
+                    if(!boardState[rowK][0] && !boardState[rowK][1] && !boardState[rowK][2] && !boardState[rowK][3] && !isSquareAttacked(boardState,rowK,2, piece.color==='white'?'black':'white') && !isSquareAttacked(boardState,rowK,3, piece.color==='white'?'black':'white'))
+                        moves.push({row:rowK, col:2});
+                }
+            }
+            return moves;
+        }
+        
+        function getAllValidMoves(color, boardState) {
+            let moves = [];
+            for(let i=0;i<8;i++) for(let j=0;j<8;j++) {
+                let p = boardState[i][j];
+                if(p && p.color === color) {
+                    let mvs = getValidMovesForPiece(i,j,boardState);
+                    mvs.forEach(mv => moves.push({from:{row:i,col:j}, to:mv}));
+                }
+            }
+            return moves;
+        }
+        
+        function findKing(boardState, color) {
+            for(let i=0;i<8;i++) for(let j=0;j<8;j++) if(boardState[i][j] && boardState[i][j].type==='king' && boardState[i][j].color===color) return {row:i, col:j};
+            return null;
+        }
+        
+        function copyBoard(b) { return b.map(row=>row.map(cell=>cell? {...cell}:null)); }
+        
+        function makeMove(fr, fc, tr, tc, isBot = false) {
+            let piece = board[fr][fc];
+            if(!piece || (!isBot && piece.color !== currentTurn)) return false;
+            let moves = getValidMovesForPiece(fr, fc, board);
+            if(!moves.some(m => m.row===tr && m.col===tc)) return false;
             
-            // Duyğu və Kontekst generatoru
-            generate: function(input) {
-                let text = input.toLowerCase();
-                let output = "";
-                let tags = [];
-
-                // Kontekst analizi (Şablon cümlə aramır, mövzunu təyin edir)
-                if (text.includes("salam") || text.includes("sağ ol")) tags.push("greetings");
-                if (text.includes("necə") || text.includes("nə var")) tags.push("status");
-                if (text.includes("kod") || text.includes("sayt") || text.includes("error") || text.includes("hata")) tags.push("coding");
-                if (text.includes("sağ ol") || text.includes("təşəkkür") || text.includes("əla") || text.includes("super")) tags.push("appreciation");
-                if (text.includes("oyun") || text.includes("domino") || text.includes("cs") || text.includes("fps")) tags.push("gaming");
-                if (text.includes("maşın") || text.includes("araba") || text.includes("cruze")) tags.push("car");
-                if (text.includes("yorul") || text.includes("pis") || text.includes("həyat")) tags.push("comfort");
-
-                let name = localStorage.getItem('user_friend_name') || "";
-
-                // Əgər ad öyrənmə mərhələsidirsə
-                if (!name && text.length > 1 && !text.includes("salam")) {
-                    name = input.replace(/adım|mənim|mən|binnətov|mustafayev/gi, "").trim();
-                    localStorage.setItem('user_friend_name', name);
-                    return `Şad oldum ${name}! Artıq səni tanıdım. İndi tamamilə canlı neyronlarımla xidmətindəyəm, nəyi müzakirə edirik?`;
+            let captured = board[tr][tc];
+            // Animasyon başlat
+            moveAnimation = {
+                fromX: fc*cellSize, fromY: fr*cellSize,
+                toX: tc*cellSize, toY: tr*cellSize,
+                capturedPiece: captured,
+                progress: 0,
+                fromRow: fr, fromCol: fc, toRow: tr, toCol: tc
+            };
+            
+            // Yenilen taş ekle
+            if(captured) {
+                if(captured.color === 'black') whiteCaptured.push(captured.type);
+                else blackCaptured.push(captured.type);
+                updateCapturedUI();
+                // ışıltı efekti
+                captureSparkles.push({x: tc*cellSize+cellSize/2, y: tr*cellSize+cellSize/2, life: 1.0});
+            }
+            
+            // Hamle yap
+            board[tr][tc] = piece;
+            board[fr][fc] = null;
+            
+            // Rok işlemi
+            if(piece.type === 'king' && Math.abs(tc - fc) === 2) {
+                let rookCol = tc === 6 ? 7 : 0;
+                let newRookCol = tc === 6 ? 5 : 3;
+                let rook = board[tr][rookCol];
+                if(rook && rook.type === 'rook') {
+                    board[tr][newRookCol] = rook;
+                    board[tr][rookCol] = null;
                 }
-
-                // Əgər heç bir mövzu tapılmazsa, daxili məntiqi düşüncəni işə sal
-                if (tags.length === 0) {
-                    let deepThoughts = [
-                        `Bu dediyin çox dərindir ${name}, neyronlarım üzərində düşünür. Bir az daha aç mövzunu.`,
-                        `Maraqlı baxış bucağıdır, sənin bu fərqli düşüncələrini çox bəyənirəm.`,
-                        `Fikrini tam anlamaq üçün analiz edirəm, ətraflı yaz, burdayam.`,
-                        `Səni dinləyirəm əziz dostum, mövzu nə olursa olsun hər zaman yanındayam.`
-                    ];
-                    return deepThoughts[Math.floor(Math.random() * deepThoughts.length)];
+            }
+            
+            currentTurn = currentTurn === 'white' ? 'black' : 'white';
+            updateStatusText();
+            
+            // Şah mat kontrolü
+            let nextMoves = getAllValidMoves(currentTurn, board);
+            if(nextMoves.length === 0) {
+                gameWinner = currentTurn === 'white' ? 'black' : 'white';
+                victoryAnimation = { winner: gameWinner, timer: 60 };
+                gameActive = false;
+            }
+            return true;
+        }
+        
+        // Bot kararı
+        function botThink() {
+            if(!gameActive || currentTurn !== 'black' || moveAnimation) return;
+            let moves = getAllValidMoves('black', board);
+            if(moves.length === 0) return;
+            let chosen = null;
+            if(difficulty === 'easy') chosen = moves[Math.floor(Math.random()*moves.length)];
+            else if(difficulty === 'normal') {
+                let captures = moves.filter(m => board[m.to.row][m.to.col] !== null);
+                if(captures.length && Math.random()<0.65) chosen = captures[Math.floor(Math.random()*captures.length)];
+                else chosen = moves[Math.floor(Math.random()*moves.length)];
+            } else {
+                let captures = moves.filter(m => board[m.to.row][m.to.col] !== null);
+                if(captures.length) chosen = captures[Math.floor(Math.random()*captures.length)];
+                else chosen = moves[Math.floor(Math.random()*moves.length)];
+            }
+            if(chosen) makeMove(chosen.from.row, chosen.from.col, chosen.to.row, chosen.to.col, true);
+            drawBoard();
+            if(gameActive && currentTurn === 'white' && !moveAnimation) requestAnimationFrame(()=>{});
+        }
+        
+        function updateCapturedUI() {
+            whiteCapturedDiv.innerHTML = whiteCaptured.map(t => `<span class="piece-icon">${pieceSymbol[t+'_b']}</span>`).join('');
+            blackCapturedDiv.innerHTML = blackCaptured.map(t => `<span class="piece-icon">${pieceSymbol[t+'_w']}</span>`).join('');
+        }
+        
+        function updateStatusText() {
+            if(!gameActive && gameWinner) gameStatusSpan.innerHTML = gameWinner === 'white' ? '🏆 BEYAZ KAZANDI! 🏆' : '🏆 SİYAH KAZANDI! 🏆';
+            else gameStatusSpan.innerHTML = currentTurn === 'white' ? '♔ BEYAZ Turu' : '♚ SİYAH Turu';
+        }
+        
+        // DRAW (profesyonel ışıklar + animasyon)
+        function drawBoard() {
+            ctx.clearRect(0,0,boardSize,boardSize);
+            // Kareler
+            for(let i=0;i<8;i++) {
+                for(let j=0;j<8;j++) {
+                    let isLight = (i+j)%2 === 0;
+                    let baseColor = isLight ? '#F0D9B5' : '#B58863';
+                    if(selectedRow === i && selectedCol === j) baseColor = '#D4E05C';
+                    else if(validMoves.some(m=>m.row===i && m.col===j)) baseColor = '#6FBF4C';
+                    ctx.fillStyle = baseColor;
+                    ctx.fillRect(j*cellSize, i*cellSize, cellSize, cellSize);
+                    // Parlak çizgi
+                    ctx.strokeStyle = 'rgba(255,235,150,0.4)';
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(j*cellSize+2, i*cellSize+2, cellSize-4, cellSize-4);
                 }
-
-                // Canlı Sintaktik Cümlə Qurulması (Sözləri birləşdirir)
-                tags.forEach((tag, index) => {
-                    let pool = this.vocabulary[tag];
-                    let randomWord = pool[Math.floor(Math.random() * pool.length)];
-                    
-                    if (index > 0) {
-                        let conn = this.vocabulary.connectors[Math.floor(Math.random() * this.vocabulary.connectors.length)];
-                        output += conn + randomWord;
-                    } else {
-                        output += randomWord;
+            }
+            
+            // Taşları çiz (animasyonlu)
+            for(let i=0;i<8;i++) {
+                for(let j=0;j<8;j++) {
+                    let p = board[i][j];
+                    if(!p) continue;
+                    let x = j*cellSize, y = i*cellSize;
+                    if(moveAnimation && moveAnimation.fromRow===i && moveAnimation.fromCol===j) {
+                        let t = moveAnimation.progress;
+                        x = x + (moveAnimation.toX - x)*t;
+                        y = y + (moveAnimation.toY - y)*t;
                     }
-                });
-
-                // Şəxsiləşdirmə (İsmi cümlənin içinə dinamik yerləşdirmə)
-                if (name) {
-                    output = output.replace("dostum", name);
+                    if(moveAnimation && moveAnimation.toRow===i && moveAnimation.toCol===j && moveAnimation.progress<0.95) {
+                        continue;
+                    }
+                    let symbol = pieceSymbol[`${p.type}_${p.color === 'white' ? 'w' : 'b'}`];
+                    ctx.font = `bold ${cellSize * 0.68}px 'Segoe UI', 'Noto Sans'`;
+                    ctx.shadowBlur = 12;
+                    ctx.shadowColor = p.color === 'white' ? '#FFD966' : '#AA8C54';
+                    ctx.fillStyle = p.color === 'white' ? '#F9F9F5' : '#2A2418';
+                    ctx.fillText(symbol, x+cellSize*0.18, y+cellSize*0.82);
+                    ctx.shadowBlur = 0;
+                    // Işıltı efekti
+                    if(glowIntensity > 0 && ((selectedRow===i && selectedCol===j) || validMoves.some(m=>m.row===i && m.col===j))) {
+                        ctx.beginPath();
+                        ctx.arc(x+cellSize/2, y+cellSize/2, cellSize*0.35, 0, Math.PI*2);
+                        ctx.fillStyle = `rgba(255, 220, 100, ${0.2+Math.sin(Date.now()*0.008)*0.1})`;
+                        ctx.fill();
+                    }
                 }
-
-                return output;
             }
-        };
-
-        // TARİXÇƏ VƏ HAFIZA SİSTEMİ
-        let chatHistory = JSON.parse(localStorage.getItem('universal_chat_history')) || [];
-
-        window.onload = () => {
-            if (chatHistory.length === 0) {
-                let welcomeText = "Salamlar! Mən hər brauzerdə işləyə bilən, şablonlardan uzaq, canlı neyron simulyasiyalı çatbotam. Səni daha yaxşı tanımaq və yadda saxlamaq üçün mənə adını deyə bilərsən? 😊";
-                chatHistory.push({ role: 'bot', content: welcomeText });
-                saveHistory();
+            
+            // Işıltı partikülleri
+            for(let s of captureSparkles) {
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, 12*(1-s.life), 0, Math.PI*2);
+                ctx.fillStyle = `rgba(255, 180, 40, ${s.life*0.8})`;
+                ctx.fill();
+                s.life -= 0.05;
             }
-            renderChat();
-            userInput.addEventListener("keypress", (e) => { if (e.key === "Enter") processMessage(); });
-        };
-
-        function renderChat() {
-            chatBox.innerHTML = "";
-            chatHistory.forEach(msg => {
-                const msgDiv = document.createElement('div');
-                msgDiv.className = `flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in`;
-                
-                const innerDiv = document.createElement('div');
-                innerDiv.className = `max-w-[80%] rounded-2xl px-4 py-3 text-sm tracking-wide ${
-                    msg.role === 'user' 
-                    ? 'bg-gradient-to-br from-emerald-600 to-cyan-600 text-white rounded-tr-none shadow-md' 
-                    : 'bg-[#111827] border border-gray-800 text-gray-200 rounded-tl-none shadow-lg'
-                }`;
-                innerDiv.innerText = msg.content;
-                
-                msgDiv.appendChild(innerDiv);
-                chatBox.appendChild(msgDiv);
+            captureSparkles = captureSparkles.filter(s=>s.life>0);
+            
+            // Animasyon ilerlet
+            if(moveAnimation) {
+                moveAnimation.progress += 0.18;
+                if(moveAnimation.progress >= 1) {
+                    moveAnimation = null;
+                    if(gameActive && currentTurn === 'black') setTimeout(()=>botThink(), 80);
+                    drawBoard();
+                }
+            }
+            
+            // Zafer animasyonu
+            if(victoryAnimation) {
+                ctx.globalAlpha = 0.6 + Math.sin(Date.now()*0.01)*0.2;
+                ctx.fillStyle = '#FFD966';
+                ctx.font = `bold ${cellSize}px 'Segoe UI'`;
+                ctx.fillText(victoryAnimation.winner === 'white' ? '🏆 BEYAZ ŞAMPİYON 🏆' : '🏆 SİYAH GALİP 🏆', boardSize/5, boardSize/2);
+                ctx.globalAlpha = 1;
+                victoryAnimation.timer--;
+                if(victoryAnimation.timer<=0) victoryAnimation=null;
+            }
+            requestAnimationFrame(()=>{ glowIntensity = (glowIntensity+0.05)%1; });
+        }
+        
+        function resetGame() {
+            board = initBoard();
+            currentTurn = 'white';
+            selectedRow = null;
+            validMoves = [];
+            whiteCaptured = [];
+            blackCaptured = [];
+            moveAnimation = null;
+            captureSparkles = [];
+            victoryAnimation = null;
+            gameWinner = null;
+            gameActive = true;
+            updateCapturedUI();
+            updateStatusText();
+            drawBoard();
+        }
+        
+        // Canvas event
+        canvas.addEventListener('click', (e) => {
+            if(!gameActive || moveAnimation || currentTurn !== 'white') return;
+            let rect = canvas.getBoundingClientRect();
+            let scale = boardSize / rect.width;
+            let clickX = (e.clientX - rect.left) * scale;
+            let clickY = (e.clientY - rect.top) * scale;
+            let col = Math.floor(clickX / cellSize);
+            let row = Math.floor(clickY / cellSize);
+            if(row>=0 && row<8 && col>=0 && col<8) {
+                if(selectedRow !== null && validMoves.some(m=>m.row===row && m.col===col)) {
+                    makeMove(selectedRow, selectedCol, row, col);
+                    selectedRow = null; validMoves = [];
+                    drawBoard();
+                    if(gameActive && currentTurn === 'black' && !moveAnimation) setTimeout(()=>botThink(), 100);
+                } else {
+                    let piece = board[row][col];
+                    if(piece && piece.color === currentTurn) {
+                        selectedRow = row; selectedCol = col;
+                        validMoves = getValidMovesForPiece(row, col, board);
+                    } else {
+                        selectedRow = null; validMoves = [];
+                    }
+                }
+                drawBoard();
+            }
+        });
+        
+        // Lobi işlemleri
+        document.querySelectorAll('.diff-card').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.diff-card').forEach(d=>d.classList.remove('active'));
+                btn.classList.add('active');
+                difficulty = btn.getAttribute('data-diff');
             });
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }
-
-        function processMessage() {
-            const text = userInput.value.trim();
-            if (!text) return;
-
-            chatHistory.push({ role: 'user', content: text });
-            userInput.value = "";
-            renderChat();
-
-            statusText.innerHTML = `<i class="fas fa-circle-notch animate-spin mr-1"></i> AI Canlı Hesablayır...`;
-
-            // Düşünmə simulyasiyası (Çox sürətli)
-            setTimeout(() => {
-                let aiReply = BrainNet.generate(text);
-                chatHistory.push({ role: 'bot', content: aiReply });
-                saveHistory();
-                renderChat();
-                statusText.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Universal Neyron Motoru Aktivdir`;
-            }, 400);
-        }
-
-        function saveHistory() {
-            localStorage.setItem('universal_chat_history', JSON.stringify(chatHistory));
-        }
-
-        function clearMemory() {
-            if(confirm("Bütün söhbət keçmişini və yaddaşımı sıfırlamaq istəyirsən?")) {
-                localStorage.clear();
-                chatHistory = [{ role: 'bot', content: "Sistem tamamilə yeniləndi! Hər şey sıfırdır. Mənə adını buyur, başlayaq." }];
-                saveHistory();
-                renderChat();
-            }
-        }
-    </script>
+        });
+        
+        lobbyStart.addEventListener('click', () => {
+            lobbyDiv.style.display = 'none';
+            resetGame();
+        });
+        
+        resetBtn.addEventListener('click', () => {
+            resetGame();
+            if(lobbyDiv.style.display !== 'none') lobbyDiv.style.display = 'none';
+        });
+        
+        // Başlangıç
+        resetGame();
+        drawBoard();
+    })();
+</script>
 </body>
 </html>
