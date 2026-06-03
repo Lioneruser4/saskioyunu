@@ -1,620 +1,631 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="az">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>♔ SATRANÇ PRO - 4:3 Masa | Işıltılı Taşlar ♚</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MultiGame Arena & Camera Sports</title>
     <style>
+        :root {
+            --primary: #ff4757;
+            --secondary: #2ed573;
+            --dark: #2f3542;
+            --light: #f1f2f6;
+        }
+
         * {
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
             box-sizing: border-box;
-        }
-
-        body {
             margin: 0;
-            min-height: 100vh;
-            background: radial-gradient(circle at 30% 20%, #1a472a, #0a1f15);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-family: 'Segoe UI', 'Poppins', 'Georgia', serif;
-            padding: 20px;
-            overflow: hidden;
+            padding: 0;
+            user-select: none;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
-        /* Ana container - Tam ekran uyumlu 4:3 masa */
-        .game-screen {
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            justify-content: center;
-            gap: 30px;
-            background: #1e1a1ecc;
-            padding: 25px 40px;
-            border-radius: 60px;
-            backdrop-filter: blur(2px);
-            border: 1px solid #e6b422;
-            box-shadow: 0 25px 45px rgba(0,0,0,0.6);
-        }
-
-        /* 4:3 Masa wrapper - sabit oran */
-        .board-4x3 {
-            position: relative;
-            background: #2b1e12;
-            padding: 12px;
-            border-radius: 24px;
-            box-shadow: inset 0 0 0 3px #c9a03d, 0 20px 35px black;
-        }
-
-        canvas {
-            display: block;
-            background: #f0d9b5;
-            border-radius: 12px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-            cursor: pointer;
-            width: 100%;
-            height: auto;
-        }
-
-        /* Sağ Panel - Yenilen taşlar */
-        .capture-panel {
-            background: linear-gradient(145deg, #241f26, #110e14);
-            border-radius: 32px;
-            padding: 20px 18px;
-            min-width: 150px;
-            border: 1px solid #e6b422;
-            box-shadow: 0 10px 25px black;
-        }
-
-        .capture-panel h3 {
-            text-align: center;
-            color: #FFD966;
-            font-size: 1.2rem;
-            margin: 0 0 15px 0;
-            letter-spacing: 2px;
-            border-bottom: 2px solid #c9a03d;
-            display: inline-block;
-            width: 100%;
-        }
-
-        .captured-pieces {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            justify-content: center;
-            min-height: 250px;
-            max-height: 450px;
-            overflow-y: auto;
-            padding: 8px;
-        }
-
-        .piece-icon {
-            font-size: 2.2rem;
-            filter: drop-shadow(0 3px 5px rgba(255,215,0,0.6));
-            transition: transform 0.1s;
-        }
-
-        /* Alt bilgi çubuğu */
-        .info-bar {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #000000cc;
-            backdrop-filter: blur(12px);
-            padding: 10px 30px;
-            border-radius: 50px;
-            color: #ffdf9c;
-            font-weight: bold;
-            font-size: 1.2rem;
-            font-family: monospace;
-            z-index: 100;
-            white-space: nowrap;
-            border: 1px solid #e6b422;
-        }
-
-        .reset-button {
-            position: fixed;
-            bottom: 20px;
-            right: 25px;
-            background: #c2410c;
-            padding: 10px 28px;
-            border-radius: 40px;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-            z-index: 100;
-            border: none;
-            box-shadow: 0 4px 0 #632818;
-            transition: 0.05s linear;
-        }
-
-        .reset-button:active {
-            transform: translateY(2px);
-        }
-
-        /* Lobi Menüsü */
-        .lobby-menu {
-            position: fixed;
-            top: 0;
-            left: 0;
+        body, html {
             width: 100%;
             height: 100%;
-            background: rgba(5, 3, 12, 0.96);
-            backdrop-filter: blur(18px);
-            display: flex;
-            flex-direction: column;
+            overflow: hidden;
+            background-color: var(--dark);
+            color: var(--light);
+        }
+
+        /* Ekran Dönmə Xəbərdarlığı */
+        #orientation-warning {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 9999;
             justify-content: center;
             align-items: center;
-            z-index: 200;
-        }
-
-        .lobby-menu h1 {
-            font-size: 4rem;
-            background: linear-gradient(135deg, #FFE6A3, #E6B422, #FF8C42);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            margin-bottom: 30px;
-            text-shadow: 0 0 15px gold;
-        }
-
-        .difficulty-selector {
-            display: flex;
-            gap: 25px;
-            margin: 30px;
-        }
-
-        .difficulty-card {
-            background: #2a242f;
-            padding: 14px 35px;
-            font-size: 1.5rem;
-            font-weight: bold;
-            border-radius: 60px;
-            color: #e6c87e;
-            cursor: pointer;
-            border: 2px solid transparent;
-            transition: 0.07s linear;
+            flex-direction: column;
             text-align: center;
+            padding: 20px;
         }
 
-        .difficulty-card.active {
-            background: #e67e22;
-            color: white;
-            border-color: gold;
-            transform: scale(1.02);
+        @media screen and (max-aspect-ratio: 1/1) {
+            /* Əgər ekran dikdirsə istifadəçiyə yan tutmasını xatırladırıq (Opsional, amma bu oyun yan daha rahatdır) */
+            #orientation-warning { display: flex; }
         }
 
-        .lobby-start-btn {
-            background: #27ae60;
-            padding: 16px 55px;
-            font-size: 1.7rem;
-            border-radius: 60px;
-            font-weight: bold;
-            color: white;
+        /* Giriş Menusu */
+        #menu-container {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1e272e, #2f3542);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            transition: opacity 0.5s ease;
+        }
+
+        .title-container {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: bounce 2s infinite alternate;
+        }
+
+        h1 {
+            font-size: 3rem;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            color: #fff;
+            text-shadow: 0 0 10px var(--primary), 0 0 20px var(--primary);
+        }
+
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            max-width: 600px;
+            width: 90%;
+        }
+
+        .game-card {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
             cursor: pointer;
-            margin-top: 20px;
-            box-shadow: 0 8px 0 #1e6b3e;
-            transition: 0.05s linear;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
         }
 
-        .lobby-start-btn:active {
-            transform: translateY(4px);
+        .game-card:hover {
+            transform: translateY(-5px) scale(1.05);
+            border-color: var(--primary);
+            box-shadow: 0 10px 20px rgba(255, 71, 87, 0.3);
+            background: rgba(255, 71, 87, 0.1);
         }
 
-        @media (max-width: 900px) {
-            .game-screen { gap: 15px; padding: 15px 20px; }
-            .capture-panel { min-width: 100px; padding: 12px; }
-            .piece-icon { font-size: 1.5rem; }
-            .difficulty-card { padding: 8px 18px; font-size: 1rem; }
-            .lobby-menu h1 { font-size: 2rem; }
-            .info-bar { font-size: 0.8rem; white-space: nowrap; }
+        .game-card h3 { margin-bottom: 10px; font-size: 1.4rem; color: #ffa502; }
+        .game-card p { font-size: 0.9rem; opacity: 0.8; }
+
+        /* Oyun Sahəsi */
+        #game-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: none;
+        }
+
+        #webcam {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1); /* Güzgü effekti */
+            z-index: 1;
+            opacity: 0.3; /* Oyun elementlərinin görünməsi üçün video arxa fonda zəiflədilir */
+        }
+
+        #gameCanvas {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+        }
+
+        /* HUD UI (Xallar və Düymələr) */
+        .hud {
+            position: absolute;
+            top: 20px;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 30px;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .score-board {
+            background: rgba(0,0,0,0.6);
+            padding: 10px 20px;
+            border-radius: 20px;
+            border: 1px solid var(--secondary);
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #fff;
+            backdrop-filter: blur(5px);
+        }
+
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            pointer-events: auto;
+            transition: background 0.2s;
+        }
+
+        .btn:hover { background: #ff6b81; }
+
+        @keyframes bounce {
+            from { transform: translateY(0); }
+            to { transform: translateY(-10px); }
         }
     </style>
 </head>
 <body>
-<div class="game-screen">
-    <div class="board-4x3">
-        <canvas id="chessCanvas" width="640" height="640"></canvas>
-    </div>
-    <div class="capture-panel">
-        <h3>⚫ YENİLEN SİYAH</h3>
-        <div class="captured-pieces" id="capturedWhiteList"></div>
-    </div>
-</div>
-<div class="info-bar" id="gameStatusText">♔ BEYAZ'ın Turu</div>
-<button class="reset-button" id="resetGameBtn">🔄 YENİ OYUN</button>
 
-<div id="lobbyPanel" class="lobby-menu">
-    <h1>♔ SATRANÇ SUPREME ♚</h1>
-    <div class="difficulty-selector">
-        <div class="difficulty-card" data-diff="easy">🌿 EASY</div>
-        <div class="difficulty-card active" data-diff="normal">⚡ NORMAL</div>
-        <div class="difficulty-card" data-diff="hard">🔥 HARD</div>
+    <!-- Ekranı Yan Tut Xəbərdarlığı -->
+    <div id="orientation-warning">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#ff4757" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><path d="M12 18h.01"></path></svg>
+        <h2 style="margin-top:15px;">Daha yaxşı təcrübə üçün ekranı YAN TUTUN!</h2>
+        <p style="opacity:0.6; margin-top:5px;">Voleybol və digər oyunlar geniş ekranda daha rahat oynanılır.</p>
+        <button class="btn" style="margin-top: 20px;" onclick="document.getElementById('orientation-warning').style.display='none'">Gizlət</button>
     </div>
-    <div class="lobby-start-btn" id="startGameBtn">🎯 MAÇA BAŞLA</div>
-    <div style="margin-top: 30px; color:#b89a60;">✨ 4:3 Masa | Işıklı taşlar | Tüm kurallar | Bot AI ✨</div>
-</div>
 
-<script>
-    (function(){
-        const canvas = document.getElementById('chessCanvas');
+    <!-- MENYU -->
+    <div id="menu-container">
+        <div class="title-container">
+            <h1>AR Arcade Arena</h1>
+            <p style="color: #ced6e0; margin-top: 5px;">Kamera və Bot Dəstəkli Professional Oyunlar</p>
+        </div>
+
+        <div class="menu-grid">
+            <div class="game-card" onclick="startGame('volleyball')">
+                <h3>🏐 Kamera Voleybolu</h3>
+                <p>Kameranı açın, əllərinizlə voleybol topunu sektirin və yıxılmasına qoymayın!</p>
+            </div>
+            <div class="game-card" onclick="startGame('bot-vs')">
+                <h3>🤖 Bot ilə Sektirmə Yarışı</h3>
+                <p>Ekranda bot rəqibə qarşı topu qarşı tərəfə keçirin. Professional AI rəqib!</p>
+            </div>
+            <div class="game-card" onclick="startGame('catcher')">
+                <h3>🍎 Göydən Düşənləri Yaxala</h3>
+                <p>Kamera qarşısında sağa-sola hərəkət edərək bonusları yığın, bombalardan qaçın.</p>
+            </div>
+            <div class="game-card" onclick="startGame('pingpong')">
+                <h3>🏓 Classic Cyber Pong</h3>
+                <p>Həm toxunuşla, həm də botla oynanılan sürətli divar topu oyunu.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- OYUN SAHƏSİ -->
+    <div id="game-container">
+        <div class="hud">
+            <button class="btn" onclick="backToMenu()">🏠 Menyu</button>
+            <div class="score-board" id="scoreDisplay">Xal: 0</div>
+            <div class="score-board" id="aiScoreDisplay" style="display:none;">Bot: 0</div>
+        </div>
+        <video id="webcam" autoplay playsinline></video>
+        <canvas id="gameCanvas"></canvas>
+    </div>
+
+    <script>
+        const menuContainer = document.getElementById('menu-container');
+        const gameContainer = document.getElementById('game-container');
+        const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-        const capturedWhiteDiv = document.getElementById('capturedWhiteList');
-        const gameStatusSpan = document.getElementById('gameStatusText');
-        const lobbyDiv = document.getElementById('lobbyPanel');
-        const startGameLobby = document.getElementById('startGameBtn');
-        const resetGameBtn = document.getElementById('resetGameBtn');
-        
-        let boardSize = 640;
-        let cellSize = 80;
+        const video = document.getElementById('webcam');
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const aiScoreDisplay = document.getElementById('aiScoreDisplay');
+
+        let currentLinesMode = '';
+        let animationFrameId;
+        let score = 0;
+        let aiScore = 0;
         let gameActive = false;
-        let difficulty = 'normal';
-        let board = Array(8).fill().map(() => Array(8).fill(null));
-        let currentTurn = 'white';
-        let selectedRow = null, selectedCol = null;
-        let validMoves = [];
-        let whiteCaptured = []; // Beyazın yediği siyah taşlar
-        let blackCaptured = []; // Siyahın yediği beyaz taşlar
-        
-        // Animasyonlar
-        let moveAnimation = null;
-        let sparkEffect = [];
-        let winEffect = null;
-        
-        // Şık taş sembolleri
-        const pieceSymbol = {
-            'king_w': '♔', 'queen_w': '♕', 'rook_w': '♖', 'bishop_w': '♗', 'knight_w': '♘', 'pawn_w': '♙',
-            'king_b': '♚', 'queen_b': '♛', 'rook_b': '♜', 'bishop_b': '♝', 'knight_b': '♞', 'pawn_b': '♟'
+
+        // Kamera Dəyişənləri (Hərəkət Təyini Üçün)
+        let lastFrameData = null;
+
+        // Oyun Elementləri
+        let ball = { x: 0, y: 0, vx: 0, vy: 0, radius: 25, type: 'volleyball' };
+        let player = { x: 0, y: 0, width: 120, height: 20, speed: 15 };
+        let bot = { x: 0, y: 0, width: 120, height: 20, speed: 7 };
+        let items = [];
+
+        // Animasiyalı Karakter Obyekti (Sadə lakin vizual kukla)
+        let character = {
+            x: 100, y: 0, width: 50, height: 80,
+            frame: 0, tick: 0
         };
-        
-        // Tahta başlangıcı
-        function initBoard() {
-            let b = Array(8).fill().map(() => Array(8).fill(null));
-            // Piyonlar
-            for(let i=0;i<8;i++) {
-                b[1][i] = {type:'pawn', color:'black'};
-                b[6][i] = {type:'pawn', color:'white'};
-            }
-            const pieces = ['rook','knight','bishop','queen','king','bishop','knight','rook'];
-            for(let i=0;i<8;i++) {
-                b[0][i] = {type:pieces[i], color:'black'};
-                b[7][i] = {type:pieces[i], color:'white'};
-            }
-            return b;
+
+        // Ekran ölçülərini tənzimləmə
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
         }
-        
-        // ----- SATRANÇ KURALLARI (tam) -----
-        function isClearLine(r1,c1,r2,c2,boardState) {
-            let sr = r1===r2 ? 0 : (r2>r1 ? 1 : -1);
-            let sc = c1===c2 ? 0 : (c2>c1 ? 1 : -1);
-            let r = r1+sr, c = c1+sc;
-            while(!(r===r2 && c===c2)) {
-                if(boardState[r][c] !== null) return false;
-                r += sr; c += sc;
-            }
-            return true;
-        }
-        
-        function isValidMoveBasic(piece, fr, fc, tr, tc, boardState) {
-            let target = boardState[tr][tc];
-            if(target && target.color === piece.color) return false;
-            let dr = tr - fr, dc = tc - fc;
-            let adr = Math.abs(dr), adc = Math.abs(dc);
-            switch(piece.type) {
-                case 'pawn':
-                    let dir = piece.color === 'white' ? -1 : 1;
-                    let startRow = piece.color === 'white' ? 6 : 1;
-                    if(dc===0 && !target && dr===dir) return true;
-                    if(dc===0 && !target && fr===startRow && dr===2*dir && !boardState[fr+dir][fc]) return true;
-                    if(adc===1 && dr===dir && target && target.color !== piece.color) return true;
-                    return false;
-                case 'knight': return (adr===2 && adc===1) || (adr===1 && adc===2);
-                case 'king':
-                    if(adr<=1 && adc<=1) return true;
-                    if(dc===2 && dr===0 && !target && !boardState[fr][fc+1]) return true;
-                    if(dc===-2 && dr===0 && !target && !boardState[fr][fc-1]) return true;
-                    return false;
-                case 'queen': case 'rook': case 'bishop':
-                    if(piece.type === 'rook' && !(fr===tr || fc===tc)) return false;
-                    if(piece.type === 'bishop' && adr!==adc) return false;
-                    if(piece.type === 'queen' && !(fr===tr || fc===tc || adr===adc)) return false;
-                    return isClearLine(fr,fc,tr,tc,boardState);
-                default: return false;
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Kameranı Aktiv Etmək
+        async function setupCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: 640, height: 480, facingMode: "user" },
+                    audio: false
+                });
+                video.srcObject = stream;
+                return new Promise((resolve) => {
+                    video.onloadedmetadata = () => {
+                        video.play();
+                        resolve(true);
+                    };
+                });
+            } catch (err) {
+                console.log("Kamera tapılmadı və ya icazə verilmədi. Sensor modu aktivləşdirilir.");
+                return false;
             }
         }
-        
-        function isSquareAttacked(boardState, row, col, byColor) {
-            for(let i=0;i<8;i++) {
-                for(let j=0;j<8;j++) {
-                    let p = boardState[i][j];
-                    if(p && p.color === byColor && isValidMoveBasic(p,i,j,row,col,boardState)) return true;
-                }
-            }
-            return false;
-        }
-        
-        function doesMoveLeaveKingInCheck(boardState, fr, fc, tr, tc, color) {
-            let clone = copyBoard(boardState);
-            clone[tr][tc] = clone[fr][fc];
-            clone[fr][fc] = null;
-            let kingPos = findKing(clone, color);
-            if(!kingPos) return true;
-            return isSquareAttacked(clone, kingPos.row, kingPos.col, color === 'white' ? 'black' : 'white');
-        }
-        
-        function getValidMovesForPiece(row, col, boardState) {
-            let piece = boardState[row][col];
-            if(!piece) return [];
-            let moves = [];
-            for(let i=0;i<8;i++) {
-                for(let j=0;j<8;j++) {
-                    if(isValidMoveBasic(piece, row, col, i, j, boardState) && !doesMoveLeaveKingInCheck(boardState, row, col, i, j, piece.color)) {
-                        moves.push({row:i, col:j});
-                    }
-                }
-            }
-            // Rok
-            if(piece.type === 'king') {
-                let r = piece.color === 'white' ? 7 : 0;
-                if(col === 4) {
-                    if(!boardState[r][7] && !boardState[r][6] && !boardState[r][5] && !isSquareAttacked(boardState,r,5, piece.color==='white'?'black':'white') && !isSquareAttacked(boardState,r,6, piece.color==='white'?'black':'white'))
-                        moves.push({row:r, col:6});
-                    if(!boardState[r][0] && !boardState[r][1] && !boardState[r][2] && !boardState[r][3] && !isSquareAttacked(boardState,r,2, piece.color==='white'?'black':'white') && !isSquareAttacked(boardState,r,3, piece.color==='white'?'black':'white'))
-                        moves.push({row:r, col:2});
-                }
-            }
-            return moves;
-        }
-        
-        function getAllValidMoves(color, boardState) {
-            let moves = [];
-            for(let i=0;i<8;i++) for(let j=0;j<8;j++) {
-                let p = boardState[i][j];
-                if(p && p.color === color) {
-                    let mvs = getValidMovesForPiece(i,j,boardState);
-                    mvs.forEach(mv => moves.push({from:{row:i,col:j}, to:mv}));
-                }
-            }
-            return moves;
-        }
-        
-        function findKing(boardState, color) {
-            for(let i=0;i<8;i++) for(let j=0;j<8;j++) if(boardState[i][j] && boardState[i][j].type==='king' && boardState[i][j].color===color) return {row:i, col:j};
-            return null;
-        }
-        
-        function copyBoard(b) { return b.map(row=>row.map(cell=>cell? {...cell}:null)); }
-        
-        // Hamle yapma + animasyon
-        function makeMove(fr, fc, tr, tc, isBot = false) {
-            let piece = board[fr][fc];
-            if(!piece || (!isBot && piece.color !== currentTurn)) return false;
-            let moves = getValidMovesForPiece(fr, fc, board);
-            if(!moves.some(m => m.row===tr && m.col===tc)) return false;
+
+        // Oyunu Başlatmaq
+        async function startGame(mode) {
+            currentLinesMode = mode;
+            menuContainer.style.opacity = 0;
+            setTimeout(() => menuContainer.style.display = 'none', 500);
+            gameContainer.style.display = 'block';
             
-            let captured = board[tr][tc];
-            // Animasyon başlat
-            moveAnimation = {
-                fromX: fc*cellSize, fromY: fr*cellSize,
-                toX: tc*cellSize, toY: tr*cellSize,
-                captured: captured, progress: 0,
-                fromRow: fr, fromCol: fc, toRow: tr, toCol: tc
-            };
-            
-            if(captured) {
-                if(captured.color === 'black') whiteCaptured.push(captured.type);
-                else blackCaptured.push(captured.type);
-                updateCapturedUI();
-                sparkEffect.push({x: tc*cellSize+cellSize/2, y: tr*cellSize+cellSize/2, life: 1.0});
-            }
-            
-            // Hamleyi uygula
-            board[tr][tc] = piece;
-            board[fr][fc] = null;
-            
-            // Rok
-            if(piece.type === 'king' && Math.abs(tc - fc) === 2) {
-                let rookCol = tc === 6 ? 7 : 0;
-                let newRookCol = tc === 6 ? 5 : 3;
-                let rook = board[tr][rookCol];
-                if(rook && rook.type === 'rook') {
-                    board[tr][newRookCol] = rook;
-                    board[tr][rookCol] = null;
-                }
-            }
-            
-            currentTurn = currentTurn === 'white' ? 'black' : 'white';
-            updateStatusText();
-            
-            // Şah mat kontrolü
-            let nextMoves = getAllValidMoves(currentTurn, board);
-            if(nextMoves.length === 0) {
-                gameActive = false;
-                winEffect = { winner: currentTurn === 'white' ? 'black' : 'white', timer: 80 };
-                updateStatusText();
-            }
-            return true;
-        }
-        
-        // Bot AI
-        function botMove() {
-            if(!gameActive || currentTurn !== 'black' || moveAnimation) return;
-            let moves = getAllValidMoves('black', board);
-            if(moves.length === 0) return;
-            let chosen = null;
-            if(difficulty === 'easy') chosen = moves[Math.floor(Math.random() * moves.length)];
-            else if(difficulty === 'normal') {
-                let captures = moves.filter(m => board[m.to.row][m.to.col] !== null);
-                if(captures.length && Math.random() < 0.6) chosen = captures[Math.floor(Math.random() * captures.length)];
-                else chosen = moves[Math.floor(Math.random() * moves.length)];
-            } else {
-                let captures = moves.filter(m => board[m.to.row][m.to.col] !== null);
-                if(captures.length) chosen = captures[Math.floor(Math.random() * captures.length)];
-                else chosen = moves[Math.floor(Math.random() * moves.length)];
-            }
-            if(chosen) makeMove(chosen.from.row, chosen.from.col, chosen.to.row, chosen.to.col, true);
-            drawBoard();
-            if(gameActive && currentTurn === 'white' && !moveAnimation) requestAnimationFrame(()=>{});
-        }
-        
-        function updateCapturedUI() {
-            capturedWhiteDiv.innerHTML = whiteCaptured.map(t => `<span class="piece-icon">${pieceSymbol[t+'_b']}</span>`).join('');
-        }
-        
-        function updateStatusText() {
-            if(!gameActive && winEffect) gameStatusSpan.innerHTML = winEffect.winner === 'white' ? '🏆 BEYAZ ŞAH MAT KAZANDI! 🏆' : '🏆 SİYAH ŞAH MAT KAZANDI! 🏆';
-            else gameStatusSpan.innerHTML = currentTurn === 'white' ? '♔ BEYAZ\'ın Turu' : '♚ SİYAH\'ın Turu';
-        }
-        
-        // Çizim: Işıltılı taşlar + 4:3 masa
-        function drawBoard() {
-            ctx.clearRect(0,0,boardSize,boardSize);
-            // Kareler
-            for(let i=0;i<8;i++) {
-                for(let j=0;j<8;j++) {
-                    let isLight = (i+j)%2 === 0;
-                    let color = isLight ? '#F0D9B5' : '#B58863';
-                    if(selectedRow === i && selectedCol === j) color = '#D6E05C';
-                    else if(validMoves.some(m=>m.row===i && m.col===j)) color = '#6FBF4C';
-                    ctx.fillStyle = color;
-                    ctx.fillRect(j*cellSize, i*cellSize, cellSize, cellSize);
-                    // Kenar çizgisi
-                    ctx.strokeStyle = 'rgba(200,170,100,0.4)';
-                    ctx.strokeRect(j*cellSize, i*cellSize, cellSize, cellSize);
-                }
-            }
-            
-            // Taşları çiz (animasyonlu)
-            for(let i=0;i<8;i++) {
-                for(let j=0;j<8;j++) {
-                    let p = board[i][j];
-                    if(!p) continue;
-                    let x = j*cellSize, y = i*cellSize;
-                    if(moveAnimation && moveAnimation.fromRow === i && moveAnimation.fromCol === j) {
-                        let t = moveAnimation.progress;
-                        x = x + (moveAnimation.toX - x) * t;
-                        y = y + (moveAnimation.toY - y) * t;
-                    }
-                    if(moveAnimation && moveAnimation.toRow === i && moveAnimation.toCol === j && moveAnimation.progress < 0.95) continue;
-                    
-                    let symbol = pieceSymbol[`${p.type}_${p.color === 'white' ? 'w' : 'b'}`];
-                    ctx.font = `bold ${cellSize * 0.68}px 'Segoe UI', 'Noto Sans'`;
-                    ctx.shadowBlur = 12;
-                    ctx.shadowColor = p.color === 'white' ? '#FFD700' : '#AA8C54';
-                    ctx.fillStyle = p.color === 'white' ? '#F9F9F5' : '#2A2418';
-                    ctx.fillText(symbol, x+cellSize*0.18, y+cellSize*0.82);
-                    ctx.shadowBlur = 0;
-                    
-                    // Işıltı efekti seçili taşta
-                    if(selectedRow === i && selectedCol === j) {
-                        ctx.beginPath();
-                        ctx.arc(x+cellSize/2, y+cellSize/2, cellSize*0.3, 0, Math.PI*2);
-                        ctx.fillStyle = `rgba(255, 220, 100, 0.3)`;
-                        ctx.fill();
-                    }
-                }
-            }
-            
-            // Sparkle efektleri
-            for(let s of sparkEffect) {
-                ctx.beginPath();
-                ctx.arc(s.x, s.y, 12*(1-s.life), 0, Math.PI*2);
-                ctx.fillStyle = `rgba(255, 180, 50, ${s.life*0.9})`;
-                ctx.fill();
-                s.life -= 0.05;
-            }
-            sparkEffect = sparkEffect.filter(s=>s.life>0);
-            
-            if(moveAnimation) {
-                moveAnimation.progress += 0.2;
-                if(moveAnimation.progress >= 1) {
-                    moveAnimation = null;
-                    if(gameActive && currentTurn === 'black') setTimeout(()=>botMove(), 80);
-                    drawBoard();
-                }
-            }
-            
-            if(winEffect) {
-                ctx.globalAlpha = 0.5 + Math.sin(Date.now()*0.01)*0.2;
-                ctx.fillStyle = '#FFD966';
-                ctx.font = `bold ${cellSize*0.7}px 'Segoe UI'`;
-                ctx.fillText(winEffect.winner === 'white' ? '🏆 BEYAZ ŞAMPİYON 🏆' : '🏆 SİYAH GALİP 🏆', boardSize/5, boardSize/2);
-                ctx.globalAlpha = 1;
-                winEffect.timer--;
-                if(winEffect.timer <= 0) winEffect = null;
-            }
-            requestAnimationFrame(()=>{});
-        }
-        
-        function resetGame() {
-            board = initBoard();
-            currentTurn = 'white';
-            selectedRow = null;
-            validMoves = [];
-            whiteCaptured = [];
-            blackCaptured = [];
-            moveAnimation = null;
-            sparkEffect = [];
-            winEffect = null;
+            score = 0;
+            aiScore = 0;
             gameActive = true;
-            updateCapturedUI();
-            updateStatusText();
-            drawBoard();
+            aiScoreDisplay.style.display = 'none';
+            scoreDisplay.innerText = "Xal: 0";
+
+            if (mode === 'volleyball' || mode === 'catcher') {
+                await setupCamera();
+            }
+
+            initGameElements(mode);
+            gameLoop();
         }
-        
-        // Canvas tıklama
-        canvas.addEventListener('click', (e) => {
-            if(!gameActive || moveAnimation || currentTurn !== 'white') return;
-            let rect = canvas.getBoundingClientRect();
-            let scale = boardSize / rect.width;
-            let clickX = (e.clientX - rect.left) * scale;
-            let clickY = (e.clientY - rect.top) * scale;
-            let col = Math.floor(clickX / cellSize);
-            let row = Math.floor(clickY / cellSize);
-            if(row>=0 && row<8 && col>=0 && col<8) {
-                if(selectedRow !== null && validMoves.some(m=>m.row===row && m.col===col)) {
-                    makeMove(selectedRow, selectedCol, row, col);
-                    selectedRow = null; validMoves = [];
-                    drawBoard();
-                    if(gameActive && currentTurn === 'black' && !moveAnimation) setTimeout(()=>botMove(), 120);
-                } else {
-                    let piece = board[row][col];
-                    if(piece && piece.color === currentTurn) {
-                        selectedRow = row; selectedCol = col;
-                        validMoves = getValidMovesForPiece(row, col, board);
-                    } else {
-                        selectedRow = null; validMoves = [];
-                    }
-                    drawBoard();
+
+        // Menyunu Geri Qaytarmaq
+        function backToMenu() {
+            gameActive = false;
+            cancelAnimationFrame(animationFrameId);
+            if (video.srcObject) {
+                video.srcObject.getTracks().forEach(track => track.stop());
+            }
+            gameContainer.style.display = 'none';
+            menuContainer.style.display = 'flex';
+            setTimeout(() => menuContainer.style.opacity = 1, 50);
+        }
+
+        // Elementlərin İlkin Vəziyyəti
+        function initGameElements(mode) {
+            ball.x = canvas.width / 2;
+            ball.y = 100;
+            ball.vx = 5 * (Math.random() > 0.5 ? 1 : -1);
+            ball.vy = 4;
+            
+            player.x = canvas.width / 2 - player.width / 2;
+            player.y = canvas.height - 50;
+
+            bot.x = canvas.width / 2 - bot.width / 2;
+            bot.y = 50;
+
+            items = [];
+            if (mode === 'catcher') {
+                for (let i = 0; i < 5; i++) {
+                    spawnItem();
                 }
             }
-        });
-        
-        // Lobi seçimleri
-        document.querySelectorAll('.difficulty-card').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.difficulty-card').forEach(d=>d.classList.remove('active'));
-                btn.classList.add('active');
-                difficulty = btn.getAttribute('data-diff');
+        }
+
+        function spawnItem() {
+            items.push({
+                x: Math.random() * (canvas.width - 40) + 20,
+                y: -Math.random() * 200,
+                speed: 3 + Math.random() * 4,
+                isBomb: Math.random() > 0.8
             });
-        });
-        
-        startGameLobby.addEventListener('click', () => {
-            lobbyDiv.style.display = 'none';
-            resetGame();
-        });
-        
-        resetGameBtn.addEventListener('click', () => {
-            if(lobbyDiv.style.display !== 'none') lobbyDiv.style.display = 'none';
-            resetGame();
-        });
-        
-        // Başlangıç
-        resetGame();
-        drawBoard();
-    })();
-</script>
+        }
+
+        // Kamera Hərəkət Analizi (Motion Detection)
+        function detectMotion() {
+            if (!video.videoWidth) return [];
+            
+            // Gizli müvəqqəti canvas hərəkət təyini üçün
+            const motionCanvas = document.createElement('canvas');
+            motionCanvas.width = 80;
+            motionCanvas.height = 60;
+            const mCtx = motionCanvas.getContext('2d');
+            
+            // Video kadrını balaca canvasa çəkirik
+            mCtx.drawImage(video, 0, 0, motionCanvas.width, motionCanvas.height);
+            const currentFrameData = mCtx.getImageData(0, 0, motionCanvas.width, motionCanvas.height);
+            
+            let hotspots = [];
+
+            if (lastFrameData) {
+                for (let i = 0; i < currentFrameData.data.length; i += 4) {
+                    const rDiff = Math.abs(currentFrameData.data[i] - lastFrameData.data[i]);
+                    const gDiff = Math.abs(currentFrameData.data[i+1] - lastFrameData.data[i+1]);
+                    const bDiff = Math.abs(currentFrameData.data[i+2] - lastFrameData.data[i+2]);
+                    
+                    // Əgər piksel rəngi əhəmiyyətli dərəcədə dəyişibsə (Hərəkət varsa)
+                    if (rDiff + gDiff + bDiff > 90) {
+                        const pixelIndex = i / 4;
+                        const x = (pixelIndex % motionCanvas.width);
+                        const y = Math.floor(pixelIndex / motionCanvas.width);
+                        
+                        // Əsl Canvas koordinatına çeviririk (Güzgü effektini nəzərə alaraq)
+                        const realX = canvas.width - (x / motionCanvas.width) * canvas.width;
+                        const realY = (y / motionCanvas.height) * canvas.height;
+                        
+                        hotspots.push({ x: realX, y: realY });
+                    }
+                }
+            }
+            lastFrameData = currentFrameData;
+            return hotspots;
+        }
+
+        // MAŞIN DÖVRÜ (GAME LOOP)
+        function gameLoop() {
+            if (!gameActive) return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Hərəkət nöqtələrini alırıq
+            let motions = [];
+            if (currentLinesMode === 'volleyball' || currentLinesMode === 'catcher') {
+                motions = detectMotion();
+            }
+
+            // Oyun rejimlərinin məntiqləri
+            if (currentLinesMode === 'volleyball') {
+                updateVolleyball(motions);
+            } else if (currentLinesMode === 'bot-vs') {
+                updateBotVS();
+            } else if (currentLinesMode === 'catcher') {
+                updateCatcher(motions);
+            } else if (currentLinesMode === 'pingpong') {
+                updatePingPong();
+            }
+
+            // Animasiyalı xarakter fon bəzəyi
+            drawAnimatedCharacter();
+
+            animationFrameId = requestAnimationFrame(gameLoop);
+        }
+
+        // 1. KAMERA VOLEYBOLU MƏNTİQİ
+        function updateVolleyball(motions) {
+            // Fizika dalğalanması
+            ball.vy += 0.2; // Qravitasiya
+            ball.x += ball.vx;
+            ball.y += ball.vy;
+
+            // Divarlardan əks olunma
+            if (ball.x - ball.radius < 0 || ball.x + ball.radius > canvas.width) {
+                ball.vx *= -1;
+            }
+
+            // Kamera hərəkəti ilə toqquşma
+            motions.forEach(pt => {
+                let dist = Math.hypot(ball.x - pt.x, ball.y - pt.y);
+                if (dist < ball.radius + 30) {
+                    ball.vy = -8 - Math.random() * 4;
+                    ball.vx = (ball.x - pt.x) * 0.3;
+                    score++;
+                    scoreDisplay.innerText = "Xal: " + score;
+                    createImpactEffect(ball.x, ball.y);
+                }
+            });
+
+            // Yere düşmə şərti (Məğlubiyyət)
+            if (ball.y + ball.radius > canvas.height) {
+                score = 0;
+                scoreDisplay.innerText = "Yenidən Başla!";
+                ball.y = 100;
+                ball.vy = 4;
+            }
+
+            // Topu Çəkmək
+            drawBall('#ffa500');
+        }
+
+        // 2. BOT VS REJİMİ
+        function updateBotVS() {
+            aiScoreDisplay.style.display = 'block';
+            aiScoreDisplay.innerText = "Bot: " + aiScore;
+
+            // Top hərəkəti
+            ball.x += ball.vx;
+            ball.y += ball.vy;
+
+            // Divarlar
+            if (ball.x - ball.radius < 0 || ball.x + ball.radius > canvas.width) ball.vx *= -1;
+
+            // Professional Bot Zəkası (AI)
+            let targetBotX = ball.x - bot.width / 2;
+            bot.x += (targetBotX - bot.x) * 0.12; // Yumşaq izləmə effekti
+
+            // Oyunçu İdarəsi (Mouse və ya Touch)
+            canvas.onmousemove = (e) => { player.x = e.clientX - player.width/2; };
+            canvas.ontouchmove = (e) => { player.x = e.touches[0].clientX - player.width/2; };
+
+            // Toqquşmalar (Oyunçu)
+            if (ball.y + ball.radius >= player.y && ball.x > player.x && ball.x < player.x + player.width) {
+                ball.vy *= -1.05; // Getdikcə sürətlənir
+                ball.vx += (ball.x - (player.x + player.width/2)) * 0.2;
+                score++;
+                scoreDisplay.innerText = "Xal: " + score;
+            }
+
+            // Toqquşmalar (Bot)
+            if (ball.y - ball.radius <= bot.y + bot.height && ball.x > bot.x && ball.x < bot.x + bot.width) {
+                ball.vy *= -1;
+                aiScore++;
+                aiScoreDisplay.innerText = "Bot: " + aiScore;
+            }
+
+            // Xal itirilməsi
+            if (ball.y > canvas.height) { aiScore++; initGameElements('bot-vs'); }
+            if (ball.y < 0) { score += 5; initGameElements('bot-vs'); }
+
+            // Çəkilmələr
+            ctx.fillStyle = varColor('--secondary');
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+            ctx.fillStyle = varColor('--primary');
+            ctx.fillRect(bot.x, bot.y, bot.width, bot.height);
+            drawBall('#2ed573');
+        }
+
+        // 3. GÖYDƏN DÜŞƏNLƏRİ YAXALA
+        function updateCatcher(motions) {
+            // Kamera hərəkət mərkəzini tapmaq (Oyunçunun durduğu yer)
+            if (motions.length > 0) {
+                let sumX = 0;
+                motions.forEach(m => sumX += m.x);
+                let avgX = sumX / motions.length;
+                player.x += (avgX - player.x - player.width/2) * 0.2; // Karakter kameraya görə hərəkət edir
+            }
+
+            // Platforma çəkmək
+            ctx.fillStyle = '#1e90ff';
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+
+            items.forEach((item, index) => {
+                item.y += item.speed;
+
+                // Çəkmək
+                ctx.beginPath();
+                ctx.arc(item.x, item.y, 15, 0, Math.PI * 2);
+                ctx.fillStyle = item.isBomb ? '#ff4757' : '#eccc68';
+                ctx.fill();
+                ctx.closePath();
+
+                // Tutulma şərti
+                if (item.y > player.y && item.x > player.x && item.x < player.x + player.width) {
+                    if (item.isBomb) {
+                        score = Math.max(0, score - 5);
+                    } else {
+                        score += 2;
+                    }
+                    scoreDisplay.innerText = "Xal: " + score;
+                    items.splice(index, 1);
+                    spawnItem();
+                }
+
+                // Ekrandan çıxma
+                if (item.y > canvas.height) {
+                    items.splice(index, 1);
+                    spawnItem();
+                }
+            });
+        }
+
+        // 4. CYBER PONG OYUNU
+        function updatePingPong() {
+            ball.x += ball.vx;
+            ball.y += ball.vy;
+
+            if (ball.x - ball.radius < 0 || ball.x + ball.radius > canvas.width) ball.vx *= -1;
+            if (ball.y - ball.radius < 0) ball.vy *= -1;
+
+            // Avtomatik Bot hərəkəti (Divar və oyunçu arası)
+            canvas.onmousemove = (e) => { player.x = e.clientX - player.width/2; };
+            canvas.ontouchmove = (e) => { player.x = e.touches[0].clientX - player.width/2; };
+
+            if (ball.y + ball.radius >= player.y && ball.x > player.x && ball.x < player.x + player.width) {
+                ball.vy *= -1;
+                score++;
+                scoreDisplay.innerText = "Xal: " + score;
+            }
+
+            if (ball.y > canvas.height) {
+                score = 0;
+                initGameElements('pingpong');
+            }
+
+            ctx.fillStyle = '#ffa502';
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+            drawBall('#ffffff');
+        }
+
+        // KÖMƏKÇİ VİZUAL FUNKSİYALAR
+        function drawBall(color) {
+            ctx.beginPath();
+            ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = color;
+            ctx.fill();
+            ctx.closePath();
+            ctx.shadowBlur = 0; // Reset
+        }
+
+        function drawAnimatedCharacter() {
+            character.tick++;
+            if (character.tick > 15) {
+                character.frame = (character.frame + 1) % 4;
+                character.tick = 0;
+            }
+
+            // Sadə professional neon xarakter çəbəkəsi (Küncdə rəqs edən xarakter effekti)
+            ctx.save();
+            ctx.translate(50, canvas.height - 120);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+            ctx.lineWidth = 4;
+            
+            // Baş
+            ctx.beginPath();
+            ctx.arc(25, 15 + (character.frame * 2), 10, 0, Math.PI * 2);
+            ctx.stroke();
+            
+            // Bədən
+            ctx.beginPath();
+            ctx.moveTo(25, 25 + (character.frame * 2));
+            ctx.lineTo(25, 60);
+            // Əllər
+            ctx.moveTo(5, 40);
+            ctx.lineTo(45, 40 + (character.frame * 3));
+            // Ayaqlar
+            ctx.moveTo(25, 60);
+            ctx.lineTo(10 + (character.frame * 2), 90);
+            ctx.moveTo(25, 60);
+            ctx.lineTo(40 - (character.frame * 2), 90);
+            
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        function createImpactEffect(x, y) {
+            ctx.beginPath();
+            ctx.arc(x, y, ball.radius + 20, 0, Math.PI*2);
+            ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+        }
+
+        function varColor(name) {
+            return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+        }
+    </script>
 </body>
 </html>
