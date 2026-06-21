@@ -1,583 +1,669 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>♔ SATRANÇ PRO - 4:3 Masa | Bot ile Oyna ♚</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Satranç · AI Bot</title>
     <style>
         * {
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
             box-sizing: border-box;
+            user-select: none;
         }
-
         body {
             margin: 0;
             min-height: 100vh;
-            background: linear-gradient(135deg, #0a2f2a 0%, #051a15 100%);
+            background: linear-gradient(145deg, #2b1e0e 0%, #3d2c1a 100%);
             display: flex;
             justify-content: center;
             align-items: center;
-            font-family: 'Segoe UI', 'Poppins', 'Georgia', serif;
-            padding: 20px;
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
         }
-
-        /* Ana layout - 4:3 masa + sağ panel */
-        .game-layout {
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            justify-content: center;
-            gap: 30px;
-            background: #1e1a1ecc;
-            padding: 25px 40px;
-            border-radius: 48px;
-            backdrop-filter: blur(2px);
-            border: 1px solid #e6b422;
-            box-shadow: 0 25px 45px rgba(0,0,0,0.6);
+        .container {
+            background: #5a3f2b;
+            padding: 2rem 2rem 1.8rem;
+            border-radius: 56px 56px 48px 48px;
+            box-shadow: 0 30px 40px rgba(0,0,0,0.7), inset 0 2px 4px rgba(255,215,140,0.3);
+            border-bottom: 6px solid #3d2a18;
         }
-
-        /* 4:3 Masa */
-        .board-frame {
-            background: #2b1e12;
-            padding: 12px;
-            border-radius: 20px;
-            box-shadow: inset 0 0 0 3px #c9a03d, 0 15px 30px black;
-        }
-
-        canvas {
-            display: block;
-            background: #f0d9b5;
-            border-radius: 10px;
-            cursor: pointer;
-            width: 100%;
-            height: auto;
-        }
-
-        /* Sağ panel - Yenilen taşlar */
-        .capture-panel {
-            background: linear-gradient(145deg, #241f26, #110e14);
-            border-radius: 28px;
-            padding: 20px 18px;
-            min-width: 150px;
-            border: 1px solid #e6b422;
-            box-shadow: 0 10px 25px black;
-        }
-
-        .capture-panel h3 {
-            text-align: center;
-            color: #FFD966;
-            font-size: 1.1rem;
-            margin: 0 0 15px 0;
-            border-bottom: 2px solid #c9a03d;
-            padding-bottom: 5px;
-        }
-
-        .captured-pieces {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            justify-content: center;
-            min-height: 200px;
-        }
-
-        .piece-icon {
-            font-size: 1.8rem;
-            filter: drop-shadow(0 2px 4px gold);
-        }
-
-        /* Alt bilgi çubuğu */
-        .info-bar {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #000000cc;
-            backdrop-filter: blur(12px);
-            padding: 8px 25px;
-            border-radius: 40px;
-            color: #ffdf9c;
-            font-weight: bold;
-            font-size: 1.1rem;
-            z-index: 100;
-            white-space: nowrap;
-            border: 1px solid #e6b422;
-        }
-
-        .reset-btn {
-            position: fixed;
-            bottom: 20px;
-            right: 25px;
-            background: #c2410c;
-            padding: 8px 25px;
-            border-radius: 40px;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-            z-index: 100;
-            border: none;
-            box-shadow: 0 4px 0 #632818;
-        }
-
-        .reset-btn:active {
-            transform: translateY(2px);
-        }
-
-        /* Lobi */
-        .lobby {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(5, 3, 12, 0.97);
-            backdrop-filter: blur(18px);
+        .board-wrapper {
             display: flex;
             flex-direction: column;
-            justify-content: center;
             align-items: center;
-            z-index: 200;
         }
-
-        .lobby h1 {
-            font-size: 3.5rem;
-            background: linear-gradient(135deg, #FFE6A3, #E6B422);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            margin-bottom: 30px;
+        canvas#chessCanvas {
+            display: block;
+            width: 600px;
+            height: 600px;
+            border-radius: 24px;
+            box-shadow: 0 0 0 6px #3d2a18, 0 20px 30px rgba(0,0,0,0.6);
+            background: #d4b48c;
+            cursor: pointer;
+            transition: filter 0.15s;
         }
-
-        .diff-group {
+        canvas#chessCanvas:active {
+            filter: brightness(0.96);
+        }
+        .status-bar {
+            width: 100%;
+            margin-top: 18px;
             display: flex;
-            gap: 25px;
-            margin: 30px;
-        }
-
-        .diff-item {
-            background: #2a242f;
-            padding: 12px 32px;
-            font-size: 1.3rem;
-            font-weight: bold;
-            border-radius: 50px;
-            color: #e6c87e;
-            cursor: pointer;
-            border: 2px solid transparent;
-        }
-
-        .diff-item.active {
-            background: #e67e22;
-            color: white;
-            border-color: gold;
-        }
-
-        .lobby-start {
-            background: #27ae60;
-            padding: 14px 50px;
-            font-size: 1.5rem;
+            justify-content: space-between;
+            align-items: center;
+            background: #4d3422;
+            padding: 10px 20px;
             border-radius: 60px;
-            font-weight: bold;
-            color: white;
-            cursor: pointer;
-            margin-top: 20px;
-            box-shadow: 0 5px 0 #1e6b3e;
+            box-shadow: inset 0 3px 6px rgba(0,0,0,0.5), 0 4px 6px rgba(0,0,0,0.3);
+            color: #f2e0c9;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            flex-wrap: wrap;
+            gap: 8px;
         }
-
-        @media (max-width: 800px) {
-            .game-layout { gap: 15px; padding: 15px 20px; }
-            .capture-panel { min-width: 100px; padding: 12px; }
-            .piece-icon { font-size: 1.3rem; }
-            .diff-item { padding: 8px 18px; font-size: 1rem; }
-            .lobby h1 { font-size: 2rem; }
+        .status-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .turn-indicator {
+            background: #2b1c0e;
+            padding: 4px 16px;
+            border-radius: 40px;
+            font-size: 1rem;
+            box-shadow: inset 0 1px 3px #1f1308;
+        }
+        .turn-indicator span {
+            color: #f5d7b3;
+        }
+        .diff-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        .diff-btn {
+            background: #2b1c0e;
+            border: none;
+            color: #cfb595;
+            font-weight: bold;
+            font-size: 0.8rem;
+            padding: 4px 14px;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: inset 0 -2px 0 #1a1108, 0 2px 4px rgba(0,0,0,0.3);
+            transition: all 0.08s ease;
+            letter-spacing: 0.4px;
+        }
+        .diff-btn.active {
+            background: #d9b382;
+            color: #221608;
+            box-shadow: inset 0 -2px 0 #8f6e4a, 0 0 12px #eac39b;
+        }
+        .diff-btn:hover {
+            background: #4d3521;
+            color: #f2dec6;
+        }
+        .diff-btn.active:hover {
+            background: #e6c09a;
+            color: #1f140a;
+        }
+        .reset-btn {
+            background: #6b4c30;
+            border: none;
+            color: #f2e0c9;
+            font-weight: bold;
+            padding: 4px 18px;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            box-shadow: inset 0 -3px 0 #3f2b19, 0 3px 6px rgba(0,0,0,0.4);
+            transition: 0.08s linear;
+            letter-spacing: 0.5px;
+        }
+        .reset-btn:active {
+            transform: scale(0.94);
+            background: #543b26;
+        }
+        .message {
+            background: #1f140b;
+            padding: 2px 20px;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            color: #eedbc6;
+            min-width: 120px;
+            text-align: center;
+        }
+        @media (max-width: 660px) {
+            .container { padding: 1rem; border-radius: 32px; }
+            canvas#chessCanvas { width: 92vw; height: 92vw; max-width: 600px; max-height: 600px; }
+            .status-bar { flex-direction: column; align-items: stretch; gap: 6px; }
+            .status-left { justify-content: center; flex-wrap: wrap; }
         }
     </style>
 </head>
 <body>
-<div class="game-layout">
-    <div class="board-frame">
-        <canvas id="chessCanvas" width="640" height="640"></canvas>
-    </div>
-    <div class="capture-panel">
-        <h3>⚫ YENİLEN SİYAH</h3>
-        <div class="captured-pieces" id="capturedList"></div>
+<div class="container">
+    <div class="board-wrapper">
+        <canvas id="chessCanvas" width="600" height="600"></canvas>
+        <div class="status-bar">
+            <div class="status-left">
+                <div class="turn-indicator">♔ <span id="turnDisplay">Beyaz</span></div>
+                <div class="diff-buttons">
+                    <button class="diff-btn" data-diff="easy">🐣 Easy</button>
+                    <button class="diff-btn active" data-diff="normal">⚖️ Normal</button>
+                    <button class="diff-btn" data-diff="hard">🧠 Hard</button>
+                </div>
+            </div>
+            <div style="display: flex; gap: 12px; align-items: center;">
+                <span class="message" id="statusMessage">Hamle bekleniyor</span>
+                <button class="reset-btn" id="resetGameBtn">⟳ Yeni Oyun</button>
+            </div>
+        </div>
     </div>
 </div>
-<div class="info-bar" id="statusText">♔ BEYAZ'ın Turu</div>
-<button class="reset-btn" id="resetButton">🔄 YENİ OYUN</button>
-
-<div id="lobbyMenu" class="lobby">
-    <h1>♔ SATRANÇ PRO ♚</h1>
-    <div class="diff-group">
-        <div class="diff-item" data-diff="easy">🟢 EASY</div>
-        <div class="diff-item active" data-diff="normal">🟡 NORMAL</div>
-        <div class="diff-item" data-diff="hard">🔴 HARD</div>
-    </div>
-    <div class="lobby-start" id="lobbyStartBtn">🎯 OYUNA BAŞLA</div>
-    <div style="margin-top: 25px; color:#b89a60;">4:3 Masa | Işıklı Hamleler | Bot AI</div>
-</div>
-
 <script>
     (function(){
-        // Canvas
-        const canvas = document.getElementById('chessCanvas');
-        const ctx = canvas.getContext('2d');
-        const capturedDiv = document.getElementById('capturedList');
-        const statusSpan = document.getElementById('statusText');
-        const lobbyDiv = document.getElementById('lobbyMenu');
-        const lobbyStart = document.getElementById('lobbyStartBtn');
-        const resetBtn = document.getElementById('resetButton');
-        
-        const BOARD_SIZE = 640;
-        const CELL_SIZE = 80;
-        
-        let gameActive = true;
-        let difficulty = 'normal';
-        let currentTurn = 'white'; // white her zaman başlar
-        let selectedRow = null, selectedCol = null;
-        let validMoves = [];
-        let board = Array(8).fill().map(() => Array(8).fill(null));
-        let whiteCaptured = []; // beyazın yediği siyah taşlar
-        
-        // Animasyon
-        let animMove = null;
-        
-        // Taş sembolleri
-        const symbols = {
-            'king_w': '♔', 'queen_w': '♕', 'rook_w': '♖', 'bishop_w': '♗', 'knight_w': '♘', 'pawn_w': '♙',
-            'king_b': '♚', 'queen_b': '♛', 'rook_b': '♜', 'bishop_b': '♝', 'knight_b': '♞', 'pawn_b': '♟'
+        // -------- Satranç çekirdeği (minimal + AI) --------
+        const boardState = {
+            squares: Array(64).fill(null),
+            turn: 'w',     // 'w' veya 'b'
+            selected: null,
+            legalMoves: [],
+            moveHistory: [],
+            gameOver: false,
+            castling: { wK: true, wQ: true, bK: true, bQ: true },
+            enPassant: null,   // hedef kare indeksi
+            fiftyMove: 0,
         };
-        
-        // ----- TAHTA BAŞLANGICI -----
+
+        // Başlangıç dizilimi
         function initBoard() {
-            let b = Array(8).fill().map(() => Array(8).fill(null));
-            // Piyonlar
-            for(let i=0;i<8;i++) {
-                b[1][i] = {type:'pawn', color:'black'};
-                b[6][i] = {type:'pawn', color:'white'};
-            }
-            // Arka sıra
-            const pieces = ['rook','knight','bishop','queen','king','bishop','knight','rook'];
-            for(let i=0;i<8;i++) {
-                b[0][i] = {type:pieces[i], color:'black'};
-                b[7][i] = {type:pieces[i], color:'white'};
-            }
-            return b;
+            const backRank = ['r','n','b','q','k','b','n','r'];
+            const pieces = [];
+            for (let i=0; i<8; i++) pieces.push(backRank[i]);
+            for (let i=0; i<8; i++) pieces.push('p');
+            for (let i=0; i<32; i++) pieces.push(null);
+            for (let i=0; i<8; i++) pieces.push('P');
+            for (let i=0; i<8; i++) pieces.push(backRank[i].toUpperCase());
+            return pieces;
         }
-        
-        // ----- SATRANÇ KURALLARI -----
-        function isClearLine(r1,c1,r2,c2,boardState) {
-            let dr = r1===r2 ? 0 : (r2>r1 ? 1 : -1);
-            let dc = c1===c2 ? 0 : (c2>c1 ? 1 : -1);
-            let r = r1+dr, c = c1+dc;
-            while(!(r===r2 && c===c2)) {
-                if(boardState[r][c] !== null) return false;
-                r += dr; c += dc;
-            }
-            return true;
+
+        function resetGame() {
+            boardState.squares = initBoard();
+            boardState.turn = 'w';
+            boardState.selected = null;
+            boardState.legalMoves = [];
+            boardState.moveHistory = [];
+            boardState.gameOver = false;
+            boardState.castling = { wK: true, wQ: true, bK: true, bQ: true };
+            boardState.enPassant = null;
+            boardState.fiftyMove = 0;
+            updateTurnDisplay();
+            setMessage('Yeni oyun başladı');
+            drawBoard();
         }
-        
-        function isValidMoveBasic(piece, fr, fc, tr, tc, boardState) {
-            let target = boardState[tr][tc];
-            if(target && target.color === piece.color) return false;
-            let dr = tr-fr, dc = tc-fc;
-            let adr = Math.abs(dr), adc = Math.abs(dc);
-            
-            switch(piece.type) {
-                case 'pawn':
-                    let dir = piece.color === 'white' ? -1 : 1;
-                    let startRow = piece.color === 'white' ? 6 : 1;
-                    if(dc===0 && !target && dr===dir) return true;
-                    if(dc===0 && !target && fr===startRow && dr===2*dir && !boardState[fr+dir][fc]) return true;
-                    if(adc===1 && dr===dir && target && target.color !== piece.color) return true;
-                    return false;
-                case 'knight':
-                    return (adr===2 && adc===1) || (adr===1 && adc===2);
-                case 'king':
-                    if(adr<=1 && adc<=1) return true;
-                    if(dc===2 && dr===0 && !target && !boardState[fr][fc+1]) return true;
-                    if(dc===-2 && dr===0 && !target && !boardState[fr][fc-1]) return true;
-                    return false;
-                case 'queen':
-                    if(fr===tr || fc===tc || adr===adc) return isClearLine(fr,fc,tr,tc,boardState);
-                    return false;
-                case 'rook':
-                    if(fr===tr || fc===tc) return isClearLine(fr,fc,tr,tc,boardState);
-                    return false;
-                case 'bishop':
-                    if(adr===adc) return isClearLine(fr,fc,tr,tc,boardState);
-                    return false;
-                default: return false;
-            }
+
+        // -------- Taş renk ve tip --------
+        function colorOf(piece) {
+            if (!piece) return null;
+            return piece === piece.toUpperCase() ? 'w' : 'b';
         }
-        
-        function isSquareAttacked(boardState, row, col, byColor) {
-            for(let i=0;i<8;i++) {
-                for(let j=0;j<8;j++) {
-                    let p = boardState[i][j];
-                    if(p && p.color === byColor && isValidMoveBasic(p,i,j,row,col,boardState)) {
-                        return true;
+        function typeOf(piece) {
+            if (!piece) return null;
+            return piece.toLowerCase();
+        }
+
+        // -------- Hamle üretimi (basit) --------
+        function generatePseudoLegalMoves(squares, turn, castling, enPassant) {
+            const moves = [];
+            const enemy = turn === 'w' ? 'b' : 'w';
+            const direction = turn === 'w' ? -1 : 1;
+            const homeRow = turn === 'w' ? 6 : 1;
+            const promoRow = turn === 'w' ? 0 : 7;
+
+            for (let i=0; i<64; i++) {
+                const piece = squares[i];
+                if (!piece || colorOf(piece) !== turn) continue;
+                const type = typeOf(piece);
+                const row = Math.floor(i/8), col = i%8;
+
+                if (type === 'p') {
+                    // ileri
+                    const next = i + direction*8;
+                    if (next>=0 && next<64 && !squares[next]) {
+                        moves.push({from:i, to:next, promotion: null});
+                        if (row === homeRow) {
+                            const double = i + direction*16;
+                            if (!squares[double]) moves.push({from:i, to:double, promotion:null, double:true});
+                        }
+                    }
+                    // almalar
+                    for (const dc of [-1, 1]) {
+                        const nc = col+dc;
+                        if (nc<0 || nc>7) continue;
+                        const to = i + direction*8 + dc;
+                        if (to<0 || to>63) continue;
+                        const target = squares[to];
+                        if (target && colorOf(target) === enemy) {
+                            const promo = (Math.floor(to/8) === promoRow) ? 'q' : null;
+                            moves.push({from:i, to:to, promotion: promo});
+                        }
+                        // en passant
+                        if (enPassant === to) {
+                            moves.push({from:i, to:to, promotion:null, enPassant:true});
+                        }
+                    }
+                } else if (type === 'n') {
+                    const offsets = [-17,-15,-10,-6,6,10,15,17];
+                    for (const off of offsets) {
+                        const to = i+off;
+                        if (to<0 || to>63) continue;
+                        const tr = Math.floor(to/8), tc = to%8;
+                        if (Math.abs(tr-row) + Math.abs(tc-col) !== 3) continue;
+                        if (Math.abs(tr-row)===3 && Math.abs(tc-col)===0) continue;
+                        if (Math.abs(tr-row)===0 && Math.abs(tc-col)===3) continue;
+                        const target = squares[to];
+                        if (target && colorOf(target) === turn) continue;
+                        moves.push({from:i, to:to, promotion:null});
+                    }
+                } else if (type === 'b' || type === 'r' || type === 'q') {
+                    const dirs = type === 'b' ? [[-1,-1],[-1,1],[1,-1],[1,1]] :
+                                  type === 'r' ? [[-1,0],[1,0],[0,-1],[0,1]] :
+                                  [[-1,-1],[-1,1],[1,-1],[1,1],[-1,0],[1,0],[0,-1],[0,1]];
+                    for (const d of dirs) {
+                        let r=row+d[0], c=col+d[1];
+                        while(r>=0 && r<8 && c>=0 && c<8) {
+                            const idx = r*8+c;
+                            const target = squares[idx];
+                            if (target) {
+                                if (colorOf(target) === enemy) moves.push({from:i, to:idx, promotion:null});
+                                break;
+                            }
+                            moves.push({from:i, to:idx, promotion:null});
+                            r+=d[0]; c+=d[1];
+                        }
+                    }
+                } else if (type === 'k') {
+                    const offsets = [-9,-8,-7,-1,1,7,8,9];
+                    for (const off of offsets) {
+                        const to = i+off;
+                        if (to<0 || to>63) continue;
+                        const tr = Math.floor(to/8), tc = to%8;
+                        if (Math.abs(tr-row)>1 || Math.abs(tc-col)>1) continue;
+                        const target = squares[to];
+                        if (target && colorOf(target) === turn) continue;
+                        moves.push({from:i, to:to, promotion:null});
+                    }
+                    // rok
+                    if (turn === 'w' && castling.wK && squares[61]===null && squares[62]===null) {
+                        if (squares[63] === 'r' && squares[60]==='k') moves.push({from:60, to:62, castling:'K'});
+                    }
+                    if (turn === 'w' && castling.wQ && squares[59]===null && squares[58]===null && squares[57]===null) {
+                        if (squares[56] === 'r' && squares[60]==='k') moves.push({from:60, to:58, castling:'Q'});
+                    }
+                    if (turn === 'b' && castling.bK && squares[5]===null && squares[6]===null) {
+                        if (squares[7] === 'r' && squares[4]==='k') moves.push({from:4, to:6, castling:'K'});
+                    }
+                    if (turn === 'b' && castling.bQ && squares[1]===null && squares[2]===null && squares[3]===null) {
+                        if (squares[0] === 'r' && squares[4]==='k') moves.push({from:4, to:2, castling:'Q'});
                     }
                 }
+            }
+            return moves;
+        }
+
+        // -------- Tahtayı kopyala --------
+        function cloneState(state) {
+            return {
+                squares: [...state.squares],
+                turn: state.turn,
+                castling: {...state.castling},
+                enPassant: state.enPassant,
+                fiftyMove: state.fiftyMove,
+            };
+        }
+
+        // -------- Hamle uygula (dönüş: yeni state) --------
+        function applyMove(state, move) {
+            const ns = cloneState(state);
+            const {from, to, promotion, castling, enPassant, double} = move;
+            const piece = ns.squares[from];
+            const captured = ns.squares[to];
+            ns.squares[to] = piece;
+            ns.squares[from] = null;
+            // en passant capture
+            if (enPassant) {
+                const epRow = state.turn === 'w' ? 5 : 2;
+                const epIdx = to + (state.turn === 'w' ? 8 : -8);
+                ns.squares[epIdx] = null;
+            }
+            // double pawn
+            if (double) {
+                ns.enPassant = from + (state.turn === 'w' ? -8 : 8);
+            } else {
+                ns.enPassant = null;
+            }
+            // promotion
+            if (promotion) {
+                ns.squares[to] = state.turn === 'w' ? 'Q' : 'q';
+            }
+            // castling
+            if (castling === 'K') {
+                if (state.turn === 'w') { ns.squares[63]=null; ns.squares[61]='r'; }
+                else { ns.squares[7]=null; ns.squares[5]='r'; }
+            } else if (castling === 'Q') {
+                if (state.turn === 'w') { ns.squares[56]=null; ns.squares[59]='r'; }
+                else { ns.squares[0]=null; ns.squares[3]='r'; }
+            }
+            // castling hakları
+            if (piece === 'k') ns.castling = {...ns.castling, wK:false, wQ:false};
+            if (piece === 'K') ns.castling = {...ns.castling, bK:false, bQ:false};
+            if (from === 63) ns.castling.wK = false;
+            if (from === 56) ns.castling.wQ = false;
+            if (from === 7) ns.castling.bK = false;
+            if (from === 0) ns.castling.bQ = false;
+            if (to === 63) ns.castling.wK = false;
+            if (to === 56) ns.castling.wQ = false;
+            if (to === 7) ns.castling.bK = false;
+            if (to === 0) ns.castling.bQ = false;
+
+            ns.fiftyMove = (piece.toLowerCase()==='p' || captured) ? 0 : ns.fiftyMove+1;
+            ns.turn = ns.turn === 'w' ? 'b' : 'w';
+            return ns;
+        }
+
+        // -------- Şah kontrolü --------
+        function inCheck(squares, turn) {
+            const king = turn === 'w' ? 'K' : 'k';
+            const kingIdx = squares.indexOf(king);
+            if (kingIdx === -1) return true;
+            const enemy = turn === 'w' ? 'b' : 'w';
+            const pseudo = generatePseudoLegalMoves(squares, enemy, {wK:false,wQ:false,bK:false,bQ:false}, null);
+            for (const m of pseudo) {
+                if (m.to === kingIdx) return true;
             }
             return false;
         }
-        
-        function doesMoveLeaveKingInCheck(boardState, fr, fc, tr, tc, color) {
-            let clone = copyBoard(boardState);
-            clone[tr][tc] = clone[fr][fc];
-            clone[fr][fc] = null;
-            let kingPos = findKing(clone, color);
-            if(!kingPos) return true;
-            return isSquareAttacked(clone, kingPos.row, kingPos.col, color === 'white' ? 'black' : 'white');
-        }
-        
-        function getValidMovesForPiece(row, col, boardState) {
-            let piece = boardState[row][col];
-            if(!piece) return [];
-            let moves = [];
-            for(let i=0;i<8;i++) {
-                for(let j=0;j<8;j++) {
-                    if(isValidMoveBasic(piece, row, col, i, j, boardState) && !doesMoveLeaveKingInCheck(boardState, row, col, i, j, piece.color)) {
-                        moves.push({row:i, col:j});
-                    }
+
+        // -------- Geçerli hamleler (şah kontrolü ile) --------
+        function legalMovesForState(state) {
+            const pseudo = generatePseudoLegalMoves(state.squares, state.turn, state.castling, state.enPassant);
+            const legal = [];
+            for (const m of pseudo) {
+                const ns = applyMove(state, m);
+                if (!inCheck(ns.squares, state.turn)) {
+                    legal.push(m);
                 }
             }
-            // Rok
-            if(piece.type === 'king') {
-                let r = piece.color === 'white' ? 7 : 0;
-                if(col === 4) {
-                    if(!boardState[r][7] && !boardState[r][6] && !boardState[r][5] && !isSquareAttacked(boardState,r,5, piece.color==='white'?'black':'white') && !isSquareAttacked(boardState,r,6, piece.color==='white'?'black':'white')) {
-                        moves.push({row:r, col:6});
+            return legal;
+        }
+
+        // -------- Skor fonksiyonu --------
+        function evaluateBoard(squares) {
+            const pieceValues = {p:100, n:320, b:330, r:500, q:900, k:20000};
+            let score = 0;
+            for (let i=0; i<64; i++) {
+                const p = squares[i];
+                if (!p) continue;
+                const val = pieceValues[typeOf(p)] || 0;
+                const sign = colorOf(p) === 'w' ? 1 : -1;
+                score += sign * val;
+            }
+            return score;
+        }
+
+        // -------- Minimax (derinlik + alpha-beta) --------
+        function minimax(state, depth, alpha, beta, isMaximizing, maxDepth, diff) {
+            const legal = legalMovesForState(state);
+            if (legal.length === 0 || depth === maxDepth) {
+                return { score: evaluateBoard(state.squares) };
+            }
+            let bestMove = legal[0];
+            if (isMaximizing) {
+                let maxEval = -Infinity;
+                for (const move of legal) {
+                    const ns = applyMove(state, move);
+                    const result = minimax(ns, depth+1, alpha, beta, false, maxDepth, diff);
+                    if (result.score > maxEval) {
+                        maxEval = result.score;
+                        bestMove = move;
                     }
-                    if(!boardState[r][0] && !boardState[r][1] && !boardState[r][2] && !boardState[r][3] && !isSquareAttacked(boardState,r,2, piece.color==='white'?'black':'white') && !isSquareAttacked(boardState,r,3, piece.color==='white'?'black':'white')) {
-                        moves.push({row:r, col:2});
-                    }
+                    alpha = Math.max(alpha, maxEval);
+                    if (beta <= alpha) break;
                 }
-            }
-            return moves;
-        }
-        
-        function getAllMoves(color, boardState) {
-            let moves = [];
-            for(let i=0;i<8;i++) {
-                for(let j=0;j<8;j++) {
-                    let p = boardState[i][j];
-                    if(p && p.color === color) {
-                        let mvs = getValidMovesForPiece(i,j,boardState);
-                        mvs.forEach(mv => moves.push({from:{row:i,col:j}, to:mv}));
-                    }
-                }
-            }
-            return moves;
-        }
-        
-        function findKing(boardState, color) {
-            for(let i=0;i<8;i++) for(let j=0;j<8;j++) if(boardState[i][j] && boardState[i][j].type==='king' && boardState[i][j].color===color) return {row:i, col:j};
-            return null;
-        }
-        
-        function copyBoard(b) { return b.map(row=>row.map(cell=>cell? {...cell}:null)); }
-        
-        // ----- HAMLE YAPMA -----
-        function makeMove(fr, fc, tr, tc, isBot = false) {
-            let piece = board[fr][fc];
-            if(!piece || (!isBot && piece.color !== currentTurn)) return false;
-            let moves = getValidMovesForPiece(fr, fc, board);
-            if(!moves.some(m => m.row===tr && m.col===tc)) return false;
-            
-            let captured = board[tr][tc];
-            
-            // Animasyon başlat
-            animMove = {
-                fromX: fc*CELL_SIZE, fromY: fr*CELL_SIZE,
-                toX: tc*CELL_SIZE, toY: tr*CELL_SIZE,
-                progress: 0,
-                captured: captured
-            };
-            
-            if(captured) {
-                if(captured.color === 'black') whiteCaptured.push(captured.type);
-                updateCapturedUI();
-            }
-            
-            // Hamleyi uygula
-            board[tr][tc] = piece;
-            board[fr][fc] = null;
-            
-            // Rok
-            if(piece.type === 'king' && Math.abs(tc - fc) === 2) {
-                let rookCol = tc === 6 ? 7 : 0;
-                let newRookCol = tc === 6 ? 5 : 3;
-                let rook = board[tr][rookCol];
-                if(rook && rook.type === 'rook') {
-                    board[tr][newRookCol] = rook;
-                    board[tr][rookCol] = null;
-                }
-            }
-            
-            currentTurn = currentTurn === 'white' ? 'black' : 'white';
-            updateStatusText();
-            
-            // Şah mat kontrolü
-            let nextMoves = getAllMoves(currentTurn, board);
-            if(nextMoves.length === 0) {
-                gameActive = false;
-                statusSpan.innerHTML = currentTurn === 'white' ? '🏆 SİYAH KAZANDI! (Şah Mat) 🏆' : '🏆 BEYAZ KAZANDI! (Şah Mat) 🏆';
-            }
-            return true;
-        }
-        
-        // ----- BOT AI -----
-        function botMove() {
-            if(!gameActive || currentTurn !== 'black' || animMove) return;
-            let moves = getAllMoves('black', board);
-            if(moves.length === 0) return;
-            
-            let chosen = null;
-            if(difficulty === 'easy') {
-                chosen = moves[Math.floor(Math.random() * moves.length)];
-            } else if(difficulty === 'normal') {
-                let captures = moves.filter(m => board[m.to.row][m.to.col] !== null);
-                if(captures.length && Math.random() < 0.5) chosen = captures[Math.floor(Math.random() * captures.length)];
-                else chosen = moves[Math.floor(Math.random() * moves.length)];
+                return { score: maxEval, move: bestMove };
             } else {
-                let captures = moves.filter(m => board[m.to.row][m.to.col] !== null);
-                if(captures.length) chosen = captures[Math.floor(Math.random() * captures.length)];
-                else chosen = moves[Math.floor(Math.random() * moves.length)];
+                let minEval = Infinity;
+                for (const move of legal) {
+                    const ns = applyMove(state, move);
+                    const result = minimax(ns, depth+1, alpha, beta, true, maxDepth, diff);
+                    if (result.score < minEval) {
+                        minEval = result.score;
+                        bestMove = move;
+                    }
+                    beta = Math.min(beta, minEval);
+                    if (beta <= alpha) break;
+                }
+                return { score: minEval, move: bestMove };
             }
-            
-            if(chosen) {
-                makeMove(chosen.from.row, chosen.from.col, chosen.to.row, chosen.to.col, true);
-                drawBoard();
+        }
+
+        // -------- AI hamlesi (zorluk seçimi) --------
+        function getAIMove(state, diff) {
+            let depth = 2;
+            if (diff === 'easy') depth = 1;
+            else if (diff === 'normal') depth = 2;
+            else if (diff === 'hard') depth = 3;
+            const legal = legalMovesForState(state);
+            if (legal.length === 0) return null;
+            if (diff === 'easy') {
+                // rastgele seç (hafif zeka)
+                return legal[Math.floor(Math.random() * legal.length)];
             }
+            const isMax = state.turn === 'w';
+            const result = minimax(state, 0, -Infinity, Infinity, isMax, depth, diff);
+            return result.move || legal[0];
         }
-        
-        function updateCapturedUI() {
-            capturedDiv.innerHTML = whiteCaptured.map(t => `<span class="piece-icon">${symbols[t+'_b']}</span>`).join('');
+
+        // -------- Oyun durumu ve UI --------
+        let currentDiff = 'normal';
+        let selectedIndex = null;
+        let legalMovesForSelected = [];
+        let animating = false;
+
+        const canvas = document.getElementById('chessCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function updateTurnDisplay() {
+            document.getElementById('turnDisplay').textContent = boardState.turn === 'w' ? 'Beyaz' : 'Siyah';
         }
-        
-        function updateStatusText() {
-            if(gameActive) statusSpan.innerHTML = currentTurn === 'white' ? '♔ BEYAZ\'ın Turu' : '♚ SİYAH\'ın Turu';
+
+        function setMessage(msg) {
+            document.getElementById('statusMessage').textContent = msg;
         }
-        
-        // ----- ÇİZİM -----
+
+        // -------- Çizim --------
         function drawBoard() {
-            ctx.clearRect(0,0,BOARD_SIZE,BOARD_SIZE);
-            // Kareler
-            for(let i=0;i<8;i++) {
-                for(let j=0;j<8;j++) {
-                    let isLight = (i+j)%2 === 0;
-                    let color = isLight ? '#F0D9B5' : '#B58863';
-                    if(selectedRow === i && selectedCol === j) color = '#D6E05C';
-                    else if(validMoves.some(m=>m.row===i && m.col===j)) color = '#7BCB5E';
+            const sqSize = 600/8;
+            ctx.clearRect(0,0,600,600);
+            // kareler
+            for (let r=0; r<8; r++) {
+                for (let c=0; c<8; c++) {
+                    const idx = r*8+c;
+                    const color = (r+c)%2===0 ? '#f0d9b5' : '#b58863';
                     ctx.fillStyle = color;
-                    ctx.fillRect(j*CELL_SIZE, i*CELL_SIZE, CELL_SIZE, CELL_SIZE);
-                    ctx.strokeStyle = '#b89a60';
-                    ctx.strokeRect(j*CELL_SIZE, i*CELL_SIZE, CELL_SIZE, CELL_SIZE);
+                    ctx.fillRect(c*sqSize, r*sqSize, sqSize, sqSize);
                 }
             }
-            
-            // Taşları çiz
-            for(let i=0;i<8;i++) {
-                for(let j=0;j<8;j++) {
-                    let p = board[i][j];
-                    if(!p) continue;
-                    let x = j*CELL_SIZE, y = i*CELL_SIZE;
-                    if(animMove && animMove.fromX === j*CELL_SIZE && animMove.fromY === i*CELL_SIZE) {
-                        let t = animMove.progress;
-                        x = x + (animMove.toX - x) * t;
-                        y = y + (animMove.toY - y) * t;
-                    }
-                    if(animMove && animMove.toX === j*CELL_SIZE && animMove.toY === i*CELL_SIZE && animMove.progress < 0.95) continue;
-                    
-                    let sym = symbols[`${p.type}_${p.color === 'white' ? 'w' : 'b'}`];
-                    ctx.font = `bold ${CELL_SIZE * 0.68}px 'Segoe UI', 'Noto Sans'`;
-                    ctx.shadowBlur = 8;
-                    ctx.shadowColor = p.color === 'white' ? '#FFD700' : '#5a4a2a';
-                    ctx.fillStyle = p.color === 'white' ? '#FFFFFF' : '#1A1510';
-                    ctx.fillText(sym, x+CELL_SIZE*0.18, y+CELL_SIZE*0.82);
-                    ctx.shadowBlur = 0;
-                }
+            // seçili kare vurgusu
+            if (selectedIndex !== null) {
+                const r = Math.floor(selectedIndex/8), c = selectedIndex%8;
+                ctx.fillStyle = 'rgba(255,255,100,0.35)';
+                ctx.fillRect(c*sqSize, r*sqSize, sqSize, sqSize);
             }
-            
-            if(animMove) {
-                animMove.progress += 0.2;
-                if(animMove.progress >= 1) {
-                    animMove = null;
-                    if(gameActive && currentTurn === 'black') setTimeout(() => botMove(), 80);
-                }
+            // yasal hamleler (nokta)
+            for (const m of legalMovesForSelected) {
+                const to = m.to;
+                const r = Math.floor(to/8), c = to%8;
+                ctx.beginPath();
+                ctx.arc(c*sqSize+sqSize/2, r*sqSize+sqSize/2, 12, 0, 2*Math.PI);
+                ctx.fillStyle = 'rgba(0,0,0,0.25)';
+                ctx.fill();
             }
-            requestAnimationFrame(() => {});
+
+            // taşlar
+            for (let i=0; i<64; i++) {
+                const p = boardState.squares[i];
+                if (!p) continue;
+                const r = Math.floor(i/8), c = i%8;
+                const x = c*sqSize + sqSize/2, y = r*sqSize + sqSize/2;
+                const size = sqSize * 0.42;
+                ctx.font = `${size*1.5}px 'Segoe UI', 'Arial Unicode MS', 'Times New Roman', serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                const unicode = getUnicode(p);
+                ctx.shadowColor = 'rgba(0,0,0,0.3)';
+                ctx.shadowBlur = 8;
+                ctx.fillStyle = colorOf(p)==='w' ? '#ffffff' : '#1a1a1a';
+                ctx.fillText(unicode, x+1, y+1);
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = colorOf(p)==='w' ? '#f8f4e8' : '#1f1f1f';
+                ctx.fillText(unicode, x, y);
+            }
+            // game over mesajı
+            if (boardState.gameOver) {
+                ctx.fillStyle = 'rgba(0,0,0,0.5)';
+                ctx.fillRect(0, 270, 600, 60);
+                ctx.fillStyle = '#f0e6d3';
+                ctx.font = 'bold 28px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('⚔️ Oyun Bitti', 300, 300);
+            }
         }
-        
-        // ----- OYUNU SIfIRLA -----
-        function resetGame() {
-            board = initBoard();
-            currentTurn = 'white';
-            selectedRow = null;
-            selectedCol = null;
-            validMoves = [];
-            whiteCaptured = [];
-            animMove = null;
-            gameActive = true;
-            updateCapturedUI();
-            updateStatusText();
+
+        function getUnicode(piece) {
+            const map = {
+                'K':'♔','Q':'♕','R':'♖','B':'♗','N':'♘','P':'♙',
+                'k':'♚','q':'♛','r':'♜','b':'♝','n':'♞','p':'♟'
+            };
+            return map[piece] || '?';
+        }
+
+        // -------- Kullanıcı tıklama --------
+        function handleCanvasClick(e) {
+            if (boardState.gameOver || animating) return;
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const x = (e.clientX - rect.left) * scaleX;
+            const y = (e.clientY - rect.top) * scaleY;
+            const col = Math.floor(x / (600/8));
+            const row = Math.floor(y / (600/8));
+            const idx = row*8 + col;
+            if (idx<0 || idx>63) return;
+
+            const piece = boardState.squares[idx];
+            const turn = boardState.turn;
+
+            // Eğer bir taş seçiliyse ve hamle yapılabilir
+            if (selectedIndex !== null) {
+                const move = legalMovesForSelected.find(m => m.to === idx);
+                if (move) {
+                    // hamleyi yap
+                    executePlayerMove(move);
+                    return;
+                }
+            }
+
+            // Yeni seçim: kendi taşı mı?
+            if (piece && colorOf(piece) === turn) {
+                selectedIndex = idx;
+                const pseudo = generatePseudoLegalMoves(boardState.squares, turn, boardState.castling, boardState.enPassant);
+                legalMovesForSelected = pseudo.filter(m => m.from === idx);
+                // şah kontrolü filtrele
+                const state = cloneState(boardState);
+                legalMovesForSelected = legalMovesForSelected.filter(m => {
+                    const ns = applyMove(state, m);
+                    return !inCheck(ns.squares, turn);
+                });
+                drawBoard();
+                setMessage('Hamle seçiniz');
+            } else {
+                selectedIndex = null;
+                legalMovesForSelected = [];
+                drawBoard();
+                setMessage('Kendi taşınızı seçin');
+            }
+        }
+
+        // -------- Oyuncu hamlesini uygula ve AI tetikle --------
+        function executePlayerMove(move) {
+            if (!move) return;
+            const state = cloneState(boardState);
+            const ns = applyMove(state, move);
+            // tahta güncelle
+            Object.assign(boardState, ns);
+            selectedIndex = null;
+            legalMovesForSelected = [];
+            // Oyun bitti mi?
+            const legal = legalMovesForState(boardState);
+            if (legal.length === 0) {
+                boardState.gameOver = true;
+                drawBoard();
+                setMessage('Şah mat!');
+                updateTurnDisplay();
+                return;
+            }
             drawBoard();
-        }
-        
-        // ----- TIKLAMA -----
-        canvas.addEventListener('click', (e) => {
-            if(!gameActive || animMove || currentTurn !== 'white') return;
-            let rect = canvas.getBoundingClientRect();
-            let scale = BOARD_SIZE / rect.width;
-            let clickX = (e.clientX - rect.left) * scale;
-            let clickY = (e.clientY - rect.top) * scale;
-            let col = Math.floor(clickX / CELL_SIZE);
-            let row = Math.floor(clickY / CELL_SIZE);
-            if(row>=0 && row<8 && col>=0 && col<8) {
-                if(selectedRow !== null && validMoves.some(m => m.row===row && m.col===col)) {
-                    makeMove(selectedRow, selectedCol, row, col);
-                    selectedRow = null;
-                    validMoves = [];
+            updateTurnDisplay();
+            setMessage('Bot düşünüyor...');
+            // AI hamlesi (async)
+            animating = true;
+            setTimeout(() => {
+                const aiMove = getAIMove(boardState, currentDiff);
+                if (!aiMove) {
+                    boardState.gameOver = true;
                     drawBoard();
-                    if(gameActive && currentTurn === 'black' && !animMove) setTimeout(() => botMove(), 100);
-                } else {
-                    let piece = board[row][col];
-                    if(piece && piece.color === currentTurn) {
-                        selectedRow = row;
-                        selectedCol = col;
-                        validMoves = getValidMovesForPiece(row, col, board);
-                    } else {
-                        selectedRow = null;
-                        validMoves = [];
-                    }
-                    drawBoard();
+                    setMessage('AI hamle yok, oyun bitti');
+                    animating = false;
+                    return;
                 }
-            }
-        });
-        
-        // Lobi
-        document.querySelectorAll('.diff-item').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.diff-item').forEach(d => d.classList.remove('active'));
-                btn.classList.add('active');
-                difficulty = btn.getAttribute('data-diff');
+                const newState = applyMove(boardState, aiMove);
+                Object.assign(boardState, newState);
+                selectedIndex = null;
+                legalMovesForSelected = [];
+                const legalAfter = legalMovesForState(boardState);
+                if (legalAfter.length === 0) {
+                    boardState.gameOver = true;
+                }
+                drawBoard();
+                updateTurnDisplay();
+                if (boardState.gameOver) {
+                    setMessage('Şah mat!');
+                } else {
+                    setMessage('Sıra sizde');
+                }
+                animating = false;
+            }, 120);
+        }
+
+        // -------- Zorluk butonları --------
+        document.querySelectorAll('.diff-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentDiff = this.dataset.diff;
+                setMessage(`Zorluk: ${currentDiff}`);
+                resetGame();
             });
         });
-        
-        lobbyStart.addEventListener('click', () => {
-            lobbyDiv.style.display = 'none';
-            resetGame();
-        });
-        
-        resetBtn.addEventListener('click', () => {
-            if(lobbyDiv.style.display !== 'none') lobbyDiv.style.display = 'none';
-            resetGame();
-        });
-        
-        // Başlat
+
+        document.getElementById('resetGameBtn').addEventListener('click', resetGame);
+
+        // -------- Başlat --------
         resetGame();
-        drawBoard();
+        canvas.addEventListener('click', handleCanvasClick);
+
+        // yeniden çizim için
+        window.drawBoard = drawBoard;
     })();
 </script>
 </body>
