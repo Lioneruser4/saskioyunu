@@ -1,630 +1,756 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Backrooms · The Pursuit</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: #0b0e14; overflow: hidden; font-family: 'Segoe UI', system-ui, sans-serif; }
-        canvas { display: block; width: 100vw; height: 100vh; touch-action: none; }
-        #ui {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            color: #f0eae1;
-            font-size: 18px;
-            text-shadow: 2px 2px 0 #1a1f2a;
-            pointer-events: none;
-            z-index: 10;
-            background: rgba(10, 14, 23, 0.6);
-            padding: 12px 22px;
-            border-radius: 40px;
-            backdrop-filter: blur(4px);
-            border: 1px solid #4a5268;
-            display: flex;
-            gap: 28px;
-            letter-spacing: 0.5px;
-        }
-        #ui span { color: #b9d0ff; font-weight: 600; }
-        #lobby {
-            position: absolute;
-            inset: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background: #141a24;
-            z-index: 30;
-            transition: opacity 0.25s;
-            backdrop-filter: blur(3px);
-        }
-        #lobby.hidden { opacity: 0; pointer-events: none; }
-        #lobby h1 {
-            font-size: clamp(2.8rem, 12vw, 6rem);
-            color: #e8edf5;
-            text-shadow: 0 0 20px #3f5f8f;
-            letter-spacing: 4px;
-            margin-bottom: 12px;
-        }
-        #lobby p {
-            color: #afbed9;
-            font-size: 1.3rem;
-            margin-bottom: 36px;
-            opacity: 0.8;
-        }
-        #lobby button {
-            background: #2d3f5e;
-            border: none;
-            color: white;
-            font-size: 1.8rem;
-            padding: 18px 52px;
-            border-radius: 60px;
-            cursor: pointer;
-            box-shadow: 0 8px 0 #0e1724;
-            transition: all 0.08s linear;
-            font-weight: 600;
-            letter-spacing: 1px;
-            border: 1px solid #6a7faa;
-        }
-        #lobby button:active { transform: translateY(6px); box-shadow: 0 2px 0 #0e1724; }
-        #lobby .sub {
-            margin-top: 40px;
-            font-size: 1rem;
-            color: #6f7e9e;
-        }
-        #controls-mobile {
-            position: absolute;
-            bottom: 30px;
-            left: 0;
-            right: 0;
-            display: flex;
-            justify-content: space-between;
-            padding: 0 30px;
-            pointer-events: none;
-            z-index: 20;
-        }
-        #controls-mobile button {
-            pointer-events: auto;
-            background: rgba(30, 40, 60, 0.7);
-            backdrop-filter: blur(6px);
-            border: 1px solid #5a6b8c;
-            color: white;
-            font-size: 2rem;
-            padding: 18px 28px;
-            border-radius: 60px;
-            box-shadow: 0 6px 0 #0f1622;
-            transition: 0.05s linear;
-            font-weight: bold;
-            min-width: 100px;
-        }
-        #controls-mobile button:active { transform: scale(0.92); background: #3d5277; }
-        @media (min-width: 800px) { #controls-mobile { display: none; } }
-        #death-overlay {
-            position: absolute;
-            inset: 0;
-            background: rgba(0,0,0,0.65);
-            backdrop-filter: blur(6px);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 40;
-            flex-direction: column;
-            color: white;
-        }
-        #death-overlay.show { display: flex; }
-        #death-overlay h2 { font-size: 4rem; color: #d66; text-shadow: 0 0 30px #a33; }
-        #death-overlay p { margin: 20px 0 30px; font-size: 1.4rem; opacity: 0.7; }
-        #death-overlay button { background: #3a4a6a; border: none; color: white; font-size: 1.8rem; padding: 14px 50px; border-radius: 60px; cursor: pointer; border: 1px solid #7a8aaa; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Zar Masası</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Poppins:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --felt-dark:#062219;
+  --felt:#0c3a2b;
+  --felt-light:#155a44;
+  --wood-dark:#2a160c;
+  --wood:#4a2815;
+  --wood-light:#6b3d20;
+  --gold:#d4af37;
+  --gold-bright:#f3dd8a;
+  --gold-dim:#8a7128;
+  --cream:#f3ead2;
+  --cream-dim:#cabe9d;
+  --danger:#c0473b;
+  --ok:#3f9e6a;
+  --shadow:rgba(0,0,0,.55);
+  font-size:16px;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none;}
+html,body{
+  height:100%; margin:0; overflow:hidden; touch-action:manipulation;
+  background:var(--felt-dark);
+  font-family:'Poppins',sans-serif;
+  color:var(--cream);
+}
+.mono{font-family:'Space Mono',monospace;}
+.display{font-family:'Cinzel',serif;}
+
+#app{
+  position:fixed; inset:0;
+  display:flex; flex-direction:column;
+  height:100dvh; width:100vw;
+  background:
+    radial-gradient(120% 90% at 50% -10%, #123f2f 0%, transparent 60%),
+    var(--felt-dark);
+  padding-top:env(safe-area-inset-top);
+  padding-bottom:env(safe-area-inset-bottom);
+}
+
+/* ---------- TOP BAR ---------- */
+#topbar{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:12px 16px; z-index:20;
+  flex-shrink:0;
+}
+.brand{
+  display:flex; align-items:center; gap:8px;
+  font-family:'Cinzel',serif; font-weight:700; letter-spacing:.08em;
+  font-size:.95rem; color:var(--gold-bright);
+  text-shadow:0 1px 0 rgba(0,0,0,.4);
+}
+.brand .dot{color:var(--gold); font-size:1.1rem;}
+.balance-pill{
+  display:flex; align-items:center; gap:8px;
+  background:linear-gradient(180deg,#123a2c,#0a2419);
+  border:1px solid var(--gold-dim);
+  border-radius:999px; padding:7px 14px 7px 8px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05), 0 3px 8px rgba(0,0,0,.4);
+}
+.coin-icon{
+  width:22px; height:22px; border-radius:50%;
+  background:radial-gradient(circle at 35% 30%, var(--gold-bright), var(--gold) 55%, var(--gold-dim) 100%);
+  display:flex; align-items:center; justify-content:center;
+  font-size:12px; font-weight:800; color:#3d2f05;
+  box-shadow:0 1px 2px rgba(0,0,0,.5);
+  flex-shrink:0;
+}
+#balanceVal{font-family:'Space Mono',monospace; font-weight:700; font-size:.95rem; letter-spacing:.02em;}
+.reset-btn{
+  font-size:.6rem; color:var(--cream-dim); background:none; border:1px solid rgba(255,255,255,.15);
+  border-radius:999px; padding:3px 8px; margin-left:2px; font-family:'Poppins',sans-serif;
+}
+
+/* ---------- SCREENS ---------- */
+.screen{
+  position:absolute; inset:0; display:flex; flex-direction:column;
+  transition:opacity .35s ease, transform .35s ease;
+}
+.screen.hidden{opacity:0; pointer-events:none; transform:scale(.98);}
+
+/* ===== SETUP SCREEN ===== */
+#setupScreen{ align-items:center; justify-content:flex-start; padding:70px 20px 20px; overflow-y:auto;}
+.setup-card{
+  width:100%; max-width:420px; margin:0 auto;
+  text-align:center;
+}
+.setup-title{
+  font-size:2.1rem; color:var(--gold-bright); letter-spacing:.05em;
+  text-shadow:0 2px 10px rgba(0,0,0,.5);
+  margin:6px 0 2px;
+}
+.setup-sub{color:var(--cream-dim); font-size:.85rem; margin-bottom:26px; letter-spacing:.02em;}
+
+.section-label{
+  display:flex; align-items:center; gap:10px;
+  color:var(--gold); font-size:.72rem; letter-spacing:.15em; text-transform:uppercase;
+  margin:22px 0 12px; font-weight:600;
+}
+.section-label::after{content:''; flex:1; height:1px; background:linear-gradient(90deg,var(--gold-dim),transparent);}
+
+.stepper{
+  display:flex; align-items:center; justify-content:center; gap:18px;
+  background:rgba(0,0,0,.2); border:1px solid rgba(212,175,55,.25);
+  border-radius:18px; padding:14px;
+}
+.stepper button{
+  width:44px; height:44px; border-radius:50%; border:1px solid var(--gold-dim);
+  background:linear-gradient(180deg,#1b5440,#0c3527);
+  color:var(--gold-bright); font-size:1.3rem; font-weight:700;
+}
+.stepper button:active{transform:scale(.9);}
+#playerCountVal{
+  font-family:'Cinzel',serif; font-size:1.7rem; font-weight:700; min-width:90px;
+  color:var(--cream);
+}
+#playerCountVal span{display:block; font-family:'Poppins',sans-serif; font-size:.6rem; color:var(--cream-dim); font-weight:400; letter-spacing:.1em; margin-top:2px;}
+
+.chip-grid{
+  display:grid; grid-template-columns:repeat(4,1fr); gap:9px;
+}
+.chip{
+  position:relative; padding:12px 4px; border-radius:14px;
+  border:1px solid var(--gold-dim);
+  background:radial-gradient(120% 140% at 30% 0%, #1c5a44, #0b2c21);
+  color:var(--cream); font-family:'Space Mono',monospace; font-weight:700; font-size:.82rem;
+  box-shadow:0 3px 0 rgba(0,0,0,.35);
+}
+.chip:active{transform:translateY(2px); box-shadow:0 1px 0 rgba(0,0,0,.35);}
+.chip.active{
+  background:radial-gradient(120% 140% at 30% 0%, var(--gold-bright), var(--gold) 60%, var(--gold-dim));
+  color:#2c2308; border-color:var(--gold-bright);
+  box-shadow:0 0 0 2px rgba(243,221,138,.35), 0 3px 10px rgba(212,175,55,.4);
+}
+.custom-bet-row{
+  display:flex; align-items:center; gap:10px; margin-top:12px;
+  background:rgba(0,0,0,.2); border:1px solid rgba(212,175,55,.2); border-radius:14px; padding:10px 14px;
+}
+.custom-bet-row input[type=range]{flex:1; accent-color:var(--gold);}
+#customBetVal{font-family:'Space Mono',monospace; font-weight:700; min-width:74px; text-align:right; font-size:.82rem; color:var(--gold-bright);}
+
+.cta-btn{
+  width:100%; margin-top:28px; padding:16px; border-radius:16px; border:none;
+  font-family:'Cinzel',serif; font-weight:700; font-size:1.05rem; letter-spacing:.06em;
+  background:linear-gradient(180deg, var(--gold-bright), var(--gold) 55%, #a3831f);
+  color:#2c2205;
+  box-shadow:0 6px 0 #7a611c, 0 10px 20px rgba(0,0,0,.4);
+}
+.cta-btn:active{transform:translateY(4px); box-shadow:0 2px 0 #7a611c, 0 4px 10px rgba(0,0,0,.4);}
+.cta-btn:disabled{filter:grayscale(.6) brightness(.7); box-shadow:0 6px 0 #333;}
+.setup-hint{margin-top:12px; font-size:.72rem; color:var(--cream-dim); min-height:16px;}
+.setup-hint.warn{color:#ff9b8a;}
+
+/* ===== GAME SCREEN ===== */
+#gameScreen{align-items:center; justify-content:space-between;}
+#tableWrap{
+  position:relative; flex:1; width:100%; display:flex; align-items:center; justify-content:center;
+  padding:6px 10px;
+}
+#table{
+  position:relative; width:min(92vw, 480px); height:min(72vh, 560px);
+  border-radius:50%;
+  background:
+    radial-gradient(60% 55% at 50% 45%, var(--felt-light) 0%, var(--felt) 55%, var(--felt-dark) 100%);
+  border:14px solid var(--wood);
+  box-shadow:
+    inset 0 0 0 3px rgba(212,175,55,.35),
+    inset 0 10px 40px rgba(0,0,0,.55),
+    0 18px 40px rgba(0,0,0,.6),
+    0 0 0 3px var(--wood-dark);
+}
+#table::before{
+  content:''; position:absolute; inset:14px; border-radius:50%;
+  border:1px solid rgba(212,175,55,.25);
+  pointer-events:none;
+}
+
+.seat{
+  position:absolute; width:66px; height:66px; transform:translate(-50%,-50%);
+  display:flex; flex-direction:column; align-items:center; gap:3px;
+  transition:filter .25s;
+}
+.seat-avatar{
+  width:50px; height:50px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center; font-size:1.5rem;
+  background:linear-gradient(160deg,#245a45,#0e3327);
+  border:2px solid rgba(212,175,55,.5);
+  box-shadow:0 3px 8px rgba(0,0,0,.5);
+  position:relative;
+  transition:box-shadow .25s, border-color .25s, transform .25s;
+}
+.seat.you .seat-avatar{border-color:var(--gold-bright);}
+.seat.active .seat-avatar{
+  border-color:var(--gold-bright);
+  box-shadow:0 0 0 4px rgba(243,221,138,.28), 0 0 18px rgba(243,221,138,.55);
+  transform:scale(1.1);
+}
+.seat.winner .seat-avatar{
+  animation:winPulse 1s ease-in-out infinite;
+}
+@keyframes winPulse{
+  0%,100%{box-shadow:0 0 0 4px rgba(63,158,106,.35), 0 0 22px rgba(63,158,106,.7);}
+  50%{box-shadow:0 0 0 8px rgba(63,158,106,.15), 0 0 32px rgba(63,158,106,.9);}
+}
+.seat-name{font-size:.62rem; color:var(--cream); font-weight:600; text-shadow:0 1px 2px #000; white-space:nowrap;}
+.seat-name b{color:var(--gold-bright);}
+.thinking-dots{position:absolute; top:-8px; right:-4px; font-size:.6rem; opacity:0; transition:opacity .2s;}
+.seat.rolling .thinking-dots{opacity:1;}
+
+#potWrap{
+  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  display:flex; flex-direction:column; align-items:center; gap:10px; z-index:5;
+}
+#potLabel{font-size:.6rem; letter-spacing:.2em; color:var(--gold); text-transform:uppercase;}
+#potAmount{
+  font-family:'Space Mono',monospace; font-weight:700; font-size:1.15rem; color:var(--gold-bright);
+  text-shadow:0 2px 6px rgba(0,0,0,.6);
+}
+#diceArea{display:flex; gap:16px; perspective:600px;}
+.die{
+  width:52px; height:52px; position:relative; transform-style:preserve-3d;
+  transition:transform 1.1s cubic-bezier(.2,.85,.3,1);
+}
+.face{
+  position:absolute; inset:0; border-radius:9px;
+  background:linear-gradient(160deg,#fdf8ec,#ece0bd);
+  border:1px solid #cbb974;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.6), 0 2px 6px rgba(0,0,0,.4);
+  display:grid; grid-template-areas:"tl . tr" "ml c mr" "bl . br";
+  padding:7px; gap:2px;
+}
+.pip{width:9px; height:9px; border-radius:50%; background:radial-gradient(circle at 35% 30%, #6b2a1c, #3a1409); align-self:center; justify-self:center;}
+.p-tl{grid-area:tl;} .p-tr{grid-area:tr;} .p-ml{grid-area:ml;} .p-mr{grid-area:mr;}
+.p-bl{grid-area:bl;} .p-br{grid-area:br;} .p-c{grid-area:c;}
+.f1{transform:rotateY(0deg) translateZ(26px);}
+.f6{transform:rotateY(180deg) translateZ(26px);}
+.f2{transform:rotateY(90deg) translateZ(26px);}
+.f5{transform:rotateY(-90deg) translateZ(26px);}
+.f3{transform:rotateX(90deg) translateZ(26px);}
+.f4{transform:rotateX(-90deg) translateZ(26px);}
+
+.flying-coin{
+  position:absolute; width:16px; height:16px; border-radius:50%; z-index:30;
+  background:radial-gradient(circle at 35% 30%, var(--gold-bright), var(--gold) 55%, var(--gold-dim));
+  box-shadow:0 2px 4px rgba(0,0,0,.5);
+  transition:transform .55s cubic-bezier(.3,.6,.4,1), opacity .55s ease;
+  pointer-events:none;
+}
+
+/* ---------- turn banner ---------- */
+#turnBanner{
+  text-align:center; font-size:.85rem; color:var(--cream); min-height:20px;
+  letter-spacing:.02em; padding:0 20px;
+}
+#turnBanner b{color:var(--gold-bright);}
+
+/* ---------- bottom controls ---------- */
+#controls{
+  width:100%; padding:14px 20px calc(18px + env(safe-area-inset-bottom));
+  display:flex; flex-direction:column; align-items:center; gap:10px; flex-shrink:0;
+}
+#rollBtn{
+  width:100%; max-width:420px; padding:17px; border-radius:18px; border:none;
+  font-family:'Cinzel',serif; font-weight:700; font-size:1.15rem; letter-spacing:.08em;
+  background:linear-gradient(180deg, var(--gold-bright), var(--gold) 55%, #a3831f);
+  color:#2c2205;
+  box-shadow:0 6px 0 #7a611c, 0 10px 22px rgba(0,0,0,.45);
+}
+#rollBtn:active{transform:translateY(4px); box-shadow:0 2px 0 #7a611c;}
+#rollBtn:disabled{filter:grayscale(.7) brightness(.65); box-shadow:0 6px 0 #333;}
+.leave-btn{
+  background:none; border:1px solid rgba(255,255,255,.2); color:var(--cream-dim);
+  font-size:.72rem; padding:8px 16px; border-radius:999px; letter-spacing:.05em;
+}
+
+/* ---------- win overlay ---------- */
+#winOverlay{
+  position:fixed; inset:0; z-index:50; display:flex; align-items:center; justify-content:center;
+  background:rgba(4,15,10,.72); backdrop-filter:blur(3px);
+  opacity:0; pointer-events:none; transition:opacity .4s ease;
+}
+#winOverlay.show{opacity:1; pointer-events:auto;}
+.win-card{
+  text-align:center; padding:34px 30px; border-radius:22px;
+  background:linear-gradient(160deg,#164a37,#0a2a1f);
+  border:1px solid var(--gold-dim);
+  box-shadow:0 20px 60px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.06);
+  max-width:340px;
+  transform:scale(.85); transition:transform .4s cubic-bezier(.2,.9,.3,1.3);
+}
+#winOverlay.show .win-card{transform:scale(1);}
+.win-crown{font-size:2.6rem; margin-bottom:6px; filter:drop-shadow(0 4px 10px rgba(0,0,0,.5));}
+.win-title{font-family:'Cinzel',serif; font-size:1.4rem; color:var(--gold-bright); letter-spacing:.04em;}
+.win-name{font-family:'Poppins',sans-serif; font-weight:700; font-size:1.05rem; margin-top:6px; color:var(--cream);}
+.win-amount{font-family:'Space Mono',monospace; font-size:1.6rem; color:var(--ok); margin-top:14px; font-weight:700;}
+.win-amount.lose{color:var(--danger);}
+.win-actions{display:flex; gap:10px; margin-top:22px;}
+.win-actions button{flex:1; padding:12px; border-radius:12px; border:none; font-weight:700; font-size:.85rem; font-family:'Poppins',sans-serif;}
+#playAgainBtn{background:linear-gradient(180deg,var(--gold-bright),var(--gold)); color:#2c2205;}
+#leaveTableBtn{background:rgba(255,255,255,.08); color:var(--cream); border:1px solid rgba(255,255,255,.15);}
+
+.confetti{position:absolute; top:-10px; width:8px; height:14px; opacity:.95; z-index:2;}
+
+::-webkit-scrollbar{display:none;}
+</style>
 </head>
 <body>
-    <!-- LOBBY -->
-    <div id="lobby">
-        <h1>⬡ BACKROOMS</h1>
-        <p>kaçış · anahtarı bul · kapıdan geç</p>
-        <button id="startBtn">▶ OYNA</button>
-        <div class="sub">[ PC: WASD + SHIFT koş | Mobile: sol/sağ butonlar ]</div>
+<div id="app">
+
+  <div id="topbar">
+    <div class="brand"><span class="dot">♠</span> ZAR MASASI</div>
+    <div class="balance-pill">
+      <div class="coin-icon">₺</div>
+      <span id="balanceVal">1.000</span>
+      <button class="reset-btn" id="resetBtn" style="display:none;">Yenile</button>
     </div>
+  </div>
 
-    <!-- DEATH -->
-    <div id="death-overlay">
-        <h2>☠ YAKALANDIN</h2>
-        <p>canavar seni buldu...</p>
-        <button id="respawnBtn">⟳ LOBIYE DÖN</button>
+  <!-- SETUP SCREEN -->
+  <div class="screen" id="setupScreen">
+    <div class="setup-card">
+      <div class="setup-title display">Masayı Kur</div>
+      <div class="setup-sub">Botlara karşı otur, zarı sallayan çift getirirse potu toplar.</div>
+
+      <div class="section-label">Oyuncu Sayısı</div>
+      <div class="stepper">
+        <button id="decBtn">−</button>
+        <div id="playerCountVal">4<span>OYUNCU</span></div>
+        <button id="incBtn">+</button>
+      </div>
+
+      <div class="section-label">Bahis Miktarı</div>
+      <div class="chip-grid" id="chipGrid">
+        <button class="chip" data-v="100">100</button>
+        <button class="chip" data-v="500">500</button>
+        <button class="chip active" data-v="1000">1K</button>
+        <button class="chip" data-v="3000">3K</button>
+        <button class="chip" data-v="5000">5K</button>
+        <button class="chip" data-v="10000">10K</button>
+        <button class="chip" data-v="50000">50K</button>
+        <button class="chip" data-v="100000">100K</button>
+      </div>
+      <div class="custom-bet-row">
+        <span style="font-size:.68rem;color:var(--cream-dim);">50</span>
+        <input type="range" id="customBet" min="50" max="100000" step="50" value="1000">
+        <span id="customBetVal">1.000 ₺</span>
+      </div>
+
+      <button class="cta-btn display" id="createBtn">Masayı Kur</button>
+      <div class="setup-hint" id="setupHint">Pot: 4.000 ₺ · Kazanan çift zarla tüm potu alır</div>
     </div>
+  </div>
 
-    <!-- OYUN -->
-    <canvas id="gameCanvas"></canvas>
-
-    <!-- UI -->
-    <div id="ui">
-        <div>🏃 <span id="statusText">kaçış</span></div>
-        <div>🔑 <span id="keyStatus">✕</span></div>
+  <!-- GAME SCREEN -->
+  <div class="screen hidden" id="gameScreen">
+    <div id="turnBanner">Masa kuruluyor…</div>
+    <div id="tableWrap">
+      <div id="table">
+        <div id="potWrap">
+          <div id="potLabel">POT</div>
+          <div id="potAmount">0 ₺</div>
+          <div id="diceArea">
+            <div class="die" id="die1"></div>
+            <div class="die" id="die2"></div>
+          </div>
+        </div>
+        <!-- seats injected by JS -->
+      </div>
     </div>
-
-    <!-- MOBIL KONTROLLER -->
-    <div id="controls-mobile">
-        <button id="btnLeft">◀</button>
-        <button id="btnRight">▶</button>
+    <div id="controls">
+      <button id="rollBtn" class="display">ZAR AT</button>
+      <button class="leave-btn" id="leaveBtn">Masadan Kalk</button>
     </div>
+  </div>
 
-    <script>
-        (function(){
-            const canvas = document.getElementById('gameCanvas');
-            const ctx = canvas.getContext('2d');
+  <!-- WIN OVERLAY -->
+  <div id="winOverlay">
+    <div class="win-card">
+      <div class="win-crown">🏆</div>
+      <div class="win-title display">ÇİFT GELDİ!</div>
+      <div class="win-name" id="winName">—</div>
+      <div class="win-amount" id="winAmount">+0 ₺</div>
+      <div class="win-actions">
+        <button id="playAgainBtn">Yeni Tur</button>
+        <button id="leaveTableBtn">Masadan Kalk</button>
+      </div>
+    </div>
+  </div>
 
-            // UI elemanları
-            const lobbyEl = document.getElementById('lobby');
-            const deathOverlay = document.getElementById('death-overlay');
-            const statusText = document.getElementById('statusText');
-            const keyStatus = document.getElementById('keyStatus');
+</div>
 
-            // --- BOYUT ---
-            let W, H;
-            function resize() {
-                W = canvas.width = window.innerWidth;
-                H = canvas.height = window.innerHeight;
-            }
-            window.addEventListener('resize', resize);
-            resize();
+<script>
+(function(){
+  "use strict";
 
-            // --- FPS / mobi kontrol ---
-            const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
-            const mobileControls = document.getElementById('controls-mobile');
-            if (isMobile) mobileControls.style.display = 'flex';
-            else mobileControls.style.display = 'none';
+  /* ---------------- STATE ---------------- */
+  let balance = 1000;
+  let playerCount = 4;
+  let betAmount = 1000;
+  const MIN_BET = 50, MAX_BET = 100000;
 
-            // --- OYUN DURUMU ---
-            let gameActive = false;
-            let player = { x: 0, y: 0, radius: 14, speed: 3.2, sprint: 5.8 };
-            let keys = { w: false, a: false, s: false, d: false, shift: false };
-            let monster = { x: 0, y: 0, speed: 1.2 };
-            let keyItem = { x: 0, y: 0, collected: false };
-            let door = { x: 0, y: 0 };
-            let world = { walls: [] }; // dikdörtgen duvarlar [x,y,w,h]
+  let players = [];      // {id, name, isUser, avatar, seatEl, angle}
+  let turnOrder = [];     // indices into players, rotated each round
+  let turnPtr = 0;
+  let pot = 0;
+  let roundActive = false;
+  let rollingLock = false;
 
-            // canavar arama hedefi (player)
-            let monsterTarget = { x: 0, y: 0 };
+  const BOT_NAMES = ["Ayşe","Mehmet","Deniz","Elif","Can","Zeynep","Burak","Selin"];
+  const BOT_AVATARS = ["🧕","🧔","👩‍🦱","🧑‍🦳","👨‍🦰","👩‍🦳","🧑‍🎤","👨‍🦱"];
 
-            // canavar vurma (öldürme) cooldown
-            let attackCooldown = 0;
+  /* ---------------- HELPERS ---------------- */
+  const $ = (id)=>document.getElementById(id);
+  const fmt = (n)=> n.toLocaleString('tr-TR');
 
-            // --- LABİRENT OLUŞTUR ---
-            function generateMaze() {
-                // labirent: backrooms hissi, ortada boş alan, çok geçit
-                const wWalls = [];
-                const size = 580; // labirent boyutu
-                const offsetX = (W - size) / 2;
-                const offsetY = (H - size) / 2;
+  function updateBalanceUI(){
+    $('balanceVal').textContent = fmt(balance);
+    $('resetBtn').style.display = balance < MIN_BET ? 'inline-block' : 'none';
+  }
 
-                // dış duvarlar
-                wWalls.push([offsetX, offsetY, size, 12]); // üst
-                wWalls.push([offsetX, offsetY + size - 12, size, 12]); // alt
-                wWalls.push([offsetX, offsetY, 12, size]); // sol
-                wWalls.push([offsetX + size - 12, offsetY, 12, size]); // sağ
+  /* ---------------- SETUP SCREEN LOGIC ---------------- */
+  function refreshSetupHint(){
+    const p = pot0();
+    $('setupHint').textContent = `Pot: ${fmt(p)} ₺ · Kazanan çift zarla tüm potu alır`;
+    const btn = $('createBtn');
+    if(betAmount > balance){
+      $('setupHint').textContent = `Bakiyeniz yetersiz (bahis ${fmt(betAmount)} ₺)`;
+      $('setupHint').classList.add('warn');
+      btn.disabled = true;
+    } else {
+      $('setupHint').classList.remove('warn');
+      btn.disabled = false;
+    }
+  }
+  function pot0(){ return betAmount * playerCount; }
 
-                // iç duvarlar (kaotik backrooms)
-                const segments = [
-                    [120, 80, 8, 200], [200, 60, 180, 8], [120, 280, 200, 8], [320, 120, 8, 180],
-                    [60, 200, 100, 8], [400, 60, 8, 200], [60, 380, 180, 8], [260, 380, 8, 120],
-                    [420, 280, 8, 180], [200, 460, 200, 8], [60, 480, 100, 8], [440, 200, 8, 180],
-                    [140, 140, 8, 60], [320, 340, 120, 8], [420, 420, 80, 8], [60, 140, 100, 8],
-                    [480, 60, 8, 140], [200, 220, 120, 8], [340, 220, 8, 100], [80, 360, 60, 8],
-                    [480, 240, 8, 100], [280, 480, 100, 8], [440, 100, 8, 80]
-                ];
-                segments.forEach(s => {
-                    // ofset ekle
-                    wWalls.push([s[0] + offsetX, s[1] + offsetY, s[2], s[3]]);
-                });
+  function setPlayerCount(n){
+    playerCount = Math.max(2, Math.min(8, n));
+    $('playerCountVal').innerHTML = playerCount + '<span>OYUNCU</span>';
+    refreshSetupHint();
+  }
+  $('decBtn').onclick = ()=> setPlayerCount(playerCount-1);
+  $('incBtn').onclick = ()=> setPlayerCount(playerCount+1);
 
-                // ortada boş alan (biraz daha açık) — ama yine de duvar ekleyelim
-                wWalls.push([offsetX + 240, offsetY + 200, 8, 120]);
-                wWalls.push([offsetX + 320, offsetY + 200, 8, 120]);
-                wWalls.push([offsetX + 200, offsetY + 300, 160, 8]);
+  function setBet(v, fromChip){
+    betAmount = Math.max(MIN_BET, Math.min(MAX_BET, Math.round(v/50)*50));
+    $('customBet').value = betAmount;
+    $('customBetVal').textContent = fmt(betAmount) + ' ₺';
+    document.querySelectorAll('.chip').forEach(c=>{
+      c.classList.toggle('active', fromChip !== undefined ? c===fromChip : parseInt(c.dataset.v)===betAmount);
+    });
+    refreshSetupHint();
+  }
+  document.querySelectorAll('.chip').forEach(chip=>{
+    chip.addEventListener('click', ()=> setBet(parseInt(chip.dataset.v), chip));
+  });
+  $('customBet').addEventListener('input', (e)=> setBet(parseInt(e.target.value)));
 
-                // ekstra dağınıklık
-                for (let i = 0; i < 40; i++) {
-                    let rx = offsetX + 30 + Math.random() * (size - 60);
-                    let ry = offsetY + 30 + Math.random() * (size - 60);
-                    let rw = 6 + Math.random() * 14;
-                    let rh = 6 + Math.random() * 14;
-                    if (Math.random() > 0.6) wWalls.push([rx, ry, rw, rh]);
-                }
+  $('resetBtn').onclick = ()=>{ balance = 1000; updateBalanceUI(); refreshSetupHint(); };
 
-                return wWalls.map(w => ({ x: w[0], y: w[1], w: w[2], h: w[3] }));
-            }
+  $('createBtn').onclick = ()=>{
+    if(betAmount > balance) return;
+    startTable();
+  };
 
-            // --- YERLEŞTİRME (player, monster, key, door) ---
-            function placeEntities(walls) {
-                const margin = 50;
-                const attempts = 300;
-                let p, m, k, d;
+  /* ---------------- BUILD TABLE ---------------- */
+  function startTable(){
+    players = [];
+    const shuffledBots = [...BOT_NAMES.keys()].sort(()=>Math.random()-.5);
+    for(let i=0;i<playerCount;i++){
+      if(i===0){
+        players.push({id:0, name:'Sen', isUser:true, avatar:'😎'});
+      } else {
+        const bi = shuffledBots[i-1];
+        players.push({id:i, name:BOT_NAMES[bi], isUser:false, avatar:BOT_AVATARS[bi]});
+      }
+    }
+    renderSeats();
+    $('setupScreen').classList.add('hidden');
+    $('gameScreen').classList.remove('hidden');
+    beginRound(true);
+  }
 
-                function randomPos() {
-                    let x = margin + Math.random() * (W - 2 * margin);
-                    let y = margin + Math.random() * (H - 2 * margin);
-                    return { x, y };
-                }
+  function renderSeats(){
+    const table = $('table');
+    table.querySelectorAll('.seat').forEach(s=>s.remove());
+    const n = players.length;
+    players.forEach((p, i)=>{
+      const angle = 90 + (360/n)*i; // degrees, seat0 at bottom
+      const rad = angle * Math.PI/180;
+      const Rx = 40, Ry = 37; // percent
+      const x = 50 + Rx*Math.cos(rad);
+      const y = 50 + Ry*Math.sin(rad);
+      const seat = document.createElement('div');
+      seat.className = 'seat' + (p.isUser?' you':'');
+      seat.style.left = x+'%';
+      seat.style.top = y+'%';
+      seat.innerHTML = `
+        <div class="seat-avatar">${p.avatar}<span class="thinking-dots">💭</span></div>
+        <div class="seat-name">${p.isUser?'<b>Sen</b>':p.name}</div>
+      `;
+      table.appendChild(seat);
+      p.seatEl = seat;
+    });
+  }
 
-                function isOverlappingWall(x, y, rad) {
-                    for (let wall of walls) {
-                        const cx = Math.max(wall.x, Math.min(x, wall.x + wall.w));
-                        const cy = Math.max(wall.y, Math.min(y, wall.y + wall.h));
-                        const dx = x - cx, dy = y - cy;
-                        if (dx * dx + dy * dy < (rad + 6) * (rad + 6)) return true;
-                    }
-                    return false;
-                }
+  /* ---------------- ROUND FLOW ---------------- */
+  function beginRound(anteFromUser){
+    if(anteFromUser){
+      balance -= betAmount;
+      updateBalanceUI();
+    }
+    pot = betAmount * playerCount;
+    $('potAmount').textContent = fmt(pot) + ' ₺';
+    roundActive = true;
+    turnOrder = players.map((_,i)=>i).sort(()=>Math.random()-.5);
+    turnPtr = 0;
+    players.forEach(p=> p.seatEl.classList.remove('winner','active'));
+    setDiceStatic();
+    animateAnte();
+    $('turnBanner').textContent = 'Herkes potu ortaya koydu…';
+    setTimeout(nextTurn, 900);
+  }
 
-                function findValidPos(rad = 16) {
-                    for (let i = 0; i < attempts; i++) {
-                        const pos = randomPos();
-                        if (!isOverlappingWall(pos.x, pos.y, rad)) return pos;
-                    }
-                    return { x: W/2 + 40, y: H/2 + 40 };
-                }
+  function animateAnte(){
+    const tableRect = $('table').getBoundingClientRect();
+    const cx = tableRect.width/2, cy = tableRect.height/2;
+    players.forEach((p,idx)=>{
+      const r = p.seatEl.getBoundingClientRect();
+      const sx = r.left - tableRect.left + r.width/2;
+      const sy = r.top - tableRect.top + r.height/2;
+      const coin = document.createElement('div');
+      coin.className = 'flying-coin';
+      coin.style.left = sx+'px'; coin.style.top = sy+'px';
+      coin.style.opacity = '1';
+      $('table').appendChild(coin);
+      requestAnimationFrame(()=>{
+        coin.style.transform = `translate(${cx-sx}px, ${cy-sy}px) scale(.6)`;
+        coin.style.opacity = '0';
+      });
+      setTimeout(()=>coin.remove(), 650);
+    });
+  }
 
-                p = findValidPos(18);
-                m = findValidPos(20);
-                k = findValidPos(12);
-                d = findValidPos(18);
+  function currentPlayer(){ return players[turnOrder[turnPtr]]; }
 
-                // kapı random anahtardan uzak olsun
-                let distKeyDoor = 0;
-                for (let i = 0; i < 50; i++) {
-                    const nd = findValidPos(18);
-                    const dk = Math.hypot(nd.x - k.x, nd.y - k.y);
-                    if (dk > 200 && dk < 500) {
-                        d = nd;
-                        break;
-                    }
-                }
+  function nextTurn(){
+    if(!roundActive) return;
+    players.forEach(p=> p.seatEl.classList.remove('active','rolling'));
+    const p = currentPlayer();
+    p.seatEl.classList.add('active');
 
-                return { player: p, monster: m, key: k, door: d };
-            }
+    if(p.isUser){
+      $('turnBanner').innerHTML = `Sıra sende — <b>ZAR AT</b>'a bas`;
+      $('rollBtn').disabled = false;
+    } else {
+      $('turnBanner').innerHTML = `<b>${p.name}</b> zar atıyor…`;
+      $('rollBtn').disabled = true;
+      p.seatEl.classList.add('rolling');
+      const delay = 900 + Math.random()*900;
+      setTimeout(()=>{ if(roundActive) rollDice(); }, delay);
+    }
+  }
 
-            // --- OYUN BAŞLAT / YENİDEN ---
-            function initGame() {
-                // Duvarları oluştur
-                world.walls = generateMaze();
+  $('rollBtn').onclick = ()=>{
+    if(rollingLock) return;
+    const p = currentPlayer();
+    if(!p.isUser) return;
+    rollDice();
+  };
 
-                // Varlıkları yerleştir
-                const entities = placeEntities(world.walls);
-                player.x = entities.player.x;
-                player.y = entities.player.y;
-                monster.x = entities.monster.x;
-                monster.y = entities.monster.y;
-                keyItem.x = entities.key.x;
-                keyItem.y = entities.key.y;
-                keyItem.collected = false;
-                door.x = entities.door.x;
-                door.y = entities.door.y;
+  function faceRotation(n){
+    switch(n){
+      case 1: return 'rotateX(0deg) rotateY(0deg)';
+      case 6: return 'rotateX(0deg) rotateY(-180deg)';
+      case 2: return 'rotateX(0deg) rotateY(-90deg)';
+      case 5: return 'rotateX(0deg) rotateY(90deg)';
+      case 3: return 'rotateX(-90deg) rotateY(0deg)';
+      case 4: return 'rotateX(90deg) rotateY(0deg)';
+    }
+  }
 
-                // UI sıfırla
-                keyStatus.textContent = '✕';
-                statusText.textContent = 'kaçış';
-                gameActive = true;
-                attackCooldown = 0;
-                deathOverlay.classList.remove('show');
-                lobbyEl.classList.add('hidden');
-            }
+  function setDiceStatic(){
+    $('die1').style.transition='none';
+    $('die2').style.transition='none';
+    $('die1').style.transform='rotateX(-18deg) rotateY(24deg)';
+    $('die2').style.transform='rotateX(-18deg) rotateY(24deg)';
+    requestAnimationFrame(()=>{
+      $('die1').style.transition='';
+      $('die2').style.transition='';
+    });
+  }
 
-            // --- ÖLÜM ---
-            function playerDeath() {
-                gameActive = false;
-                deathOverlay.classList.add('show');
-            }
+  function rollDice(){
+    rollingLock = true;
+    $('rollBtn').disabled = true;
+    const p = currentPlayer();
 
-            // --- KAZANMA (kapıdan geçiş) ---
-            function winGame() {
-                gameActive = false;
-                statusText.textContent = '✧ KAZANDIN ✧';
-                setTimeout(() => {
-                    lobbyEl.classList.remove('hidden');
-                    gameActive = false;
-                }, 800);
-            }
+    const v1 = 1+Math.floor(Math.random()*6);
+    const v2 = 1+Math.floor(Math.random()*6);
+    const spins1 = 3+Math.floor(Math.random()*2);
+    const spins2 = 3+Math.floor(Math.random()*2);
 
-            // --- FİZİK & ÇARPIŞMA ---
-            function isCollidingWithWall(x, y, rad) {
-                for (let wall of world.walls) {
-                    const cx = Math.max(wall.x, Math.min(x, wall.x + wall.w));
-                    const cy = Math.max(wall.y, Math.min(y, wall.y + wall.h));
-                    const dx = x - cx, dy = y - cy;
-                    if (dx * dx + dy * dy < (rad + 4) * (rad + 4)) return true;
-                }
-                return false;
-            }
+    const d1 = $('die1'), d2 = $('die2');
+    d1.style.transform = `rotateY(${360*spins1}deg) rotateX(${360*spins1}deg) ${faceRotation(v1)}`;
+    d2.style.transform = `rotateY(${-360*spins2}deg) rotateX(${360*spins2}deg) ${faceRotation(v2)}`;
 
-            function canMoveTo(x, y, rad) {
-                return !isCollidingWithWall(x, y, rad);
-            }
+    setTimeout(()=>{
+      resolveRoll(p, v1, v2);
+    }, 1150);
+  }
 
-            // --- AI: canavar akıllı arama ---
-            function updateMonster() {
-                if (!gameActive) return;
+  function resolveRoll(p, v1, v2){
+    p.seatEl.classList.remove('rolling');
+    rollingLock = false;
+    if(v1 === v2){
+      $('turnBanner').innerHTML = `<b>${p.isUser?'Sen':p.name}</b> çift ${v1}-${v2} attı!`;
+      setTimeout(()=> handleWin(p), 500);
+    } else {
+      $('turnBanner').innerHTML = `${p.isUser?'Sen':p.name}: ${v1}-${v2} · eşleşme yok`;
+      turnPtr = (turnPtr+1) % turnOrder.length;
+      setTimeout(nextTurn, 750);
+    }
+  }
 
-                // hedef: player
-                const dx = player.x - monster.x;
-                const dy = player.y - monster.y;
-                const dist = Math.hypot(dx, dy);
+  function handleWin(winner){
+    roundActive = false;
+    players.forEach(p=>p.seatEl.classList.remove('active'));
+    winner.seatEl.classList.add('winner');
+    $('rollBtn').disabled = true;
+    $('turnBanner').innerHTML = `<b>${winner.isUser?'Sen':winner.name}</b> potu kazandı!`;
 
-                if (dist < 120) {
-                    // yakın: doğrudan saldır
-                    const angle = Math.atan2(dy, dx);
-                    let nx = monster.x + Math.cos(angle) * monster.speed * 1.4;
-                    let ny = monster.y + Math.sin(angle) * monster.speed * 1.4;
-                    if (canMoveTo(nx, ny, 18)) {
-                        monster.x = nx;
-                        monster.y = ny;
-                    } else {
-                        // duvara takılma, yana kay
-                        const altAngle = angle + (Math.random() - 0.5) * 0.9;
-                        nx = monster.x + Math.cos(altAngle) * monster.speed * 1.2;
-                        ny = monster.y + Math.sin(altAngle) * monster.speed * 1.2;
-                        if (canMoveTo(nx, ny, 18)) { monster.x = nx; monster.y = ny; }
-                    }
-                } else {
-                    // akıllı arama: insansı, keskin köşelerden kaçınarak
-                    // hedefe doğru yönelim + random sapma
-                    let angle = Math.atan2(dy, dx);
-                    const noise = (Math.random() - 0.5) * 0.6;
-                    angle += noise;
-                    let nx = monster.x + Math.cos(angle) * monster.speed * 0.9;
-                    let ny = monster.y + Math.sin(angle) * monster.speed * 0.9;
-                    if (canMoveTo(nx, ny, 18)) {
-                        monster.x = nx;
-                        monster.y = ny;
-                    } else {
-                        // alternatif
-                        for (let i = 0; i < 4; i++) {
-                            const alt = angle + (i * 1.2 - 1.8);
-                            nx = monster.x + Math.cos(alt) * monster.speed * 0.8;
-                            ny = monster.y + Math.sin(alt) * monster.speed * 0.8;
-                            if (canMoveTo(nx, ny, 18)) { monster.x = nx; monster.y = ny; break; }
-                        }
-                    }
-                }
+    // fly coins from pot to winner seat
+    const tableRect = $('table').getBoundingClientRect();
+    const r = winner.seatEl.getBoundingClientRect();
+    const tx = r.left - tableRect.left + r.width/2;
+    const ty = r.top - tableRect.top + r.height/2;
+    const cx = tableRect.width/2, cy = tableRect.height/2;
+    for(let i=0;i<10;i++){
+      setTimeout(()=>{
+        const coin = document.createElement('div');
+        coin.className='flying-coin';
+        coin.style.left=(cx+(Math.random()*20-10))+'px';
+        coin.style.top=(cy+(Math.random()*20-10))+'px';
+        coin.style.opacity='1';
+        $('table').appendChild(coin);
+        requestAnimationFrame(()=>{
+          coin.style.transform=`translate(${tx-cx}px, ${ty-cy}px) scale(.5)`;
+          coin.style.opacity='0';
+        });
+        setTimeout(()=>coin.remove(), 600);
+      }, i*45);
+    }
 
-                // CANAVAR ÇARPMASI (oyuncuyu yakalarsa)
-                if (Math.hypot(player.x - monster.x, player.y - monster.y) < 32) {
-                    if (attackCooldown <= 0) {
-                        playerDeath();
-                        attackCooldown = 40;
-                    }
-                }
-                if (attackCooldown > 0) attackCooldown--;
-            }
+    if(winner.isUser){
+      balance += pot;
+      updateBalanceUI();
+    }
 
-            // --- OYUNCU GÜNCELLEME ---
-            function updatePlayer(dt) {
-                if (!gameActive) return;
-                let moveX = 0, moveY = 0;
-                if (keys.w) moveY -= 1;
-                if (keys.s) moveY += 1;
-                if (keys.a) moveX -= 1;
-                if (keys.d) moveX += 1;
+    setTimeout(()=> showWinOverlay(winner), 900);
+  }
 
-                if (moveX !== 0 || moveY !== 0) {
-                    const len = Math.hypot(moveX, moveY);
-                    moveX /= len;
-                    moveY /= len;
-                    const spd = keys.shift ? player.sprint : player.speed;
-                    const newX = player.x + moveX * spd * dt * 60;
-                    const newY = player.y + moveY * spd * dt * 60;
+  function showWinOverlay(winner){
+    $('winName').textContent = winner.isUser ? 'Sen kazandın!' : winner.name + ' kazandı';
+    const amt = $('winAmount');
+    if(winner.isUser){
+      amt.textContent = '+' + fmt(pot) + ' ₺';
+      amt.classList.remove('lose');
+    } else {
+      amt.textContent = '−' + fmt(betAmount) + ' ₺';
+      amt.classList.add('lose');
+    }
+    $('winOverlay').classList.add('show');
+    launchConfetti();
+    $('playAgainBtn').disabled = betAmount > balance;
+    $('playAgainBtn').style.opacity = betAmount > balance ? .5 : 1;
+  }
 
-                    // ayrı ayrı kontrol (sürtünme)
-                    if (canMoveTo(newX, player.y, player.radius)) player.x = newX;
-                    if (canMoveTo(player.x, newY, player.radius)) player.y = newY;
-                }
+  function launchConfetti(){
+    const colors = ['#d4af37','#f3dd8a','#3f9e6a','#f3ead2','#c0473b'];
+    for(let i=0;i<26;i++){
+      const c = document.createElement('div');
+      c.className='confetti';
+      c.style.left = (Math.random()*100)+'vw';
+      c.style.background = colors[Math.floor(Math.random()*colors.length)];
+      c.style.borderRadius = Math.random()>.5 ? '50%' : '2px';
+      c.style.transform = `rotate(${Math.random()*360}deg)`;
+      document.body.appendChild(c);
+      const dur = 1600+Math.random()*1200;
+      const drift = (Math.random()*160-80);
+      c.animate([
+        {transform:`translate(0,0) rotate(0deg)`, opacity:1},
+        {transform:`translate(${drift}px, 100vh) rotate(${Math.random()*720}deg)`, opacity:.9}
+      ],{duration:dur, easing:'cubic-bezier(.3,.6,.4,1)'});
+      setTimeout(()=>c.remove(), dur+50);
+    }
+  }
 
-                // anahtar toplama
-                if (!keyItem.collected) {
-                    if (Math.hypot(player.x - keyItem.x, player.y - keyItem.y) < 28) {
-                        keyItem.collected = true;
-                        keyStatus.textContent = '✔';
-                        statusText.textContent = 'anahtar var!';
-                    }
-                }
+  $('playAgainBtn').onclick = ()=>{
+    if(betAmount > balance) return;
+    $('winOverlay').classList.remove('show');
+    setTimeout(()=> beginRound(true), 300);
+  };
+  $('leaveTableBtn').onclick = ()=> returnToSetup();
+  $('leaveBtn').onclick = ()=> returnToSetup();
 
-                // kapı kontrolü (anahtar varsa)
-                if (keyItem.collected) {
-                    if (Math.hypot(player.x - door.x, player.y - door.y) < 30) {
-                        winGame();
-                    }
-                }
-            }
+  function returnToSetup(){
+    roundActive = false;
+    $('winOverlay').classList.remove('show');
+    $('gameScreen').classList.add('hidden');
+    $('setupScreen').classList.remove('hidden');
+    refreshSetupHint();
+  }
 
-            // --- ÇİZİM ---
-            function draw() {
-                ctx.clearRect(0, 0, W, H);
-                // arkaplan backrooms
-                const grad = ctx.createRadialGradient(W/2, H/2, 20, W/2, H/2, 700);
-                grad.addColorStop(0, '#2f3f4b');
-                grad.addColorStop(1, '#10161e');
-                ctx.fillStyle = grad;
-                ctx.fillRect(0, 0, W, H);
+  /* ---------------- INIT ---------------- */
+  function buildDiceFaces(){
+    const patterns = {
+      1:['c'],
+      2:['tl','br'],
+      3:['tl','c','br'],
+      4:['tl','tr','bl','br'],
+      5:['tl','tr','c','bl','br'],
+      6:['tl','tr','ml','mr','bl','br']
+    };
+    ['die1','die2'].forEach(id=>{
+      const die = $(id);
+      die.innerHTML='';
+      for(let n=1;n<=6;n++){
+        const face = document.createElement('div');
+        face.className = `face f${n}`;
+        patterns[n].forEach(pos=>{
+          const pip = document.createElement('div');
+          pip.className = 'pip p-'+pos;
+          face.appendChild(pip);
+        });
+        die.appendChild(face);
+      }
+    });
+    setDiceStatic();
+  }
 
-                // duvarlar
-                ctx.fillStyle = '#7b8b9c';
-                ctx.shadowColor = '#1f2a33';
-                ctx.shadowBlur = 18;
-                for (let wall of world.walls) {
-                    ctx.fillRect(wall.x, wall.y, wall.w, wall.h);
-                }
-                ctx.shadowBlur = 0;
-
-                // kapı (yeşil)
-                ctx.fillStyle = '#4a7a5a';
-                ctx.shadowBlur = 24;
-                ctx.shadowColor = '#2d5a3a';
-                ctx.beginPath();
-                ctx.arc(door.x, door.y, 20, 0, Math.PI * 2);
-                ctx.fill();
-                if (keyItem.collected) {
-                    ctx.fillStyle = '#b3ffb3';
-                    ctx.beginPath();
-                    ctx.arc(door.x, door.y, 14, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-                ctx.shadowBlur = 0;
-
-                // anahtar
-                if (!keyItem.collected) {
-                    ctx.fillStyle = '#f0d050';
-                    ctx.shadowBlur = 34;
-                    ctx.shadowColor = '#f0b030';
-                    ctx.beginPath();
-                    ctx.arc(keyItem.x, keyItem.y, 12, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.fillStyle = '#b38f30';
-                    ctx.beginPath();
-                    ctx.arc(keyItem.x - 2, keyItem.y - 3, 4, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.shadowBlur = 0;
-                } else if (keyItem.collected) {
-                    // oyuncunun elinde anahtar (çiz)
-                    ctx.fillStyle = '#f0d050';
-                    ctx.beginPath();
-                    ctx.arc(player.x + 18, player.y - 12, 8, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-
-                // oyuncu (beyaz insan)
-                ctx.shadowBlur = 28;
-                ctx.shadowColor = '#b0c8ff';
-                ctx.fillStyle = '#f2f6ff';
-                ctx.beginPath();
-                ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.fillStyle = '#d0daf0';
-                ctx.beginPath();
-                ctx.arc(player.x - 4, player.y - 6, 5, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.arc(player.x + 4, player.y - 6, 5, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.fillStyle = '#222';
-                ctx.beginPath();
-                ctx.arc(player.x - 5, player.y - 8, 2, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.arc(player.x + 3, player.y - 8, 2, 0, Math.PI * 2);
-                ctx.fill();
-                // ağız
-                ctx.strokeStyle = '#222';
-                ctx.lineWidth = 1.6;
-                ctx.beginPath();
-                ctx.arc(player.x, player.y + 2, 6, 0.1, Math.PI - 0.1);
-                ctx.stroke();
-                // bacak animasyonu (basit)
-                const step = Date.now() / 140;
-                if (keys.w || keys.s || keys.a || keys.d) {
-                    ctx.fillStyle = '#d0daf0';
-                    ctx.fillRect(player.x - 10, player.y + 12 + Math.sin(step)*3, 6, 8);
-                    ctx.fillRect(player.x + 4, player.y + 12 + Math.sin(step+2)*3, 6, 8);
-                } else {
-                    ctx.fillRect(player.x - 10, player.y + 14, 6, 8);
-                    ctx.fillRect(player.x + 4, player.y + 14, 6, 8);
-                }
-                ctx.shadowBlur = 0;
-
-                // canavar (kırmızımsı, insansı)
-                ctx.shadowBlur = 40;
-                ctx.shadowColor = '#a03333';
-                ctx.fillStyle = '#c04a4a';
-                ctx.beginPath();
-                ctx.arc(monster.x, monster.y, 20, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.fillStyle = '#a03333';
-                ctx.beginPath();
-                ctx.arc(monster.x - 5, monster.y - 8, 7, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.arc(monster.x + 5, monster.y - 8, 7, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.fillStyle = '#220000';
-                ctx.beginPath();
-                ctx.arc(monster.x - 6, monster.y - 10, 3, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.arc(monster.x + 4, monster.y - 10, 3, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.fillStyle = '#6a1a1a';
-                ctx.fillRect(monster.x - 14, monster.y + 12, 10, 12);
-                ctx.fillRect(monster.x + 4, monster.y + 12, 10, 12);
-                ctx.shadowBlur = 0;
-
-                // hareket yönü göstergesi (AI)
-                if (gameActive) {
-                    const angle = Math.atan2(player.y - monster.y, player.x - monster.x);
-                    ctx.strokeStyle = '#ff666655';
-                    ctx.lineWidth = 2;
-                    ctx.beginPath();
-                    ctx.moveTo(monster.x, monster.y);
-                    ctx.lineTo(monster.x + Math.cos(angle) * 44, monster.y + Math.sin(angle) * 44);
-                    ctx.stroke();
-                }
-            }
-
-            // --- OYUN DÖNGÜSÜ ---
-            let lastTime = 0;
-            function gameLoop(time) {
-                const dt = Math.min(0.05, (time - lastTime) / 1000);
-                lastTime = time;
-                if (gameActive) {
-                    updatePlayer(dt);
-                    updateMonster();
-                }
-                draw();
-                requestAnimationFrame(gameLoop);
-            }
-
-            // --- KONTROLLER ---
-            document.addEventListener('keydown', (e) => {
-                const key = e.key.toLowerCase();
-                if (key === 'w' || key === 'a' || key === 's' || key === 'd') {
-                    keys[key] = true;
-                    e.preventDefault();
-                }
-                if (key === 'shift') { keys.shift = true; e.preventDefault(); }
-            });
-            document.addEventListener('keyup', (e) => {
-                const key = e.key.toLowerCase();
-                if (key === 'w' || key === 'a' || key === 's' || key === 'd') {
-                    keys[key] = false;
-                    e.preventDefault();
-                }
-                if (key === 'shift') { keys.shift = false; e.preventDefault(); }
-            });
-
-            // mobil butonlar
-            const btnLeft = document.getElementById('btnLeft');
-            const btnRight = document.getElementById('btnRight');
-            let mobileLeft = false, mobileRight = false;
-
-            function setupMobileButton(btn, onStart, onEnd) {
-                btn.addEventListener('mousedown', onStart);
-                btn.addEventListener('mouseup', onEnd);
-                btn.addEventListener('mouseleave', onEnd);
-                btn.addEventListener('touchstart', (e) => { e.preventDefault(); onStart(); });
-                btn.addEventListener('touchend', (e) => { e.preventDefault(); onEnd(); });
-                btn.addEventListener('touchcancel', (e) => { e.preventDefault(); onEnd(); });
-            }
-            setupMobileButton(btnLeft, () => { keys.a = true; keys.d = false; }, () => { keys.a = false; });
-            setupMobileButton(btnRight, () => { keys.d = true; keys.a = false; }, () => { keys.d = false; });
-
-            // LOBBY / RESPAWN
-            document.getElementById('startBtn').addEventListener('click', initGame);
-            document.getElementById('respawnBtn').addEventListener('click', () => {
-                deathOverlay.classList.remove('show');
-                initGame();
-            });
-
-            // başlangıçta lobi görünsün
-            lobbyEl.classList.remove('hidden');
-            gameActive = false;
-
-            // döngüyü başlat
-            requestAnimationFrame(gameLoop);
-        })();
-    </script>
+  buildDiceFaces();
+  updateBalanceUI();
+  setPlayerCount(4);
+  setBet(1000);
+})();
+</script>
 </body>
 </html>
