@@ -1,647 +1,894 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CS:GO Case Opening Simulator</title>
-    <style>
-        :root {
-            --milspec: #4b69ff;
-            --restricted: #8847ff;
-            --classified: #d32ce6;
-            --covert: #eb4b4b;
-            --special: #caab05;
-            --dark-bg: #0e0e14;
-            --panel-bg: #151520;
-        }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="theme-color" content="#140a08" />
+<title>Kanyon Rallisi 3D — Sonsuz Tepe Tırmanışı</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik+Mono+One&family=Rubik:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --amber:#f2a541;
+    --amber-deep:#e8543a;
+    --cream:#f4ead9;
+    --glass:rgba(20,12,9,0.55);
+    --glass-strong:rgba(14,9,7,0.78);
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none; -webkit-user-select:none; touch-action:none; }
+  html,body{
+    margin:0; padding:0; width:100%; height:100%; overflow:hidden;
+    background:#0a0e1f; font-family:'Rubik',sans-serif; color:var(--cream);
+  }
+  #gameCanvas{ position:fixed; inset:0; display:block; width:100%; height:100%; }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--dark-bg);
-            color: #fff;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 30px 10px;
-            overflow-x: hidden;
-            user-select: none;
-        }
+  .hud{
+    position:fixed; inset:0; pointer-events:none; z-index:20;
+    font-family:'Rubik',sans-serif;
+  }
 
-        h1 {
-            font-size: 24px;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            color: #eceff1;
-            margin-bottom: 25px;
-            text-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
-        }
+  /* ---------- Top HUD bar ---------- */
+  .topbar{
+    position:absolute; top:0; left:0; right:0;
+    display:flex; align-items:flex-start; justify-content:space-between;
+    padding: max(10px, env(safe-area-inset-top)) 16px 0 16px;
+    gap:10px;
+  }
+  .pill{
+    background:var(--glass); backdrop-filter: blur(6px);
+    border:1px solid rgba(242,165,65,0.35);
+    border-radius:14px; padding:8px 14px;
+    display:flex; align-items:center; gap:8px;
+    box-shadow:0 4px 14px rgba(0,0,0,0.35);
+  }
+  .pill .icon{ font-size:18px; line-height:1; }
+  .pill .val{ font-family:'Rubik Mono One',monospace; font-size:16px; letter-spacing:0.5px; color:var(--cream); }
+  .pill .label{ font-size:10px; opacity:0.65; text-transform:uppercase; letter-spacing:1px; margin-left:2px;}
 
-        /* Rulet Bölgesi */
-        .roulette-container {
-            position: relative;
-            width: 100%;
-            max-width: 900px;
-            background: var(--panel-bg);
-            border: 2px solid #252538;
-            border-radius: 8px;
-            padding: 10px 0;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
-            overflow: hidden;
-            margin-bottom: 30px;
-        }
+  #fuelWrap{ width:130px; }
+  #fuelBarBg{ width:100%; height:9px; border-radius:6px; background:rgba(255,255,255,0.15); overflow:hidden; margin-top:4px; }
+  #fuelBarFill{ height:100%; width:100%; border-radius:6px; background:linear-gradient(90deg,#ff5b4d,#f2a541,#7be07a); transition:width .15s linear; }
 
-        /* Ortadaki Kırmızı Çizgi */
-        .pointer {
-            position: absolute;
-            left: 50%;
-            top: 0;
-            bottom: 0;
-            width: 4px;
-            background-color: #ff3e3e;
-            z-index: 10;
-            transform: translateX(-50%);
-            box-shadow: 0 0 15px #ff3e3e;
-            pointer-events: none;
-        }
+  .distScore{ text-align:right; }
+  .distScore .big{ font-family:'Rubik Mono One',monospace; font-size:24px; color:var(--amber); text-shadow:0 2px 8px rgba(0,0,0,0.5); }
+  .distScore .small{ font-size:10px; opacity:0.7; letter-spacing:1px; text-transform:uppercase; }
 
-        /* Sol ve Sağ Kenar Gölgelikleri (CS:GO tarzı sinematik geçiş) */
-        .roulette-container::before, .roulette-container::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            width: 15%;
-            z-index: 5;
-            pointer-events: none;
-        }
-        .roulette-container::before {
-            left: 0;
-            background: linear-gradient(to right, rgba(14, 14, 20, 0.95), transparent);
-        }
-        .roulette-container::after {
-            right: 0;
-            background: linear-gradient(to left, rgba(14, 14, 20, 0.95), transparent);
-        }
+  #nitroFlash{
+    position:absolute; top:70px; left:50%; transform:translateX(-50%) scale(0.8);
+    font-family:'Rubik Mono One',monospace; font-size:20px; color:#ffe07a;
+    text-shadow:0 0 12px #ff8a2b, 0 0 4px #fff; opacity:0; letter-spacing:2px;
+    transition:opacity .2s, transform .2s;
+  }
 
-        .roulette-viewport {
-            width: 100%;
-            height: 150px;
-            overflow: hidden;
-            position: relative;
-        }
+  /* ---------- Controls ---------- */
+  .ctrlBtn{
+    position:absolute; bottom: max(22px, env(safe-area-inset-bottom));
+    width:92px; height:92px; border-radius:50%; pointer-events:auto;
+    display:flex; align-items:center; justify-content:center; flex-direction:column;
+    border:3px solid rgba(255,255,255,0.25);
+    box-shadow:0 6px 18px rgba(0,0,0,0.45), inset 0 2px 6px rgba(255,255,255,0.15);
+    font-family:'Rubik Mono One',monospace; font-size:11px; letter-spacing:1px;
+    color:#fff; transition:transform .08s ease, filter .08s ease;
+  }
+  .ctrlBtn .arrow{ font-size:30px; line-height:1; }
+  .ctrlBtn:active, .ctrlBtn.pressed{ transform:scale(0.9); filter:brightness(1.25); }
+  #brakeBtn{ left: max(22px, env(safe-area-inset-left)); background:radial-gradient(circle at 35% 30%, #5b5f6b, #2a2d34); }
+  #gasBtn{ right: max(22px, env(safe-area-inset-right)); background:radial-gradient(circle at 35% 30%, #ff8a52, #d43f2a); }
 
-        .carousel-track {
-            display: flex;
-            position: absolute;
-            left: 0;
-            top: 10px;
-            height: 130px;
-            transform: translateX(0px);
-            will-change: transform;
-        }
+  #fsBtn{
+    position:absolute; top:max(10px, env(safe-area-inset-top)); right:16px;
+    pointer-events:auto; width:38px; height:38px; border-radius:10px;
+    background:var(--glass); border:1px solid rgba(242,165,65,0.35);
+    display:flex; align-items:center; justify-content:center; font-size:17px; color:var(--cream);
+  }
 
-        /* Eşya Kartı */
-        .item-card {
-            flex-shrink: 0;
-            width: 130px;
-            height: 130px;
-            margin: 0 5px;
-            background: #1a1a26;
-            border-bottom: 4px solid #fff;
-            border-radius: 6px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: space-between;
-            padding: 10px 6px;
-            text-align: center;
-            font-size: 11px;
-            font-weight: 600;
-            position: relative;
-            overflow: hidden;
-            box-shadow: inset 0 0 15px rgba(0,0,0,0.5);
-        }
-
-        .item-card svg {
-            width: 85px;
-            height: 45px;
-            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
-            margin: auto 0;
-            transition: transform 0.3s;
-        }
-
-        .item-card .weapon-name {
-            font-size: 10px;
-            color: #cfd8dc;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            width: 100%;
-        }
-
-        .item-card .skin-name {
-            font-size: 11px;
-            font-weight: bold;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            width: 100%;
-            margin-top: 2px;
-        }
-
-        /* Nadirlik Renk Sınıfları */
-        .milspec { border-color: var(--milspec); background: linear-gradient(180deg, #161a36 0%, #1a1a26 100%); }
-        .restricted { border-color: var(--restricted); background: linear-gradient(180deg, #23173d 0%, #1a1a26 100%); }
-        .classified { border-color: var(--classified); background: linear-gradient(180deg, #35163a 0%, #1a1a26 100%); }
-        .covert { border-color: var(--covert); background: linear-gradient(180deg, #3d1419 0%, #1a1a26 100%); }
-        .special { border-color: var(--special); background: linear-gradient(180deg, #3d3508 0%, #1a1a26 100%); }
-
-        /* Butonlar ve Kontroller */
-        .btn-open {
-            background: linear-gradient(135deg, #4caf50 0%, #2e7d32 100%);
-            color: white;
-            border: none;
-            padding: 14px 45px;
-            font-size: 16px;
-            font-weight: bold;
-            text-transform: uppercase;
-            border-radius: 4px;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
-            transition: all 0.2s ease-in-out;
-            letter-spacing: 1px;
-        }
-
-        .btn-open:hover:not(:disabled) {
-            transform: scale(1.03);
-            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.6);
-        }
-
-        .btn-open:active:not(:disabled) {
-            transform: scale(0.97);
-        }
-
-        .btn-open:disabled {
-            background: #37474f;
-            color: #90a4ae;
-            cursor: not-allowed;
-            box-shadow: none;
-        }
-
-        /* Kazanılan Eşya Modalı */
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.85);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 100;
-            backdrop-filter: blur(5px);
-        }
-
-        .modal-card {
-            background: #181922;
-            width: 320px;
-            border-radius: 10px;
-            border: 2px solid #37474f;
-            padding: 25px;
-            text-align: center;
-            transform: scale(0.8);
-            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
-        }
-
-        .modal-overlay.active { display: flex; }
-        .modal-overlay.active .modal-card { transform: scale(1); }
-
-        .modal-card h3 { font-size: 14px; text-transform: uppercase; color: #90a4ae; margin-bottom: 5px; }
-        .modal-card .item-glow {
-            width: 150px;
-            height: 150px;
-            margin: 20px auto;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-        }
-
-        .modal-card .item-glow svg { width: 110px; height: 110px; z-index: 2; }
-        .modal-glow-bg {
-            position: absolute;
-            width: 100%; height: 100%;
-            border-radius: 50%;
-            filter: blur(35px);
-            opacity: 0.5;
-        }
-
-        .modal-info { margin-bottom: 20px; }
-        .modal-info .title { font-size: 18px; font-weight: bold; margin-bottom: 6px; }
-        .modal-info .wear { font-size: 12px; color: #81909a; margin-bottom: 4px; }
-        .modal-info .price { font-size: 20px; font-weight: 800; color: #4caf50; }
-
-        .modal-close {
-            background: #37474f;
-            border: none;
-            color: #fff;
-            padding: 10px 30px;
-            font-size: 14px;
-            font-weight: bold;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .modal-close:hover { background: #455a64; }
-
-        /* Envanter Bölümü */
-        .inventory-section {
-            width: 100%;
-            max-width: 900px;
-            margin-top: 40px;
-        }
-
-        .inventory-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid #252538;
-            padding-bottom: 10px;
-            margin-bottom: 15px;
-        }
-
-        .inventory-header h2 { font-size: 18px; color: #b0bec5; }
-        .inventory-header span { font-size: 18px; color: #4caf50; font-weight: 800; }
-
-        .inventory-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-            gap: 12px;
-            max-height: 350px;
-            overflow-y: auto;
-            padding-right: 5px;
-        }
-
-        .inv-card {
-            background: #151520;
-            border-radius: 4px;
-            border-left: 4px solid #fff;
-            padding: 10px 8px;
-            font-size: 10px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: space-between;
-            height: 100px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-        }
-
-        .inv-card svg { width: 60px; height: 35px; }
-        .inv-card .name { font-weight: bold; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
-        .inv-card .price { color: #4caf50; font-weight: 800; font-size: 11px; margin-top: 2px; }
-    </style>
+  /* ---------- Overlays ---------- */
+  .overlay{
+    position:fixed; inset:0; z-index:50; display:flex; align-items:center; justify-content:center;
+    background:radial-gradient(ellipse at 50% 30%, rgba(70,30,20,0.55), rgba(6,4,8,0.92));
+    pointer-events:auto; text-align:center; padding:20px;
+  }
+  .overlay.hidden{ display:none; }
+  .panel{ max-width:420px; width:100%; }
+  .title{
+    font-family:'Rubik Mono One',monospace; font-size:clamp(28px,7vw,42px);
+    color:var(--amber); letter-spacing:2px; text-shadow:0 4px 0 #7a2f1e, 0 8px 18px rgba(0,0,0,0.6);
+    margin:0 0 6px 0;
+  }
+  .subtitle{ opacity:0.75; font-size:13px; margin-bottom:22px; letter-spacing:0.5px; }
+  .bigBtn{
+    font-family:'Rubik Mono One',monospace; font-size:18px; letter-spacing:1px;
+    background:linear-gradient(180deg,#ff9a52,#e8543a); color:#2a0f08;
+    border:none; border-radius:16px; padding:16px 38px; cursor:pointer;
+    box-shadow:0 8px 0 #9c2f1f, 0 12px 22px rgba(0,0,0,0.5);
+    transition:transform .08s;
+  }
+  .bigBtn:active{ transform:translateY(6px); box-shadow:0 2px 0 #9c2f1f, 0 4px 10px rgba(0,0,0,0.5); }
+  .ghostBtn{
+    margin-top:14px; background:transparent; border:1px solid rgba(244,234,217,0.35);
+    color:var(--cream); font-family:'Rubik',sans-serif; font-size:13px; padding:10px 20px;
+    border-radius:10px; cursor:pointer;
+  }
+  .howto{ display:flex; justify-content:center; gap:22px; margin:18px 0 26px 0; font-size:12px; opacity:0.85; }
+  .howto div{ display:flex; flex-direction:column; align-items:center; gap:4px; }
+  .howto .k{ font-size:22px; }
+  .statsRow{ display:flex; justify-content:center; gap:26px; margin:18px 0 8px 0; }
+  .statBox .n{ font-family:'Rubik Mono One',monospace; font-size:22px; color:var(--amber); }
+  .statBox .l{ font-size:10px; text-transform:uppercase; letter-spacing:1px; opacity:0.65; }
+  .rotateHint{
+    position:fixed; inset:0; z-index:100; background:#0a0705; color:var(--cream);
+    display:none; align-items:center; justify-content:center; flex-direction:column; gap:14px;
+    text-align:center; padding:30px; font-size:15px;
+  }
+  .rotateHint .ic{ font-size:54px; animation:spin 1.6s ease-in-out infinite; }
+  @keyframes spin{ 0%,100%{ transform:rotate(0deg);} 50%{ transform:rotate(-90deg);} }
+  @media (orientation: portrait) and (max-aspect-ratio: 1/1){
+    .rotateHint.show{ display:flex; }
+  }
+  .float-pop{
+    position:absolute; pointer-events:none; font-family:'Rubik Mono One',monospace;
+    font-size:14px; color:#ffe07a; text-shadow:0 2px 4px rgba(0,0,0,0.6); z-index:30;
+    animation:floatUp 0.9s ease-out forwards;
+  }
+  @keyframes floatUp{ 0%{ opacity:1; transform:translate(-50%,-50%) translateY(0);} 100%{ opacity:0; transform:translate(-50%,-50%) translateY(-46px);} }
+</style>
 </head>
 <body>
 
-    <h1>🚨 CS:GO CASE SIMULATOR</h1>
+<canvas id="gameCanvas"></canvas>
 
-    <div class="roulette-container">
-        <div class="pointer"></div>
-        <div class="roulette-viewport">
-            <div class="carousel-track" id="carouselTrack"></div>
+<div class="hud">
+  <div class="topbar">
+    <div style="display:flex; gap:8px;">
+      <div class="pill" id="fuelWrap">
+        <div style="width:100%">
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span class="icon">⛽</span><span class="label">Yakıt</span>
+          </div>
+          <div id="fuelBarBg"><div id="fuelBarFill"></div></div>
         </div>
+      </div>
+      <div class="pill">
+        <span class="icon">🪙</span><span class="val" id="coinVal">0</span>
+      </div>
     </div>
-
-    <button class="btn-open" id="openBtn" onclick="openCase()">KUTU AÇ</button>
-
-    <div class="inventory-section">
-        <div class="inventory-header">
-            <h2>ENVANTERİN</h2>
-            <span id="totalValue">$0.00</span>
-        </div>
-        <div class="inventory-grid" id="inventoryGrid"></div>
+    <div class="distScore">
+      <div class="big" id="distVal">0 m</div>
+      <div class="small">En iyi: <span id="bestVal">0</span> m</div>
     </div>
+  </div>
 
-    <div class="modal-overlay" id="modal">
-        <div class="modal-card">
-            <h3 id="modalRarityText">YENİ EŞYA!</h3>
-            <div class="item-glow" id="modalGlowContainer">
-                <div class="modal-glow-bg" id="modalGlowBg"></div>
-                </div>
-            <div class="modal-info">
-                <div class="title" id="modalTitle">AWP | Dragon Lore</div>
-                <div class="wear" id="modalWear">Fabrikadan Yeni Çıkmış (0.02)</div>
-                <div class="price" id="modalPrice">$4,500.00</div>
-            </div>
-            <button class="modal-close" onclick="closeModal()">ENVANTERE EKLE</button>
-        </div>
+  <div id="nitroFlash">🔥 NİTRO!</div>
+
+  <button id="fsBtn" title="Tam ekran">⛶</button>
+
+  <div id="brakeBtn" class="ctrlBtn"><span class="arrow">◀</span><span>FREN</span></div>
+  <div id="gasBtn" class="ctrlBtn"><span class="arrow">▶</span><span>GAZ</span></div>
+</div>
+
+<div class="rotateHint" id="rotateHint">
+  <div class="ic">📱</div>
+  <div>Daha iyi bir deneyim için lütfen<br/><b>telefonunuzu yan çevirin</b></div>
+</div>
+
+<div class="overlay" id="startOverlay">
+  <div class="panel">
+    <div class="title">KANYON<br/>RALLİSİ 3D</div>
+    <div class="subtitle">sonsuza kadar süren tepe tırmanışı</div>
+    <div class="howto">
+      <div><div class="k">▶</div>GAZ</div>
+      <div><div class="k">◀</div>FREN / GERİ</div>
+      <div><div class="k">⛽🪙</div>TOPLA</div>
     </div>
+    <button class="bigBtn" id="startBtn">OYUNU BAŞLAT</button>
+    <div><button class="ghostBtn" id="fsBtnStart">⛶ Tam ekran &amp; yatay kilit</button></div>
+  </div>
+</div>
 
-    <script>
-        // Silah SVG Şablonları (Yüksek Kaliteli Vektörel Tasarımlar)
-        const weaponSVGs = {
-            rifle: `<svg viewBox="0 0 120 40"><path d="M5 25h18l4-3h4l2 3h35l4-5h20l3 5h10v3H95L75 33H55l-15-2L25 35H5z M60 17h10v5H60z" fill="currentColor"/></svg>`,
-            sniper: `<svg viewBox="0 0 120 40"><path d="M5 23h25l3-3h5l2 3h20l3-5h20l3 5h25v3l-10 4H75l-15-2H40l-15 4H5z M50 15h12v4H50z M70 15h12v4H70z" fill="currentColor"/></svg>`,
-            pistol: `<svg viewBox="0 0 120 60"><path d="M30 15h50l3 5v12H55l-3 18H35l3-18H30z" fill="currentColor"/></svg>`,
-            knife: `<svg viewBox="0 0 120 40"><path d="M15 22h35l3-3 40-5-5 10-35 2-3 4H15z" fill="currentColor"/></svg>`
-        };
+<div class="overlay hidden" id="gameOverOverlay">
+  <div class="panel">
+    <div class="title" style="font-size:clamp(22px,6vw,32px);">YAKIT BİTTİ!</div>
+    <div class="statsRow">
+      <div class="statBox"><div class="n" id="finalDist">0</div><div class="l">Metre</div></div>
+      <div class="statBox"><div class="n" id="finalCoins">0</div><div class="l">Jeton</div></div>
+      <div class="statBox"><div class="n" id="finalBest">0</div><div class="l">En İyi</div></div>
+    </div>
+    <button class="bigBtn" id="restartBtn">TEKRAR OYNA</button>
+  </div>
+</div>
 
-        // Kasa İçeriği (İsim, Tip, Nadirlik ve Taban Fiyat Parametreleri)
-        const itemDatabase = [
-            // Mil-Spec (Mavi) - %79.92
-            { name: "P90", skin: "Grim", type: "rifle", rarity: "milspec", basePrice: 0.50 },
-            { name: "Glock-18", skin: "Sacrifice", type: "pistol", rarity: "milspec", basePrice: 0.80 },
-            { name: "M4A4", skin: "Magnesium", type: "rifle", rarity: "milspec", basePrice: 1.20 },
-            { name: "USP-S", skin: "Yeti", type: "pistol", rarity: "milspec", basePrice: 1.50 },
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+"use strict";
 
-            // Restricted (Mor) - %15.98
-            { name: "AK-47", skin: "Uncharted", type: "rifle", rarity: "restricted", basePrice: 4.50 },
-            { name: "MAC-10", skin: "Disco Tech", type: "rifle", rarity: "restricted", basePrice: 5.00 },
-            { name: "USP-S", skin: "Cortex", type: "pistol", rarity: "restricted", basePrice: 7.50 },
+/* ============================================================
+   AYARLAR / CONFIG
+============================================================ */
+const CFG = {
+  gravity: 9.8,
+  engineAccel: 14.0,
+  brakeAccel: 16.0,
+  reverseAccel: 8.0,
+  friction: 0.6,
+  maxSpeed: 17,
+  maxReverse: -6,
+  nitroMult: 1.75,
+  nitroDuration: 3.2,
+  fuelDrainIdle: 0.55,   // per second just from time
+  fuelDrainGas: 1.55,    // extra per second while gassing
+  fuelPickupAmt: 38,
+  wheelBase: 1.7,
+  wheelRadius: 0.46,
+  chunkLen: 40,
+  chunkStep: 1.25,
+  viewAhead: 220,
+  viewBehind: 60,
+  hillCycle: 900,        // distance over which hill amplitude ramps
+  cameraLag: 0.09,
+};
 
-            // Classified (Pembe) - %3.20
-            { name: "Desert Eagle", skin: "Printstream", type: "pistol", rarity: "classified", basePrice: 55.00 },
-            { name: "M4A1-S", skin: "Player Two", type: "rifle", rarity: "classified", basePrice: 60.00 },
-            { name: "USP-S", skin: "Neo-Noir", type: "pistol", rarity: "classified", basePrice: 40.00 },
+/* ============================================================
+   THREE SETUP
+============================================================ */
+const canvas = document.getElementById('gameCanvas');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:false, powerPreference:'high-performance' });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
+renderer.shadowMap.enabled = false;
 
-            // Covert (Kırmızı) - %0.64
-            { name: "AK-47", skin: "Asiimov", type: "rifle", rarity: "covert", basePrice: 180.00 },
-            { name: "AWP", skin: "Hyper Beast", type: "sniper", rarity: "covert", basePrice: 220.00 },
-            { name: "M4A4", skin: "Howl", type: "rifle", rarity: "covert", basePrice: 1500.00 },
+const scene = new THREE.Scene();
+const skyColorTop = new THREE.Color('#5aa7d6');
+scene.background = skyColorTop.clone();
+scene.fog = new THREE.Fog(skyColorTop.getHex(), 40, 210);
 
-            // Special (Altın) - %0.26
-            { name: "Karambit", skin: "Fade", type: "knife", rarity: "special", basePrice: 1200.00 },
-            { name: "M9 Bayonet", skin: "Crimson Web", type: "knife", rarity: "special", basePrice: 1500.00 },
-            { name: "Butterfly Knife", skin: "Doppler", type: "knife", rarity: "special", basePrice: 1800.00 }
-        ];
+const camera = new THREE.PerspectiveCamera(58, window.innerWidth/window.innerHeight, 0.1, 1200);
+camera.position.set(-6, 5, 10);
 
-        let audioCtx = null;
-        let isSpinning = false;
-        let lastTickIndex = -1;
-        let inventory = [];
-        let pendingWonItem = null; // Animasyon bittiğinde modala aktarılacak olan eşya
+function onResize(){
+  const w = window.innerWidth, h = window.innerHeight;
+  renderer.setSize(w, h, true);
+  camera.aspect = w/h;
+  camera.updateProjectionMatrix();
+}
+window.addEventListener('resize', onResize);
+onResize();
 
-        // Web Audio API ile Mekanik Çıtlama (Tick) Sesi Sentezi
-        function playTickSound() {
-            try {
-                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                if (audioCtx.state === 'suspended') audioCtx.resume();
+/* ---- Lights ---- */
+const ambient = new THREE.AmbientLight(0xffe9cf, 0.65);
+scene.add(ambient);
+const sun = new THREE.DirectionalLight(0xffe0b0, 1.15);
+sun.position.set(-30, 45, 20);
+scene.add(sun);
+const fillLight = new THREE.HemisphereLight(0x7fa8d9, 0x5a3a24, 0.55);
+scene.add(fillLight);
 
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
+/* Sun visual disc */
+const sunSprite = (function(){
+  const c = document.createElement('canvas'); c.width=c.height=256;
+  const ctx = c.getContext('2d');
+  const g = ctx.createRadialGradient(128,128,0,128,128,128);
+  g.addColorStop(0,'rgba(255,244,214,1)');
+  g.addColorStop(0.35,'rgba(255,210,140,0.9)');
+  g.addColorStop(1,'rgba(255,180,110,0)');
+  ctx.fillStyle=g; ctx.fillRect(0,0,256,256);
+  const tex = new THREE.CanvasTexture(c);
+  const mat = new THREE.SpriteMaterial({ map:tex, transparent:true, depthWrite:false, fog:false });
+  const spr = new THREE.Sprite(mat);
+  spr.scale.set(70,70,1);
+  scene.add(spr);
+  return spr;
+})();
 
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(140, audioCtx.currentTime); 
-                osc.frequency.exponentialRampToValueAtTime(15, audioCtx.currentTime + 0.06);
+/* ============================================================
+   TERRAIN (foreground driveable ground)
+============================================================ */
+function smoothNoise(x){
+  return Math.sin(x)*0.55 + Math.sin(x*2.13+3.1)*0.27 + Math.sin(x*4.7+1.7)*0.13 + Math.sin(x*9.3+0.4)*0.06;
+}
+function heightAt(x){
+  const startFlat = THREE.MathUtils.smoothstep(x, 4, 34); // safe flat start zone
+  const rampAmp = 1.6 + Math.min(4.2, x/CFG.hillCycle*4.2);
+  const t = x*0.045;
+  const n = smoothNoise(t) * 0.65 + smoothNoise(t*0.5+50)*0.35;
+  return n * rampAmp * startFlat;
+}
+function slopeAt(x){
+  const d=0.4;
+  return Math.atan2(heightAt(x+d)-heightAt(x-d), d*2);
+}
 
-                gain.gain.setValueAtTime(0.18, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.06);
+const terrainMat = new THREE.MeshLambertMaterial({ vertexColors:true, side:THREE.DoubleSide });
+const ZB=-3.2, ZF=3.2, FLOOR_Y=-26;
+const colTopHi = new THREE.Color('#e7b978');
+const colTopLo = new THREE.Color('#8a5a3a');
+const colWallHi = new THREE.Color('#7a3a26');
+const colWallLo = new THREE.Color('#2a150e');
 
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
+function buildChunkGeometry(x0, x1){
+  const n = Math.max(2, Math.round((x1-x0)/CFG.chunkStep));
+  const pos=[], col=[], idx=[];
+  for(let i=0;i<=n;i++){
+    const x = x0 + (x1-x0)*(i/n);
+    const h = heightAt(x);
+    const hn = THREE.MathUtils.clamp((h+4)/8, 0, 1);
+    const cTop = colTopLo.clone().lerp(colTopHi, hn);
+    const cWall = colWallLo.clone().lerp(colWallHi, hn);
+    // A: top-back, B: top-front, C: bottom-front
+    pos.push(x,h,ZB);            col.push(cTop.r,cTop.g,cTop.b);
+    pos.push(x,h,ZF);            col.push(cTop.r,cTop.g,cTop.b);
+    pos.push(x,FLOOR_Y,ZF);      col.push(cWall.r,cWall.g,cWall.b);
+  }
+  for(let i=0;i<n;i++){
+    const a0=i*3, b0=i*3+1, c0=i*3+2;
+    const a1=(i+1)*3, b1=(i+1)*3+1, c1=(i+1)*3+2;
+    // top face
+    idx.push(a0,b0,a1,  b0,b1,a1);
+    // front cliff face
+    idx.push(b0,c0,b1,  c0,c1,b1);
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos,3));
+  geo.setAttribute('color', new THREE.Float32BufferAttribute(col,3));
+  geo.setIndex(idx);
+  geo.computeVertexNormals();
+  return geo;
+}
 
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.06);
-            } catch (e) {
-                console.log("Tarayıcı ses politikası engeli.");
-            }
-        }
+let chunks = [];
+let nextChunkStart = 0;
+function addChunk(){
+  const x0 = nextChunkStart, x1 = nextChunkStart + CFG.chunkLen;
+  const geo = buildChunkGeometry(x0, x1);
+  const mesh = new THREE.Mesh(geo, terrainMat);
+  mesh.frustumCulled = false;
+  scene.add(mesh);
+  chunks.push({ mesh, x0, x1 });
+  nextChunkStart = x1;
+}
+function ensureChunks(carX){
+  while(nextChunkStart < carX + CFG.viewAhead) addChunk();
+  while(chunks.length && chunks[0].x1 < carX - CFG.viewBehind){
+    const c = chunks.shift();
+    scene.remove(c.mesh); c.mesh.geometry.dispose();
+  }
+}
 
-        // Rastgele Aşınma (Float) Değeri ve Aşınma Sınıfı Oluşturucu
-        function generateWear() {
-            const f = Math.random();
-            let label = "";
-            let priceMultiplier = 1;
+/* ============================================================
+   PARALLAX MOUNTAINS (periodic, wrapped -> true infinite)
+============================================================ */
+function buildMountainLayer(period, amp, baseY, colorNear, colorFar, harmonics){
+  const n = 140;
+  const pos=[], col=[], idx=[];
+  for(let i=0;i<=n;i++){
+    const u = (i/n - 0.5) * period * 2; // spans two periods, centered
+    let h=0;
+    for(const hkt of harmonics){ h += Math.sin(u*hkt.f*(2*Math.PI/period) + hkt.p)*hkt.a; }
+    h = h*amp + baseY;
+    const c = colorFar.clone().lerp(colorNear, THREE.MathUtils.clamp((h-baseY+amp)/(2*amp),0,1));
+    pos.push(u, h, 0);         col.push(c.r,c.g,c.b);
+    pos.push(u, -40, 0);       col.push(c.r*0.7,c.g*0.7,c.b*0.7);
+  }
+  for(let i=0;i<n;i++){
+    const a0=i*2, b0=i*2+1, a1=(i+1)*2, b1=(i+1)*2+1;
+    idx.push(a0,b0,a1, b0,b1,a1);
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos,3));
+  geo.setAttribute('color', new THREE.Float32BufferAttribute(col,3));
+  geo.setIndex(idx);
+  geo.computeVertexNormals();
+  const mat = new THREE.MeshBasicMaterial({ vertexColors:true, fog:true, side:THREE.DoubleSide });
+  const mesh = new THREE.Mesh(geo, mat);
+  return { mesh, period };
+}
+const mountainFar = buildMountainLayer(3600, 34, 10, new THREE.Color('#5f5470'), new THREE.Color('#2b2440'), [{f:1,a:1,p:0.4},{f:2.3,a:0.5,p:2},{f:4.1,a:0.25,p:1}]);
+mountainFar.mesh.position.z = -160; mountainFar.mesh.position.y = -2;
+scene.add(mountainFar.mesh);
 
-            if (f < 0.07) {
-                label = "Fabrikadan Yeni Çıkmış (Factory New)";
-                priceMultiplier = 1.5;
-            } else if (f < 0.15) {
-                label = "Az Aşınmış (Minimal Wear)";
-                priceMultiplier = 1.2;
-            } else if (f < 0.38) {
-                label = "Görevde Kullanılmış (Field-Tested)";
-                priceMultiplier = 0.9;
-            } else if (f < 0.45) {
-                label = "Eskimiş (Well-Worn)";
-                priceMultiplier = 0.7;
-            } else {
-                label = "Savaş Görmüş (Battle-Scarred)";
-                priceMultiplier = 0.4;
-            }
+const mountainNear = buildMountainLayer(2200, 22, 2, new THREE.Color('#a8593a'), new THREE.Color('#5a2f22'), [{f:1,a:1,p:1.1},{f:2.7,a:0.4,p:0.2},{f:5,a:0.2,p:2.5}]);
+mountainNear.mesh.position.z = -90; mountainNear.mesh.position.y = -3;
+scene.add(mountainNear.mesh);
 
-            return { float: f.toFixed(4), label, multiplier: priceMultiplier };
-        }
+function wrap(v,p){ return ((v % p) + p) % p - p/2; }
 
-        // Orijinal CS:GO Olasılık Algoritması
-        function rollRarity() {
-            const chance = Math.random() * 100;
-            if (chance < 0.26) return "special";
-            if (chance < 0.26 + 0.64) return "covert";
-            if (chance < 0.26 + 0.64 + 3.20) return "classified";
-            if (chance < 0.26 + 0.64 + 3.20 + 15.98) return "restricted";
-            return "milspec";
-        }
+/* Clouds */
+const cloudTex = (function(){
+  const c=document.createElement('canvas'); c.width=c.height=128;
+  const ctx=c.getContext('2d');
+  const g=ctx.createRadialGradient(64,64,0,64,64,64);
+  g.addColorStop(0,'rgba(255,255,255,0.9)');
+  g.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.fillStyle=g; ctx.fillRect(0,0,128,128);
+  return new THREE.CanvasTexture(c);
+})();
+const clouds = [];
+for(let i=0;i<10;i++){
+  const mat = new THREE.SpriteMaterial({ map:cloudTex, transparent:true, opacity:0.75, depthWrite:false, fog:true });
+  const spr = new THREE.Sprite(mat);
+  const s = 18+Math.random()*22;
+  spr.scale.set(s,s*0.5,1);
+  spr.position.set(Math.random()*400-100, 22+Math.random()*18, -60-Math.random()*70);
+  spr.userData.period = 500;
+  scene.add(spr); clouds.push(spr);
+}
 
-        function getRandomItem() {
-            const targetRarity = rollRarity();
-            const pool = itemDatabase.filter(i => i.rarity === targetRarity);
-            // Seçilen havuzdan rastgele bir silah
-            const item = pool[Math.floor(Math.random() * pool.length)];
-            const wearInfo = generateWear();
-            const finalPrice = (item.basePrice * wearInfo.multiplier).toFixed(2);
+/* ============================================================
+   CAR
+============================================================ */
+const car = new THREE.Group();
+scene.add(car);
 
-            return {
-                ...item,
-                float: wearInfo.float,
-                wearLabel: wearInfo.label,
-                price: parseFloat(finalPrice)
-            };
-        }
+const bodyMat = new THREE.MeshPhongMaterial({ color:0xe8543a, shininess:60, specular:0x552211 });
+const trimMat = new THREE.MeshPhongMaterial({ color:0xf4ead9, shininess:40 });
+const glassMat = new THREE.MeshPhongMaterial({ color:0x274052, shininess:90, transparent:true, opacity:0.85 });
+const wheelMat = new THREE.MeshPhongMaterial({ color:0x1a1a1a, shininess:20 });
+const rimMat = new THREE.MeshPhongMaterial({ color:0xdedede, shininess:80 });
 
-        // Kart Arayüzü HTML Oluşturma
-        function createCardHTML(item) {
-            return `
-                <div class="item-card ${item.rarity}">
-                    <div class="weapon-name">${item.name}</div>
-                    ${weaponSVGs[item.type]}
-                    <div class="skin-name">${item.skin}</div>
-                </div>
-            `;
-        }
+const chassis = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.5, 1.3), bodyMat);
+chassis.position.set(0, 0.62, 0);
+car.add(chassis);
 
-        // KUTU AÇMA ANA FONKSİYONU
-        function openCase() {
-            if (isSpinning) return;
-            isSpinning = true;
-            document.getElementById('openBtn').disabled = true;
+const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.05, 0.5, 1.15), glassMat);
+cabin.position.set(-0.05, 1.02, 0);
+car.add(cabin);
 
-            const track = document.getElementById('carouselTrack');
-            track.style.transition = 'none';
-            track.style.transform = 'translateX(0px)';
+const cabinRoof = new THREE.Mesh(new THREE.BoxGeometry(0.95,0.12,1.1), trimMat);
+cabinRoof.position.set(-0.05,1.28,0);
+car.add(cabinRoof);
 
-            // Rulet Şeridini Yeniden Doldur (Toplam 75 eşya spin atacak)
-            const totalItemsInSpin = 75;
-            const winningIndex = 65; // Kazanan kart 65. sırada yer alır
-            
-            let trackHTML = '';
-            let spinItems = [];
+const bumperF = new THREE.Mesh(new THREE.BoxGeometry(0.25,0.32,1.35), trimMat);
+bumperF.position.set(1.05, 0.5, 0);
+car.add(bumperF);
 
-            for (let i = 0; i < totalItemsInSpin; i++) {
-                if (i === winningIndex) {
-                    pendingWonItem = getRandomItem();
-                    spinItems.push(pendingWonItem);
-                } else {
-                    // Rastgele doldurma kartları
-                    const randomItem = itemDatabase[Math.floor(Math.random() * itemDatabase.length)];
-                    spinItems.push(randomItem);
-                }
-                trackHTML += createCardHTML(spinItems[i]);
-            }
+const spoiler = new THREE.Mesh(new THREE.BoxGeometry(0.14,0.35,1.25), trimMat);
+spoiler.position.set(-1.05,0.95,0);
+car.add(spoiler);
 
-            track.innerHTML = trackHTML;
+function makeWheel(){
+  const g = new THREE.Group();
+  const tire = new THREE.Mesh(new THREE.CylinderGeometry(CFG.wheelRadius, CFG.wheelRadius, 0.42, 20), wheelMat);
+  tire.rotation.z = Math.PI/2;
+  g.add(tire);
+  const rim = new THREE.Mesh(new THREE.CylinderGeometry(CFG.wheelRadius*0.5, CFG.wheelRadius*0.5, 0.44, 10), rimMat);
+  rim.rotation.z = Math.PI/2;
+  g.add(rim);
+  return g;
+}
+const wheelF = makeWheel(); wheelF.position.set(CFG.wheelBase/2, 0, 0); car.add(wheelF);
+const wheelR = makeWheel(); wheelR.position.set(-CFG.wheelBase/2, 0, 0); car.add(wheelR);
 
-            // Kart Ölçüleri: Kart Genişliği: 130px + Margins: 10px (sol/sağ 5px) = 140px toplam kaplama alanı.
-            const cardFullWidth = 140; 
-            const containerWidth = document.querySelector('.roulette-viewport').offsetWidth;
-            
-            // Tam ortalamak için ince hesap
-            const centerOffset = containerWidth / 2;
-            const targetCardOffset = (winningIndex * cardFullWidth) + (cardFullWidth / 2);
-            
-            // CS:GO'daki gibi tam merkez yerine kartın içinde rastgele bir yere durma simülasyonu
-            const randomOffsetInsideCard = Math.floor(Math.random() * 80) - 40; // -40px ile +40px arası salınım
+const susMat = new THREE.MeshPhongMaterial({ color:0x333333 });
+const susF = new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.05,0.55,6), susMat);
+susF.position.set(CFG.wheelBase/2, 0.3, 0); car.add(susF);
+const susR = new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.05,0.55,6), susMat);
+susR.position.set(-CFG.wheelBase/2, 0.3, 0); car.add(susR);
 
-            const finalTranslate = -(targetCardOffset - centerOffset + randomOffsetInsideCard);
+/* Exhaust smoke + dust particles (simple sprite pool) */
+const smokeTex = cloudTex;
+function makeParticlePool(count, color, size){
+  const group = new THREE.Group();
+  const items = [];
+  for(let i=0;i<count;i++){
+    const mat = new THREE.SpriteMaterial({ map:smokeTex, color:color, transparent:true, opacity:0, depthWrite:false });
+    const spr = new THREE.Sprite(mat);
+    spr.scale.set(size,size,1);
+    group.add(spr);
+    items.push({ spr, life:0, active:false });
+  }
+  scene.add(group);
+  return items;
+}
+const exhaustPool = makeParticlePool(18, 0xbbbbbb, 0.9);
+const dustPool = makeParticlePool(22, 0xd9a86a, 0.8);
+let exhaustCursor=0, dustCursor=0;
+function emit(pool, cursorRef, pos, vel, life){
+  const idx = cursorRef.i % pool.length; cursorRef.i++;
+  const p = pool[idx];
+  p.active = true; p.life = life; p.maxLife = life;
+  p.spr.position.copy(pos);
+  p.vel = vel;
+  p.spr.material.opacity = 0.55;
+}
+const exCur={i:0}, duCur={i:0};
 
-            // Akıcı bir frenleme ve durma için özel Cubic-Bezier (CS:GO tekerlek duruş hissi)
-            setTimeout(() => {
-                track.style.transition = 'transform 6.5s cubic-bezier(0.08, 0.6, 0.1, 1)';
-                track.style.transform = `translateX(${finalTranslate}px)`;
-                
-                // Kayma hızıyla tetiklenen dinamik çıtlama takibi
-                lastTickIndex = -1;
-                requestAnimationFrame(updateTickPhysics);
-            }, 50);
+/* ============================================================
+   PICKUPS (coins, fuel, nitro)
+============================================================ */
+const coinGeo = new THREE.TorusGeometry(0.34, 0.13, 8, 16);
+const coinMat = new THREE.MeshPhongMaterial({ color:0xffd23f, shininess:100, specular:0xffffff, emissive:0x553300, emissiveIntensity:0.3 });
+const fuelGeo = new THREE.CylinderGeometry(0.28,0.28,0.62,10);
+const fuelMat = new THREE.MeshPhongMaterial({ color:0xe74c3c });
+const fuelCapMat = new THREE.MeshPhongMaterial({ color:0xf4ead9 });
+const nitroGeo = new THREE.OctahedronGeometry(0.38,0);
+const nitroMat = new THREE.MeshPhongMaterial({ color:0x4fd6ff, emissive:0x0b4a5a, shininess:100 });
 
-            // Spin Bitiminde Modalı Aç
-            setTimeout(() => {
-                isSpinning = false;
-                showWinnerModal(pendingWonItem);
-            }, 6600);
-        }
+let pickups = [];
+let nextPickupX = 60;
+function spawnPickupsUpTo(targetX){
+  while(nextPickupX < targetX){
+    const gap = 14 + Math.random()*16;
+    nextPickupX += gap;
+    const roll = Math.random();
+    const h = heightAt(nextPickupX);
+    if(roll < 0.62){
+      // coin cluster
+      const count = 1 + Math.floor(Math.random()*4);
+      for(let k=0;k<count;k++){
+        const m = new THREE.Mesh(coinGeo, coinMat);
+        m.position.set(nextPickupX + k*0.9, h + 1.1, 0);
+        m.rotation.x = Math.PI/2;
+        scene.add(m);
+        pickups.push({ mesh:m, type:'coin', x:m.position.x, y:m.position.y, collected:false });
+      }
+    } else if(roll < 0.85){
+      const m = new THREE.Mesh(fuelGeo, fuelMat);
+      const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.16,0.16,0.14,10), fuelCapMat);
+      cap.position.y = 0.38; m.add(cap);
+      m.position.set(nextPickupX, h + 1.0, 0);
+      scene.add(m);
+      pickups.push({ mesh:m, type:'fuel', x:m.position.x, y:m.position.y, collected:false });
+    } else {
+      const m = new THREE.Mesh(nitroGeo, nitroMat);
+      m.position.set(nextPickupX, h + 1.15, 0);
+      scene.add(m);
+      pickups.push({ mesh:m, type:'nitro', x:m.position.x, y:m.position.y, collected:false });
+    }
+  }
+  pickups = pickups.filter(p=>{
+    if(p.x < state.carX - CFG.viewBehind){ scene.remove(p.mesh); return false; }
+    return true;
+  });
+}
 
-        // Kayma konumunu eşzamanlı izleyip tam kart geçişlerinde çıtlama sesini tetikleyen döngü
-        function updateTickPhysics() {
-            if (!isSpinning) return;
+/* ============================================================
+   AUDIO (synthesized, no external files)
+============================================================ */
+let actx = null, engineOsc=null, engineGain=null;
+function initAudio(){
+  if(actx) return;
+  try{
+    actx = new (window.AudioContext||window.webkitAudioContext)();
+    engineOsc = actx.createOscillator();
+    engineOsc.type = 'sawtooth';
+    engineGain = actx.createGain();
+    engineGain.gain.value = 0.0;
+    const filt = actx.createBiquadFilter(); filt.type='lowpass'; filt.frequency.value=800;
+    engineOsc.connect(filt); filt.connect(engineGain); engineGain.connect(actx.destination);
+    engineOsc.frequency.value = 60;
+    engineOsc.start();
+  }catch(e){ /* audio unavailable, silently ignore */ }
+}
+function beep(freq, dur, type, vol){
+  if(!actx) return;
+  const o = actx.createOscillator(); const g = actx.createGain();
+  o.type = type||'sine'; o.frequency.value = freq;
+  g.gain.value = vol||0.12;
+  o.connect(g); g.connect(actx.destination);
+  o.start();
+  g.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + dur);
+  o.stop(actx.currentTime + dur);
+}
 
-            const track = document.getElementById('carouselTrack');
-            const style = window.getComputedStyle(track);
-            const matrix = new DOMMatrixReadOnly(style.transform);
-            const currentTranslateX = Math.abs(matrix.m41); 
+/* ============================================================
+   GAME STATE
+============================================================ */
+const state = {
+  carX: 4, vel: 0, rot: 0,
+  fuel: 100, coins: 0, distance: 0, best: Number(localStorage.getItem('canyonRallyBest')||0),
+  nitroT: 0, running:false, camX:-6, camY:5, camZ:10, camLookX:0
+};
+document.getElementById('bestVal').textContent = Math.round(state.best);
 
-            const cardFullWidth = 140; 
-            // Mevcut konumun kaçıncı kart sınırına ulaştığını analiz et
-            const currentItemIndex = Math.floor((currentTranslateX + 70) / cardFullWidth);
+const input = { gas:false, brake:false };
 
-            if (currentItemIndex !== lastTickIndex && currentItemIndex >= 0) {
-                playTickSound();
-                lastTickIndex = currentItemIndex;
-            }
+function resetGame(){
+  state.carX = 4; state.vel = 0; state.rot = 0;
+  state.fuel = 100; state.coins = 0; state.distance = 0; state.nitroT = 0;
+  pickups.forEach(p=>scene.remove(p.mesh)); pickups = [];
+  nextPickupX = 60;
+  chunks.forEach(c=>{ scene.remove(c.mesh); c.mesh.geometry.dispose(); }); chunks=[]; nextChunkStart=0;
+  ensureChunks(state.carX);
+  spawnPickupsUpTo(state.carX + CFG.viewAhead);
+  updateHUD();
+  state.running = true;
+}
 
-            requestAnimationFrame(updateTickPhysics);
-        }
+function updateHUD(){
+  document.getElementById('coinVal').textContent = state.coins;
+  document.getElementById('distVal').textContent = Math.round(state.distance) + ' m';
+  document.getElementById('fuelBarFill').style.width = Math.max(0,state.fuel) + '%';
+}
 
-        // Kazanılan Eşyanın Bilgilerini Modala Yazdır
-        function showWinnerModal(item) {
-            const modal = document.getElementById('modal');
-            const rarityText = document.getElementById('modalRarityText');
-            const glowBg = document.getElementById('modalGlowBg');
-            const glowContainer = document.getElementById('modalGlowContainer');
-            const title = document.getElementById('modalTitle');
-            const wear = document.getElementById('modalWear');
-            const price = document.getElementById('modalPrice');
+function popText(txt, worldPos){
+  const v = worldPos.clone().project(camera);
+  const x = (v.x*0.5+0.5)*window.innerWidth;
+  const y = (1-(v.y*0.5+0.5))*window.innerHeight;
+  const el = document.createElement('div');
+  el.className='float-pop'; el.textContent = txt;
+  el.style.left = x+'px'; el.style.top = y+'px';
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(), 950);
+}
 
-            // Eski SVG'yi temizle ve yeni kazanılanı ekle
-            const existingSVG = glowContainer.querySelector('svg');
-            if (existingSVG) existingSVG.remove();
-            
-            glowContainer.insertAdjacentHTML('beforeend', weaponSVGs[item.type]);
+function collect(p){
+  p.collected = true;
+  scene.remove(p.mesh);
+  if(p.type==='coin'){ state.coins++; popText('+1', p.mesh.position); beep(880,0.12,'triangle',0.1); }
+  else if(p.type==='fuel'){ state.fuel = Math.min(100, state.fuel+CFG.fuelPickupAmt); popText('+YAKIT', p.mesh.position); beep(440,0.18,'sine',0.12); }
+  else if(p.type==='nitro'){
+    state.nitroT = CFG.nitroDuration;
+    popText('NİTRO!', p.mesh.position);
+    beep(220,0.25,'sawtooth',0.14);
+    const flash = document.getElementById('nitroFlash');
+    flash.style.opacity=1; flash.style.transform='translateX(-50%) scale(1.15)';
+    setTimeout(()=>{ flash.style.opacity=0; flash.style.transform='translateX(-50%) scale(0.8)'; }, 900);
+  }
+}
 
-            // Renk ve Nadirlik Atamaları
-            let colorHex = 'var(--milspec)';
-            let rarityName = 'Tüketici Sınıfı';
-            if (item.rarity === 'restricted') { colorHex = 'var(--restricted)'; rarityName = 'Sınırlı'; }
-            if (item.rarity === 'classified') { colorHex = 'var(--classified)'; rarityName = 'Gizli'; }
-            if (item.rarity === 'covert') { colorHex = 'var(--covert)'; rarityName = 'Gizli Ötesi'; }
-            if (item.rarity === 'special') { colorHex = 'var(--special)'; rarityName = 'Özel Nadir Eşya ★'; }
+function gameOver(){
+  state.running = false;
+  if(state.distance > state.best){
+    state.best = state.distance;
+    localStorage.setItem('canyonRallyBest', String(Math.round(state.best)));
+  }
+  document.getElementById('finalDist').textContent = Math.round(state.distance);
+  document.getElementById('finalCoins').textContent = state.coins;
+  document.getElementById('finalBest').textContent = Math.round(state.best);
+  document.getElementById('bestVal').textContent = Math.round(state.best);
+  document.getElementById('gameOverOverlay').classList.remove('hidden');
+}
 
-            rarityText.innerText = rarityName;
-            rarityText.style.color = colorHex;
-            glowBg.style.backgroundColor = colorHex;
-            glowContainer.querySelector('svg').style.color = colorHex;
+/* ============================================================
+   PHYSICS UPDATE
+============================================================ */
+function updatePhysics(dt){
+  const slope = slopeAt(state.carX);
+  const speedMult = state.nitroT>0 ? CFG.nitroMult : 1;
 
-            title.innerText = `${item.name} | ${item.skin}`;
-            wear.innerText = `${item.wearLabel} (Float: ${item.float})`;
-            price.innerText = `$${item.price.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+  let accel = -Math.sin(slope) * CFG.gravity;
 
-            modal.classList.add('active');
-        }
+  if(input.gas){
+    accel += CFG.engineAccel * speedMult * Math.max(0.35, Math.cos(slope));
+  }
+  if(input.brake){
+    if(state.vel > 0.15) accel -= CFG.brakeAccel;
+    else accel -= CFG.reverseAccel;
+  }
+  accel -= state.vel * CFG.friction * 0.4;
 
-        function closeModal() {
-            document.getElementById('modal').classList.remove('active');
-            
-            // Eşyayı yerel envantere dahil et
-            inventory.unshift(pendingWonItem);
-            updateInventoryUI();
+  state.vel += accel * dt;
+  const maxS = CFG.maxSpeed * speedMult;
+  state.vel = THREE.MathUtils.clamp(state.vel, CFG.maxReverse, maxS);
 
-            document.getElementById('openBtn').disabled = false;
-        }
+  const dx = state.vel * Math.cos(slope) * dt;
+  state.carX += dx;
+  if(state.carX < 1) state.carX = 1;
+  state.distance = Math.max(state.distance, state.carX - 4);
 
-        // Envanter Arayüzü Güncelleyici
-        function updateInventoryUI() {
-            const grid = document.getElementById('inventoryGrid');
-            const totalValEl = document.getElementById('totalValue');
-            grid.innerHTML = '';
+  if(state.nitroT>0) state.nitroT = Math.max(0, state.nitroT - dt);
 
-            let totalVal = 0;
+  // fuel drain
+  let drain = CFG.fuelDrainIdle*dt;
+  if(input.gas) drain += CFG.fuelDrainGas*dt;
+  state.fuel = Math.max(0, state.fuel - drain);
+  if(state.fuel<=0 && Math.abs(state.vel)<0.05 && state.running){
+    gameOver();
+  } else if(state.fuel<=0){
+    // out of fuel: engine cuts, only gravity/friction act
+    input.gas = false;
+  }
 
-            inventory.forEach((item) => {
-                totalVal += item.price;
+  // place car
+  const hf = heightAt(state.carX + CFG.wheelBase/2);
+  const hr = heightAt(state.carX - CFG.wheelBase/2);
+  const groundY = (hf+hr)/2 + CFG.wheelRadius;
+  const targetRot = Math.atan2(hf-hr, CFG.wheelBase);
+  state.rot += (targetRot - state.rot) * Math.min(1, dt*10);
 
-                let colorHex = 'var(--milspec)';
-                if (item.rarity === 'restricted') colorHex = 'var(--restricted)';
-                if (item.rarity === 'classified') colorHex = 'var(--classified)';
-                if (item.rarity === 'covert') colorHex = 'var(--covert)';
-                if (item.rarity === 'special') colorHex = 'var(--special)';
+  car.position.set(state.carX, groundY, 0);
+  car.rotation.z = state.rot;
 
-                const invCard = document.createElement('div');
-                invCard.className = `inv-card`;
-                invCard.style.borderLeftColor = colorHex;
-                invCard.innerHTML = `
-                    <div class="name" style="color: ${colorHex}">${item.name}</div>
-                    ${weaponSVGs[item.type]}
-                    <div class="price">$${item.price.toFixed(2)}</div>
-                `;
-                // SVG rengini ata
-                invCard.querySelector('svg').style.color = colorHex;
-                grid.appendChild(invCard);
-            });
+  const wheelSpin = state.vel*dt*3.2;
+  wheelF.rotation.x -= wheelSpin;
+  wheelR.rotation.x -= wheelSpin;
 
-            totalValEl.innerText = `$${totalVal.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
-        }
+  // particles
+  if(Math.abs(state.vel) > 2){
+    if(Math.random()<0.6){
+      const back = new THREE.Vector3(-1.15,0.75,0).applyEuler(car.rotation).add(car.position);
+      emit(exhaustPool, exCur, back, new THREE.Vector3(-1.5,1.0+Math.random()*0.5,0), 0.9);
+    }
+    if(Math.random()<0.5){
+      const wpos = new THREE.Vector3(state.vel>0?-CFG.wheelBase/2:CFG.wheelBase/2,0.15,0).applyEuler(car.rotation).add(car.position);
+      emit(dustPool, duCur, wpos, new THREE.Vector3(-state.vel*0.4,0.6,0), 0.6);
+    }
+  }
 
-        // Sayfa ilk açıldığında gösteri amaçlı pasif kartlar yükle
-        window.onload = () => {
-            const track = document.getElementById('carouselTrack');
-            let initialHTML = '';
-            for (let i = 0; i < 15; i++) {
-                const randomItem = itemDatabase[Math.floor(Math.random() * itemDatabase.length)];
-                initialHTML += createCardHTML(randomItem);
-            }
-            track.innerHTML = initialHTML;
-        };
-    </script>
+  // pickup collisions
+  for(const p of pickups){
+    if(p.collected) continue;
+    const dx2 = p.x - state.carX, dy2 = p.y - groundY;
+    if(dx2*dx2 + dy2*dy2 < 1.15) collect(p);
+  }
+
+  // audio engine pitch
+  if(engineOsc){
+    const target = 55 + Math.abs(state.vel)*14 + (input.gas?40:0);
+    engineOsc.frequency.setTargetAtTime(target, actx.currentTime, 0.08);
+    engineGain.gain.setTargetAtTime(state.running? 0.05+Math.min(0.05,Math.abs(state.vel)*0.004):0, actx.currentTime, 0.1);
+  }
+}
+
+function updateParticleAnim(dt){
+  [exhaustPool, dustPool].forEach(pool=>{
+    pool.forEach(p=>{
+      if(!p.active) return;
+      p.life -= dt;
+      if(p.life<=0){ p.active=false; p.spr.material.opacity=0; return; }
+      p.spr.position.addScaledVector(p.vel, dt);
+      const t = p.life/p.maxLife;
+      p.spr.material.opacity = t*0.5;
+      p.spr.scale.setScalar((1-t)*1.3 + 0.5);
+    });
+  });
+}
+
+/* ============================================================
+   CAMERA + SKY
+============================================================ */
+const skyStops = [
+  { c1:'#161028', c2:'#3a2440', fog:'#241a30' }, // gece
+  { c1:'#ff8f5c', c2:'#ffd27a', fog:'#e08a52' }, // şafak/gün batımı
+  { c1:'#5aa7d6', c2:'#eaf6ff', fog:'#bcd9ee' }, // gündüz
+  { c1:'#ff7a3c', c2:'#3a2440', fog:'#7a3a3a' }, // akşam
+];
+function lerpColor(a,b,t){ return new THREE.Color(a).lerp(new THREE.Color(b), t); }
+function updateSky(){
+  const cycle = 1400;
+  const t = (state.distance % cycle)/cycle * skyStops.length;
+  const i = Math.floor(t)%skyStops.length;
+  const j = (i+1)%skyStops.length;
+  const f = t - Math.floor(t);
+  const s1 = skyStops[i], s2 = skyStops[j];
+  const top = lerpColor(s1.c1, s2.c1, f);
+  const bottom = lerpColor(s1.c2, s2.c2, f);
+  const fogc = lerpColor(s1.fog, s2.fog, f);
+  scene.background = top;
+  scene.fog.color = fogc;
+  sun.intensity = 0.7 + (top.r+top.g+top.b)/3*0.8;
+  ambient.intensity = 0.4 + (top.r+top.g+top.b)/3*0.4;
+  sunSprite.position.set(state.carX + 60 - (state.distance%cycle)*0.12, 26, -90);
+  sunSprite.material.color = bottom;
+}
+
+function updateCamera(dt){
+  const targetX = state.carX - 6.4;
+  const targetY = heightAt(state.carX) + 5.3;
+  const targetZ = 9.5;
+  state.camX += (targetX-state.camX)*Math.min(1,dt*3.2);
+  state.camY += (targetY-state.camY)*Math.min(1,dt*3.2);
+  state.camZ += (targetZ-state.camZ)*Math.min(1,dt*3.2);
+  camera.position.set(state.camX, state.camY, state.camZ);
+  const lookAt = new THREE.Vector3(state.carX + 3.2, heightAt(state.carX+2)+0.8, 0);
+  camera.lookAt(lookAt);
+
+  mountainFar.mesh.position.x = state.carX*0.12 - wrap(state.carX*0.12, mountainFar.period);
+  mountainFar.mesh.position.x = wrap(state.carX*0.15, mountainFar.period)*-1 + state.carX*0.15;
+  mountainFar.mesh.position.x = state.carX*0.85;
+  mountainNear.mesh.position.x = state.carX*0.65;
+
+  clouds.forEach(c=>{
+    let rel = (c.position.x - state.carX*0.3);
+    if(rel < -220) c.position.x += 440;
+    if(rel > 220) c.position.x -= 440;
+  });
+}
+
+/* ============================================================
+   MAIN LOOP
+============================================================ */
+const clock = new THREE.Clock();
+function animate(){
+  requestAnimationFrame(animate);
+  const dt = Math.min(0.05, clock.getDelta());
+  if(state.running){
+    updatePhysics(dt);
+    ensureChunks(state.carX);
+    spawnPickupsUpTo(state.carX + CFG.viewAhead);
+    pickups.forEach(p=>{ if(!p.collected){ p.mesh.rotation.y += dt*2.2; } });
+  }
+  updateParticleAnim(dt);
+  updateCamera(dt);
+  updateSky();
+  updateHUD();
+  renderer.render(scene, camera);
+}
+
+/* ============================================================
+   INPUT WIRING
+============================================================ */
+const gasBtn = document.getElementById('gasBtn');
+const brakeBtn = document.getElementById('brakeBtn');
+function bindHold(el, onDown, onUp){
+  const down = (e)=>{ e.preventDefault(); el.classList.add('pressed'); onDown(); };
+  const up = (e)=>{ if(e) e.preventDefault(); el.classList.remove('pressed'); onUp(); };
+  el.addEventListener('touchstart', down, {passive:false});
+  el.addEventListener('touchend', up, {passive:false});
+  el.addEventListener('touchcancel', up, {passive:false});
+  el.addEventListener('mousedown', down);
+  window.addEventListener('mouseup', up);
+  el.addEventListener('mouseleave', (e)=>{ if(e.buttons!==1){} });
+}
+bindHold(gasBtn, ()=>{ input.gas=true; }, ()=>{ input.gas=false; });
+bindHold(brakeBtn, ()=>{ input.brake=true; }, ()=>{ input.brake=false; });
+
+window.addEventListener('keydown', (e)=>{
+  if(e.code==='ArrowRight'||e.code==='ArrowUp'||e.code==='Space') input.gas=true;
+  if(e.code==='ArrowLeft'||e.code==='ArrowDown') input.brake=true;
+});
+window.addEventListener('keyup', (e)=>{
+  if(e.code==='ArrowRight'||e.code==='ArrowUp'||e.code==='Space') input.gas=false;
+  if(e.code==='ArrowLeft'||e.code==='ArrowDown') input.brake=false;
+});
+
+/* ============================================================
+   FULLSCREEN + ORIENTATION LOCK
+============================================================ */
+function goFullscreenLandscape(){
+  const el = document.documentElement;
+  const req = el.requestFullscreen||el.webkitRequestFullscreen||el.mozRequestFullScreen||el.msRequestFullscreen;
+  const doLock = ()=>{
+    if(screen.orientation && screen.orientation.lock){
+      screen.orientation.lock('landscape').catch(()=>{});
+    }
+  };
+  if(req){
+    Promise.resolve(req.call(el)).then(doLock).catch(doLock);
+  } else {
+    doLock();
+  }
+}
+document.getElementById('fsBtn').addEventListener('click', goFullscreenLandscape);
+document.getElementById('fsBtnStart').addEventListener('click', goFullscreenLandscape);
+
+function checkRotateHint(){
+  const hint = document.getElementById('rotateHint');
+  if(window.innerHeight > window.innerWidth && window.innerWidth < 900){
+    hint.classList.add('show');
+  } else {
+    hint.classList.remove('show');
+  }
+}
+window.addEventListener('resize', checkRotateHint);
+window.addEventListener('orientationchange', checkRotateHint);
+checkRotateHint();
+
+/* ============================================================
+   START / RESTART FLOW
+============================================================ */
+document.getElementById('startBtn').addEventListener('click', ()=>{
+  initAudio();
+  goFullscreenLandscape();
+  document.getElementById('startOverlay').classList.add('hidden');
+  resetGame();
+});
+document.getElementById('restartBtn').addEventListener('click', ()=>{
+  document.getElementById('gameOverOverlay').classList.add('hidden');
+  resetGame();
+});
+
+/* init scene content before start */
+ensureChunks(state.carX);
+spawnPickupsUpTo(state.carX + CFG.viewAhead);
+updateCamera(0);
+updateSky();
+animate();
+
+})();
+</script>
 </body>
 </html>
