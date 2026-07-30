@@ -1,563 +1,383 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Backrooms Suspects FPS</title>
-  <style>
-    :root {
-      --bg: #0e1116;
-      --panel: rgba(18, 23, 31, 0.86);
-      --panel-2: rgba(24, 31, 43, 0.92);
-      --line: rgba(255,255,255,0.1);
-      --text: #eef3ff;
-      --muted: #98a7c2;
-      --good: #7fffb0;
-      --warn: #ffd65c;
-      --danger: #ff5d73;
-      --accent: #6aa8ff;
-      --shadow: 0 20px 60px rgba(0,0,0,0.35);
-    }
-    * { box-sizing: border-box; }
-    html, body {
-      margin: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background: radial-gradient(circle at top, #1b2130, #08090d 65%);
-      color: var(--text);
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      touch-action: none;
-    }
-    canvas { display: block; }
-    #app, #gameCanvas { position: fixed; inset: 0; }
-    .overlay {
-      position: fixed;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: linear-gradient(180deg, rgba(6,8,12,0.45), rgba(6,8,12,0.78));
-      backdrop-filter: blur(10px);
-      z-index: 20;
-    }
-    .hidden { display: none !important; }
-    .panel {
-      width: min(980px, calc(100vw - 32px));
-      max-height: calc(100vh - 32px);
-      overflow: auto;
-      border: 1px solid var(--line);
-      border-radius: 24px;
-      background: linear-gradient(180deg, rgba(24,28,36,0.96), rgba(14,17,22,0.96));
-      box-shadow: var(--shadow);
-      padding: 24px;
-    }
-    .hero {
-      display: grid;
-      grid-template-columns: 1.15fr 0.85fr;
-      gap: 22px;
-    }
-    .heroCard, .controlCard, .smallPanel, .voteCard {
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      padding: 18px;
-    }
-    .heroTitle {
-      margin: 0 0 10px;
-      font-size: clamp(26px, 4vw, 42px);
-      letter-spacing: 0.4px;
-      font-weight: 800;
-    }
-    .subtitle { color: var(--muted); line-height: 1.55; }
-    .glow {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 12px;
-      border-radius: 999px;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.08);
-      color: #d9e8ff;
-      font-size: 13px;
-      margin: 0 10px 10px 0;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 14px;
-      margin-top: 18px;
-    }
-    .field { display: grid; gap: 8px; }
-    .field label {
-      color: #dce6fa;
-      font-size: 14px;
-      font-weight: 600;
-    }
-    .field input, .field select {
-      width: 100%;
-      background: rgba(255,255,255,0.05);
-      color: var(--text);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 14px;
-      padding: 12px 14px;
-      font-size: 15px;
-      outline: none;
-    }
-    .field input[type="range"] {
-      padding: 0;
-      accent-color: var(--accent);
-    }
-    .row {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 12px;
-    }
-    .btn {
-      appearance: none;
-      border: 1px solid rgba(255,255,255,0.1);
-      background: linear-gradient(180deg, rgba(104,166,255,0.95), rgba(78,120,255,0.95));
-      color: white;
-      border-radius: 14px;
-      padding: 13px 18px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: transform 0.15s ease, filter 0.2s ease, opacity 0.2s ease;
-      box-shadow: 0 12px 30px rgba(45, 91, 255, 0.28);
-    }
-    .btn:hover { filter: brightness(1.05); }
-    .btn:active { transform: translateY(1px) scale(0.99); }
-    .btn.secondary {
-      background: rgba(255,255,255,0.05);
-      box-shadow: none;
-    }
-    .btn.danger {
-      background: linear-gradient(180deg, rgba(255,106,130,0.98), rgba(203,47,72,0.98));
-      box-shadow: 0 12px 28px rgba(203,47,72,0.28);
-    }
-    .btn.warn {
-      background: linear-gradient(180deg, rgba(255,208,98,0.98), rgba(227,166,31,0.98));
-      box-shadow: 0 12px 28px rgba(227,166,31,0.28);
-      color: #201400;
-    }
-    .btn:disabled { opacity: 0.45; cursor: not-allowed; filter: grayscale(0.2); }
-    .meta {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
-      margin-top: 14px;
-    }
-    .stat {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.06);
-      border-radius: 14px;
-      padding: 12px;
-    }
-    .stat b { display: block; font-size: 20px; margin-bottom: 4px; }
-    .stat span { color: var(--muted); font-size: 13px; }
-    #hud {
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 10;
-    }
-    #topBar {
-      position: absolute;
-      top: 14px;
-      left: 14px;
-      right: 14px;
-      display: flex;
-      justify-content: space-between;
-      gap: 14px;
-      align-items: flex-start;
-    }
-    .hudBox {
-      min-width: 230px;
-      max-width: min(420px, 55vw);
-      background: rgba(9, 12, 17, 0.58);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 16px;
-      padding: 12px 14px;
-      backdrop-filter: blur(8px);
-      pointer-events: auto;
-    }
-    .hudTitle { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
-    .progress {
-      height: 10px;
-      border-radius: 999px;
-      background: rgba(255,255,255,0.08);
-      overflow: hidden;
-      margin: 8px 0;
-    }
-    .progress > div {
-      height: 100%;
-      width: 0%;
-      background: linear-gradient(90deg, #71f6b1, #5ca8ff);
-      border-radius: inherit;
-      transition: width 0.2s ease;
-    }
-    #centerHint {
-      position: absolute;
-      left: 50%; top: 50%;
-      transform: translate(-50%, -50%);
-      text-align: center;
-      color: #f0f5ff;
-      text-shadow: 0 2px 16px rgba(0,0,0,0.55);
-      font-size: 14px;
-      line-height: 1.4;
-      padding: 10px 14px;
-      border-radius: 12px;
-      background: rgba(4,6,9,0.16);
-    }
-    #crosshair {
-      position: absolute;
-      left: 50%; top: 50%;
-      width: 16px; height: 16px;
-      transform: translate(-50%, -50%);
-      opacity: 0.85;
-    }
-    #crosshair::before, #crosshair::after {
-      content: "";
-      position: absolute;
-      background: rgba(255,255,255,0.9);
-      border-radius: 999px;
-    }
-    #crosshair::before { left: 7px; top: 0; width: 2px; height: 16px; }
-    #crosshair::after { left: 0; top: 7px; width: 16px; height: 2px; }
-    #bottomRight {
-      position: absolute;
-      right: 18px;
-      bottom: 18px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      align-items: flex-end;
-      pointer-events: auto;
-    }
-    .actionBtn {
-      min-width: 170px;
-      justify-content: center;
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 15px;
-    }
-    #mobileControls {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-    }
-    .stickArea, .lookArea {
-      position: absolute;
-      bottom: 18px;
-      width: min(38vw, 220px);
-      height: min(38vw, 220px);
-      border-radius: 50%;
-      pointer-events: auto;
-      touch-action: none;
-    }
-    .stickArea {
-      left: 18px;
-      background: radial-gradient(circle, rgba(255,255,255,0.12), rgba(255,255,255,0.02) 70%);
-      border: 1px solid rgba(255,255,255,0.08);
-    }
-    .lookArea {
-      right: 18px;
-      background: radial-gradient(circle, rgba(106,168,255,0.09), rgba(255,255,255,0.01) 70%);
-      border: 1px solid rgba(255,255,255,0.06);
-    }
-    .stickKnob {
-      position: absolute;
-      left: 50%; top: 50%;
-      width: 78px; height: 78px;
-      transform: translate(-50%, -50%);
-      border-radius: 50%;
-      background: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.22), rgba(255,255,255,0.08));
-      border: 1px solid rgba(255,255,255,0.12);
-      box-shadow: 0 14px 30px rgba(0,0,0,0.18);
-    }
-    #jumpBtn {
-      position: absolute;
-      right: 22px;
-      bottom: calc(min(38vw, 220px) + 34px);
-      width: 84px; height: 84px;
-      border-radius: 50%;
-      pointer-events: auto;
-      border: 1px solid rgba(255,255,255,0.12);
-      background: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.22), rgba(255,255,255,0.08));
-      color: white;
-      font-weight: 800;
-      font-size: 15px;
-      box-shadow: var(--shadow);
-    }
-    #meetingOverlay .panel { width: min(920px, calc(100vw - 20px)); }
-    .meetingTop {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 18px;
-    }
-    .meetingFlash {
-      background: linear-gradient(90deg, rgba(255,93,115,0.15), rgba(255,214,92,0.15));
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 16px;
-      padding: 12px 14px;
-      margin-bottom: 16px;
-    }
-    #suspectGrid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-      gap: 12px;
-    }
-    .suspectCard {
-      border-radius: 16px;
-      background: var(--panel);
-      border: 1px solid rgba(255,255,255,0.08);
-      padding: 14px;
-      display: grid;
-      gap: 10px;
-    }
-    .chip {
-      display: inline-flex;
-      padding: 5px 10px;
-      border-radius: 999px;
-      font-size: 12px;
-      border: 1px solid rgba(255,255,255,0.08);
-      background: rgba(255,255,255,0.04);
-      color: #d6def0;
-    }
-    #resultToast {
-      position: absolute;
-      left: 50%;
-      bottom: 24px;
-      transform: translateX(-50%);
-      background: rgba(10,13,19,0.88);
-      border: 1px solid rgba(255,255,255,0.08);
-      color: #f2f6ff;
-      padding: 12px 18px;
-      border-radius: 999px;
-      box-shadow: var(--shadow);
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity 0.25s ease, transform 0.25s ease;
-      z-index: 30;
-    }
-    #resultToast.show {
-      opacity: 1;
-      transform: translateX(-50%) translateY(-4px);
-    }
-    #gameOverOverlay .panel { text-align: center; max-width: 680px; }
-    #gameOverTitle { font-size: clamp(28px, 5vw, 48px); margin: 0 0 10px; }
-    #taskList { line-height: 1.7; font-size: 14px; }
-    #taskList .done { color: #87ffc6; }
-    #taskList .todo { color: #f1f5ff; }
-    .kbd {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 26px;
-      padding: 5px 8px;
-      border-radius: 8px;
-      border: 1px solid rgba(255,255,255,0.12);
-      background: rgba(255,255,255,0.05);
-      font-size: 12px;
-      color: #e7efff;
-      margin-right: 4px;
-    }
-    @media (max-width: 900px) {
-      .hero { grid-template-columns: 1fr; }
-      .meta, .grid { grid-template-columns: 1fr; }
-      .hudBox { max-width: calc(100vw - 28px); }
-      .actionBtn { min-width: 150px; }
-    }
-    @media (max-width: 640px) {
-      .panel { padding: 16px; border-radius: 18px; }
-      #topBar { flex-direction: column; align-items: stretch; }
-      #bottomRight { right: 12px; bottom: 12px; }
-      #jumpBtn { width: 72px; height: 72px; font-size: 14px; }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THE BACKROOMS - Among Us 3D FPS</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Arial', sans-serif;
+            background: #000;
+            color: #fff;
+            overflow: hidden;
+        }
+        #canvas { display: block; width: 100%; height: 100vh; }
+        
+        .lobby { 
+            position: fixed; 
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, #1a0a0a 0%, #0f0505 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            pointer-events: auto;
+        }
+        
+        .lobby-content {
+            background: rgba(10, 10, 10, 0.95);
+            padding: 40px;
+            border-radius: 15px;
+            border: 3px solid #ff6600;
+            max-width: 600px;
+            box-shadow: 0 0 50px rgba(255, 102, 0, 0.3);
+        }
+        
+        .lobby-title {
+            font-size: 48px;
+            font-weight: bold;
+            margin-bottom: 30px;
+            text-align: center;
+            color: #ff6600;
+            text-shadow: 0 0 20px rgba(255, 102, 0, 0.8);
+        }
+        
+        .color-selector {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+        
+        .color-btn {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 3px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .color-btn:hover, .color-btn.selected {
+            border-color: #fff;
+            transform: scale(1.1);
+            box-shadow: 0 0 20px currentColor;
+        }
+        
+        .settings-group {
+            margin-bottom: 20px;
+        }
+        
+        .settings-label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #aaa;
+        }
+        
+        .settings-input, .settings-select {
+            width: 100%;
+            padding: 10px;
+            background: rgba(30, 30, 30, 0.8);
+            border: 1px solid #ff6600;
+            color: #fff;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        
+        .settings-input:focus, .settings-select:focus {
+            outline: none;
+            border-color: #ffaa00;
+            box-shadow: 0 0 10px rgba(255, 102, 0, 0.3);
+        }
+        
+        .slider-value {
+            float: right;
+            color: #ff6600;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+        
+        .btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            pointer-events: auto;
+        }
+        
+        .btn-start {
+            background: linear-gradient(135deg, #ff6600 0%, #ff8833 100%);
+            color: white;
+        }
+        
+        .btn-start:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 25px rgba(255, 102, 0, 0.6);
+        }
+        
+        .hud {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            color: #fff;
+            font-size: 14px;
+            z-index: 50;
+            pointer-events: auto;
+            font-family: monospace;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 3px solid #ff6600;
+        }
+        
+        .hud-item {
+            margin-bottom: 10px;
+            color: #ffaa00;
+        }
+        
+        .killer-hud {
+            position: fixed;
+            bottom: 100px;
+            left: 20px;
+            background: rgba(100, 20, 20, 0.9);
+            padding: 15px 20px;
+            border-radius: 8px;
+            border: 2px solid #ff3333;
+            pointer-events: auto;
+            z-index: 50;
+            display: none;
+        }
+        
+        .kill-button {
+            background: #ff3333;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 10px;
+            width: 100%;
+            transition: all 0.2s;
+        }
+        
+        .kill-button:hover:not(:disabled) {
+            background: #ff5555;
+            transform: scale(1.05);
+        }
+        
+        .kill-button:disabled {
+            background: #666;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        
+        .report-panel {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(20, 50, 100, 0.9);
+            padding: 15px 20px;
+            border-radius: 8px;
+            border: 2px solid #3366ff;
+            pointer-events: auto;
+            z-index: 50;
+            display: none;
+        }
+        
+        .report-button {
+            background: #3366ff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 10px;
+            width: 100%;
+        }
+        
+        .report-button:hover:not(:disabled) {
+            background: #5588ff;
+        }
+        
+        .vote-panel {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(20, 20, 30, 0.98);
+            padding: 30px;
+            border-radius: 15px;
+            border: 3px solid #ff6600;
+            max-height: 80vh;
+            overflow-y: auto;
+            pointer-events: auto;
+            z-index: 200;
+            text-align: center;
+            display: none;
+        }
+        
+        .vote-title { font-size: 24px; margin-bottom: 20px; color: #ff6600; }
+        .vote-timer { font-size: 18px; color: #ff8844; margin-bottom: 20px; font-weight: bold; }
+        
+        .vote-list { max-height: 400px; overflow-y: auto; margin-bottom: 20px; }
+        .vote-player {
+            background: rgba(50, 50, 70, 0.6);
+            padding: 15px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .vote-player:hover {
+            background: rgba(70, 70, 100, 0.8);
+            border-color: #ff6600;
+        }
+        
+        .vote-player-color {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        
+        .tasks-ui {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(20, 60, 20, 0.9);
+            padding: 15px 20px;
+            border-radius: 8px;
+            border: 2px solid #44ff44;
+            max-width: 250px;
+            pointer-events: auto;
+            z-index: 50;
+            display: none;
+        }
+        
+        .task-item {
+            background: rgba(30, 80, 30, 0.7);
+            padding: 8px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            border-left: 3px solid #44ff44;
+            font-size: 12px;
+        }
+        
+        .task-item.completed {
+            border-left-color: #ff6666;
+            opacity: 0.6;
+            text-decoration: line-through;
+        }
+        
+        .crosshair {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 10;
+        }
+        
+        .crosshair::before {
+            content: '+';
+            position: absolute;
+            font-size: 24px;
+            color: #44ff44;
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
-  <canvas id="gameCanvas"></canvas>
-
-  <div id="hud" class="hidden">
-    <div id="topBar">
-      <div class="hudBox">
-        <div class="hudTitle">Görev İlerlemesi</div>
-        <div id="roleLine">Rol yükleniyor...</div>
-        <div class="progress"><div id="taskProgressBar"></div></div>
-        <div id="taskList"></div>
-      </div>
-      <div class="hudBox">
-        <div class="hudTitle">Durum</div>
-        <div id="statusLine">Backrooms senaryosu başlıyor...</div>
-        <div class="row" style="margin-top:8px; gap:8px; color: var(--muted); font-size: 13px;">
-          <span><span class="kbd">WASD</span>Hareket</span>
-          <span><span class="kbd">Space</span>Zıpla</span>
-          <span><span class="kbd">E</span>Görev/Report</span>
-          <span><span class="kbd">Q</span>Öldür</span>
-          <span><span class="kbd">Esc</span>Menü</span>
-        </div>
-      </div>
-    </div>
-    <div id="centerHint">Tıklayıp kilitlen. Yakındaki görevleri <b>E</b> ile yap.</div>
-    <div id="crosshair"></div>
-    <div id="bottomRight">
-      <button id="taskBtn" class="btn actionBtn secondary">Görev Yap</button>
-      <button id="reportBtn" class="btn actionBtn warn">Reportla</button>
-      <button id="killBtn" class="btn actionBtn danger">Öldür</button>
-      <button id="pauseBtn" class="btn actionBtn secondary">Ayarlar</button>
-    </div>
-    <div id="mobileControls" class="hidden">
-      <div id="stickArea" class="stickArea"><div id="stickKnob" class="stickKnob"></div></div>
-      <div id="lookArea" class="lookArea"></div>
-      <button id="jumpBtn">ZIPLA</button>
-    </div>
-  </div>
-
-  <div id="lobbyOverlay" class="overlay">
-    <div class="panel">
-      <div class="hero">
-        <div class="heroCard">
-          <div class="glow">3D FPS • Backrooms • Mobil + PC</div>
-          <h1 class="heroTitle">Backrooms Suspects</h1>
-          <p class="subtitle">
-            Among Us tarzı kuralları, FPS kontrol hissi ve Backrooms atmosferiyle tek dosya kurulumlu profesyonel prototip.
-            Rastgele katil, görev sistemi, rapor ekranı, 30 saniyelik oylama, akıllı bot davranışları, mobil dokunmatik kontroller ve PC uyumlu pointer-lock nişan sistemi hazır.
-          </p>
-          <div class="meta">
-            <div class="stat"><b>2 Dosya</b><span>index.html + game.js</span></div>
-            <div class="stat"><b>Statik</b><span>GitHub Pages üzerinde direkt çalışır</span></div>
-            <div class="stat"><b>3D</b><span>Three.js ile ışık, sis, gölge ve hareket</span></div>
-          </div>
-          <div style="margin-top:18px" class="smallPanel">
-            <b>Bu sürüm neleri kapsıyor?</b>
-            <p class="subtitle" style="margin-bottom:0">
-              FPS hareket, duvara sürtünmeli çarpışma, düzgün ileri/geri/zıplama, Backrooms haritası, görev terminalleri, bot yapay zekâsı,
-              yalnız yakalanınca öldürme mantığı, cesedin yerde kalması, yakından report, 30 saniyelik şüpheli seçme ekranı ve lobi ayarları.
-            </p>
-          </div>
-        </div>
-        <div class="controlCard">
-          <h2 style="margin-top:0">Oyun Kur</h2>
-          <div class="grid">
-            <div class="field">
-              <label for="playerCount">Toplam kişi sayısı</label>
-              <select id="playerCount">
-                <option>4</option><option>5</option><option selected>6</option><option>7</option><option>8</option>
-              </select>
+    <canvas id="canvas"></canvas>
+    
+    <div id="lobby" class="lobby">
+        <div class="lobby-content">
+            <div class="lobby-title">THE BACKROOMS</div>
+            
+            <div style="margin-bottom: 20px;">
+                <div class="settings-label">RENG SEÇ (Oyuncu Rolü)</div>
+                <div class="color-selector" id="colorSelector"></div>
             </div>
-            <div class="field">
-              <label for="killerCount">Katil sayısı</label>
-              <select id="killerCount">
-                <option selected>1</option><option>2</option>
-              </select>
+            
+            <div class="settings-group">
+                <label class="settings-label">
+                    Oyuncu Sayısı <span class="slider-value" id="playerCountValue">4</span>
+                </label>
+                <input type="range" id="playerCount" class="settings-input" min="4" max="10" value="4">
             </div>
-            <div class="field">
-              <label for="gameMinutes">Oyun süresi (dakika)</label>
-              <select id="gameMinutes">
-                <option>5</option><option selected>8</option><option>10</option><option>12</option><option>15</option>
-              </select>
+            
+            <div class="settings-group">
+                <label class="settings-label">
+                    İmpostor Sayısı <span class="slider-value" id="killerCountValue">1</span>
+                </label>
+                <input type="range" id="killerCount" class="settings-input" min="1" max="2" value="1">
             </div>
-            <div class="field">
-              <label for="taskCount">Görev sayısı</label>
-              <select id="taskCount">
-                <option>4</option><option selected>5</option><option>6</option><option>7</option>
-              </select>
+            
+            <div class="settings-group">
+                <label class="settings-label">
+                    Oyun Süresi (dakika) <span class="slider-value" id="gameDurationValue">10</span>
+                </label>
+                <input type="range" id="gameDuration" class="settings-input" min="5" max="30" value="10">
             </div>
-            <div class="field">
-              <label for="mouseSensitivity">Mouse dönme hızı</label>
-              <input id="mouseSensitivity" type="range" min="0.6" max="2.2" step="0.05" value="1.1" />
+            
+            <div class="button-group">
+                <button class="btn btn-start" id="startBtn">OYUNU BAŞLAT</button>
             </div>
-            <div class="field">
-              <label for="lookSensitivityTouch">Mobil bakış hızı</label>
-              <input id="lookSensitivityTouch" type="range" min="0.4" max="2.4" step="0.05" value="1.15" />
-            </div>
-          </div>
-          <div class="smallPanel" style="margin-top:16px;">
-            <div class="row" style="justify-content:space-between; gap:8px;">
-              <span class="chip">Lobi + ayarlar dahil</span>
-              <span class="chip">Statik site uyumlu</span>
-              <span class="chip">Offline bot maçları</span>
-            </div>
-            <p class="subtitle" style="margin:12px 0 0;">
-              Not: Bu sürüm GitHub.io için backend gerektirmeyen, botlarla oynanan yerel maç yapısıdır.
-              İstersen sonraki adımda gerçek online multiplayer için WebSocket/Firebase tabanlı sürüme de yükseltebilirim.
-            </p>
-          </div>
-          <div class="row" style="margin-top:18px; justify-content:space-between;">
-            <button id="startBtn" class="btn">Maçı Başlat</button>
-            <button id="openSettingsBtn" class="btn secondary">Ayarları İncele</button>
-          </div>
         </div>
-      </div>
     </div>
-  </div>
-
-  <div id="settingsOverlay" class="overlay hidden">
-    <div class="panel" style="max-width: 720px;">
-      <h2 style="margin-top:0">Ayarlar</h2>
-      <div class="grid">
-        <div class="field">
-          <label for="settingMouse">Mouse hassasiyet</label>
-          <input id="settingMouse" type="range" min="0.6" max="2.2" step="0.05" value="1.1" />
+    
+    <div class="ui-container">
+        <div class="crosshair"></div>
+        
+        <div class="hud" id="hud">
+            <div class="hud-item" id="roleDisplay">Rol: Bekleniyor...</div>
+            <div class="hud-item" id="healthDisplay">Sağlık: 100%</div>
+            <div class="hud-item" id="timerDisplay">Zaman: 10:00</div>
+            <div class="hud-item" id="coordsDisplay">Pos: (0, 0, 0)</div>
         </div>
-        <div class="field">
-          <label for="settingTouch">Mobil bakış hassasiyet</label>
-          <input id="settingTouch" type="range" min="0.4" max="2.4" step="0.05" value="1.15" />
+        
+        <div id="killerPanel" class="killer-hud">
+            <div style="font-size: 14px; color: #ff8888;">İMPOSTOR</div>
+            <button class="kill-button" id="killBtn" disabled>ÖLDÜR (E) - Yakında</button>
+            <div style="font-size: 12px; margin-top: 5px; color: #ffaaaa;" id="killCooldown"></div>
         </div>
-      </div>
-      <div class="smallPanel" style="margin-top:16px;">
-        <p class="subtitle" style="margin:0">
-          Oyunda FPS kamera kilidi vardır. PC'de ekrana tıklayıp mouse ile dönersin. Mobilde sağ alan bakış, sol alan hareket içindir.
-          Duvar çarpışmaları kayarak çözülür; ileri/geri/zıplama fizik temellidir.
-        </p>
-      </div>
-      <div class="row" style="margin-top:18px; justify-content:flex-end;">
-        <button id="closeSettingsBtn" class="btn">Devam</button>
-      </div>
+        
+        <div id="reportPanel" class="report-panel">
+            <div style="font-size: 14px; margin-bottom: 10px;">ÖLÜ KARAKTER BULUNDU</div>
+            <button class="report-button" id="reportBtn">RAPOR ET (R)</button>
+        </div>
+        
+        <div id="votePanel" class="vote-panel">
+            <div class="vote-title">OYLAMA</div>
+            <div class="vote-timer" id="voteTimer">30</div>
+            <div class="vote-list" id="voteList"></div>
+        </div>
+        
+        <div id="tasksUI" class="tasks-ui">
+            <div style="color: #44ff44; font-weight: bold; margin-bottom: 10px;">GÖREVLER</div>
+            <div id="tasksList"></div>
+        </div>
     </div>
-  </div>
 
-  <div id="meetingOverlay" class="overlay hidden">
-    <div class="panel">
-      <div class="meetingTop">
-        <div>
-          <h2 style="margin:0">Emergency Report</h2>
-          <div id="meetingReason" class="subtitle">Ceset bulundu.</div>
-        </div>
-        <div class="voteCard">
-          <div class="hudTitle">Kalan süre</div>
-          <div id="meetingTimer" style="font-size: 28px; font-weight: 800;">30</div>
-        </div>
-      </div>
-      <div class="meetingFlash">
-        Bir oyuncu ceset raporladı. En şüpheli kişiyi seç veya geç. 30 saniye sonunda oylar otomatik sayılır.
-      </div>
-      <div id="suspectGrid"></div>
-      <div class="row" style="margin-top:16px; justify-content:space-between;">
-        <button id="skipVoteBtn" class="btn secondary">Oyu Geç</button>
-        <div id="meetingInfo" class="subtitle">Henüz oy kullanmadın.</div>
-      </div>
-    </div>
-  </div>
-
-  <div id="gameOverOverlay" class="overlay hidden">
-    <div class="panel">
-      <h1 id="gameOverTitle">Maç Bitti</h1>
-      <p id="gameOverText" class="subtitle">Sonuç hazırlanıyor...</p>
-      <div class="row" style="justify-content:center; margin-top: 20px;">
-        <button id="restartBtn" class="btn">Lobiye Dön</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="resultToast"></div>
-
-  <script src="https://unpkg.com/three@0.164.1/build/three.min.js"></script>
-  <script type="module" src="game.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="game.js"></script>
+    <script src="main.js"></script>
 </body>
 </html>
