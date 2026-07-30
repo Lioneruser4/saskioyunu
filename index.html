@@ -2,382 +2,304 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>THE BACKROOMS - Among Us 3D FPS</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Backrooms: Among Us - 3D FPS</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-            font-family: 'Arial', sans-serif;
-            background: #000;
-            color: #fff;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
             overflow: hidden;
+            background: #000;
+            font-family: 'Arial', sans-serif;
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
         }
-        #canvas { display: block; width: 100%; height: 100vh; }
-        
-        .lobby { 
-            position: fixed; 
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(135deg, #1a0a0a 0%, #0f0505 100%);
+        canvas {
+            display: block;
+        }
+        #lobby {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
             display: flex;
-            justify-content: center;
             align-items: center;
-            z-index: 100;
-            pointer-events: auto;
+            justify-content: center;
+            z-index: 1000;
         }
-        
-        .lobby-content {
-            background: rgba(10, 10, 10, 0.95);
+        .lobby-container {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #ffd700;
+            border-radius: 20px;
             padding: 40px;
-            border-radius: 15px;
-            border: 3px solid #ff6600;
             max-width: 600px;
-            box-shadow: 0 0 50px rgba(255, 102, 0, 0.3);
+            width: 90%;
+            color: #fff;
+            box-shadow: 0 0 50px rgba(255, 215, 0, 0.3);
         }
-        
         .lobby-title {
-            font-size: 48px;
-            font-weight: bold;
-            margin-bottom: 30px;
             text-align: center;
-            color: #ff6600;
-            text-shadow: 0 0 20px rgba(255, 102, 0, 0.8);
-        }
-        
-        .color-selector {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
+            font-size: 2.5em;
             margin-bottom: 30px;
+            color: #ffd700;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+            letter-spacing: 3px;
         }
-        
-        .color-btn {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            border: 3px solid transparent;
-            cursor: pointer;
-            transition: all 0.2s;
+        .setting-group {
+            margin-bottom: 25px;
         }
-        
-        .color-btn:hover, .color-btn.selected {
-            border-color: #fff;
-            transform: scale(1.1);
-            box-shadow: 0 0 20px currentColor;
-        }
-        
-        .settings-group {
-            margin-bottom: 20px;
-        }
-        
-        .settings-label {
+        .setting-label {
             display: block;
             margin-bottom: 8px;
-            font-size: 14px;
-            color: #aaa;
+            color: #ffd700;
+            font-size: 1.1em;
+            font-weight: bold;
         }
-        
-        .settings-input, .settings-select {
+        .setting-input {
             width: 100%;
-            padding: 10px;
-            background: rgba(30, 30, 30, 0.8);
-            border: 1px solid #ff6600;
-            color: #fff;
-            border-radius: 8px;
-            font-size: 14px;
-        }
-        
-        .settings-input:focus, .settings-select:focus {
-            outline: none;
-            border-color: #ffaa00;
-            box-shadow: 0 0 10px rgba(255, 102, 0, 0.3);
-        }
-        
-        .slider-value {
-            float: right;
-            color: #ff6600;
-        }
-        
-        .button-group {
-            display: flex;
-            gap: 10px;
-            margin-top: 30px;
-        }
-        
-        .btn {
-            flex: 1;
             padding: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid #ffd700;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 1em;
+            outline: none;
+        }
+        .setting-input:focus {
+            border-color: #ffaa00;
+            box-shadow: 0 0 15px rgba(255, 170, 0, 0.3);
+        }
+        .setting-slider {
+            width: 100%;
+            margin-top: 10px;
+        }
+        .start-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(45deg, #ffd700, #ffaa00);
             border: none;
-            border-radius: 8px;
-            font-size: 16px;
+            border-radius: 15px;
+            color: #000;
+            font-size: 1.3em;
             font-weight: bold;
             cursor: pointer;
+            margin-top: 20px;
             transition: all 0.3s;
-            pointer-events: auto;
+            letter-spacing: 2px;
         }
-        
-        .btn-start {
-            background: linear-gradient(135deg, #ff6600 0%, #ff8833 100%);
-            color: white;
+        .start-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.6);
         }
-        
-        .btn-start:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 25px rgba(255, 102, 0, 0.6);
+        .start-btn:active {
+            transform: scale(0.95);
         }
-        
-        .hud {
-            position: fixed;
+        select.setting-input {
+            cursor: pointer;
+        }
+        #ui-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            pointer-events: none;
+            z-index: 100;
+            display: none;
+        }
+        #task-list {
+            position: absolute;
             top: 20px;
             left: 20px;
-            color: #fff;
-            font-size: 14px;
-            z-index: 50;
-            pointer-events: auto;
-            font-family: monospace;
             background: rgba(0, 0, 0, 0.7);
-            padding: 15px;
-            border-radius: 8px;
-            border-left: 3px solid #ff6600;
+            border: 2px solid #00ff00;
+            border-radius: 15px;
+            padding: 20px;
+            color: #fff;
+            max-width: 300px;
         }
-        
-        .hud-item {
+        .task-title {
+            color: #00ff00;
+            font-size: 1.2em;
             margin-bottom: 10px;
-            color: #ffaa00;
+            text-align: center;
         }
-        
-        .killer-hud {
-            position: fixed;
-            bottom: 100px;
-            left: 20px;
-            background: rgba(100, 20, 20, 0.9);
-            padding: 15px 20px;
-            border-radius: 8px;
-            border: 2px solid #ff3333;
-            pointer-events: auto;
-            z-index: 50;
+        .task-item {
+            margin: 8px 0;
+            padding: 5px;
+            background: rgba(0, 255, 0, 0.1);
+            border-radius: 5px;
+        }
+        .task-completed {
+            text-decoration: line-through;
+            color: #00ff00;
+        }
+        #kill-button {
+            position: absolute;
+            bottom: 50px;
+            right: 50px;
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(circle, #ff0000, #8b0000);
+            border: 3px solid #ff4444;
+            border-radius: 50%;
+            color: #fff;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            pointer-events: all;
             display: none;
+            animation: pulse 1.5s infinite;
         }
-        
-        .kill-button {
-            background: #ff3333;
-            color: white;
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.7); }
+            70% { box-shadow: 0 0 0 20px rgba(255, 0, 0, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 0, 0, 0); }
+        }
+        #report-prompt {
+            position: absolute;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid #ffd700;
+            border-radius: 15px;
+            padding: 15px 30px;
+            color: #fff;
+            display: none;
+            pointer-events: all;
+            text-align: center;
+        }
+        #report-prompt button {
+            background: #ffd700;
+            color: #000;
             border: none;
-            padding: 12px 20px;
-            border-radius: 6px;
+            padding: 10px 20px;
+            border-radius: 10px;
+            margin: 5px;
             cursor: pointer;
             font-weight: bold;
-            margin-top: 10px;
-            width: 100%;
-            transition: all 0.2s;
         }
-        
-        .kill-button:hover:not(:disabled) {
-            background: #ff5555;
-            transform: scale(1.05);
-        }
-        
-        .kill-button:disabled {
-            background: #666;
-            cursor: not-allowed;
-            opacity: 0.5;
-        }
-        
-        .report-panel {
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            background: rgba(20, 50, 100, 0.9);
-            padding: 15px 20px;
-            border-radius: 8px;
-            border: 2px solid #3366ff;
-            pointer-events: auto;
-            z-index: 50;
-            display: none;
-        }
-        
-        .report-button {
-            background: #3366ff;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            margin-top: 10px;
-            width: 100%;
-        }
-        
-        .report-button:hover:not(:disabled) {
-            background: #5588ff;
-        }
-        
-        .vote-panel {
-            position: fixed;
+        #voting-screen {
+            position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: rgba(20, 20, 30, 0.98);
+            background: rgba(0, 0, 0, 0.95);
+            border: 3px solid #ffd700;
+            border-radius: 20px;
             padding: 30px;
-            border-radius: 15px;
-            border: 3px solid #ff6600;
-            max-height: 80vh;
-            overflow-y: auto;
-            pointer-events: auto;
-            z-index: 200;
-            text-align: center;
+            color: #fff;
             display: none;
+            pointer-events: all;
+            z-index: 200;
+            min-width: 400px;
         }
-        
-        .vote-title { font-size: 24px; margin-bottom: 20px; color: #ff6600; }
-        .vote-timer { font-size: 18px; color: #ff8844; margin-bottom: 20px; font-weight: bold; }
-        
-        .vote-list { max-height: 400px; overflow-y: auto; margin-bottom: 20px; }
+        #voting-screen h2 {
+            text-align: center;
+            color: #ffd700;
+            margin-bottom: 20px;
+        }
         .vote-player {
-            background: rgba(50, 50, 70, 0.6);
-            padding: 15px;
-            margin-bottom: 8px;
-            border-radius: 8px;
+            padding: 10px;
+            margin: 5px 0;
+            background: rgba(255, 215, 0, 0.1);
+            border-radius: 10px;
             cursor: pointer;
-            transition: all 0.2s;
-            border: 2px solid transparent;
-            display: flex;
-            align-items: center;
-            gap: 15px;
+            transition: 0.2s;
         }
-        
         .vote-player:hover {
-            background: rgba(70, 70, 100, 0.8);
-            border-color: #ff6600;
+            background: rgba(255, 215, 0, 0.3);
         }
-        
-        .vote-player-color {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            flex-shrink: 0;
-        }
-        
-        .tasks-ui {
-            position: fixed;
+        #minimap {
+            position: absolute;
             bottom: 20px;
             right: 20px;
-            background: rgba(20, 60, 20, 0.9);
-            padding: 15px 20px;
-            border-radius: 8px;
-            border: 2px solid #44ff44;
-            max-width: 250px;
-            pointer-events: auto;
-            z-index: 50;
-            display: none;
-        }
-        
-        .task-item {
-            background: rgba(30, 80, 30, 0.7);
-            padding: 8px;
-            margin-bottom: 8px;
-            border-radius: 6px;
-            border-left: 3px solid #44ff44;
-            font-size: 12px;
-        }
-        
-        .task-item.completed {
-            border-left-color: #ff6666;
-            opacity: 0.6;
-            text-decoration: line-through;
-        }
-        
-        .crosshair {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
+            width: 150px;
+            height: 150px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid #ffd700;
+            border-radius: 10px;
             pointer-events: none;
-            z-index: 10;
         }
-        
-        .crosshair::before {
-            content: '+';
-            position: absolute;
-            font-size: 24px;
-            color: #44ff44;
-            font-weight: bold;
+        @media (max-width: 768px) {
+            .lobby-container {
+                padding: 20px;
+            }
+            .lobby-title {
+                font-size: 1.8em;
+            }
+            #kill-button {
+                width: 60px;
+                height: 60px;
+                bottom: 30px;
+                right: 30px;
+                font-size: 0.8em;
+            }
         }
     </style>
 </head>
 <body>
-    <canvas id="canvas"></canvas>
-    
-    <div id="lobby" class="lobby">
-        <div class="lobby-content">
-            <div class="lobby-title">THE BACKROOMS</div>
-            
-            <div style="margin-bottom: 20px;">
-                <div class="settings-label">RENG SEÇ (Oyuncu Rolü)</div>
-                <div class="color-selector" id="colorSelector"></div>
+    <div id="lobby">
+        <div class="lobby-container">
+            <h1 class="lobby-title">🎭 BACKROOMS: IMPOSTOR</h1>
+            <div class="setting-group">
+                <label class="setting-label">👥 Oyuncu Sayısı (Botlar dahil)</label>
+                <input type="range" class="setting-slider" id="playerCount" min="4" max="15" value="10" step="1">
+                <span style="color:#ffd700" id="playerCountDisplay">10</span>
             </div>
-            
-            <div class="settings-group">
-                <label class="settings-label">
-                    Oyuncu Sayısı <span class="slider-value" id="playerCountValue">4</span>
-                </label>
-                <input type="range" id="playerCount" class="settings-input" min="4" max="10" value="4">
+            <div class="setting-group">
+                <label class="setting-label">🔪 Katil Sayısı</label>
+                <input type="range" class="setting-slider" id="impostorCount" min="1" max="3" value="2" step="1">
+                <span style="color:#ffd700" id="impostorCountDisplay">2</span>
             </div>
-            
-            <div class="settings-group">
-                <label class="settings-label">
-                    İmpostor Sayısı <span class="slider-value" id="killerCountValue">1</span>
-                </label>
-                <input type="range" id="killerCount" class="settings-input" min="1" max="2" value="1">
+            <div class="setting-group">
+                <label class="setting-label">⏱️ Oyun Süresi (dakika)</label>
+                <input type="range" class="setting-slider" id="gameTime" min="3" max="15" value="5" step="1">
+                <span style="color:#ffd700" id="gameTimeDisplay">5</span>
             </div>
-            
-            <div class="settings-group">
-                <label class="settings-label">
-                    Oyun Süresi (dakika) <span class="slider-value" id="gameDurationValue">10</span>
-                </label>
-                <input type="range" id="gameDuration" class="settings-input" min="5" max="30" value="10">
+            <div class="setting-group">
+                <label class="setting-label">🖱️ Mouse Hassasiyeti</label>
+                <input type="range" class="setting-slider" id="mouseSensitivity" min="0.5" max="3" value="1.5" step="0.1">
+                <span style="color:#ffd700" id="sensitivityDisplay">1.5</span>
             </div>
-            
-            <div class="button-group">
-                <button class="btn btn-start" id="startBtn">OYUNU BAŞLAT</button>
+            <div class="setting-group">
+                <label class="setting-label">🎯 Zorluk</label>
+                <select class="setting-input" id="difficulty">
+                    <option value="easy">Kolay</option>
+                    <option value="normal" selected>Normal</option>
+                    <option value="hard">Zor</option>
+                </select>
             </div>
-        </div>
-    </div>
-    
-    <div class="ui-container">
-        <div class="crosshair"></div>
-        
-        <div class="hud" id="hud">
-            <div class="hud-item" id="roleDisplay">Rol: Bekleniyor...</div>
-            <div class="hud-item" id="healthDisplay">Sağlık: 100%</div>
-            <div class="hud-item" id="timerDisplay">Zaman: 10:00</div>
-            <div class="hud-item" id="coordsDisplay">Pos: (0, 0, 0)</div>
-        </div>
-        
-        <div id="killerPanel" class="killer-hud">
-            <div style="font-size: 14px; color: #ff8888;">İMPOSTOR</div>
-            <button class="kill-button" id="killBtn" disabled>ÖLDÜR (E) - Yakında</button>
-            <div style="font-size: 12px; margin-top: 5px; color: #ffaaaa;" id="killCooldown"></div>
-        </div>
-        
-        <div id="reportPanel" class="report-panel">
-            <div style="font-size: 14px; margin-bottom: 10px;">ÖLÜ KARAKTER BULUNDU</div>
-            <button class="report-button" id="reportBtn">RAPOR ET (R)</button>
-        </div>
-        
-        <div id="votePanel" class="vote-panel">
-            <div class="vote-title">OYLAMA</div>
-            <div class="vote-timer" id="voteTimer">30</div>
-            <div class="vote-list" id="voteList"></div>
-        </div>
-        
-        <div id="tasksUI" class="tasks-ui">
-            <div style="color: #44ff44; font-weight: bold; margin-bottom: 10px;">GÖREVLER</div>
-            <div id="tasksList"></div>
+            <button class="start-btn" onclick="startGame()">🎮 OYUNU BAŞLAT</button>
         </div>
     </div>
 
+    <div id="ui-overlay">
+        <div id="task-list">
+            <div class="task-title">📋 GÖREVLER</div>
+            <div id="tasks-container"></div>
+        </div>
+        <button id="kill-button">🔪<br>ÖLDÜR</button>
+        <div id="report-prompt">
+            <p>⚠️ Ceset Bulundu!</p>
+            <button onclick="reportBody()">📢 REPORT ET</button>
+        </div>
+        <div id="voting-screen">
+            <h2>🗳️ OYLAMA</h2>
+            <div id="vote-players"></div>
+            <div id="vote-timer" style="text-align:center;margin-top:15px;color:#ffd700;"></div>
+        </div>
+        <canvas id="minimap" width="150" height="150"></canvas>
+    </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="game.js"></script>
     <script src="main.js"></script>
+    <script src="game.js"></script>
 </body>
 </html>
