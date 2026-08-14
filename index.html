@@ -1,1512 +1,1430 @@
 <!DOCTYPE html>
-<html lang="az">
+<html lang="tr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Marbrass Chess — 3D Şahmat</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<style>
-  :root{
-    --bg-deep:#14100c;
-    --bg-panel:#1d1712;
-    --bg-panel-2:#241c15;
-    --line:#3a2f22;
-    --cream:#f2e8d5;
-    --muted:#a4977f;
-    --gold:#c9a24b;
-    --gold-bright:#e6c874;
-    --white-piece:#f4ecd8;
-    --black-piece:#241a12;
-    --danger:#b5493a;
-    --success:#7fae6c;
-    --shadow: 0 20px 60px rgba(0,0,0,.55);
-  }
-  *{box-sizing:border-box;}
-  html,body{
-    margin:0;padding:0;height:100%;
-    background:radial-gradient(1200px 800px at 50% -10%, #221a12 0%, var(--bg-deep) 60%);
-    color:var(--cream);
-    font-family:'Inter',sans-serif;
-    overflow:hidden;
-  }
-  h1,h2,h3,.display{
-    font-family:'Cormorant Garamond', serif;
-    font-weight:700;
-    letter-spacing:.02em;
-  }
-  #app{position:relative;width:100vw;height:100vh;}
-  #canvas-holder{position:absolute;inset:0;}
-  canvas{display:block;}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>💣 ZAR BOMBA - 3D Savaş</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        :root {
+            --primary: #ff6b35;
+            --secondary: #f7c59f;
+            --accent: #efefef;
+            --dark: #2c3e50;
+            --danger: #e74c3c;
+            --success: #2ecc71;
+            --warning: #f39c12;
+        }
 
-  /* ---------- Top HUD ---------- */
-  #hud{
-    position:absolute;top:0;left:0;right:0;
-    display:flex;justify-content:space-between;align-items:flex-start;
-    padding:22px 28px;pointer-events:none;
-    z-index:5;
-  }
-  .brand{
-    display:flex;align-items:center;gap:10px;
-    pointer-events:auto;
-  }
-  .brand .mark{
-    width:34px;height:34px;border-radius:50%;
-    background:conic-gradient(from 210deg, var(--gold), #7a5a22, var(--gold-bright), var(--gold));
-    box-shadow:0 0 0 1px rgba(201,162,75,.35), 0 6px 18px rgba(0,0,0,.5);
-  }
-  .brand .name{font-size:22px;color:var(--gold-bright);}
-  .brand .sub{font-size:10px;letter-spacing:.24em;color:var(--muted);text-transform:uppercase;margin-top:-2px;}
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
 
-  .hud-right{display:flex;gap:10px;pointer-events:auto;}
-  .icon-btn{
-    width:40px;height:40px;border-radius:10px;
-    background:rgba(36,28,21,.7);
-    border:1px solid var(--line);
-    color:var(--cream);
-    display:flex;align-items:center;justify-content:center;
-    cursor:pointer;transition:.15s;
-    backdrop-filter:blur(6px);
-  }
-  .icon-btn:hover{border-color:var(--gold);color:var(--gold-bright);transform:translateY(-1px);}
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #000;
+            position: fixed;
+            touch-action: manipulation;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
 
-  /* status bar center-top */
-  #status-bar{
-    position:absolute;top:24px;left:50%;transform:translateX(-50%);
-    z-index:5;pointer-events:none;
-    display:flex;flex-direction:column;align-items:center;gap:6px;
-  }
-  #turn-pill{
-    pointer-events:auto;
-    display:flex;align-items:center;gap:9px;
-    background:rgba(29,23,18,.8);
-    border:1px solid var(--line);
-    padding:8px 18px;border-radius:999px;
-    font-size:13px;letter-spacing:.04em;
-    backdrop-filter:blur(8px);
-    box-shadow:var(--shadow);
-  }
-  #turn-dot{width:10px;height:10px;border-radius:50%;background:var(--cream);transition:.25s;box-shadow:0 0 8px rgba(255,255,255,.4);}
-  #turn-dot.black{background:#0d0a07;box-shadow:0 0 8px rgba(0,0,0,.6);border:1px solid #4b3c2b;}
-  #turn-label{color:var(--muted);}
-  #thinking{
-    font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);
-    opacity:0;transition:.3s;
-  }
-  #thinking.show{opacity:1;}
-  #thinking .dots span{animation:blink 1.2s infinite;opacity:.2;}
-  #thinking .dots span:nth-child(2){animation-delay:.2s;}
-  #thinking .dots span:nth-child(3){animation-delay:.4s;}
-  @keyframes blink{0%,100%{opacity:.2;}50%{opacity:1;}}
+        #gameCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
 
-  /* ---------- Side panels ---------- */
-  #side-left, #side-right{
-    position:absolute;top:100px;bottom:24px;
-    width:220px;z-index:5;
-    display:flex;flex-direction:column;gap:14px;
-    pointer-events:none;
-  }
-  #side-left{left:24px;}
-  #side-right{right:24px;align-items:flex-end;}
+        #ui-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
 
-  .panel{
-    pointer-events:auto;
-    background:rgba(29,23,18,.72);
-    border:1px solid var(--line);
-    border-radius:14px;
-    padding:14px 16px;
-    backdrop-filter:blur(10px);
-    box-shadow:var(--shadow);
-    width:100%;
-  }
-  .panel .p-title{
-    font-size:10px;letter-spacing:.2em;text-transform:uppercase;
-    color:var(--muted);margin-bottom:10px;
-  }
-  .captured-row{display:flex;flex-wrap:wrap;gap:6px;min-height:26px;}
-  .cap-chip{
-    width:24px;height:24px;border-radius:6px;
-    display:flex;align-items:center;justify-content:center;
-    font-size:14px;background:rgba(0,0,0,.25);border:1px solid var(--line);
-  }
-  .cap-chip.white{color:var(--white-piece);}
-  .cap-chip.black{color:#8a7f70;}
+        .screen {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            pointer-events: auto;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: fadeIn 0.5s;
+        }
 
-  .material-diff{font-size:22px;color:var(--gold-bright);margin-top:8px;font-family:'Cormorant Garamond',serif;}
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
 
-  .history-panel{max-height:230px;overflow-y:auto;}
-  .history-panel::-webkit-scrollbar{width:5px;}
-  .history-panel::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px;}
-  #move-list{font-size:12.5px;line-height:1.9;color:var(--muted);}
-  #move-list b{color:var(--cream);font-weight:600;}
-  .mv-row{display:flex;gap:8px;}
-  .mv-num{color:#6b5f4d;width:20px;flex-shrink:0;}
+        @keyframes slideIn {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
 
-  .controls-row{display:flex;gap:8px;margin-top:4px;}
-  .ctrl-btn{
-    flex:1;
-    background:rgba(0,0,0,.25);
-    border:1px solid var(--line);
-    color:var(--cream);
-    padding:9px 0;border-radius:9px;
-    font-size:11px;letter-spacing:.05em;text-transform:uppercase;
-    cursor:pointer;transition:.15s;
-    font-family:'Inter',sans-serif;
-  }
-  .ctrl-btn:hover{border-color:var(--gold);color:var(--gold-bright);}
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
 
-  .diff-tag{
-    display:inline-flex;align-items:center;gap:6px;
-    font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--gold);
-    border:1px solid rgba(201,162,75,.35);background:rgba(201,162,75,.08);
-    padding:5px 10px;border-radius:999px;
-  }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
+            20%, 40%, 60%, 80% { transform: translateX(10px); }
+        }
 
-  /* ---------- Overlays ---------- */
-  .overlay{
-    position:absolute;inset:0;z-index:20;
-    display:flex;align-items:center;justify-content:center;
-    background:radial-gradient(1000px 700px at 50% 30%, rgba(40,30,20,.55), rgba(10,8,6,.92));
-    backdrop-filter:blur(4px);
-    opacity:1;transition:opacity .4s ease;
-  }
-  .overlay.hidden{opacity:0;pointer-events:none;}
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
 
-  /* ---- Lobby ---- */
-  #lobby-card{
-    width:min(560px, 92vw);
-    background:linear-gradient(160deg, var(--bg-panel-2), var(--bg-panel) 70%);
-    border:1px solid var(--line);
-    border-radius:22px;
-    padding:40px 42px 34px;
-    box-shadow:0 30px 90px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.03);
-    position:relative;
-    overflow:hidden;
-  }
-  #lobby-card::before{
-    content:"";position:absolute;top:-60%;left:-20%;width:140%;height:140%;
-    background:radial-gradient(circle at 30% 20%, rgba(201,162,75,.10), transparent 55%);
-    pointer-events:none;
-  }
-  .lobby-eyebrow{font-size:11px;letter-spacing:.32em;text-transform:uppercase;color:var(--gold);margin-bottom:10px;}
-  #lobby-card h1{font-size:42px;margin:0 0 6px;color:var(--cream);line-height:1.05;}
-  #lobby-card .tagline{color:var(--muted);font-size:14px;margin-bottom:30px;max-width:420px;}
+        .hidden {
+            display: none !important;
+        }
 
-  .field-label{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:22px 0 10px;}
-  .option-row{display:flex;gap:10px;}
-  .opt{
-    flex:1;position:relative;
-    border:1px solid var(--line);
-    background:rgba(0,0,0,.22);
-    border-radius:12px;
-    padding:14px 10px;
-    text-align:center;
-    cursor:pointer;transition:.15s;
-    color:var(--muted);
-  }
-  .opt:hover{border-color:rgba(201,162,75,.5);color:var(--cream);}
-  .opt.active{
-    border-color:var(--gold);
-    color:var(--gold-bright);
-    background:rgba(201,162,75,.10);
-    box-shadow:0 0 0 1px rgba(201,162,75,.25) inset;
-  }
-  .opt .opt-title{font-size:14px;font-weight:600;font-family:'Inter';}
-  .opt .opt-sub{font-size:10px;color:inherit;opacity:.65;margin-top:3px;text-transform:uppercase;letter-spacing:.08em;}
-  .opt .piece-glyph{font-size:26px;display:block;margin-bottom:6px;}
+        /* Ana Menü */
+        #main-menu {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            position: relative;
+            overflow: hidden;
+        }
 
-  #start-btn{
-    margin-top:32px;width:100%;
-    background:linear-gradient(180deg, var(--gold-bright), var(--gold));
-    color:#241a0c;border:none;border-radius:12px;
-    padding:15px 0;font-size:14px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
-    cursor:pointer;transition:.15s;
-    box-shadow:0 10px 30px rgba(201,162,75,.25);
-  }
-  #start-btn:hover{transform:translateY(-1px);box-shadow:0 14px 34px rgba(201,162,75,.35);}
-  #start-btn:active{transform:translateY(0);}
+        #main-menu::before {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: float 6s infinite;
+        }
 
-  /* ---- Win overlay ---- */
-  #win-card{
-    text-align:center;
-    background:linear-gradient(160deg, var(--bg-panel-2), var(--bg-panel) 70%);
-    border:1px solid rgba(201,162,75,.4);
-    border-radius:22px;
-    padding:52px 50px 40px;
-    box-shadow:0 30px 100px rgba(0,0,0,.65);
-    position:relative;
-  }
-  #win-crown{font-size:52px;display:block;margin-bottom:6px;filter:drop-shadow(0 6px 14px rgba(201,162,75,.5));}
-  #win-title{font-size:38px;color:var(--gold-bright);margin:6px 0 6px;}
-  #win-sub{color:var(--muted);font-size:14px;margin-bottom:28px;}
-  .win-actions{display:flex;gap:10px;justify-content:center;}
-  .win-btn{
-    padding:12px 26px;border-radius:11px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;
-    cursor:pointer;border:1px solid var(--line);background:rgba(0,0,0,.2);color:var(--cream);transition:.15s;
-  }
-  .win-btn.primary{background:linear-gradient(180deg, var(--gold-bright), var(--gold));color:#241a0c;border:none;font-weight:700;}
-  .win-btn:hover{transform:translateY(-1px);}
+        .game-title {
+            font-size: 4em;
+            color: #fff;
+            text-shadow: 0 0 20px rgba(255,255,255,0.5), 0 0 40px rgba(255,255,255,0.3);
+            margin-bottom: 10px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            animation: pulse 2s infinite;
+            position: relative;
+            z-index: 2;
+        }
 
-  #confetti-canvas{position:absolute;inset:0;pointer-events:none;z-index:19;}
+        .game-subtitle {
+            font-size: 1.5em;
+            color: #f0f0f0;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            position: relative;
+            z-index: 2;
+        }
 
-  /* promotion picker */
-  #promo-card{
-    background:var(--bg-panel);border:1px solid var(--gold);border-radius:16px;
-    padding:22px;display:flex;gap:12px;
-  }
-  .promo-opt{
-    width:64px;height:64px;border-radius:12px;border:1px solid var(--line);
-    background:rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;
-    font-size:32px;cursor:pointer;transition:.15s;
-  }
-  .promo-opt:hover{border-color:var(--gold);background:rgba(201,162,75,.12);}
+        .player-badge {
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            padding: 15px 30px;
+            border-radius: 50px;
+            margin-bottom: 30px;
+            color: #fff;
+            font-size: 1.2em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+            z-index: 2;
+            border: 2px solid rgba(255,255,255,0.3);
+        }
 
-  .hint{
-    position:absolute;bottom:22px;left:50%;transform:translateX(-50%);
-    font-size:11px;letter-spacing:.08em;color:var(--muted);
-    background:rgba(20,16,12,.6);padding:7px 14px;border-radius:999px;border:1px solid var(--line);
-    z-index:5;backdrop-filter:blur(6px);
-    pointer-events:none;
-    transition:opacity .4s;
-  }
+        .player-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+        }
 
-  @media (max-width: 880px){
-    #side-left,#side-right{display:none;}
-    #lobby-card{padding:30px 22px 26px;}
-    #lobby-card h1{font-size:32px;}
-  }
-</style>
+        .btn {
+            padding: 18px 50px;
+            font-size: 1.3em;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            color: #fff;
+            font-weight: bold;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+            z-index: 2;
+            text-transform: uppercase;
+        }
+
+        .btn::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+            transition: all 0.5s;
+            transform: translate(-50%, -50%);
+        }
+
+        .btn:active::after {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            animation: pulse 2s infinite;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        /* Lobi */
+        #lobby-screen {
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+        }
+
+        .searching-animation {
+            width: 100px;
+            height: 100px;
+            border: 5px solid rgba(255,255,255,0.1);
+            border-top: 5px solid #fff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 30px 0;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .waiting-text {
+            color: #fff;
+            font-size: 1.5em;
+            margin: 20px 0;
+            animation: pulse 1.5s infinite;
+        }
+
+        .player-count {
+            color: #f0f0f0;
+            font-size: 1.2em;
+            margin: 10px 0;
+            opacity: 0.8;
+        }
+
+        /* Oyun Ekranı */
+        #game-screen {
+            background: transparent;
+            pointer-events: none;
+        }
+
+        #hud {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            pointer-events: none;
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .player-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .health-container {
+            flex: 1;
+            background: rgba(0,0,0,0.7);
+            border-radius: 20px;
+            padding: 15px;
+            border: 2px solid rgba(255,255,255,0.3);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s;
+        }
+
+        .health-container.active-turn {
+            border-color: #fff;
+            box-shadow: 0 0 30px rgba(255,255,255,0.5);
+        }
+
+        .player-name {
+            color: #fff;
+            font-size: 1.1em;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .health-bar {
+            width: 100%;
+            height: 25px;
+            background: #333;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .health-fill {
+            height: 100%;
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 15px;
+            position: relative;
+        }
+
+        .health-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 50%;
+            background: rgba(255,255,255,0.3);
+            border-radius: 15px 15px 0 0;
+        }
+
+        .health-fill.player {
+            background: linear-gradient(90deg, #00ff00, #00cc00);
+        }
+
+        .health-fill.enemy {
+            background: linear-gradient(90deg, #ff0000, #cc0000);
+        }
+
+        .health-text {
+            color: #fff;
+            text-align: center;
+            margin-top: 5px;
+            font-size: 1em;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+
+        #turn-indicator {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #fff;
+            font-size: 2em;
+            font-weight: bold;
+            text-shadow: 0 0 20px rgba(0,0,0,0.8);
+            pointer-events: none;
+            z-index: 20;
+            animation: pulse 1.5s infinite;
+        }
+
+        #dice-result {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 5em;
+            color: #fff;
+            text-shadow: 0 0 30px rgba(255,255,255,0.8);
+            pointer-events: none;
+            z-index: 30;
+            animation: diceAppear 0.5s;
+        }
+
+        @keyframes diceAppear {
+            from { transform: translate(-50%, -50%) scale(0); }
+            to { transform: translate(-50%, -50%) scale(1); }
+        }
+
+        .shake {
+            animation: shake 0.5s;
+        }
+
+        #action-buttons {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+            pointer-events: auto;
+            z-index: 20;
+        }
+
+        .action-btn {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border: 4px solid #fff;
+            color: #fff;
+            font-size: 3em;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: pulse 2s infinite;
+        }
+
+        .action-btn:active {
+            transform: scale(0.9);
+            animation: none;
+        }
+
+        .action-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            animation: none;
+        }
+
+        /* Bildirim */
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            color: #fff;
+            padding: 15px 30px;
+            border-radius: 50px;
+            z-index: 40;
+            animation: slideIn 0.5s;
+            pointer-events: none;
+            backdrop-filter: blur(10px);
+        }
+    </style>
 </head>
 <body>
-<div id="app">
-  <div id="canvas-holder"></div>
-  <canvas id="confetti-canvas"></canvas>
-
-  <!-- HUD -->
-  <div id="hud">
-    <div class="brand">
-      <div class="mark"></div>
-      <div>
-        <div class="name">Marbrass Chess</div>
-        <div class="sub">Table &amp; Ivory</div>
-      </div>
-    </div>
-    <div class="hud-right">
-      <div class="icon-btn" id="btn-reset-cam" title="Kameranı sıfırla">⟲</div>
-      <div class="icon-btn" id="btn-lobby" title="Lobiyə qayıt">☰</div>
-    </div>
-  </div>
-
-  <div id="status-bar">
-    <div id="turn-pill">
-      <div id="turn-dot"></div>
-      <div id="turn-label">Ağ gedişi</div>
-      <div id="thinking">Bot düşünür<span class="dots"><span>.</span><span>.</span><span>.</span></span></div>
-    </div>
-  </div>
-
-  <div id="side-left">
-    <div class="panel" id="panel-diff">
-      <div class="p-title">Rejim</div>
-      <span class="diff-tag" id="diff-tag">● Normal</span>
-      <div class="controls-row" style="margin-top:14px;">
-        <div class="ctrl-btn" id="btn-undo">Geri al</div>
-        <div class="ctrl-btn" id="btn-restart">Yenidən</div>
-      </div>
-    </div>
-    <div class="panel">
-      <div class="p-title">Sizin tutduqlarınız</div>
-      <div class="captured-row" id="cap-by-player"></div>
-      <div class="material-diff" id="mat-diff-1">+0</div>
-    </div>
-  </div>
-
-  <div id="side-right">
-    <div class="panel history-panel">
-      <div class="p-title">Gedişlər</div>
-      <div id="move-list"></div>
-    </div>
-    <div class="panel">
-      <div class="p-title">Rəqibin tutduqları</div>
-      <div class="captured-row" id="cap-by-bot"></div>
-    </div>
-  </div>
-
-  <div class="hint" id="hint-text">Daşı seçmək üçün klikləyin, sonra hədəf xanaya klikləyin</div>
-
-  <!-- LOBBY -->
-  <div class="overlay" id="lobby-overlay">
-    <div id="lobby-card">
-      <div class="lobby-eyebrow">3D Şahmat · Tək Oyunçu</div>
-      <h1>Taxtaya otur.</h1>
-      <div class="tagline">Rəngini seç, rəqibinin gücünü təyin et və oyuna başla. Hər gediş həndəsi dəqiqliklə animasiya olunur.</div>
-
-      <div class="field-label">Rəng seçimi</div>
-      <div class="option-row" id="color-options">
-        <div class="opt active" data-color="w">
-          <span class="piece-glyph">♔</span>
-          <div class="opt-title">Ağ</div>
-          <div class="opt-sub">İlk gediş</div>
+    <div id="gameCanvas"></div>
+    
+    <div id="ui-overlay">
+        <!-- Ana Menü -->
+        <div id="main-menu" class="screen">
+            <div class="game-title">💣 ZAR BOMBA</div>
+            <div class="game-subtitle">3D Savaş Arenası</div>
+            <div class="player-badge">
+                <div class="player-avatar">👤</div>
+                <span id="player-name">Yükleniyor...</span>
+            </div>
+            <button id="play-btn" class="btn btn-primary">⚔️ SAVAŞA BAŞLA</button>
+            <button id="how-to-btn" class="btn btn-success">📖 NASIL OYNANIR?</button>
+            <button id="stats-btn" class="btn btn-warning">📊 İSTATİSTİKLER</button>
         </div>
-        <div class="opt" data-color="b">
-          <span class="piece-glyph">♚</span>
-          <div class="opt-title">Qara</div>
-          <div class="opt-sub">İkinci gediş</div>
-        </div>
-        <div class="opt" data-color="r">
-          <span class="piece-glyph">🎲</span>
-          <div class="opt-title">Təsadüfi</div>
-          <div class="opt-sub">Sürpriz</div>
-        </div>
-      </div>
 
-      <div class="field-label">Bot çətinliyi</div>
-      <div class="option-row" id="diff-options">
-        <div class="opt" data-diff="easy">
-          <div class="opt-title">Easy</div>
-          <div class="opt-sub">Öyrənmə üçün</div>
+        <!-- Lobi -->
+        <div id="lobby-screen" class="screen hidden">
+            <div class="game-title" style="font-size: 2.5em;">🔍 RAKİP ARANIYOR</div>
+            <div class="searching-animation"></div>
+            <div class="waiting-text">Eşleştirme Yapılıyor...</div>
+            <div class="player-count" id="player-count">Aktif Oyuncu: 0</div>
+            <button id="cancel-btn" class="btn btn-danger">✖ İPTAL</button>
         </div>
-        <div class="opt active" data-diff="normal">
-          <div class="opt-title">Normal</div>
-          <div class="opt-sub">Balanslı</div>
-        </div>
-        <div class="opt" data-diff="hard">
-          <div class="opt-title">Hard</div>
-          <div class="opt-sub">Amansız</div>
-        </div>
-      </div>
 
-      <button id="start-btn">Oyuna başla</button>
+        <!-- Oyun -->
+        <div id="game-screen" class="screen hidden">
+            <div id="hud">
+                <div class="player-info">
+                    <div class="health-container" id="player-health-container">
+                        <div class="player-name">👤 SEN</div>
+                        <div class="health-bar">
+                            <div id="player-health" class="health-fill player" style="width: 100%"></div>
+                        </div>
+                        <div class="health-text" id="player-health-text">100 HP</div>
+                    </div>
+                    <div class="health-container" id="enemy-health-container">
+                        <div class="player-name">👾 RAKİP</div>
+                        <div class="health-bar">
+                            <div id="enemy-health" class="health-fill enemy" style="width: 100%"></div>
+                        </div>
+                        <div class="health-text" id="enemy-health-text">100 HP</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="turn-indicator"></div>
+            <div id="dice-result"></div>
+            
+            <div id="action-buttons">
+                <button id="roll-btn" class="action-btn" title="Zar At">🎲</button>
+            </div>
+        </div>
     </div>
-  </div>
 
-  <!-- WIN -->
-  <div class="overlay hidden" id="win-overlay">
-    <div id="win-card">
-      <span id="win-crown">♛</span>
-      <h2 id="win-title">Mat!</h2>
-      <div id="win-sub">Ağ qalib gəldi</div>
-      <div class="win-actions">
-        <div class="win-btn" id="btn-win-lobby">Lobi</div>
-        <div class="win-btn primary" id="btn-win-again">Yenidən oyna</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- PROMOTION -->
-  <div class="overlay hidden" id="promo-overlay">
-    <div id="promo-card"></div>
-  </div>
-</div>
-
-<!-- ================= LIBRARIES (CDN) ================= -->
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.13.4/chess.min.js"></script>
-
-<script>
-/* =========================================================================
-   MARBRASS CHESS — tam 3D şahmat, tək fayl
-   Three.js (render) + chess.js (qaydalar/qanunilik) + öz minimax botu
-   ========================================================================= */
-
-(function(){
-"use strict";
-
-/* ---------------------------------------------------------------------
-   0. QLOBAL VƏZİYYƏT
---------------------------------------------------------------------- */
-const state = {
-  game: new Chess(),
-  playerColor: 'w',
-  difficulty: 'normal',
-  selectedSquare: null,
-  legalTargets: [],
-  animating: false,
-  gameOver: false,
-  history: [],           // { san, color }
-  capturedByWhite: [],    // black pieces captured by white
-  capturedByBlack: [],
-  boardFlipped: false,
-};
-
-const PIECE_VALUE = { p:1, n:3, b:3, r:5, q:9, k:0 };
-const PIECE_GLYPH = {
-  wp:'♙', wn:'♘', wb:'♗', wr:'♖', wq:'♕', wk:'♔',
-  bp:'♟', bn:'♞', bb:'♝', br:'♜', bq:'♛', bk:'♚'
-};
-
-/* ---------------------------------------------------------------------
-   1. THREE.JS SƏHNƏ QURULUŞU
---------------------------------------------------------------------- */
-let scene, camera, renderer, controls, raycaster, mouse;
-let boardGroup, piecesGroup, fxGroup;
-const pieceMeshes = {};   // square -> THREE.Group
-const squareMeshes = {};  // square -> THREE.Mesh (for raycast)
-let selectionRing, targetDots = [];
-const clock = new THREE.Clock();
-const animQueue = [];     // list of {fn, done}
-
-const COLORS = {
-  light: 0xe9dcc3,
-  dark: 0x6b4429,
-  boardEdge: 0x241a12,
-  gold: 0xc9a24b,
-  selection: 0x8fd39e,
-  target: 0xc9a24b,
-  check: 0xb5493a,
-};
-
-function initThree(){
-  const holder = document.getElementById('canvas-holder');
-  scene = new THREE.Scene();
-  scene.background = null;
-  scene.fog = new THREE.FogExp2(0x14100c, 0.028);
-
-  camera = new THREE.PerspectiveCamera(42, window.innerWidth/window.innerHeight, 0.1, 200);
-
-  renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-  renderer.outputEncoding = THREE.sRGBEncoding;
-  holder.appendChild(renderer.domElement);
-
-  controls = new THREE.OrbitControls(camera, renderer.domElement);
-  controls.enableDamping = true;
-  controls.dampingFactor = 0.08;
-  controls.minDistance = 6;
-  controls.maxDistance = 18;
-  controls.maxPolarAngle = Math.PI/2 - 0.05;
-  controls.minPolarAngle = 0.35;
-  controls.target.set(0,0,0);
-
-  setCameraForColor('w');
-
-  // Lighting
-  const hemi = new THREE.HemisphereLight(0xfff2d8, 0x1a120a, 0.65);
-  scene.add(hemi);
-
-  const key = new THREE.DirectionalLight(0xfff1d6, 1.15);
-  key.position.set(6, 10, 5);
-  key.castShadow = true;
-  key.shadow.mapSize.set(2048,2048);
-  key.shadow.camera.left = -8; key.shadow.camera.right = 8;
-  key.shadow.camera.top = 8; key.shadow.camera.bottom = -8;
-  key.shadow.camera.near = 1; key.shadow.camera.far = 30;
-  key.shadow.bias = -0.0015;
-  scene.add(key);
-
-  const rim = new THREE.DirectionalLight(0xc9a24b, 0.35);
-  rim.position.set(-8, 6, -6);
-  scene.add(rim);
-
-  const fill = new THREE.PointLight(0xffe9c2, 0.4, 20);
-  fill.position.set(0, 4, 6);
-  scene.add(fill);
-
-  raycaster = new THREE.Raycaster();
-  mouse = new THREE.Vector2();
-
-  boardGroup = new THREE.Group();
-  piecesGroup = new THREE.Group();
-  fxGroup = new THREE.Group();
-  scene.add(boardGroup, piecesGroup, fxGroup);
-
-  buildTable();
-  buildBoard();
-  buildSelectionFX();
-
-  window.addEventListener('resize', onResize);
-  renderer.domElement.addEventListener('click', onCanvasClick);
-  renderer.domElement.addEventListener('touchend', onCanvasTouch, {passive:true});
-
-  animate();
-}
-
-function setCameraForColor(color){
-  if(color === 'w'){
-    camera.position.set(0, 9.2, 8.6);
-  } else {
-    camera.position.set(0, 9.2, -8.6);
-  }
-  camera.lookAt(0,0,0);
-}
-
-function onResize(){
-  camera.aspect = window.innerWidth/window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
-}
-
-/* ---- Table / plinth beneath the board ---- */
-function buildTable(){
-  const plinthGeo = new THREE.BoxGeometry(10.4, 0.5, 10.4);
-  const plinthMat = new THREE.MeshStandardMaterial({ color:0x1c140d, roughness:0.55, metalness:0.15 });
-  const plinth = new THREE.Mesh(plinthGeo, plinthMat);
-  plinth.position.y = -0.5;
-  plinth.receiveShadow = true;
-  plinth.castShadow = true;
-  boardGroup.add(plinth);
-
-  // subtle gold trim line
-  const trimGeo = new THREE.BoxGeometry(10.55, 0.06, 10.55);
-  const trimMat = new THREE.MeshStandardMaterial({ color:COLORS.gold, roughness:0.35, metalness:0.6, emissive:0x2b210c, emissiveIntensity:0.3 });
-  const trim = new THREE.Mesh(trimGeo, trimMat);
-  trim.position.y = -0.26;
-  boardGroup.add(trim);
-
-  // floor disc for ambience
-  const floorGeo = new THREE.CircleGeometry(30, 48);
-  const floorMat = new THREE.MeshStandardMaterial({ color:0x0e0b08, roughness:1 });
-  const floor = new THREE.Mesh(floorGeo, floorMat);
-  floor.rotation.x = -Math.PI/2;
-  floor.position.y = -0.76;
-  floor.receiveShadow = true;
-  scene.add(floor);
-}
-
-/* ---- 8x8 board ---- */
-function squareToXZ(square){
-  const file = square.charCodeAt(0) - 97; // 0..7 a..h
-  const rank = parseInt(square[1],10) - 1; // 0..7
-  const x = file - 3.5;
-  const z = 3.5 - rank;
-  return {x, z};
-}
-
-function buildBoard(){
-  const squareGeo = new THREE.BoxGeometry(1, 0.22, 1);
-  const files = 'abcdefgh';
-  for(let f=0; f<8; f++){
-    for(let r=0; r<8; r++){
-      const square = files[f] + (r+1);
-      const isLight = (f + r) % 2 === 1;
-      const mat = new THREE.MeshStandardMaterial({
-        color: isLight ? COLORS.light : COLORS.dark,
-        roughness: isLight ? 0.45 : 0.55,
-        metalness: 0.06,
-      });
-      const mesh = new THREE.Mesh(squareGeo, mat);
-      const {x,z} = squareToXZ(square);
-      mesh.position.set(x, -0.11, z);
-      mesh.receiveShadow = true;
-      mesh.userData = { square, baseColor: mat.color.getHex() };
-      boardGroup.add(mesh);
-      squareMeshes[square] = mesh;
-    }
-  }
-
-  // coordinate labels (simple sprites-free approach using small planes) — subtle, optional
-}
-
-function buildSelectionFX(){
-  const ringGeo = new THREE.RingGeometry(0.34, 0.44, 32);
-  const ringMat = new THREE.MeshBasicMaterial({ color: COLORS.selection, transparent:true, opacity:0.9, side:THREE.DoubleSide });
-  selectionRing = new THREE.Mesh(ringGeo, ringMat);
-  selectionRing.rotation.x = -Math.PI/2;
-  selectionRing.visible = false;
-  selectionRing.position.y = 0.02;
-  fxGroup.add(selectionRing);
-}
-
-function clearTargetDots(){
-  targetDots.forEach(d => fxGroup.remove(d));
-  targetDots = [];
-}
-
-function showTargets(squares, captureSquares){
-  clearTargetDots();
-  squares.forEach(sq => {
-    const isCapture = captureSquares.includes(sq);
-    const geo = isCapture
-      ? new THREE.RingGeometry(0.36, 0.46, 24)
-      : new THREE.CircleGeometry(0.13, 20);
-    const mat = new THREE.MeshBasicMaterial({
-      color: isCapture ? COLORS.check : COLORS.target,
-      transparent:true, opacity:0.85, side:THREE.DoubleSide
-    });
-    const dot = new THREE.Mesh(geo, mat);
-    dot.rotation.x = -Math.PI/2;
-    const {x,z} = squareToXZ(sq);
-    dot.position.set(x, 0.02, z);
-    dot.userData = { targetSquare: sq };
-    fxGroup.add(dot);
-    targetDots.push(dot);
-  });
-}
-
-/* ---------------------------------------------------------------------
-   2. DAŞ GEOMETRİYASI (procedural, low-poly professional stil)
---------------------------------------------------------------------- */
-function pieceMaterial(color){
-  const isWhite = color === 'w';
-  return new THREE.MeshStandardMaterial({
-    color: isWhite ? COLORS_PIECE.white : COLORS_PIECE.black,
-    roughness: isWhite ? 0.32 : 0.4,
-    metalness: isWhite ? 0.12 : 0.22,
-  });
-}
-const COLORS_PIECE = { white: 0xf3ead2, black: 0x1c140e };
-
-function makeBase(mat, r=0.32, h=0.1){
-  const g = new THREE.CylinderGeometry(r, r*1.08, h, 24);
-  const m = new THREE.Mesh(g, mat);
-  m.position.y = h/2;
-  m.castShadow = true; m.receiveShadow = true;
-  return m;
-}
-function makeStem(mat, r=0.13, h=0.35, y=0.1){
-  const g = new THREE.CylinderGeometry(r, r*1.2, h, 16);
-  const m = new THREE.Mesh(g, mat);
-  m.position.y = y + h/2;
-  m.castShadow = true;
-  return m;
-}
-
-function buildPawn(mat){
-  const g = new THREE.Group();
-  g.add(makeBase(mat));
-  g.add(makeStem(mat, 0.11, 0.22, 0.1));
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.15, 20, 16), mat);
-  head.position.y = 0.4; head.castShadow = true;
-  g.add(head);
-  return g;
-}
-function buildRook(mat){
-  const g = new THREE.Group();
-  g.add(makeBase(mat, 0.33, 0.1));
-  const body = new THREE.Mesh(new THREE.CylinderGeometry(0.22,0.26,0.4,16), mat);
-  body.position.y = 0.1+0.2; body.castShadow = true;
-  g.add(body);
-  const top = new THREE.Mesh(new THREE.CylinderGeometry(0.27,0.24,0.12,16), mat);
-  top.position.y = 0.1+0.4+0.06; top.castShadow = true;
-  g.add(top);
-  // crenellations
-  for(let i=0;i<6;i++){
-    const a = (i/6)*Math.PI*2;
-    const c = new THREE.Mesh(new THREE.BoxGeometry(0.08,0.09,0.08), mat);
-    c.position.set(Math.cos(a)*0.2, 0.1+0.4+0.12+0.045, Math.sin(a)*0.2);
-    c.castShadow = true;
-    g.add(c);
-  }
-  return g;
-}
-function buildKnight(mat){
-  const g = new THREE.Group();
-  g.add(makeBase(mat, 0.32, 0.1));
-  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.14,0.22,0.32,16), mat);
-  neck.position.y = 0.1+0.16; neck.castShadow = true;
-  g.add(neck);
-  // head (box tilted) + snout
-  const head = new THREE.Mesh(new THREE.BoxGeometry(0.18,0.22,0.36), mat);
-  head.position.set(0, 0.1+0.34, 0.05);
-  head.rotation.x = -0.35;
-  head.castShadow = true;
-  g.add(head);
-  const snout = new THREE.Mesh(new THREE.BoxGeometry(0.13,0.13,0.16), mat);
-  snout.position.set(0, 0.1+0.30, 0.24);
-  snout.rotation.x = -0.35;
-  snout.castShadow = true;
-  g.add(snout);
-  const ear = new THREE.Mesh(new THREE.ConeGeometry(0.055,0.14,8), mat);
-  ear.position.set(0.06, 0.1+0.5, -0.06);
-  ear.castShadow = true;
-  g.add(ear);
-  return g;
-}
-function buildBishop(mat){
-  const g = new THREE.Group();
-  g.add(makeBase(mat, 0.31, 0.1));
-  g.add(makeStem(mat, 0.11, 0.28, 0.1));
-  const body = new THREE.Mesh(new THREE.ConeGeometry(0.19, 0.34, 20), mat);
-  body.position.y = 0.1+0.28+0.17; body.castShadow = true;
-  g.add(body);
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.08, 16,12), mat);
-  head.position.y = 0.1+0.28+0.34+0.05; head.castShadow = true;
-  g.add(head);
-  return g;
-}
-function buildQueen(mat){
-  const g = new THREE.Group();
-  g.add(makeBase(mat, 0.34, 0.1));
-  g.add(makeStem(mat, 0.14, 0.4, 0.1));
-  const crownBase = new THREE.Mesh(new THREE.CylinderGeometry(0.24,0.16,0.14,20), mat);
-  crownBase.position.y = 0.1+0.4+0.07; crownBase.castShadow = true;
-  g.add(crownBase);
-  for(let i=0;i<7;i++){
-    const a = (i/7)*Math.PI*2;
-    const spike = new THREE.Mesh(new THREE.ConeGeometry(0.045,0.16,8), mat);
-    spike.position.set(Math.cos(a)*0.19, 0.1+0.4+0.14+0.08, Math.sin(a)*0.19);
-    spike.castShadow = true;
-    g.add(spike);
-  }
-  const ball = new THREE.Mesh(new THREE.SphereGeometry(0.07,16,12), mat);
-  ball.position.y = 0.1+0.4+0.28; ball.castShadow = true;
-  g.add(ball);
-  return g;
-}
-function buildKing(mat){
-  const g = new THREE.Group();
-  g.add(makeBase(mat, 0.35, 0.1));
-  g.add(makeStem(mat, 0.15, 0.46, 0.1));
-  const crownBase = new THREE.Mesh(new THREE.CylinderGeometry(0.25,0.18,0.14,20), mat);
-  crownBase.position.y = 0.1+0.46+0.07; crownBase.castShadow = true;
-  g.add(crownBase);
-  const crossV = new THREE.Mesh(new THREE.BoxGeometry(0.07,0.26,0.07), mat);
-  crossV.position.y = 0.1+0.46+0.14+0.13; crossV.castShadow = true;
-  g.add(crossV);
-  const crossH = new THREE.Mesh(new THREE.BoxGeometry(0.2,0.07,0.07), mat);
-  crossH.position.y = 0.1+0.46+0.14+0.18; crossH.castShadow = true;
-  g.add(crossH);
-  return g;
-}
-
-function buildPieceMesh(type, color){
-  const mat = pieceMaterial(color);
-  let g;
-  switch(type){
-    case 'p': g = buildPawn(mat); break;
-    case 'r': g = buildRook(mat); break;
-    case 'n': g = buildKnight(mat); break;
-    case 'b': g = buildBishop(mat); break;
-    case 'q': g = buildQueen(mat); break;
-    case 'k': g = buildKing(mat); break;
-  }
-  g.userData = { type, color };
-  g.traverse(o => { if(o.isMesh){ o.castShadow = true; o.receiveShadow = false; } });
-  return g;
-}
-
-/* ---------------------------------------------------------------------
-   3. TAXTANI chess.js VƏZİYYƏTİNDƏN QURMAQ / SİNXRONLAŞDIRMAQ
---------------------------------------------------------------------- */
-function clearPieces(){
-  Object.values(pieceMeshes).forEach(m => piecesGroup.remove(m));
-  for(const k in pieceMeshes) delete pieceMeshes[k];
-}
-
-function rebuildPiecesFromGame(){
-  clearPieces();
-  const board = state.game.board(); // 8x8, rank8->rank1, file a->h
-  const files = 'abcdefgh';
-  for(let r=0;r<8;r++){
-    for(let f=0;f<8;f++){
-      const cell = board[r][f];
-      if(!cell) continue;
-      const rank = 8 - r;
-      const square = files[f] + rank;
-      const mesh = buildPieceMesh(cell.type, cell.color);
-      const {x,z} = squareToXZ(square);
-      mesh.position.set(x, 0, z);
-      piecesGroup.add(mesh);
-      pieceMeshes[square] = mesh;
-    }
-  }
-}
-
-/* ---------------------------------------------------------------------
-   4. ANİMASİYA MÜHƏRRİKİ (sadə tween queue)
---------------------------------------------------------------------- */
-function tween(duration, onUpdate, onComplete){
-  const start = performance.now();
-  animQueue.push({
-    update(now){
-      let t = (now - start) / (duration*1000);
-      if(t > 1) t = 1;
-      const eased = easeInOutCubic(t);
-      onUpdate(eased, t);
-      if(t >= 1){
-        if(onComplete) onComplete();
-        return true; // done
-      }
-      return false;
-    }
-  });
-}
-function easeInOutCubic(t){ return t<0.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2; }
-
-function animate(){
-  requestAnimationFrame(animate);
-  const now = performance.now();
-  for(let i = animQueue.length-1; i>=0; i--){
-    const done = animQueue[i].update(now);
-    if(done) animQueue.splice(i,1);
-  }
-  // idle piece bob for selected
-  if(selectionRing.visible){
-    selectionRing.rotation.z += 0.01;
-  }
-  controls.update();
-  renderer.render(scene, camera);
-}
-
-/* ---------------------------------------------------------------------
-   5. GEDİŞ İCRASI + ANİMASİYALAR (yerimə / yemə)
---------------------------------------------------------------------- */
-function animateMove(moveObj, callback){
-  // moveObj: chess.js verbose move {from,to,piece,color,captured,flags,promotion,san}
-  const mesh = pieceMeshes[moveObj.from];
-  if(!mesh){ callback && callback(); return; }
-
-  const {x:fx, z:fz} = squareToXZ(moveObj.from);
-  const {x:tx, z:tz} = squareToXZ(moveObj.to);
-
-  const isCapture = moveObj.flags.includes('c') || moveObj.flags.includes('e');
-  const capturedSquare = moveObj.flags.includes('e')
-    ? (moveObj.color === 'w' ? moveObj.to[0]+ (parseInt(moveObj.to[1])-1) : moveObj.to[0]+ (parseInt(moveObj.to[1])+1))
-    : moveObj.to;
-
-  function doMainMove(){
-    const dist = Math.hypot(tx-fx, tz-fz);
-    const hopHeight = 0.55 + Math.min(dist*0.05, 0.4);
-    const duration = 0.32 + dist*0.045;
-
-    tween(duration, (e)=>{
-      mesh.position.x = fx + (tx-fx)*e;
-      mesh.position.z = fz + (tz-fz)*e;
-      mesh.position.y = Math.sin(Math.PI*e) * hopHeight;
-      mesh.rotation.y = Math.sin(Math.PI*e) * 0.15;
-    }, ()=>{
-      mesh.position.set(tx, 0, tz);
-      mesh.rotation.y = 0;
-
-      // handle castling rook hop
-      if(moveObj.flags.includes('k') || moveObj.flags.includes('q')){
-        const isKingside = moveObj.flags.includes('k');
-        const rank = moveObj.color === 'w' ? '1' : '8';
-        const rookFrom = (isKingside?'h':'a') + rank;
-        const rookTo = (isKingside?'f':'d') + rank;
-        const rookMesh = pieceMeshes[rookFrom];
-        if(rookMesh){
-          const {x:rfx,z:rfz} = squareToXZ(rookFrom);
-          const {x:rtx,z:rtz} = squareToXZ(rookTo);
-          tween(0.3, (e2)=>{
-            rookMesh.position.x = rfx + (rtx-rfx)*e2;
-            rookMesh.position.z = rfz + (rtz-rfz)*e2;
-            rookMesh.position.y = Math.sin(Math.PI*e2)*0.35;
-          }, ()=>{
-            rookMesh.position.set(rtx,0,rtz);
-            pieceMeshes[rookTo] = rookMesh;
-            delete pieceMeshes[rookFrom];
-          });
+    <script>
+        // Telegram WebApp başlatma
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.ready();
+        tg.setHeaderColor('#667eea');
+        tg.setBackgroundColor('#000000');
+        
+        // Telegram kullanıcı bilgisi
+        let telegramUser = null;
+        try {
+            telegramUser = tg.initDataUnsafe?.user || { 
+                first_name: "Misafir", 
+                id: Math.floor(Math.random() * 1000000),
+                username: "guest"
+            };
+            document.getElementById('player-name').textContent = telegramUser.first_name || 'Oyuncu';
+            if (telegramUser.photo_url) {
+                document.querySelector('.player-avatar').innerHTML = `<img src="${telegramUser.photo_url}" style="width:100%;height:100%;border-radius:50%;">`;
+            }
+        } catch(e) {
+            telegramUser = { 
+                first_name: "Misafir", 
+                id: Math.floor(Math.random() * 1000000),
+                username: "guest"
+            };
+            document.getElementById('player-name').textContent = 'Misafir';
         }
-      }
 
-      // promotion swap
-      if(moveObj.flags.includes('p')){
-        piecesGroup.remove(mesh);
-        const newMesh = buildPieceMesh(moveObj.promotion, moveObj.color);
-        newMesh.position.set(tx, 0, tz);
-        newMesh.scale.set(0.01,0.01,0.01);
-        piecesGroup.add(newMesh);
-        pieceMeshes[moveObj.to] = newMesh;
-        tween(0.35, (e3)=>{
-          const s = easeOutBack(e3);
-          newMesh.scale.set(s,s,s);
+        // İstatistikler
+        let stats = JSON.parse(localStorage.getItem('zarBombaStats') || '{"wins":0,"losses":0,"totalGames":0}');
+
+        // Three.js sahne kurulumu
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.Fog(0x000000, 10, 30);
+        
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.outputEncoding = THREE.sRGBEncoding;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.2;
+        document.getElementById('gameCanvas').appendChild(renderer.domElement);
+
+        // Işıklandırma
+        const ambientLight = new THREE.AmbientLight(0x404040, 2);
+        scene.add(ambientLight);
+        
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5);
+        directionalLight.position.set(5, 10, 5);
+        directionalLight.castShadow = true;
+        directionalLight.shadow.camera.near = 0.1;
+        directionalLight.shadow.camera.far = 50;
+        directionalLight.shadow.camera.left = -10;
+        directionalLight.shadow.camera.right = 10;
+        directionalLight.shadow.camera.top = 10;
+        directionalLight.shadow.camera.bottom = -10;
+        directionalLight.shadow.mapSize.width = 2048;
+        directionalLight.shadow.mapSize.height = 2048;
+        scene.add(directionalLight);
+
+        // Nokta ışıkları
+        const pointLight1 = new THREE.PointLight(0xff6b35, 0.5, 10);
+        pointLight1.position.set(-3, 2, 0);
+        scene.add(pointLight1);
+        
+        const pointLight2 = new THREE.PointLight(0x4facfe, 0.5, 10);
+        pointLight2.position.set(3, 2, 0);
+        scene.add(pointLight2);
+
+        // Zemin
+        const groundGeometry = new THREE.PlaneGeometry(20, 20);
+        const groundMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0x1a1a2e,
+            roughness: 0.5,
+            metalness: 0.3
         });
-      } else {
-        pieceMeshes[moveObj.to] = mesh;
-      }
-      if(moveObj.from !== moveObj.to) delete pieceMeshes[moveObj.from];
-      callback && callback();
-    });
-  }
+        const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+        ground.rotation.x = -Math.PI / 2;
+        ground.receiveShadow = true;
+        scene.add(ground);
 
-  if(isCapture){
-    const capMesh = pieceMeshes[capturedSquare];
-    if(capMesh){
-      delete pieceMeshes[capturedSquare];
-      const dir = new THREE.Vector3(capMesh.position.x, 0, capMesh.position.z).sub(new THREE.Vector3(0,0,0));
-      if(dir.length() < 0.01) dir.set(1,0,0);
-      dir.normalize();
-      const startPos = capMesh.position.clone();
-      const flyTarget = startPos.clone().add(dir.multiplyScalar(2.2));
-      tween(0.5, (e)=>{
-        capMesh.position.x = startPos.x + (flyTarget.x-startPos.x)*e;
-        capMesh.position.z = startPos.z + (flyTarget.z-startPos.z)*e;
-        capMesh.position.y = Math.sin(Math.PI*e)*1.4 - e*e*0.3;
-        capMesh.rotation.x += 0.25;
-        capMesh.rotation.z += 0.18;
-        const s = 1 - e*0.6;
-        capMesh.scale.set(s,s,s);
-      }, ()=>{
-        piecesGroup.remove(capMesh);
-        registerCapture(moveObj);
-        doMainMove();
-      });
-    } else {
-      registerCapture(moveObj);
-      doMainMove();
-    }
-  } else {
-    doMainMove();
-  }
-}
-function easeOutBack(t){
-  const c1=1.70158, c3=c1+1;
-  return 1 + c3*Math.pow(t-1,3) + c1*Math.pow(t-1,2);
-}
+        // Grid
+        const gridHelper = new THREE.GridHelper(20, 20, 0x333333, 0x222222);
+        gridHelper.position.y = 0.01;
+        scene.add(gridHelper);
 
-function registerCapture(moveObj){
-  const capturedType = moveObj.captured;
-  if(!capturedType) return;
-  if(moveObj.color === 'w'){
-    state.capturedByWhite.push(capturedType); // white captured a black piece
-  } else {
-    state.capturedByBlack.push(capturedType);
-  }
-  updateCapturedPanels();
-}
+        // Oyuncu karakteri (Kahraman)
+        const playerGroup = new THREE.Group();
+        
+        // Gövde
+        const playerBody = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.5, 0.7, 1.5, 8),
+            new THREE.MeshStandardMaterial({ color: 0x00ff00, roughness: 0.3, metalness: 0.5 })
+        );
+        playerBody.castShadow = true;
+        playerBody.position.y = 0.75;
+        playerGroup.add(playerBody);
+        
+        // Kafa
+        const playerHead = new THREE.Mesh(
+            new THREE.SphereGeometry(0.4, 32, 32),
+            new THREE.MeshStandardMaterial({ color: 0xffcc00, roughness: 0.2, metalness: 0.3 })
+        );
+        playerHead.castShadow = true;
+        playerHead.position.y = 1.9;
+        playerGroup.add(playerHead);
+        
+        // Gözler
+        const eyeGeometry = new THREE.SphereGeometry(0.1, 16, 16);
+        const eyeMaterial = new THREE.MeshStandardMaterial({ color: 0x000000 });
+        
+        const leftEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+        leftEye.position.set(-0.15, 1.95, 0.35);
+        playerGroup.add(leftEye);
+        
+        const rightEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+        rightEye.position.set(0.15, 1.95, 0.35);
+        playerGroup.add(rightEye);
+        
+        // Silah (Kılıç)
+        const swordGroup = new THREE.Group();
+        const swordBlade = new THREE.Mesh(
+            new THREE.BoxGeometry(0.1, 1, 0.02),
+            new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.9, roughness: 0.1 })
+        );
+        swordBlade.position.y = 0.5;
+        swordGroup.add(swordBlade);
+        
+        const swordHandle = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.05, 0.05, 0.3),
+            new THREE.MeshStandardMaterial({ color: 0x8b4513 })
+        );
+        swordGroup.add(swordHandle);
+        
+        swordGroup.position.set(0.7, 1, 0);
+        swordGroup.rotation.z = -0.5;
+        playerGroup.add(swordGroup);
+        
+        playerGroup.position.set(-3, 0, 0);
+        scene.add(playerGroup);
 
-/* ---------------------------------------------------------------------
-   6. UI: TARIX, TUTULAN DAŞLAR, VƏZİYYƏT PANELİ
---------------------------------------------------------------------- */
-const moveListEl = document.getElementById('move-list');
-const capByPlayerEl = document.getElementById('cap-by-player');
-const capByBotEl = document.getElementById('cap-by-bot');
-const matDiffEl = document.getElementById('mat-diff-1');
-const turnDotEl = document.getElementById('turn-dot');
-const turnLabelEl = document.getElementById('turn-label');
-const thinkingEl = document.getElementById('thinking');
-const hintEl = document.getElementById('hint-text');
+        // Rakip karakteri (Canavar)
+        const enemyGroup = new THREE.Group();
+        
+        // Gövde
+        const enemyBody = new THREE.Mesh(
+            new THREE.ConeGeometry(0.8, 2, 8),
+            new THREE.MeshStandardMaterial({ color: 0xff0000, roughness: 0.4, metalness: 0.2 })
+        );
+        enemyBody.castShadow = true;
+        enemyBody.position.y = 1;
+        enemyGroup.add(enemyBody);
+        
+        // Kafa
+        const enemyHead = new THREE.Mesh(
+            new THREE.SphereGeometry(0.5, 32, 32),
+            new THREE.MeshStandardMaterial({ color: 0xff6600, roughness: 0.3, metalness: 0.3 })
+        );
+        enemyHead.castShadow = true;
+        enemyHead.position.y = 2.2;
+        enemyGroup.add(enemyHead);
+        
+        // Boynuzlar
+        const hornGeometry = new THREE.ConeGeometry(0.15, 0.6, 8);
+        const hornMaterial = new THREE.MeshStandardMaterial({ color: 0x8b4513 });
+        
+        const leftHorn = new THREE.Mesh(hornGeometry, hornMaterial);
+        leftHorn.position.set(-0.3, 2.7, 0);
+        leftHorn.rotation.z = 0.3;
+        enemyGroup.add(leftHorn);
+        
+        const rightHorn = new THREE.Mesh(hornGeometry, hornMaterial);
+        rightHorn.position.set(0.3, 2.7, 0);
+        rightHorn.rotation.z = -0.3;
+        enemyGroup.add(rightHorn);
+        
+        // Gözler
+        const enemyEyeGeometry = new THREE.SphereGeometry(0.12, 16, 16);
+        const enemyEyeMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0xffff00, 
+            emissive: 0xff6600,
+            emissiveIntensity: 0.5
+        });
+        
+        const enemyLeftEye = new THREE.Mesh(enemyEyeGeometry, enemyEyeMaterial);
+        enemyLeftEye.position.set(-0.2, 2.2, 0.4);
+        enemyGroup.add(enemyLeftEye);
+        
+        const enemyRightEye = new THREE.Mesh(enemyEyeGeometry, enemyEyeMaterial);
+        enemyRightEye.position.set(0.2, 2.2, 0.4);
+        enemyGroup.add(enemyRightEye);
+        
+        enemyGroup.position.set(3, 0, 0);
+        scene.add(enemyGroup);
 
-function updateMoveList(){
-  moveListEl.innerHTML = '';
-  const hist = state.history;
-  for(let i=0;i<hist.length;i+=2){
-    const row = document.createElement('div');
-    row.className = 'mv-row';
-    const num = document.createElement('span');
-    num.className = 'mv-num';
-    num.textContent = (i/2+1) + '.';
-    row.appendChild(num);
-    const w = document.createElement('b');
-    w.textContent = hist[i] ? hist[i].san : '';
-    row.appendChild(w);
-    if(hist[i+1]){
-      const b = document.createElement('span');
-      b.textContent = hist[i+1].san;
-      b.style.marginLeft = '6px';
-      row.appendChild(b);
-    }
-    moveListEl.appendChild(row);
-  }
-  moveListEl.parentElement.scrollTop = moveListEl.parentElement.scrollHeight;
-}
+        // Bomba (Zar yerine)
+        const bombGroup = new THREE.Group();
+        
+        // Bomba gövdesi
+        const bombBody = new THREE.Mesh(
+            new THREE.SphereGeometry(0.8, 32, 32),
+            new THREE.MeshStandardMaterial({ 
+                color: 0x333333, 
+                roughness: 0.3, 
+                metalness: 0.7 
+            })
+        );
+        bombBody.castShadow = true;
+        bombGroup.add(bombBody);
+        
+        // Bomba fitili
+        const fuse = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.08, 0.08, 0.6),
+            new THREE.MeshStandardMaterial({ color: 0x8b4513, roughness: 0.8 })
+        );
+        fuse.position.y = 1;
+        bombGroup.add(fuse);
+        
+        // Alev
+        const flameGeometry = new THREE.SphereGeometry(0.2, 16, 16);
+        const flameMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0xff6600, 
+            emissive: 0xff3300,
+            emissiveIntensity: 2
+        });
+        const flame = new THREE.Mesh(flameGeometry, flameMaterial);
+        flame.position.y = 1.4;
+        bombGroup.add(flame);
+        
+        // Zar yüzeyleri için noktalar
+        const dotGeometry = new THREE.SphereGeometry(0.15, 16, 16);
+        const dotMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0xffffff, 
+            emissive: 0xffffff,
+            emissiveIntensity: 0.3
+        });
+        
+        // Zar noktalarını ekle (1-6 arası değerler için)
+        const dotPositions = [
+            { x: 0, y: 0.4, z: 0 }, // 1
+            { x: -0.3, y: 0.5, z: 0.3 }, { x: 0.3, y: 0.3, z: -0.3 }, // 2
+            { x: -0.3, y: 0.6, z: 0 }, { x: 0, y: 0.3, z: 0 }, { x: 0.3, y: 0.1, z: 0 }, // 3
+            { x: -0.2, y: 0.6, z: 0.2 }, { x: 0.2, y: 0.6, z: 0.2 }, { x: -0.2, y: 0.2, z: 0.2 }, { x: 0.2, y: 0.2, z: 0.2 }, // 4
+        ];
+        
+        dotPositions.forEach(pos => {
+            const dot = new THREE.Mesh(dotGeometry, dotMaterial);
+            dot.position.set(pos.x, pos.y, pos.z);
+            bombGroup.add(dot);
+        });
+        
+        bombGroup.position.set(0, 2, -3);
+        bombGroup.rotation.x = 0.5;
+        scene.add(bombGroup);
 
-function updateCapturedPanels(){
-  // "sizin tutduqlarınız" = pieces captured BY the player color
-  const byPlayer = state.playerColor === 'w' ? state.capturedByWhite : state.capturedByBlack;
-  const byBot = state.playerColor === 'w' ? state.capturedByBlack : state.capturedByWhite;
+        // Partikül sistemi
+        const particles = [];
+        const particleGeometry = new THREE.SphereGeometry(0.08, 8, 8);
+        
+        for (let i = 0; i < 100; i++) {
+            const particle = new THREE.Mesh(
+                particleGeometry,
+                new THREE.MeshStandardMaterial({ 
+                    color: 0xff6600,
+                    emissive: 0xff3300,
+                    emissiveIntensity: 1
+                })
+            );
+            particle.visible = false;
+            scene.add(particle);
+            particles.push(particle);
+        }
 
-  capByPlayerEl.innerHTML = '';
-  byPlayer.forEach(t=>{
-    const chip = document.createElement('div');
-    const oppColor = state.playerColor === 'w' ? 'b' : 'w';
-    chip.className = 'cap-chip ' + (oppColor==='w'?'white':'black');
-    chip.textContent = PIECE_GLYPH[oppColor+t];
-    capByPlayerEl.appendChild(chip);
-  });
-  capByBotEl.innerHTML = '';
-  byBot.forEach(t=>{
-    const chip = document.createElement('div');
-    chip.className = 'cap-chip ' + (state.playerColor==='w'?'white':'black');
-    chip.textContent = PIECE_GLYPH[state.playerColor+t];
-    capByBotEl.appendChild(chip);
-  });
+        camera.position.set(0, 3, 8);
+        camera.lookAt(0, 1, 0);
 
-  const playerMat = byPlayer.reduce((s,t)=>s+PIECE_VALUE[t],0);
-  const botMat = byBot.reduce((s,t)=>s+PIECE_VALUE[t],0);
-  const diff = playerMat - botMat;
-  matDiffEl.textContent = (diff>0?'+':'') + diff;
-}
+        // Oyun durumu
+        let gameState = {
+            playerHealth: 100,
+            enemyHealth: 100,
+            playerTurn: true,
+            gameActive: false,
+            opponent: null,
+            roomId: null,
+            isAnimating: false
+        };
 
-function updateTurnUI(){
-  const turn = state.game.turn();
-  turnDotEl.className = turn === 'b' ? 'black' : '';
-  const isPlayerTurn = turn === state.playerColor;
-  if(state.game.in_check()){
-    turnLabelEl.textContent = (turn==='w'?'Ağ':'Qara') + ' — Şah!';
-  } else {
-    turnLabelEl.textContent = (turn==='w'?'Ağ gedişi':'Qara gedişi') + (isPlayerTurn ? '' : ' · Bot');
-  }
-}
+        // Gelişmiş eşleştirme sistemi
+        class MatchmakingSystem {
+            constructor() {
+                this.waitingPlayers = this.loadData('waitingPlayers', []);
+                this.activeRooms = this.loadData('activeRooms', {});
+                this.roomData = null;
+                this.cleanupInterval = null;
+                this.startCleanup();
+            }
 
-/* ---------------------------------------------------------------------
-   7. QARŞILIQLI TƏSİR (klik / toxunma)
---------------------------------------------------------------------- */
-function getPointerIntersects(clientX, clientY){
-  const rect = renderer.domElement.getBoundingClientRect();
-  mouse.x = ((clientX-rect.left)/rect.width)*2 - 1;
-  mouse.y = -((clientY-rect.top)/rect.height)*2 + 1;
-  raycaster.setFromCamera(mouse, camera);
-  const objs = [];
-  Object.values(squareMeshes).forEach(m=>objs.push(m));
-  targetDots.forEach(d=>objs.push(d));
-  Object.values(pieceMeshes).forEach(m=>m.traverse(o=>{ if(o.isMesh) objs.push(o); }));
-  return raycaster.intersectObjects(objs, false);
-}
+            loadData(key, defaultValue) {
+                try {
+                    return JSON.parse(localStorage.getItem(key)) || defaultValue;
+                } catch {
+                    return defaultValue;
+                }
+            }
 
-function squareFromIntersection(hit){
-  let obj = hit.object;
-  while(obj){
-    if(obj.userData && obj.userData.square) return obj.userData.square;
-    if(obj.userData && obj.userData.targetSquare) return obj.userData.targetSquare;
-    obj = obj.parent;
-  }
-  return null;
-}
+            saveData(key, data) {
+                localStorage.setItem(key, JSON.stringify(data));
+            }
 
-function onCanvasClick(ev){ handlePointer(ev.clientX, ev.clientY); }
-function onCanvasTouch(ev){
-  if(ev.changedTouches && ev.changedTouches[0]){
-    handlePointer(ev.changedTouches[0].clientX, ev.changedTouches[0].clientY);
-  }
-}
+            startCleanup() {
+                this.cleanupInterval = setInterval(() => {
+                    this.cleanupOldData();
+                }, 5000);
+            }
 
-function handlePointer(clientX, clientY){
-  if(state.animating || state.gameOver) return;
-  if(state.game.turn() !== state.playerColor) return; // not player's turn
+            cleanupOldData() {
+                const now = Date.now();
+                
+                // Eski bekleyen oyuncuları temizle
+                this.waitingPlayers = this.waitingPlayers.filter(p => now - p.timestamp < 15000);
+                this.saveData('waitingPlayers', this.waitingPlayers);
+                
+                // Eski odaları temizle
+                Object.keys(this.activeRooms).forEach(roomId => {
+                    if (now - this.activeRooms[roomId].timestamp > 60000) {
+                        delete this.activeRooms[roomId];
+                    }
+                });
+                this.saveData('activeRooms', this.activeRooms);
+            }
 
-  const hits = getPointerIntersects(clientX, clientY);
-  if(!hits.length) return;
-  const square = squareFromIntersection(hits[0]);
-  if(!square) return;
+            findMatch(playerId, playerName) {
+                this.cleanupOldData();
+                
+                // Kendi kendine eşleşmeyi önle
+                const availableOpponent = this.waitingPlayers.find(p => p.id !== playerId);
+                
+                if (availableOpponent) {
+                    // Eşleşme bulundu
+                    this.waitingPlayers = this.waitingPlayers.filter(p => p.id !== availableOpponent.id);
+                    this.saveData('waitingPlayers', this.waitingPlayers);
+                    
+                    this.roomId = `room_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                    this.roomData = {
+                        id: this.roomId,
+                        players: [
+                            { id: playerId, name: playerName, health: 100 },
+                            { id: availableOpponent.id, name: availableOpponent.name, health: 100 }
+                        ],
+                        currentTurn: playerId,
+                        diceValue: null,
+                        lastAction: null,
+                        timestamp: Date.now(),
+                        gameStarted: false
+                    };
+                    
+                    this.activeRooms[this.roomId] = this.roomData;
+                    this.saveData('activeRooms', this.activeRooms);
+                    
+                    return { matched: true, opponent: availableOpponent, roomId: this.roomId };
+                } else {
+                    // Bekleme listesine ekle
+                    const existingPlayer = this.waitingPlayers.find(p => p.id === playerId);
+                    if (!existingPlayer) {
+                        this.waitingPlayers.push({
+                            id: playerId,
+                            name: playerName,
+                            timestamp: Date.now()
+                        });
+                        this.saveData('waitingPlayers', this.waitingPlayers);
+                    }
+                    
+                    return { matched: false };
+                }
+            }
 
-  if(state.selectedSquare){
-    if(state.legalTargets.includes(square)){
-      tryPlayerMove(state.selectedSquare, square);
-      return;
-    }
-  }
+            cancelMatch(playerId) {
+                this.waitingPlayers = this.waitingPlayers.filter(p => p.id !== playerId);
+                this.saveData('waitingPlayers', this.waitingPlayers);
+            }
 
-  // select / reselect
-  const piece = state.game.get(square);
-  if(piece && piece.color === state.playerColor){
-    selectSquare(square);
-  } else {
-    deselect();
-  }
-}
+            updateRoom(roomId, data) {
+                data.timestamp = Date.now();
+                this.activeRooms[roomId] = data;
+                this.saveData('activeRooms', this.activeRooms);
+            }
 
-function selectSquare(square){
-  state.selectedSquare = square;
-  const {x,z} = squareToXZ(square);
-  selectionRing.position.set(x, 0.02, z);
-  selectionRing.visible = true;
+            getRoom(roomId) {
+                return this.activeRooms[roomId] || null;
+            }
 
-  const moves = state.game.moves({square, verbose:true});
-  state.legalTargets = moves.map(m=>m.to);
-  const captureSquares = moves.filter(m=>m.flags.includes('c')||m.flags.includes('e')).map(m=>m.to);
-  showTargets(state.legalTargets, captureSquares);
-  hintEl.style.opacity = '0';
-}
+            deleteRoom(roomId) {
+                delete this.activeRooms[roomId];
+                this.saveData('activeRooms', this.activeRooms);
+            }
+        }
 
-function deselect(){
-  state.selectedSquare = null;
-  state.legalTargets = [];
-  selectionRing.visible = false;
-  clearTargetDots();
-}
+        const matchmaking = new MatchmakingSystem();
+        let matchCheckInterval = null;
+        let roomUpdateInterval = null;
 
-function tryPlayerMove(from, to){
-  const moves = state.game.moves({square:from, verbose:true});
-  const chosen = moves.find(m=>m.to===to);
-  if(!chosen) return;
+        // Ses efektleri (Web Audio API)
+        class SoundEffects {
+            constructor() {
+                this.audioContext = null;
+                this.initialize();
+            }
 
-  if(chosen.flags.includes('p')){
-    deselect();
-    askPromotion(state.playerColor, (promo)=>{
-      executeMove(from, to, promo);
-    });
-    return;
-  }
-  deselect();
-  executeMove(from, to);
-}
+            initialize() {
+                try {
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                } catch (e) {
+                    console.log('Web Audio API desteklenmiyor');
+                }
+            }
 
-function executeMove(from, to, promotion){
-  const moveObj = state.game.move({from, to, promotion: promotion || 'q'});
-  if(!moveObj) return;
-  state.animating = true;
-  state.history.push({san: moveObj.san, color: moveObj.color});
-  updateMoveList();
+            playDiceRoll() {
+                if (!this.audioContext) return;
+                
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(200, this.audioContext.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(800, this.audioContext.currentTime + 0.3);
+                
+                gainNode.gain.setValueAtTime(0.3, this.audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.5);
+                
+                oscillator.start(this.audioContext.currentTime);
+                oscillator.stop(this.audioContext.currentTime + 0.5);
+            }
 
-  animateMove(moveObj, ()=>{
-    state.animating = false;
-    updateTurnUI();
-    checkGameEnd();
-    if(!state.gameOver && state.game.turn() !== state.playerColor){
-      setTimeout(botMove, 480);
-    }
-  });
-}
+            playExplosion() {
+                if (!this.audioContext) return;
+                
+                const bufferSize = this.audioContext.sampleRate * 0.3;
+                const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
+                const data = buffer.getChannelData(0);
+                
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.3));
+                }
+                
+                const source = this.audioContext.createBufferSource();
+                source.buffer = buffer;
+                
+                const gainNode = this.audioContext.createGain();
+                gainNode.gain.setValueAtTime(0.5, this.audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.3);
+                
+                source.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+                source.start();
+            }
 
-function askPromotion(color, cb){
-  const overlay = document.getElementById('promo-overlay');
-  const card = document.getElementById('promo-card');
-  card.innerHTML = '';
-  ['q','r','b','n'].forEach(t=>{
-    const opt = document.createElement('div');
-    opt.className = 'promo-opt';
-    opt.textContent = PIECE_GLYPH[color+t];
-    opt.style.color = color==='w' ? '#f3ead2' : '#241a12';
-    opt.style.background = color==='w' ? 'rgba(243,234,210,.08)' : 'rgba(0,0,0,.4)';
-    opt.onclick = ()=>{
-      overlay.classList.add('hidden');
-      cb(t);
-    };
-    card.appendChild(opt);
-  });
-  overlay.classList.remove('hidden');
-}
+            playDamage() {
+                if (!this.audioContext) return;
+                
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(100, this.audioContext.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(50, this.audioContext.currentTime + 0.2);
+                
+                gainNode.gain.setValueAtTime(0.4, this.audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.3);
+                
+                oscillator.start(this.audioContext.currentTime);
+                oscillator.stop(this.audioContext.currentTime + 0.3);
+            }
+        }
 
-/* ---------------------------------------------------------------------
-   8. OYUN SONU
---------------------------------------------------------------------- */
-function checkGameEnd(){
-  if(!state.game.game_over()) return;
-  state.gameOver = true;
-  deselect();
+        const sounds = new SoundEffects();
 
-  const winOverlay = document.getElementById('win-overlay');
-  const title = document.getElementById('win-title');
-  const sub = document.getElementById('win-sub');
-  const crown = document.getElementById('win-crown');
+        // UI fonksiyonları
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+            document.getElementById(screenId).classList.remove('hidden');
+        }
 
-  if(state.game.in_checkmate()){
-    const winnerColor = state.game.turn() === 'w' ? 'b' : 'w';
-    const playerWon = winnerColor === state.playerColor;
-    title.textContent = playerWon ? 'Qələbə!' : 'Mat!';
-    sub.textContent = (winnerColor==='w'?'Ağ':'Qara') + ' qalib gəldi — ' + (playerWon ? 'təbrik edirik!' : 'bot udmağı bacardı.');
-    crown.textContent = playerWon ? '♛' : '♚';
-    if(playerWon) launchConfetti();
-  } else if(state.game.in_stalemate()){
-    title.textContent = 'Pat';
-    sub.textContent = 'Heç bir tərəf üçün qanuni gediş qalmadı — bərabərə.';
-    crown.textContent = '♟';
-  } else if(state.game.in_draw() || state.game.in_threefold_repetition() || state.game.insufficient_material()){
-    title.textContent = 'Bərabərə';
-    sub.textContent = 'Oyun heç-heçə ilə bitdi.';
-    crown.textContent = '♟';
-  }
+        function updateHealthBars() {
+            document.getElementById('player-health').style.width = gameState.playerHealth + '%';
+            document.getElementById('enemy-health').style.width = gameState.enemyHealth + '%';
+            document.getElementById('player-health-text').textContent = `${gameState.playerHealth} HP`;
+            document.getElementById('enemy-health-text').textContent = `${gameState.enemyHealth} HP`;
+        }
 
-  setTimeout(()=> winOverlay.classList.remove('hidden'), 350);
-}
+        function updateTurnIndicator() {
+            const indicator = document.getElementById('turn-indicator');
+            const rollBtn = document.getElementById('roll-btn');
+            
+            if (gameState.playerTurn) {
+                indicator.textContent = '🎯 SENİN SIRAN';
+                indicator.style.color = '#00ff00';
+                rollBtn.disabled = false;
+                rollBtn.style.opacity = '1';
+            } else {
+                indicator.textContent = '⏳ RAKİBİN SIRASI';
+                indicator.style.color = '#ff0000';
+                rollBtn.disabled = true;
+                rollBtn.style.opacity = '0.5';
+            }
+            
+            // Aktif oyuncu vurgusu
+            document.getElementById('player-health-container').classList.toggle('active-turn', gameState.playerTurn);
+            document.getElementById('enemy-health-container').classList.toggle('active-turn', !gameState.playerTurn);
+        }
 
-/* ---------------------------------------------------------------------
-   9. BOT AI — minimax + alpha-beta, çətinliyə görə dərinlik
---------------------------------------------------------------------- */
-const CENTER_BONUS = {
-  a1:0,b1:0.05,c1:0.1,d1:0.1,e1:0.1,f1:0.1,g1:0.05,h1:0,
-};
-function positionalScore(game){
-  // small center-control heuristic for pawns/knights/bishops
-  let score = 0;
-  const board = game.board();
-  for(let r=0;r<8;r++){
-    for(let f=0;f<8;f++){
-      const cell = board[r][f];
-      if(!cell) continue;
-      const centerDist = Math.abs(3.5-f) + Math.abs(3.5-r);
-      let bonus = 0;
-      if(cell.type==='n' || cell.type==='p' || cell.type==='b'){
-        bonus = (7-centerDist) * 0.02;
-      }
-      score += cell.color==='w' ? bonus : -bonus;
-    }
-  }
-  return score;
-}
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.style.backgroundColor = type === 'damage' ? 'rgba(255,0,0,0.8)' : 'rgba(0,0,0,0.8)';
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 2000);
+        }
 
-function evaluateBoard(game){
-  if(game.in_checkmate()){
-    return game.turn()==='w' ? -9999 : 9999;
-  }
-  if(game.in_draw() || game.in_stalemate()) return 0;
-  const board = game.board();
-  let score = 0;
-  for(let r=0;r<8;r++){
-    for(let f=0;f<8;f++){
-      const cell = board[r][f];
-      if(!cell) continue;
-      const val = PIECE_VALUE[cell.type];
-      score += cell.color==='w' ? val : -val;
-    }
-  }
-  score += positionalScore(game);
-  return score;
-}
+        // Zar animasyonu
+        function animateDice(value) {
+            sounds.playDiceRoll();
+            
+            const diceResult = document.getElementById('dice-result');
+            diceResult.textContent = `🎲 ${value}`;
+            diceResult.classList.add('shake');
+            
+            // 3D bomba animasyonu
+            let rotations = 0;
+            const maxRotations = 20;
+            const rotateInterval = setInterval(() => {
+                bombGroup.rotation.y += 0.5;
+                bombGroup.rotation.x += 0.3;
+                bombGroup.position.y += Math.sin(rotations * 0.5) * 0.5;
+                rotations++;
+                
+                if (rotations >= maxRotations) {
+                    clearInterval(rotateInterval);
+                    bombGroup.rotation.set(0, 0, 0);
+                    bombGroup.position.y = 2;
+                    
+                    // Patlama efekti
+                    setTimeout(() => {
+                        sounds.playExplosion();
+                        createExplosion();
+                    }, 200);
+                    
+                    setTimeout(() => {
+                        diceResult.classList.remove('shake');
+                    }, 500);
+                }
+            }, 50);
+        }
 
-function orderMoves(moves){
-  return moves.slice().sort((a,b)=>{
-    const av = a.flags.includes('c') ? (PIECE_VALUE[a.captured]||0) - PIECE_VALUE[a.piece]*0.1 : -1;
-    const bv = b.flags.includes('c') ? (PIECE_VALUE[b.captured]||0) - PIECE_VALUE[b.piece]*0.1 : -1;
-    return bv - av;
-  });
-}
+        function createExplosion() {
+            particles.forEach((particle, index) => {
+                particle.visible = true;
+                particle.position.set(0, 2, -3);
+                
+                const angle = (index / particles.length) * Math.PI * 2;
+                const speed = 0.2 + Math.random() * 0.5;
+                
+                particle.userData = {
+                    velocity: new THREE.Vector3(
+                        Math.cos(angle) * speed,
+                        Math.random() * 0.4,
+                        Math.sin(angle) * speed
+                    ),
+                    life: 1
+                };
+            });
+        }
 
-function minimax(game, depth, alpha, beta, maximizing){
-  if(depth===0 || game.game_over()){
-    return { score: evaluateBoard(game) };
-  }
-  const moves = orderMoves(game.moves({verbose:true}));
-  let best = null;
+        function updateParticles() {
+            particles.forEach(particle => {
+                if (particle.visible && particle.userData.life > 0) {
+                    particle.position.x += particle.userData.velocity.x;
+                    particle.position.y += particle.userData.velocity.y;
+                    particle.position.z += particle.userData.velocity.z;
+                    particle.userData.velocity.y -= 0.02;
+                    particle.userData.life -= 0.02;
+                    particle.material.opacity = particle.userData.life;
+                    particle.material.transparent = true;
+                    
+                    if (particle.userData.life <= 0) {
+                        particle.visible = false;
+                    }
+                }
+            });
+        }
 
-  if(maximizing){
-    let value = -Infinity;
-    for(const m of moves){
-      game.move(m);
-      const res = minimax(game, depth-1, alpha, beta, false);
-      game.undo();
-      if(res.score > value){ value = res.score; best = m; }
-      alpha = Math.max(alpha, value);
-      if(beta <= alpha) break;
-    }
-    return { score:value, move:best };
-  } else {
-    let value = Infinity;
-    for(const m of moves){
-      game.move(m);
-      const res = minimax(game, depth-1, alpha, beta, true);
-      game.undo();
-      if(res.score < value){ value = res.score; best = m; }
-      beta = Math.min(beta, value);
-      if(beta <= alpha) break;
-    }
-    return { score:value, move:best };
-  }
-}
+        // Hasar göstergesi
+        function showDamageIndicator(target, damage) {
+            const element = target === 'player' ? 
+                document.getElementById('player-health-container') : 
+                document.getElementById('enemy-health-container');
+            
+            element.style.transform = 'scale(1.1)';
+            element.style.borderColor = '#ff0000';
+            
+            setTimeout(() => {
+                element.style.transform = 'scale(1)';
+                element.style.borderColor = 'rgba(255,255,255,0.3)';
+            }, 300);
+        }
 
-function pickEasyMove(game){
-  const moves = game.moves({verbose:true});
-  // 70% random, 30% greedy-capture-best to feel "somewhat aware" but still weak
-  if(Math.random() < 0.3){
-    const captures = moves.filter(m=>m.flags.includes('c'));
-    if(captures.length){
-      captures.sort((a,b)=>PIECE_VALUE[b.captured]-PIECE_VALUE[a.captured]);
-      return captures[0];
-    }
-  }
-  return moves[Math.floor(Math.random()*moves.length)];
-}
+        // Oyun mantığı
+        function rollDice() {
+            if (!gameState.gameActive || !gameState.playerTurn || gameState.isAnimating) return;
+            
+            gameState.isAnimating = true;
+            
+            const diceValue = Math.floor(Math.random() * 6) + 1;
+            const damage = diceValue * 10;
+            
+            animateDice(diceValue);
+            showNotification(`Zar: ${diceValue} - Hasar: ${damage}`, 'damage');
+            
+            gameState.playerTurn = false;
+            updateTurnIndicator();
+            
+            // Rakibe hasar ver
+            setTimeout(() => {
+                gameState.enemyHealth = Math.max(0, gameState.enemyHealth - damage);
+                updateHealthBars();
+                showDamageIndicator('enemy', damage);
+                
+                // Oda verisini güncelle
+                if (gameState.roomId) {
+                    const roomData = matchmaking.getRoom(gameState.roomId);
+                    if (roomData) {
+                        const opponentId = roomData.players.find(p => p.id !== telegramUser.id).id;
+                        roomData.currentTurn = opponentId;
+                        roomData.diceValue = diceValue;
+                        roomData.lastAction = {
+                            playerId: telegramUser.id,
+                            diceValue,
+                            damage,
+                            timestamp: Date.now()
+                        };
+                        roomData.players = roomData.players.map(p => ({
+                            ...p,
+                            health: p.id === telegramUser.id ? gameState.playerHealth : gameState.enemyHealth
+                        }));
+                        matchmaking.updateRoom(gameState.roomId, roomData);
+                    }
+                }
+                
+                // Oyun bitti mi kontrol et
+                if (gameState.enemyHealth <= 0) {
+                    endGame(true);
+                    return;
+                }
+                
+                // Rakibin hamlesini bekle
+                gameState.isAnimating = false;
+                
+                // Rakip hamlesi için 3 saniye bekle
+                setTimeout(() => {
+                    if (gameState.gameActive && !gameState.playerTurn) {
+                        // Eğer gerçek rakip yoksa, simüle et
+                        simulateEnemyTurn();
+                    }
+                }, 3000);
+            }, 800);
+        }
 
-function computeBotMove(){
-  const botColor = state.game.turn();
-  const maximizing = botColor === 'w';
+        function simulateEnemyTurn() {
+            if (!gameState.gameActive || gameState.playerTurn || gameState.isAnimating) return;
+            
+            gameState.isAnimating = true;
+            
+            const diceValue = Math.floor(Math.random() * 6) + 1;
+            const damage = diceValue * 10;
+            
+            animateDice(diceValue);
+            showNotification(`Rakip zar attı: ${diceValue} - Hasar: ${damage}`, 'damage');
+            
+            setTimeout(() => {
+                gameState.playerHealth = Math.max(0, gameState.playerHealth - damage);
+                updateHealthBars();
+                showDamageIndicator('player', damage);
+                
+                gameState.playerTurn = true;
+                updateTurnIndicator();
+                gameState.isAnimating = false;
+                
+                if (gameState.playerHealth <= 0) {
+                    endGame(false);
+                }
+            }, 800);
+        }
 
-  if(state.difficulty === 'easy'){
-    return pickEasyMove(state.game);
-  }
-  const depth = state.difficulty === 'hard' ? 3 : 2;
-  const result = minimax(state.game, depth, -Infinity, Infinity, maximizing);
-  if(result.move) return result.move;
-  const moves = state.game.moves({verbose:true});
-  return moves[Math.floor(Math.random()*moves.length)];
-}
+        function endGame(won) {
+            gameState.gameActive = false;
+            gameState.isAnimating = false;
+            
+            // İstatistikleri güncelle
+            stats.totalGames++;
+            if (won) {
+                stats.wins++;
+                showNotification('🏆 KAZANDIN!', 'success');
+            } else {
+                stats.losses++;
+                showNotification('💀 KAYBETTİN!', 'damage');
+            }
+            localStorage.setItem('zarBombaStats', JSON.stringify(stats));
+            
+            // Odayı sil
+            if (gameState.roomId) {
+                matchmaking.deleteRoom(gameState.roomId);
+            }
+            
+            setTimeout(() => {
+                resetGame();
+                showScreen('main-menu');
+            }, 2000);
+        }
 
-function botMove(){
-  if(state.gameOver) return;
-  thinkingEl.classList.add('show');
-  state.animating = true;
+        function resetGame() {
+            gameState.playerHealth = 100;
+            gameState.enemyHealth = 100;
+            gameState.playerTurn = true;
+            gameState.gameActive = false;
+            gameState.roomId = null;
+            gameState.opponent = null;
+            gameState.isAnimating = false;
+            
+            updateHealthBars();
+            
+            if (roomUpdateInterval) {
+                clearInterval(roomUpdateInterval);
+                roomUpdateInterval = null;
+            }
+        }
 
-  // let UI paint "thinking" before heavy sync compute
-  setTimeout(()=>{
-    const move = computeBotMove();
-    thinkingEl.classList.remove('show');
-    if(!move){ state.animating=false; return; }
+        // Event listeners
+        document.getElementById('play-btn').addEventListener('click', () => {
+            showScreen('lobby-screen');
+            
+            const result = matchmaking.findMatch(telegramUser.id, telegramUser.first_name);
+            
+            if (result.matched) {
+                startGame(result.opponent, result.roomId);
+            } else {
+                // Eşleşme bekle
+                let waitTime = 0;
+                matchCheckInterval = setInterval(() => {
+                    waitTime += 1;
+                    
+                    const waitingPlayers = matchmaking.loadData('waitingPlayers', []);
+                    const activeRooms = matchmaking.loadData('activeRooms', {});
+                    
+                    // Bizi içeren oda var mı kontrol et
+                    for (const roomId in activeRooms) {
+                        const room = activeRooms[roomId];
+                        if (room.players.some(p => p.id === telegramUser.id)) {
+                            const opponent = room.players.find(p => p.id !== telegramUser.id);
+                            if (opponent) {
+                                clearInterval(matchCheckInterval);
+                                startGame(opponent, roomId);
+                                return;
+                            }
+                        }
+                    }
+                    
+                    // 15 saniye sonra bot ile oyna
+                    if (waitTime >= 15) {
+                        clearInterval(matchCheckInterval);
+                        matchmaking.cancelMatch(telegramUser.id);
+                        
+                        const botOpponent = {
+                            id: 'bot_' + Date.now(),
+                            name: 'Bot Rakip',
+                            isBot: true
+                        };
+                        
+                        startGame(botOpponent, 'bot_room_' + Date.now());
+                    }
+                    
+                    // Aktif oyuncu sayısını güncelle
+                    const activePlayers = waitingPlayers.filter(p => p.id !== telegramUser.id).length;
+                    document.getElementById('player-count').textContent = `Aktif Oyuncu: ${activePlayers}`;
+                }, 1000);
+            }
+        });
 
-    let promo = move.promotion;
-    const moveObj = state.game.move({from:move.from, to:move.to, promotion: promo || 'q'});
-    if(!moveObj){ state.animating=false; return; }
+        document.getElementById('cancel-btn').addEventListener('click', () => {
+            matchmaking.cancelMatch(telegramUser.id);
+            if (matchCheckInterval) {
+                clearInterval(matchCheckInterval);
+                matchCheckInterval = null;
+            }
+            showScreen('main-menu');
+        });
 
-    state.history.push({san: moveObj.san, color: moveObj.color});
-    updateMoveList();
+        document.getElementById('roll-btn').addEventListener('click', rollDice);
 
-    animateMove(moveObj, ()=>{
-      state.animating = false;
-      updateTurnUI();
-      checkGameEnd();
-    });
-  }, 260);
-}
+        document.getElementById('how-to-btn').addEventListener('click', () => {
+            alert('📖 NASIL OYNANIR?\n\n' +
+                  '🎲 Zar atarak rakibine hasar ver!\n' +
+                  '💣 Her zar değeri 10 hasar verir\n' +
+                  '⚔️ Örnek: Zar 3 gelirse 30 hasar\n' +
+                  '❤️ 100 HP ile başlarsın\n' +
+                  '🏆 Rakibin canını sıfırla ve kazan!\n\n' +
+                  'İyi eğlenceler! 🎮');
+        });
 
-/* ---------------------------------------------------------------------
-   10. LOBİ / RESTART / UNDO
---------------------------------------------------------------------- */
-const lobbyOverlay = document.getElementById('lobby-overlay');
-const winOverlay = document.getElementById('win-overlay');
+        document.getElementById('stats-btn').addEventListener('click', () => {
+            const winRate = stats.totalGames > 0 ? Math.round((stats.wins / stats.totalGames) * 100) : 0;
+            alert('📊 İSTATİSTİKLER\n\n' +
+                  `🏆 Kazanma: ${stats.wins}\n` +
+                  `💀 Kaybetme: ${stats.losses}\n` +
+                  `🎮 Toplam Oyun: ${stats.totalGames}\n` +
+                  `📈 Kazanma Oranı: %${winRate}`);
+        });
 
-let chosenColor = 'w';
-let chosenDiff = 'normal';
+        function startGame(opponent, roomId) {
+            gameState.opponent = opponent;
+            gameState.roomId = roomId;
+            gameState.gameActive = true;
+            gameState.playerTurn = true;
+            
+            showScreen('game-screen');
+            updateHealthBars();
+            updateTurnIndicator();
+            
+            showNotification(`Rakip: ${opponent.name}`, 'info');
+            
+            // Oda güncellemelerini dinle (gerçek oyuncu varsa)
+            if (!opponent.isBot && roomId) {
+                roomUpdateInterval = setInterval(() => {
+                    if (gameState.roomId && gameState.gameActive) {
+                        const roomData = matchmaking.getRoom(gameState.roomId);
+                        if (roomData && roomData.lastAction) {
+                            // Rakibin hamlesini kontrol et
+                            if (roomData.lastAction.playerId !== telegramUser.id) {
+                                const action = roomData.lastAction;
+                                
+                                // Eğer henüz işlemediysek
+                                if (Date.now() - action.timestamp < 2000) {
+                                    animateDice(action.diceValue);
+                                    gameState.playerHealth = Math.max(0, gameState.playerHealth - action.damage);
+                                    updateHealthBars();
+                                    gameState.playerTurn = true;
+                                    updateTurnIndicator();
+                                    
+                                    if (gameState.playerHealth <= 0) {
+                                        endGame(false);
+                                    }
+                                    
+                                    // Aksiyonu temizle
+                                    roomData.lastAction = null;
+                                    matchmaking.updateRoom(gameState.roomId, roomData);
+                                }
+                            }
+                        }
+                    }
+                }, 500);
+            }
+        }
 
-document.getElementById('color-options').addEventListener('click', (e)=>{
-  const opt = e.target.closest('.opt');
-  if(!opt) return;
-  document.querySelectorAll('#color-options .opt').forEach(o=>o.classList.remove('active'));
-  opt.classList.add('active');
-  chosenColor = opt.dataset.color;
-});
-document.getElementById('diff-options').addEventListener('click', (e)=>{
-  const opt = e.target.closest('.opt');
-  if(!opt) return;
-  document.querySelectorAll('#diff-options .opt').forEach(o=>o.classList.remove('active'));
-  opt.classList.add('active');
-  chosenDiff = opt.dataset.diff;
-});
+        // Animasyon döngüsü
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Karakter animasyonları
+            if (gameState.gameActive) {
+                if (gameState.playerTurn) {
+                    playerGroup.position.y = Math.sin(Date.now() * 0.005) * 0.2;
+                    playerGroup.rotation.y = Math.sin(Date.now() * 0.003) * 0.3;
+                } else {
+                    enemyGroup.position.y = Math.sin(Date.now() * 0.005) * 0.2;
+                    enemyGroup.rotation.y = Math.sin(Date.now() * 0.003) * 0.3;
+                }
+            }
+            
+            // Bomba animasyonu
+            bombGroup.rotation.y += 0.01;
+            bombGroup.position.y = 2 + Math.sin(Date.now() * 0.002) * 0.2;
+            
+            // Alev animasyonu
+            if (flame) {
+                flame.scale.setScalar(1 + Math.sin(Date.now() * 0.01) * 0.2);
+            }
+            
+            // Partikül güncelleme
+            updateParticles();
+            
+            // Kamera hafif sallanma
+            camera.position.x = Math.sin(Date.now() * 0.0005) * 0.5;
+            camera.position.y = 3 + Math.sin(Date.now() * 0.001) * 0.1;
+            camera.lookAt(0, 1, 0);
+            
+            renderer.render(scene, camera);
+        }
 
-document.getElementById('start-btn').addEventListener('click', ()=>{
-  let color = chosenColor;
-  if(color === 'r') color = Math.random() < 0.5 ? 'w' : 'b';
-  startGame(color, chosenDiff);
-});
-document.getElementById('btn-win-again').addEventListener('click', ()=>{
-  winOverlay.classList.add('hidden');
-  startGame(state.playerColor, state.difficulty);
-});
-document.getElementById('btn-win-lobby').addEventListener('click', ()=>{
-  winOverlay.classList.add('hidden');
-  lobbyOverlay.classList.remove('hidden');
-});
-document.getElementById('btn-lobby').addEventListener('click', ()=>{
-  lobbyOverlay.classList.remove('hidden');
-});
-document.getElementById('btn-reset-cam').addEventListener('click', ()=>{
-  setCameraForColor(state.playerColor);
-  controls.target.set(0,0,0);
-});
-document.getElementById('btn-restart').addEventListener('click', ()=>{
-  startGame(state.playerColor, state.difficulty);
-});
-document.getElementById('btn-undo').addEventListener('click', ()=>{
-  if(state.animating) return;
-  // undo bot move + player move (two plies) so it's player's turn again
-  const isPlayerTurn = state.game.turn() === state.playerColor;
-  state.game.undo();
-  if(!isPlayerTurn) { /* only one ply was bot's pending? just undo one */ }
-  else { state.game.undo(); }
-  state.history = state.history.slice(0, state.history.length - (isPlayerTurn?1:2));
-  state.capturedByWhite = [];
-  state.capturedByBlack = [];
-  // recompute captures from scratch via history replay for accuracy
-  recomputeCapturesFromHistory();
-  rebuildPiecesFromGame();
-  updateMoveList();
-  updateTurnUI();
-  updateCapturedPanels();
-  deselect();
-  state.gameOver = false;
-});
+        // Pencere yeniden boyutlandırma
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
 
-function recomputeCapturesFromHistory(){
-  const replay = new Chess();
-  state.capturedByWhite = [];
-  state.capturedByBlack = [];
-  const verboseHist = state.game.history({verbose:true});
-  // Simpler: use chess.js internal history of the *current* game object
-  const h = state.game.history({verbose:true});
-  h.forEach(m=>{
-    if(m.captured){
-      if(m.color==='w') state.capturedByWhite.push(m.captured);
-      else state.capturedByBlack.push(m.captured);
-    }
-  });
-}
-
-function startGame(color, difficulty){
-  state.game = new Chess();
-  state.playerColor = color;
-  state.difficulty = difficulty;
-  state.selectedSquare = null;
-  state.legalTargets = [];
-  state.animating = false;
-  state.gameOver = false;
-  state.history = [];
-  state.capturedByWhite = [];
-  state.capturedByBlack = [];
-
-  document.getElementById('diff-tag').textContent =
-    '● ' + (difficulty==='easy'?'Easy':difficulty==='hard'?'Hard':'Normal');
-
-  rebuildPiecesFromGame();
-  updateMoveList();
-  updateCapturedPanels();
-  updateTurnUI();
-  deselect();
-  setCameraForColor(color);
-  controls.target.set(0,0,0);
-
-  lobbyOverlay.classList.add('hidden');
-  winOverlay.classList.add('hidden');
-  hintEl.style.opacity = '1';
-
-  if(state.game.turn() !== state.playerColor){
-    setTimeout(botMove, 600);
-  }
-}
-
-/* ---------------------------------------------------------------------
-   11. KONFETTI (qələbə animasiyası)
---------------------------------------------------------------------- */
-const confettiCanvas = document.getElementById('confetti-canvas');
-const cctx = confettiCanvas.getContext('2d');
-let confettiParticles = [];
-let confettiRunning = false;
-
-function resizeConfetti(){
-  confettiCanvas.width = window.innerWidth;
-  confettiCanvas.height = window.innerHeight;
-}
-window.addEventListener('resize', resizeConfetti);
-resizeConfetti();
-
-function launchConfetti(){
-  const colors = ['#c9a24b','#e6c874','#f2e8d5','#7fae6c','#b5493a'];
-  confettiParticles = [];
-  for(let i=0;i<140;i++){
-    confettiParticles.push({
-      x: Math.random()*confettiCanvas.width,
-      y: -20 - Math.random()*200,
-      vx: (Math.random()-0.5)*2.2,
-      vy: 2 + Math.random()*3,
-      size: 4 + Math.random()*6,
-      color: colors[Math.floor(Math.random()*colors.length)],
-      rot: Math.random()*Math.PI*2,
-      vr: (Math.random()-0.5)*0.3,
-      shape: Math.random()<0.5?'rect':'circle',
-    });
-  }
-  if(!confettiRunning){
-    confettiRunning = true;
-    requestAnimationFrame(confettiLoop);
-  }
-  setTimeout(()=>{ confettiParticles = []; confettiRunning=false; cctx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height); }, 4200);
-}
-function confettiLoop(){
-  cctx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);
-  confettiParticles.forEach(p=>{
-    p.x += p.vx; p.y += p.vy; p.rot += p.vr; p.vy += 0.02;
-    cctx.save();
-    cctx.translate(p.x,p.y);
-    cctx.rotate(p.rot);
-    cctx.fillStyle = p.color;
-    if(p.shape==='rect') cctx.fillRect(-p.size/2,-p.size/2,p.size,p.size*0.6);
-    else { cctx.beginPath(); cctx.arc(0,0,p.size/2,0,Math.PI*2); cctx.fill(); }
-    cctx.restore();
-  });
-  if(confettiRunning) requestAnimationFrame(confettiLoop);
-}
-
-/* ---------------------------------------------------------------------
-   12. BAŞLAT
---------------------------------------------------------------------- */
-initThree();
-rebuildPiecesFromGame();
-updateTurnUI();
-
-})();
-</script>
+        // Başlat
+        animate();
+        showScreen('main-menu');
+        
+        // Telegram WebApp hazır
+        tg.ready();
+    </script>
 </body>
 </html>
