@@ -1,1430 +1,234 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>💣 ZAR BOMBA - 3D Savaş</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <style>
-        :root {
-            --primary: #ff6b35;
-            --secondary: #f7c59f;
-            --accent: #efefef;
-            --dark: #2c3e50;
-            --danger: #e74c3c;
-            --success: #2ecc71;
-            --warning: #f39c12;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        html, body {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background: #000;
-            position: fixed;
-            touch-action: manipulation;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        #gameCanvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1;
-        }
-
-        #ui-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 10;
-        }
-
-        .screen {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            pointer-events: auto;
-            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-            animation: fadeIn 0.5s;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.9); }
-            to { opacity: 1; transform: scale(1); }
-        }
-
-        @keyframes slideIn {
-            from { transform: translateY(50px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
-            20%, 40%, 60%, 80% { transform: translateX(10px); }
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-20px); }
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
-        /* Ana Menü */
-        #main-menu {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            position: relative;
-            overflow: hidden;
-        }
-
-        #main-menu::before {
-            content: '';
-            position: absolute;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-            animation: float 6s infinite;
-        }
-
-        .game-title {
-            font-size: 4em;
-            color: #fff;
-            text-shadow: 0 0 20px rgba(255,255,255,0.5), 0 0 40px rgba(255,255,255,0.3);
-            margin-bottom: 10px;
-            font-weight: 900;
-            letter-spacing: 2px;
-            animation: pulse 2s infinite;
-            position: relative;
-            z-index: 2;
-        }
-
-        .game-subtitle {
-            font-size: 1.5em;
-            color: #f0f0f0;
-            margin-bottom: 30px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-            position: relative;
-            z-index: 2;
-        }
-
-        .player-badge {
-            background: rgba(255,255,255,0.2);
-            backdrop-filter: blur(10px);
-            padding: 15px 30px;
-            border-radius: 50px;
-            margin-bottom: 30px;
-            color: #fff;
-            font-size: 1.2em;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            position: relative;
-            z-index: 2;
-            border: 2px solid rgba(255,255,255,0.3);
-        }
-
-        .player-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5em;
-        }
-
-        .btn {
-            padding: 18px 50px;
-            font-size: 1.3em;
-            border: none;
-            border-radius: 50px;
-            cursor: pointer;
-            margin: 10px;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            pointer-events: auto;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            color: #fff;
-            font-weight: bold;
-            letter-spacing: 1px;
-            position: relative;
-            overflow: hidden;
-            z-index: 2;
-            text-transform: uppercase;
-        }
-
-        .btn::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.3);
-            transition: all 0.5s;
-            transform: translate(-50%, -50%);
-        }
-
-        .btn:active::after {
-            width: 300px;
-            height: 300px;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            animation: pulse 2s infinite;
-        }
-
-        .btn-danger {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        }
-
-        .btn-success {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-        }
-
-        .btn-warning {
-            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-        }
-
-        .btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 15px 40px rgba(0,0,0,0.4);
-        }
-
-        .btn:active {
-            transform: translateY(0);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        }
-
-        /* Lobi */
-        #lobby-screen {
-            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
-        }
-
-        .searching-animation {
-            width: 100px;
-            height: 100px;
-            border: 5px solid rgba(255,255,255,0.1);
-            border-top: 5px solid #fff;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 30px 0;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .waiting-text {
-            color: #fff;
-            font-size: 1.5em;
-            margin: 20px 0;
-            animation: pulse 1.5s infinite;
-        }
-
-        .player-count {
-            color: #f0f0f0;
-            font-size: 1.2em;
-            margin: 10px 0;
-            opacity: 0.8;
-        }
-
-        /* Oyun Ekranı */
-        #game-screen {
-            background: transparent;
-            pointer-events: none;
-        }
-
-        #hud {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            right: 20px;
-            pointer-events: none;
-            z-index: 20;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .player-info {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .health-container {
-            flex: 1;
-            background: rgba(0,0,0,0.7);
-            border-radius: 20px;
-            padding: 15px;
-            border: 2px solid rgba(255,255,255,0.3);
-            backdrop-filter: blur(10px);
-            transition: all 0.3s;
-        }
-
-        .health-container.active-turn {
-            border-color: #fff;
-            box-shadow: 0 0 30px rgba(255,255,255,0.5);
-        }
-
-        .player-name {
-            color: #fff;
-            font-size: 1.1em;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .health-bar {
-            width: 100%;
-            height: 25px;
-            background: #333;
-            border-radius: 15px;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .health-fill {
-            height: 100%;
-            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-            border-radius: 15px;
-            position: relative;
-        }
-
-        .health-fill::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 50%;
-            background: rgba(255,255,255,0.3);
-            border-radius: 15px 15px 0 0;
-        }
-
-        .health-fill.player {
-            background: linear-gradient(90deg, #00ff00, #00cc00);
-        }
-
-        .health-fill.enemy {
-            background: linear-gradient(90deg, #ff0000, #cc0000);
-        }
-
-        .health-text {
-            color: #fff;
-            text-align: center;
-            margin-top: 5px;
-            font-size: 1em;
-            font-weight: bold;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
-        }
-
-        #turn-indicator {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: #fff;
-            font-size: 2em;
-            font-weight: bold;
-            text-shadow: 0 0 20px rgba(0,0,0,0.8);
-            pointer-events: none;
-            z-index: 20;
-            animation: pulse 1.5s infinite;
-        }
-
-        #dice-result {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 5em;
-            color: #fff;
-            text-shadow: 0 0 30px rgba(255,255,255,0.8);
-            pointer-events: none;
-            z-index: 30;
-            animation: diceAppear 0.5s;
-        }
-
-        @keyframes diceAppear {
-            from { transform: translate(-50%, -50%) scale(0); }
-            to { transform: translate(-50%, -50%) scale(1); }
-        }
-
-        .shake {
-            animation: shake 0.5s;
-        }
-
-        #action-buttons {
-            position: fixed;
-            bottom: 40px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 20px;
-            pointer-events: auto;
-            z-index: 20;
-        }
-
-        .action-btn {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            border: 4px solid #fff;
-            color: #fff;
-            font-size: 3em;
-            cursor: pointer;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            animation: pulse 2s infinite;
-        }
-
-        .action-btn:active {
-            transform: scale(0.9);
-            animation: none;
-        }
-
-        .action-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            animation: none;
-        }
-
-        /* Bildirim */
-        .notification {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0,0,0,0.8);
-            color: #fff;
-            padding: 15px 30px;
-            border-radius: 50px;
-            z-index: 40;
-            animation: slideIn 0.5s;
-            pointer-events: none;
-            backdrop-filter: blur(10px);
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>8 Pool Bilardo - GitHub Pages Standalone</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+    body { background: #070a12; color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; overflow: hidden; display: flex; flex-direction: column; height: 100vh; }
+    header { background: rgba(15, 23, 42, 0.9); padding: 8px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; }
+    .hud-title { font-weight: bold; color: #10b981; font-size: 16px; }
+    .hud-info { font-size: 13px; color: #94a3b8; }
+    #canvas-container { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; background: #020617; }
+    canvas { max-width: 100%; max-height: 100%; display: block; }
+    .controls-overlay { position: absolute; bottom: 12px; left: 12px; right: 12px; display: flex; justify-content: space-between; pointer-events: none; }
+    .btn { pointer-events: auto; background: #10b981; color: #000; border: none; padding: 8px 14px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+    .btn:hover { background: #34d399; }
+  </style>
 </head>
 <body>
-    <div id="gameCanvas"></div>
-    
-    <div id="ui-overlay">
-        <!-- Ana Menü -->
-        <div id="main-menu" class="screen">
-            <div class="game-title">💣 ZAR BOMBA</div>
-            <div class="game-subtitle">3D Savaş Arenası</div>
-            <div class="player-badge">
-                <div class="player-avatar">👤</div>
-                <span id="player-name">Yükleniyor...</span>
-            </div>
-            <button id="play-btn" class="btn btn-primary">⚔️ SAVAŞA BAŞLA</button>
-            <button id="how-to-btn" class="btn btn-success">📖 NASIL OYNANIR?</button>
-            <button id="stats-btn" class="btn btn-warning">📊 İSTATİSTİKLER</button>
-        </div>
+  <header>
+    <div class="hud-title">🎱 8 Pool Bilardo</div>
+    <div id="turn-indicator" class="hud-info">Sıra: Oyuncu 1</div>
+    <button class="btn" onclick="resetGame()">Yeniden Başlat</button>
+  </header>
 
-        <!-- Lobi -->
-        <div id="lobby-screen" class="screen hidden">
-            <div class="game-title" style="font-size: 2.5em;">🔍 RAKİP ARANIYOR</div>
-            <div class="searching-animation"></div>
-            <div class="waiting-text">Eşleştirme Yapılıyor...</div>
-            <div class="player-count" id="player-count">Aktif Oyuncu: 0</div>
-            <button id="cancel-btn" class="btn btn-danger">✖ İPTAL</button>
-        </div>
+  <div id="canvas-container">
+    <canvas id="poolCanvas" width="1090" height="590"></canvas>
+  </div>
 
-        <!-- Oyun -->
-        <div id="game-screen" class="screen hidden">
-            <div id="hud">
-                <div class="player-info">
-                    <div class="health-container" id="player-health-container">
-                        <div class="player-name">👤 SEN</div>
-                        <div class="health-bar">
-                            <div id="player-health" class="health-fill player" style="width: 100%"></div>
-                        </div>
-                        <div class="health-text" id="player-health-text">100 HP</div>
-                    </div>
-                    <div class="health-container" id="enemy-health-container">
-                        <div class="player-name">👾 RAKİP</div>
-                        <div class="health-bar">
-                            <div id="enemy-health" class="health-fill enemy" style="width: 100%"></div>
-                        </div>
-                        <div class="health-text" id="enemy-health-text">100 HP</div>
-                    </div>
-                </div>
-            </div>
-            
-            <div id="turn-indicator"></div>
-            <div id="dice-result"></div>
-            
-            <div id="action-buttons">
-                <button id="roll-btn" class="action-btn" title="Zar At">🎲</button>
-            </div>
-        </div>
-    </div>
+  <script>
+    // Telegram WebApp Auto-Login
+    let playerName = 'Player 1';
+    if (window.Telegram && window.Telegram.WebApp) {
+      const tg = window.Telegram.WebApp;
+      tg.ready();
+      tg.expand();
+      if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+        playerName = tg.initDataUnsafe.user.first_name || 'Telegram Oyuncusu';
+      }
+    }
 
-    <script>
-        // Telegram WebApp başlatma
-        const tg = window.Telegram.WebApp;
-        tg.expand();
-        tg.ready();
-        tg.setHeaderColor('#667eea');
-        tg.setBackgroundColor('#000000');
-        
-        // Telegram kullanıcı bilgisi
-        let telegramUser = null;
-        try {
-            telegramUser = tg.initDataUnsafe?.user || { 
-                first_name: "Misafir", 
-                id: Math.floor(Math.random() * 1000000),
-                username: "guest"
-            };
-            document.getElementById('player-name').textContent = telegramUser.first_name || 'Oyuncu';
-            if (telegramUser.photo_url) {
-                document.querySelector('.player-avatar').innerHTML = `<img src="${telegramUser.photo_url}" style="width:100%;height:100%;border-radius:50%;">`;
-            }
-        } catch(e) {
-            telegramUser = { 
-                first_name: "Misafir", 
-                id: Math.floor(Math.random() * 1000000),
-                username: "guest"
-            };
-            document.getElementById('player-name').textContent = 'Misafir';
+    const canvas = document.getElementById('poolCanvas');
+    const ctx = canvas.getContext('2d');
+    const turnIndicator = document.getElementById('turn-indicator');
+
+    const TABLE_WIDTH = 1000, TABLE_HEIGHT = 500, RAIL_WIDTH = 45, BALL_RADIUS = 13.5;
+    let balls = [], cueBall = null, aimAngle = 0, power = 0, isAiming = false, currentTurn = 1;
+
+    const COLORS = {
+      0: '#f8fafc', 1: '#eab308', 2: '#2563eb', 3: '#dc2626', 4: '#7c3aed',
+      5: '#ea580c', 6: '#16a34a', 7: '#881337', 8: '#09090b',
+      9: '#eab308', 10: '#2563eb', 11: '#dc2626', 12: '#7c3aed',
+      13: '#ea580c', 14: '#16a34a', 15: '#881337'
+    };
+
+    function initBalls() {
+      balls = [];
+      cueBall = { id: 0, num: 0, x: 250, y: 250, vx: 0, vy: 0, type: 'cue', color: '#fff', inPocket: false };
+      balls.push(cueBall);
+
+      const apexX = 720, apexY = 250, spacing = BALL_RADIUS * 2 + 0.5, rowSpacing = spacing * 0.866;
+      const order = [1, 9, 2, 3, 8, 10, 11, 4, 12, 5, 7, 13, 6, 14, 15];
+      let idx = 0;
+      for (let r = 0; r < 5; r++) {
+        const startY = apexY - (r * spacing) / 2;
+        for (let c = 0; c <= r; c++) {
+          const num = order[idx++];
+          balls.push({
+            id: num, num: num,
+            x: apexX + r * rowSpacing, y: startY + c * spacing,
+            vx: 0, vy: 0, type: num === 8 ? '8ball' : (num < 8 ? 'solid' : 'stripe'),
+            color: COLORS[num], inPocket: false
+          });
         }
+      }
+    }
 
-        // İstatistikler
-        let stats = JSON.parse(localStorage.getItem('zarBombaStats') || '{"wins":0,"losses":0,"totalGames":0}');
+    function resetGame() {
+      initBalls();
+      currentTurn = 1;
+      updateTurnText();
+    }
 
-        // Three.js sahne kurulumu
-        const scene = new THREE.Scene();
-        scene.fog = new THREE.Fog(0x000000, 10, 30);
-        
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-        renderer.outputEncoding = THREE.sRGBEncoding;
-        renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        renderer.toneMappingExposure = 1.2;
-        document.getElementById('gameCanvas').appendChild(renderer.domElement);
+    function updateTurnText() {
+      turnIndicator.textContent = currentTurn === 1 ? 'Sıra: ' + playerName : 'Sıra: Bot / Oyuncu 2';
+    }
 
-        // Işıklandırma
-        const ambientLight = new THREE.AmbientLight(0x404040, 2);
-        scene.add(ambientLight);
-        
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5);
-        directionalLight.position.set(5, 10, 5);
-        directionalLight.castShadow = true;
-        directionalLight.shadow.camera.near = 0.1;
-        directionalLight.shadow.camera.far = 50;
-        directionalLight.shadow.camera.left = -10;
-        directionalLight.shadow.camera.right = 10;
-        directionalLight.shadow.camera.top = 10;
-        directionalLight.shadow.camera.bottom = -10;
-        directionalLight.shadow.mapSize.width = 2048;
-        directionalLight.shadow.mapSize.height = 2048;
-        scene.add(directionalLight);
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.save();
+      // Table Frame
+      ctx.fillStyle = '#2c1810';
+      ctx.roundRect(0, 0, canvas.width, canvas.height, 24);
+      ctx.fill();
 
-        // Nokta ışıkları
-        const pointLight1 = new THREE.PointLight(0xff6b35, 0.5, 10);
-        pointLight1.position.set(-3, 2, 0);
-        scene.add(pointLight1);
-        
-        const pointLight2 = new THREE.PointLight(0x4facfe, 0.5, 10);
-        pointLight2.position.set(3, 2, 0);
-        scene.add(pointLight2);
+      // Felt
+      ctx.fillStyle = '#0d6338';
+      ctx.fillRect(RAIL_WIDTH, RAIL_WIDTH, TABLE_WIDTH, TABLE_HEIGHT);
 
-        // Zemin
-        const groundGeometry = new THREE.PlaneGeometry(20, 20);
-        const groundMaterial = new THREE.MeshStandardMaterial({ 
-            color: 0x1a1a2e,
-            roughness: 0.5,
-            metalness: 0.3
-        });
-        const ground = new THREE.Mesh(groundGeometry, groundMaterial);
-        ground.rotation.x = -Math.PI / 2;
-        ground.receiveShadow = true;
-        scene.add(ground);
+      // Pockets
+      const pockets = [
+        {x: 0, y: 0}, {x: TABLE_WIDTH/2, y: 0}, {x: TABLE_WIDTH, y: 0},
+        {x: 0, y: TABLE_HEIGHT}, {x: TABLE_WIDTH/2, y: TABLE_HEIGHT}, {x: TABLE_WIDTH, y: TABLE_HEIGHT}
+      ];
+      ctx.fillStyle = '#000';
+      for(const p of pockets) {
+        ctx.beginPath();
+        ctx.arc(RAIL_WIDTH + p.x, RAIL_WIDTH + p.y, 25, 0, Math.PI*2);
+        ctx.fill();
+      }
 
-        // Grid
-        const gridHelper = new THREE.GridHelper(20, 20, 0x333333, 0x222222);
-        gridHelper.position.y = 0.01;
-        scene.add(gridHelper);
-
-        // Oyuncu karakteri (Kahraman)
-        const playerGroup = new THREE.Group();
-        
-        // Gövde
-        const playerBody = new THREE.Mesh(
-            new THREE.CylinderGeometry(0.5, 0.7, 1.5, 8),
-            new THREE.MeshStandardMaterial({ color: 0x00ff00, roughness: 0.3, metalness: 0.5 })
-        );
-        playerBody.castShadow = true;
-        playerBody.position.y = 0.75;
-        playerGroup.add(playerBody);
-        
-        // Kafa
-        const playerHead = new THREE.Mesh(
-            new THREE.SphereGeometry(0.4, 32, 32),
-            new THREE.MeshStandardMaterial({ color: 0xffcc00, roughness: 0.2, metalness: 0.3 })
-        );
-        playerHead.castShadow = true;
-        playerHead.position.y = 1.9;
-        playerGroup.add(playerHead);
-        
-        // Gözler
-        const eyeGeometry = new THREE.SphereGeometry(0.1, 16, 16);
-        const eyeMaterial = new THREE.MeshStandardMaterial({ color: 0x000000 });
-        
-        const leftEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
-        leftEye.position.set(-0.15, 1.95, 0.35);
-        playerGroup.add(leftEye);
-        
-        const rightEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
-        rightEye.position.set(0.15, 1.95, 0.35);
-        playerGroup.add(rightEye);
-        
-        // Silah (Kılıç)
-        const swordGroup = new THREE.Group();
-        const swordBlade = new THREE.Mesh(
-            new THREE.BoxGeometry(0.1, 1, 0.02),
-            new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.9, roughness: 0.1 })
-        );
-        swordBlade.position.y = 0.5;
-        swordGroup.add(swordBlade);
-        
-        const swordHandle = new THREE.Mesh(
-            new THREE.CylinderGeometry(0.05, 0.05, 0.3),
-            new THREE.MeshStandardMaterial({ color: 0x8b4513 })
-        );
-        swordGroup.add(swordHandle);
-        
-        swordGroup.position.set(0.7, 1, 0);
-        swordGroup.rotation.z = -0.5;
-        playerGroup.add(swordGroup);
-        
-        playerGroup.position.set(-3, 0, 0);
-        scene.add(playerGroup);
-
-        // Rakip karakteri (Canavar)
-        const enemyGroup = new THREE.Group();
-        
-        // Gövde
-        const enemyBody = new THREE.Mesh(
-            new THREE.ConeGeometry(0.8, 2, 8),
-            new THREE.MeshStandardMaterial({ color: 0xff0000, roughness: 0.4, metalness: 0.2 })
-        );
-        enemyBody.castShadow = true;
-        enemyBody.position.y = 1;
-        enemyGroup.add(enemyBody);
-        
-        // Kafa
-        const enemyHead = new THREE.Mesh(
-            new THREE.SphereGeometry(0.5, 32, 32),
-            new THREE.MeshStandardMaterial({ color: 0xff6600, roughness: 0.3, metalness: 0.3 })
-        );
-        enemyHead.castShadow = true;
-        enemyHead.position.y = 2.2;
-        enemyGroup.add(enemyHead);
-        
-        // Boynuzlar
-        const hornGeometry = new THREE.ConeGeometry(0.15, 0.6, 8);
-        const hornMaterial = new THREE.MeshStandardMaterial({ color: 0x8b4513 });
-        
-        const leftHorn = new THREE.Mesh(hornGeometry, hornMaterial);
-        leftHorn.position.set(-0.3, 2.7, 0);
-        leftHorn.rotation.z = 0.3;
-        enemyGroup.add(leftHorn);
-        
-        const rightHorn = new THREE.Mesh(hornGeometry, hornMaterial);
-        rightHorn.position.set(0.3, 2.7, 0);
-        rightHorn.rotation.z = -0.3;
-        enemyGroup.add(rightHorn);
-        
-        // Gözler
-        const enemyEyeGeometry = new THREE.SphereGeometry(0.12, 16, 16);
-        const enemyEyeMaterial = new THREE.MeshStandardMaterial({ 
-            color: 0xffff00, 
-            emissive: 0xff6600,
-            emissiveIntensity: 0.5
-        });
-        
-        const enemyLeftEye = new THREE.Mesh(enemyEyeGeometry, enemyEyeMaterial);
-        enemyLeftEye.position.set(-0.2, 2.2, 0.4);
-        enemyGroup.add(enemyLeftEye);
-        
-        const enemyRightEye = new THREE.Mesh(enemyEyeGeometry, enemyEyeMaterial);
-        enemyRightEye.position.set(0.2, 2.2, 0.4);
-        enemyGroup.add(enemyRightEye);
-        
-        enemyGroup.position.set(3, 0, 0);
-        scene.add(enemyGroup);
-
-        // Bomba (Zar yerine)
-        const bombGroup = new THREE.Group();
-        
-        // Bomba gövdesi
-        const bombBody = new THREE.Mesh(
-            new THREE.SphereGeometry(0.8, 32, 32),
-            new THREE.MeshStandardMaterial({ 
-                color: 0x333333, 
-                roughness: 0.3, 
-                metalness: 0.7 
-            })
-        );
-        bombBody.castShadow = true;
-        bombGroup.add(bombBody);
-        
-        // Bomba fitili
-        const fuse = new THREE.Mesh(
-            new THREE.CylinderGeometry(0.08, 0.08, 0.6),
-            new THREE.MeshStandardMaterial({ color: 0x8b4513, roughness: 0.8 })
-        );
-        fuse.position.y = 1;
-        bombGroup.add(fuse);
-        
-        // Alev
-        const flameGeometry = new THREE.SphereGeometry(0.2, 16, 16);
-        const flameMaterial = new THREE.MeshStandardMaterial({ 
-            color: 0xff6600, 
-            emissive: 0xff3300,
-            emissiveIntensity: 2
-        });
-        const flame = new THREE.Mesh(flameGeometry, flameMaterial);
-        flame.position.y = 1.4;
-        bombGroup.add(flame);
-        
-        // Zar yüzeyleri için noktalar
-        const dotGeometry = new THREE.SphereGeometry(0.15, 16, 16);
-        const dotMaterial = new THREE.MeshStandardMaterial({ 
-            color: 0xffffff, 
-            emissive: 0xffffff,
-            emissiveIntensity: 0.3
-        });
-        
-        // Zar noktalarını ekle (1-6 arası değerler için)
-        const dotPositions = [
-            { x: 0, y: 0.4, z: 0 }, // 1
-            { x: -0.3, y: 0.5, z: 0.3 }, { x: 0.3, y: 0.3, z: -0.3 }, // 2
-            { x: -0.3, y: 0.6, z: 0 }, { x: 0, y: 0.3, z: 0 }, { x: 0.3, y: 0.1, z: 0 }, // 3
-            { x: -0.2, y: 0.6, z: 0.2 }, { x: 0.2, y: 0.6, z: 0.2 }, { x: -0.2, y: 0.2, z: 0.2 }, { x: 0.2, y: 0.2, z: 0.2 }, // 4
-        ];
-        
-        dotPositions.forEach(pos => {
-            const dot = new THREE.Mesh(dotGeometry, dotMaterial);
-            dot.position.set(pos.x, pos.y, pos.z);
-            bombGroup.add(dot);
-        });
-        
-        bombGroup.position.set(0, 2, -3);
-        bombGroup.rotation.x = 0.5;
-        scene.add(bombGroup);
-
-        // Partikül sistemi
-        const particles = [];
-        const particleGeometry = new THREE.SphereGeometry(0.08, 8, 8);
-        
-        for (let i = 0; i < 100; i++) {
-            const particle = new THREE.Mesh(
-                particleGeometry,
-                new THREE.MeshStandardMaterial({ 
-                    color: 0xff6600,
-                    emissive: 0xff3300,
-                    emissiveIntensity: 1
-                })
-            );
-            particle.visible = false;
-            scene.add(particle);
-            particles.push(particle);
+      // Balls
+      for(const b of balls) {
+        if(b.inPocket) continue;
+        const cx = RAIL_WIDTH + b.x, cy = RAIL_WIDTH + b.y;
+        ctx.fillStyle = b.color;
+        ctx.beginPath();
+        ctx.arc(cx, cy, BALL_RADIUS, 0, Math.PI*2);
+        ctx.fill();
+        if(b.num > 0) {
+          ctx.fillStyle = '#fff';
+          ctx.beginPath();
+          ctx.arc(cx, cy, 6, 0, Math.PI*2);
+          ctx.fill();
+          ctx.fillStyle = '#000';
+          ctx.font = 'bold 8px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(b.num, cx, cy);
         }
+      }
 
-        camera.position.set(0, 3, 8);
-        camera.lookAt(0, 1, 0);
+      // Aim Line & Cue
+      if(isAiming && !cueBall.inPocket) {
+        const cx = RAIL_WIDTH + cueBall.x, cy = RAIL_WIDTH + cueBall.y;
+        ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+        ctx.setLineDash([4,4]);
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + Math.cos(aimAngle)*200, cy + Math.sin(aimAngle)*200);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+      ctx.restore();
+    }
 
-        // Oyun durumu
-        let gameState = {
-            playerHealth: 100,
-            enemyHealth: 100,
-            playerTurn: true,
-            gameActive: false,
-            opponent: null,
-            roomId: null,
-            isAnimating: false
-        };
+    function updatePhysics() {
+      for(const b of balls) {
+        if(b.inPocket) continue;
+        b.x += b.vx; b.y += b.vy;
+        b.vx *= 0.99; b.vy *= 0.99;
+        if(Math.hypot(b.vx, b.vy) < 0.05) { b.vx = 0; b.vy = 0; }
 
-        // Gelişmiş eşleştirme sistemi
-        class MatchmakingSystem {
-            constructor() {
-                this.waitingPlayers = this.loadData('waitingPlayers', []);
-                this.activeRooms = this.loadData('activeRooms', {});
-                this.roomData = null;
-                this.cleanupInterval = null;
-                this.startCleanup();
+        // Cushions
+        if(b.x < BALL_RADIUS) { b.x = BALL_RADIUS; b.vx = -b.vx*0.9; }
+        if(b.x > TABLE_WIDTH - BALL_RADIUS) { b.x = TABLE_WIDTH - BALL_RADIUS; b.vx = -b.vx*0.9; }
+        if(b.y < BALL_RADIUS) { b.y = BALL_RADIUS; b.vy = -b.vy*0.9; }
+        if(b.y > TABLE_HEIGHT - BALL_RADIUS) { b.y = TABLE_HEIGHT - BALL_RADIUS; b.vy = -b.vy*0.9; }
+
+        // Pockets
+        const pockets = [{x:0,y:0},{x:500,y:0},{x:1000,y:0},{x:0,y:500},{x:500,y:500},{x:1000,y:500}];
+        for(const p of pockets) {
+          if(Math.hypot(b.x - p.x, b.y - p.y) < 24) {
+            b.inPocket = true;
+            b.vx = 0; b.vy = 0;
+            if(b.id === 0) {
+              setTimeout(() => { b.inPocket = false; b.x = 250; b.y = 250; }, 800);
             }
-
-            loadData(key, defaultValue) {
-                try {
-                    return JSON.parse(localStorage.getItem(key)) || defaultValue;
-                } catch {
-                    return defaultValue;
-                }
-            }
-
-            saveData(key, data) {
-                localStorage.setItem(key, JSON.stringify(data));
-            }
-
-            startCleanup() {
-                this.cleanupInterval = setInterval(() => {
-                    this.cleanupOldData();
-                }, 5000);
-            }
-
-            cleanupOldData() {
-                const now = Date.now();
-                
-                // Eski bekleyen oyuncuları temizle
-                this.waitingPlayers = this.waitingPlayers.filter(p => now - p.timestamp < 15000);
-                this.saveData('waitingPlayers', this.waitingPlayers);
-                
-                // Eski odaları temizle
-                Object.keys(this.activeRooms).forEach(roomId => {
-                    if (now - this.activeRooms[roomId].timestamp > 60000) {
-                        delete this.activeRooms[roomId];
-                    }
-                });
-                this.saveData('activeRooms', this.activeRooms);
-            }
-
-            findMatch(playerId, playerName) {
-                this.cleanupOldData();
-                
-                // Kendi kendine eşleşmeyi önle
-                const availableOpponent = this.waitingPlayers.find(p => p.id !== playerId);
-                
-                if (availableOpponent) {
-                    // Eşleşme bulundu
-                    this.waitingPlayers = this.waitingPlayers.filter(p => p.id !== availableOpponent.id);
-                    this.saveData('waitingPlayers', this.waitingPlayers);
-                    
-                    this.roomId = `room_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-                    this.roomData = {
-                        id: this.roomId,
-                        players: [
-                            { id: playerId, name: playerName, health: 100 },
-                            { id: availableOpponent.id, name: availableOpponent.name, health: 100 }
-                        ],
-                        currentTurn: playerId,
-                        diceValue: null,
-                        lastAction: null,
-                        timestamp: Date.now(),
-                        gameStarted: false
-                    };
-                    
-                    this.activeRooms[this.roomId] = this.roomData;
-                    this.saveData('activeRooms', this.activeRooms);
-                    
-                    return { matched: true, opponent: availableOpponent, roomId: this.roomId };
-                } else {
-                    // Bekleme listesine ekle
-                    const existingPlayer = this.waitingPlayers.find(p => p.id === playerId);
-                    if (!existingPlayer) {
-                        this.waitingPlayers.push({
-                            id: playerId,
-                            name: playerName,
-                            timestamp: Date.now()
-                        });
-                        this.saveData('waitingPlayers', this.waitingPlayers);
-                    }
-                    
-                    return { matched: false };
-                }
-            }
-
-            cancelMatch(playerId) {
-                this.waitingPlayers = this.waitingPlayers.filter(p => p.id !== playerId);
-                this.saveData('waitingPlayers', this.waitingPlayers);
-            }
-
-            updateRoom(roomId, data) {
-                data.timestamp = Date.now();
-                this.activeRooms[roomId] = data;
-                this.saveData('activeRooms', this.activeRooms);
-            }
-
-            getRoom(roomId) {
-                return this.activeRooms[roomId] || null;
-            }
-
-            deleteRoom(roomId) {
-                delete this.activeRooms[roomId];
-                this.saveData('activeRooms', this.activeRooms);
-            }
+          }
         }
+      }
 
-        const matchmaking = new MatchmakingSystem();
-        let matchCheckInterval = null;
-        let roomUpdateInterval = null;
-
-        // Ses efektleri (Web Audio API)
-        class SoundEffects {
-            constructor() {
-                this.audioContext = null;
-                this.initialize();
-            }
-
-            initialize() {
-                try {
-                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                } catch (e) {
-                    console.log('Web Audio API desteklenmiyor');
-                }
-            }
-
-            playDiceRoll() {
-                if (!this.audioContext) return;
-                
-                const oscillator = this.audioContext.createOscillator();
-                const gainNode = this.audioContext.createGain();
-                
-                oscillator.connect(gainNode);
-                gainNode.connect(this.audioContext.destination);
-                
-                oscillator.frequency.setValueAtTime(200, this.audioContext.currentTime);
-                oscillator.frequency.exponentialRampToValueAtTime(800, this.audioContext.currentTime + 0.3);
-                
-                gainNode.gain.setValueAtTime(0.3, this.audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.5);
-                
-                oscillator.start(this.audioContext.currentTime);
-                oscillator.stop(this.audioContext.currentTime + 0.5);
-            }
-
-            playExplosion() {
-                if (!this.audioContext) return;
-                
-                const bufferSize = this.audioContext.sampleRate * 0.3;
-                const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
-                const data = buffer.getChannelData(0);
-                
-                for (let i = 0; i < bufferSize; i++) {
-                    data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.3));
-                }
-                
-                const source = this.audioContext.createBufferSource();
-                source.buffer = buffer;
-                
-                const gainNode = this.audioContext.createGain();
-                gainNode.gain.setValueAtTime(0.5, this.audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.3);
-                
-                source.connect(gainNode);
-                gainNode.connect(this.audioContext.destination);
-                source.start();
-            }
-
-            playDamage() {
-                if (!this.audioContext) return;
-                
-                const oscillator = this.audioContext.createOscillator();
-                const gainNode = this.audioContext.createGain();
-                
-                oscillator.connect(gainNode);
-                gainNode.connect(this.audioContext.destination);
-                
-                oscillator.frequency.setValueAtTime(100, this.audioContext.currentTime);
-                oscillator.frequency.exponentialRampToValueAtTime(50, this.audioContext.currentTime + 0.2);
-                
-                gainNode.gain.setValueAtTime(0.4, this.audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.3);
-                
-                oscillator.start(this.audioContext.currentTime);
-                oscillator.stop(this.audioContext.currentTime + 0.3);
-            }
+      // Ball collisions
+      for(let i=0; i<balls.length; i++) {
+        for(let j=i+1; j<balls.length; j++) {
+          const b1 = balls[i], b2 = balls[j];
+          if(b1.inPocket || b2.inPocket) continue;
+          const dx = b2.x - b1.x, dy = b2.y - b1.y, dist = Math.hypot(dx, dy);
+          if(dist < BALL_RADIUS*2 && dist > 0.001) {
+            const nx = dx/dist, ny = dy/dist;
+            const kx = b1.vx - b2.vx, ky = b1.vy - b2.vy;
+            const p = 2 * (nx*kx + ny*ky) / 2;
+            b1.vx -= p*nx*0.95; b1.vy -= p*ny*0.95;
+            b2.vx += p*nx*0.95; b2.vy += p*ny*0.95;
+          }
         }
+      }
+    }
 
-        const sounds = new SoundEffects();
+    function loop() {
+      updatePhysics();
+      draw();
+      requestAnimationFrame(loop);
+    }
 
-        // UI fonksiyonları
-        function showScreen(screenId) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
-            document.getElementById(screenId).classList.remove('hidden');
-        }
+    // Touch / Mouse Aim & Shoot
+    canvas.addEventListener('pointerdown', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      const mx = (e.clientX - rect.left) * scaleX - RAIL_WIDTH;
+      const my = (e.clientY - rect.top) * scaleY - RAIL_WIDTH;
+      aimAngle = Math.atan2(my - cueBall.y, mx - cueBall.x);
+      isAiming = true;
+    });
 
-        function updateHealthBars() {
-            document.getElementById('player-health').style.width = gameState.playerHealth + '%';
-            document.getElementById('enemy-health').style.width = gameState.enemyHealth + '%';
-            document.getElementById('player-health-text').textContent = `${gameState.playerHealth} HP`;
-            document.getElementById('enemy-health-text').textContent = `${gameState.enemyHealth} HP`;
-        }
+    canvas.addEventListener('pointermove', (e) => {
+      if(!isAiming) return;
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      const mx = (e.clientX - rect.left) * scaleX - RAIL_WIDTH;
+      const my = (e.clientY - rect.top) * scaleY - RAIL_WIDTH;
+      aimAngle = Math.atan2(my - cueBall.y, mx - cueBall.x);
+    });
 
-        function updateTurnIndicator() {
-            const indicator = document.getElementById('turn-indicator');
-            const rollBtn = document.getElementById('roll-btn');
-            
-            if (gameState.playerTurn) {
-                indicator.textContent = '🎯 SENİN SIRAN';
-                indicator.style.color = '#00ff00';
-                rollBtn.disabled = false;
-                rollBtn.style.opacity = '1';
-            } else {
-                indicator.textContent = '⏳ RAKİBİN SIRASI';
-                indicator.style.color = '#ff0000';
-                rollBtn.disabled = true;
-                rollBtn.style.opacity = '0.5';
-            }
-            
-            // Aktif oyuncu vurgusu
-            document.getElementById('player-health-container').classList.toggle('active-turn', gameState.playerTurn);
-            document.getElementById('enemy-health-container').classList.toggle('active-turn', !gameState.playerTurn);
-        }
+    canvas.addEventListener('pointerup', () => {
+      if(isAiming) {
+        cueBall.vx = Math.cos(aimAngle) * 16;
+        cueBall.vy = Math.sin(aimAngle) * 16;
+        isAiming = false;
+        currentTurn = currentTurn === 1 ? 2 : 1;
+        updateTurnText();
+      }
+    });
 
-        function showNotification(message, type = 'info') {
-            const notification = document.createElement('div');
-            notification.className = 'notification';
-            notification.style.backgroundColor = type === 'damage' ? 'rgba(255,0,0,0.8)' : 'rgba(0,0,0,0.8)';
-            notification.textContent = message;
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.remove();
-            }, 2000);
-        }
-
-        // Zar animasyonu
-        function animateDice(value) {
-            sounds.playDiceRoll();
-            
-            const diceResult = document.getElementById('dice-result');
-            diceResult.textContent = `🎲 ${value}`;
-            diceResult.classList.add('shake');
-            
-            // 3D bomba animasyonu
-            let rotations = 0;
-            const maxRotations = 20;
-            const rotateInterval = setInterval(() => {
-                bombGroup.rotation.y += 0.5;
-                bombGroup.rotation.x += 0.3;
-                bombGroup.position.y += Math.sin(rotations * 0.5) * 0.5;
-                rotations++;
-                
-                if (rotations >= maxRotations) {
-                    clearInterval(rotateInterval);
-                    bombGroup.rotation.set(0, 0, 0);
-                    bombGroup.position.y = 2;
-                    
-                    // Patlama efekti
-                    setTimeout(() => {
-                        sounds.playExplosion();
-                        createExplosion();
-                    }, 200);
-                    
-                    setTimeout(() => {
-                        diceResult.classList.remove('shake');
-                    }, 500);
-                }
-            }, 50);
-        }
-
-        function createExplosion() {
-            particles.forEach((particle, index) => {
-                particle.visible = true;
-                particle.position.set(0, 2, -3);
-                
-                const angle = (index / particles.length) * Math.PI * 2;
-                const speed = 0.2 + Math.random() * 0.5;
-                
-                particle.userData = {
-                    velocity: new THREE.Vector3(
-                        Math.cos(angle) * speed,
-                        Math.random() * 0.4,
-                        Math.sin(angle) * speed
-                    ),
-                    life: 1
-                };
-            });
-        }
-
-        function updateParticles() {
-            particles.forEach(particle => {
-                if (particle.visible && particle.userData.life > 0) {
-                    particle.position.x += particle.userData.velocity.x;
-                    particle.position.y += particle.userData.velocity.y;
-                    particle.position.z += particle.userData.velocity.z;
-                    particle.userData.velocity.y -= 0.02;
-                    particle.userData.life -= 0.02;
-                    particle.material.opacity = particle.userData.life;
-                    particle.material.transparent = true;
-                    
-                    if (particle.userData.life <= 0) {
-                        particle.visible = false;
-                    }
-                }
-            });
-        }
-
-        // Hasar göstergesi
-        function showDamageIndicator(target, damage) {
-            const element = target === 'player' ? 
-                document.getElementById('player-health-container') : 
-                document.getElementById('enemy-health-container');
-            
-            element.style.transform = 'scale(1.1)';
-            element.style.borderColor = '#ff0000';
-            
-            setTimeout(() => {
-                element.style.transform = 'scale(1)';
-                element.style.borderColor = 'rgba(255,255,255,0.3)';
-            }, 300);
-        }
-
-        // Oyun mantığı
-        function rollDice() {
-            if (!gameState.gameActive || !gameState.playerTurn || gameState.isAnimating) return;
-            
-            gameState.isAnimating = true;
-            
-            const diceValue = Math.floor(Math.random() * 6) + 1;
-            const damage = diceValue * 10;
-            
-            animateDice(diceValue);
-            showNotification(`Zar: ${diceValue} - Hasar: ${damage}`, 'damage');
-            
-            gameState.playerTurn = false;
-            updateTurnIndicator();
-            
-            // Rakibe hasar ver
-            setTimeout(() => {
-                gameState.enemyHealth = Math.max(0, gameState.enemyHealth - damage);
-                updateHealthBars();
-                showDamageIndicator('enemy', damage);
-                
-                // Oda verisini güncelle
-                if (gameState.roomId) {
-                    const roomData = matchmaking.getRoom(gameState.roomId);
-                    if (roomData) {
-                        const opponentId = roomData.players.find(p => p.id !== telegramUser.id).id;
-                        roomData.currentTurn = opponentId;
-                        roomData.diceValue = diceValue;
-                        roomData.lastAction = {
-                            playerId: telegramUser.id,
-                            diceValue,
-                            damage,
-                            timestamp: Date.now()
-                        };
-                        roomData.players = roomData.players.map(p => ({
-                            ...p,
-                            health: p.id === telegramUser.id ? gameState.playerHealth : gameState.enemyHealth
-                        }));
-                        matchmaking.updateRoom(gameState.roomId, roomData);
-                    }
-                }
-                
-                // Oyun bitti mi kontrol et
-                if (gameState.enemyHealth <= 0) {
-                    endGame(true);
-                    return;
-                }
-                
-                // Rakibin hamlesini bekle
-                gameState.isAnimating = false;
-                
-                // Rakip hamlesi için 3 saniye bekle
-                setTimeout(() => {
-                    if (gameState.gameActive && !gameState.playerTurn) {
-                        // Eğer gerçek rakip yoksa, simüle et
-                        simulateEnemyTurn();
-                    }
-                }, 3000);
-            }, 800);
-        }
-
-        function simulateEnemyTurn() {
-            if (!gameState.gameActive || gameState.playerTurn || gameState.isAnimating) return;
-            
-            gameState.isAnimating = true;
-            
-            const diceValue = Math.floor(Math.random() * 6) + 1;
-            const damage = diceValue * 10;
-            
-            animateDice(diceValue);
-            showNotification(`Rakip zar attı: ${diceValue} - Hasar: ${damage}`, 'damage');
-            
-            setTimeout(() => {
-                gameState.playerHealth = Math.max(0, gameState.playerHealth - damage);
-                updateHealthBars();
-                showDamageIndicator('player', damage);
-                
-                gameState.playerTurn = true;
-                updateTurnIndicator();
-                gameState.isAnimating = false;
-                
-                if (gameState.playerHealth <= 0) {
-                    endGame(false);
-                }
-            }, 800);
-        }
-
-        function endGame(won) {
-            gameState.gameActive = false;
-            gameState.isAnimating = false;
-            
-            // İstatistikleri güncelle
-            stats.totalGames++;
-            if (won) {
-                stats.wins++;
-                showNotification('🏆 KAZANDIN!', 'success');
-            } else {
-                stats.losses++;
-                showNotification('💀 KAYBETTİN!', 'damage');
-            }
-            localStorage.setItem('zarBombaStats', JSON.stringify(stats));
-            
-            // Odayı sil
-            if (gameState.roomId) {
-                matchmaking.deleteRoom(gameState.roomId);
-            }
-            
-            setTimeout(() => {
-                resetGame();
-                showScreen('main-menu');
-            }, 2000);
-        }
-
-        function resetGame() {
-            gameState.playerHealth = 100;
-            gameState.enemyHealth = 100;
-            gameState.playerTurn = true;
-            gameState.gameActive = false;
-            gameState.roomId = null;
-            gameState.opponent = null;
-            gameState.isAnimating = false;
-            
-            updateHealthBars();
-            
-            if (roomUpdateInterval) {
-                clearInterval(roomUpdateInterval);
-                roomUpdateInterval = null;
-            }
-        }
-
-        // Event listeners
-        document.getElementById('play-btn').addEventListener('click', () => {
-            showScreen('lobby-screen');
-            
-            const result = matchmaking.findMatch(telegramUser.id, telegramUser.first_name);
-            
-            if (result.matched) {
-                startGame(result.opponent, result.roomId);
-            } else {
-                // Eşleşme bekle
-                let waitTime = 0;
-                matchCheckInterval = setInterval(() => {
-                    waitTime += 1;
-                    
-                    const waitingPlayers = matchmaking.loadData('waitingPlayers', []);
-                    const activeRooms = matchmaking.loadData('activeRooms', {});
-                    
-                    // Bizi içeren oda var mı kontrol et
-                    for (const roomId in activeRooms) {
-                        const room = activeRooms[roomId];
-                        if (room.players.some(p => p.id === telegramUser.id)) {
-                            const opponent = room.players.find(p => p.id !== telegramUser.id);
-                            if (opponent) {
-                                clearInterval(matchCheckInterval);
-                                startGame(opponent, roomId);
-                                return;
-                            }
-                        }
-                    }
-                    
-                    // 15 saniye sonra bot ile oyna
-                    if (waitTime >= 15) {
-                        clearInterval(matchCheckInterval);
-                        matchmaking.cancelMatch(telegramUser.id);
-                        
-                        const botOpponent = {
-                            id: 'bot_' + Date.now(),
-                            name: 'Bot Rakip',
-                            isBot: true
-                        };
-                        
-                        startGame(botOpponent, 'bot_room_' + Date.now());
-                    }
-                    
-                    // Aktif oyuncu sayısını güncelle
-                    const activePlayers = waitingPlayers.filter(p => p.id !== telegramUser.id).length;
-                    document.getElementById('player-count').textContent = `Aktif Oyuncu: ${activePlayers}`;
-                }, 1000);
-            }
-        });
-
-        document.getElementById('cancel-btn').addEventListener('click', () => {
-            matchmaking.cancelMatch(telegramUser.id);
-            if (matchCheckInterval) {
-                clearInterval(matchCheckInterval);
-                matchCheckInterval = null;
-            }
-            showScreen('main-menu');
-        });
-
-        document.getElementById('roll-btn').addEventListener('click', rollDice);
-
-        document.getElementById('how-to-btn').addEventListener('click', () => {
-            alert('📖 NASIL OYNANIR?\n\n' +
-                  '🎲 Zar atarak rakibine hasar ver!\n' +
-                  '💣 Her zar değeri 10 hasar verir\n' +
-                  '⚔️ Örnek: Zar 3 gelirse 30 hasar\n' +
-                  '❤️ 100 HP ile başlarsın\n' +
-                  '🏆 Rakibin canını sıfırla ve kazan!\n\n' +
-                  'İyi eğlenceler! 🎮');
-        });
-
-        document.getElementById('stats-btn').addEventListener('click', () => {
-            const winRate = stats.totalGames > 0 ? Math.round((stats.wins / stats.totalGames) * 100) : 0;
-            alert('📊 İSTATİSTİKLER\n\n' +
-                  `🏆 Kazanma: ${stats.wins}\n` +
-                  `💀 Kaybetme: ${stats.losses}\n` +
-                  `🎮 Toplam Oyun: ${stats.totalGames}\n` +
-                  `📈 Kazanma Oranı: %${winRate}`);
-        });
-
-        function startGame(opponent, roomId) {
-            gameState.opponent = opponent;
-            gameState.roomId = roomId;
-            gameState.gameActive = true;
-            gameState.playerTurn = true;
-            
-            showScreen('game-screen');
-            updateHealthBars();
-            updateTurnIndicator();
-            
-            showNotification(`Rakip: ${opponent.name}`, 'info');
-            
-            // Oda güncellemelerini dinle (gerçek oyuncu varsa)
-            if (!opponent.isBot && roomId) {
-                roomUpdateInterval = setInterval(() => {
-                    if (gameState.roomId && gameState.gameActive) {
-                        const roomData = matchmaking.getRoom(gameState.roomId);
-                        if (roomData && roomData.lastAction) {
-                            // Rakibin hamlesini kontrol et
-                            if (roomData.lastAction.playerId !== telegramUser.id) {
-                                const action = roomData.lastAction;
-                                
-                                // Eğer henüz işlemediysek
-                                if (Date.now() - action.timestamp < 2000) {
-                                    animateDice(action.diceValue);
-                                    gameState.playerHealth = Math.max(0, gameState.playerHealth - action.damage);
-                                    updateHealthBars();
-                                    gameState.playerTurn = true;
-                                    updateTurnIndicator();
-                                    
-                                    if (gameState.playerHealth <= 0) {
-                                        endGame(false);
-                                    }
-                                    
-                                    // Aksiyonu temizle
-                                    roomData.lastAction = null;
-                                    matchmaking.updateRoom(gameState.roomId, roomData);
-                                }
-                            }
-                        }
-                    }
-                }, 500);
-            }
-        }
-
-        // Animasyon döngüsü
-        function animate() {
-            requestAnimationFrame(animate);
-            
-            // Karakter animasyonları
-            if (gameState.gameActive) {
-                if (gameState.playerTurn) {
-                    playerGroup.position.y = Math.sin(Date.now() * 0.005) * 0.2;
-                    playerGroup.rotation.y = Math.sin(Date.now() * 0.003) * 0.3;
-                } else {
-                    enemyGroup.position.y = Math.sin(Date.now() * 0.005) * 0.2;
-                    enemyGroup.rotation.y = Math.sin(Date.now() * 0.003) * 0.3;
-                }
-            }
-            
-            // Bomba animasyonu
-            bombGroup.rotation.y += 0.01;
-            bombGroup.position.y = 2 + Math.sin(Date.now() * 0.002) * 0.2;
-            
-            // Alev animasyonu
-            if (flame) {
-                flame.scale.setScalar(1 + Math.sin(Date.now() * 0.01) * 0.2);
-            }
-            
-            // Partikül güncelleme
-            updateParticles();
-            
-            // Kamera hafif sallanma
-            camera.position.x = Math.sin(Date.now() * 0.0005) * 0.5;
-            camera.position.y = 3 + Math.sin(Date.now() * 0.001) * 0.1;
-            camera.lookAt(0, 1, 0);
-            
-            renderer.render(scene, camera);
-        }
-
-        // Pencere yeniden boyutlandırma
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
-
-        // Başlat
-        animate();
-        showScreen('main-menu');
-        
-        // Telegram WebApp hazır
-        tg.ready();
-    </script>
+    initBalls();
+    updateTurnText();
+    loop();
+  </script>
 </body>
 </html>
