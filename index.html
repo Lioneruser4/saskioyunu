@@ -30,18 +30,6 @@
             width: 100%;
             border: 1px solid rgba(255, 255, 255, 0.08);
             box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
-            animation: slideUp 0.6s ease;
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
         }
 
         .header {
@@ -56,7 +44,6 @@
             background: linear-gradient(135deg, #f093fb, #f5576c, #4facfe);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            margin-bottom: 5px;
         }
 
         .header p {
@@ -67,11 +54,10 @@
         .welcome-section {
             background: linear-gradient(135deg, rgba(79, 172, 254, 0.15), rgba(245, 87, 108, 0.15));
             border-radius: 16px;
-            padding: 20px 25px;
+            padding: 20px;
             margin-bottom: 25px;
             border: 1px solid rgba(79, 172, 254, 0.2);
             display: none;
-            animation: fadeIn 0.5s ease;
         }
 
         .welcome-section.active {
@@ -131,7 +117,6 @@
 
         .user-section input:disabled {
             opacity: 0.5;
-            cursor: not-allowed;
         }
 
         .search-box {
@@ -179,14 +164,9 @@
             box-shadow: 0 10px 35px rgba(245, 87, 108, 0.4);
         }
 
-        .search-box button:active {
-            transform: translateY(0);
-        }
-
         .search-box button:disabled {
             opacity: 0.5;
             cursor: not-allowed;
-            transform: none !important;
         }
 
         .loading {
@@ -239,7 +219,6 @@
 
         .results.active {
             display: grid;
-            animation: fadeIn 0.4s ease;
         }
 
         .result-item {
@@ -273,7 +252,6 @@
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
-            line-height: 1.3;
         }
 
         .result-item .duration {
@@ -386,12 +364,6 @@
             .results {
                 grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
             }
-
-            .notification {
-                left: 20px;
-                right: 20px;
-                bottom: 20px;
-            }
         }
     </style>
 </head>
@@ -403,22 +375,15 @@
             <p>YouTube'da ara, seç, bot ile al!</p>
         </div>
 
-        <!-- Hoşgeldin Bölümü -->
         <div class="welcome-section" id="welcomeSection">
-            <div class="greeting">
-                👋 Hoşgeldin, <span id="userName">İsim</span>!
-            </div>
-            <div class="user-id">
-                🆔 ID: <span id="userIdDisplay">-</span>
-            </div>
+            <div class="greeting">👋 Hoşgeldin, <span id="userName">İsim</span>!</div>
+            <div class="user-id">🆔 ID: <span id="userIdDisplay">-</span></div>
         </div>
 
         <div class="user-section">
             <label>👤 Telegram User ID</label>
             <input type="text" id="userId" placeholder="Otomatik algılanıyor..." disabled>
-            <small style="color: #718096; display: block; margin-top: 5px;">
-                ✅ WebView üzerinden otomatik algılandı
-            </small>
+            <small style="color: #718096; display: block; margin-top: 5px;">✅ WebView üzerinden otomatik algılandı</small>
         </div>
 
         <div class="search-box">
@@ -442,15 +407,13 @@
     <div class="notification" id="notification"></div>
 
     <script>
-        // ⚠️ BOT SUNUCU ADRESİNİ BURAYA YAZIN
+        // ⚠️ RENDER URL'Nİ BURAYA YAZ
         const BOT_API_URL = 'https://fullsongbot.onrender.com';
 
-        // Telegram WebApp'den bilgileri al
         let telegramUser = null;
 
         function initTelegramUser() {
             try {
-                // Telegram WebApp API
                 if (window.Telegram && window.Telegram.WebApp) {
                     const webApp = window.Telegram.WebApp;
                     const user = webApp.initDataUnsafe?.user;
@@ -460,50 +423,30 @@
                             id: user.id,
                             firstName: user.first_name || 'Kullanıcı',
                             lastName: user.last_name || '',
-                            username: user.username || '',
-                            languageCode: user.language_code || 'tr'
+                            username: user.username || ''
                         };
 
-                        // Kullanıcı bilgilerini göster
                         document.getElementById('userId').value = telegramUser.id;
                         document.getElementById('userIdDisplay').textContent = telegramUser.id;
 
                         const fullName = telegramUser.firstName + (telegramUser.lastName ? ' ' + telegramUser.lastName : '');
                         document.getElementById('userName').textContent = fullName;
 
-                        // Hoşgeldin mesajını göster
                         document.getElementById('welcomeSection').classList.add('active');
-
                         showNotification(`🎵 Hoşgeldin ${fullName}!`, 'info');
 
-                        // WebApp'i genişlet
                         webApp.expand();
-
                         return true;
                     }
                 }
 
-                // Telegram WebApp yoksa manuel giriş yap
-                console.log('Telegram WebApp bulunamadı, manuel giriş yapılabilir.');
                 document.getElementById('userId').disabled = false;
                 document.getElementById('userId').placeholder = 'Telegram ID\'nizi girin';
-                document.getElementById('userId').value = '';
                 return false;
 
             } catch (error) {
-                console.error('Telegram başlatma hatası:', error);
+                console.error('Telegram hatası:', error);
                 return false;
-            }
-        }
-
-        // Telegram WebApp'den gelen verileri işle
-        function handleTelegramData() {
-            if (window.Telegram && window.Telegram.WebApp) {
-                const webApp = window.Telegram.WebApp;
-                const initData = webApp.initData;
-
-                // Bot'a doğrulama için gönderebiliriz
-                console.log('Telegram initData mevcut');
             }
         }
 
@@ -515,8 +458,6 @@
             }
 
             let userId = document.getElementById('userId').value.trim();
-
-            // Eğer hala ID yoksa manuel iste
             if (!userId) {
                 const manualId = prompt('Telegram ID\'nizi girin:');
                 if (manualId) {
@@ -528,7 +469,6 @@
                 }
             }
 
-            // Loading göster
             document.getElementById('loading').classList.add('active');
             document.getElementById('results').classList.remove('active');
             document.getElementById('results').innerHTML = '';
@@ -584,9 +524,7 @@
             try {
                 const response = await fetch(`${BOT_API_URL}/send`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         user_id: userId,
                         url: item.url,
@@ -618,22 +556,14 @@
             }, 5000);
         }
 
-        // Enter tuşu ile arama
         document.getElementById('searchInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                searchMusic();
-            }
+            if (e.key === 'Enter') searchMusic();
         });
 
-        // Sayfa yüklendiğinde Telegram bilgilerini al
         document.addEventListener('DOMContentLoaded', function() {
             initTelegramUser();
-            handleTelegramData();
-
-            // WebApp hazır olduğunda
             if (window.Telegram && window.Telegram.WebApp) {
                 window.Telegram.WebApp.ready();
-                window.Telegram.WebApp.enableClosingConfirmation();
             }
         });
     </script>
