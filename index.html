@@ -1,234 +1,642 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>8 Pool Bilardo - GitHub Pages Standalone</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
-    body { background: #070a12; color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; overflow: hidden; display: flex; flex-direction: column; height: 100vh; }
-    header { background: rgba(15, 23, 42, 0.9); padding: 8px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; }
-    .hud-title { font-weight: bold; color: #10b981; font-size: 16px; }
-    .hud-info { font-size: 13px; color: #94a3b8; }
-    #canvas-container { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; background: #020617; }
-    canvas { max-width: 100%; max-height: 100%; display: block; }
-    .controls-overlay { position: absolute; bottom: 12px; left: 12px; right: 12px; display: flex; justify-content: space-between; pointer-events: none; }
-    .btn { pointer-events: auto; background: #10b981; color: #000; border: none; padding: 8px 14px; border-radius: 8px; font-weight: bold; cursor: pointer; }
-    .btn:hover { background: #34d399; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FullSongBot 🎵</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.07);
+            backdrop-filter: blur(30px);
+            border-radius: 30px;
+            padding: 40px;
+            max-width: 850px;
+            width: 100%;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+            animation: slideUp 0.6s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #fff;
+            font-size: 3em;
+            font-weight: 800;
+            background: linear-gradient(135deg, #f093fb, #f5576c, #4facfe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            color: #a0aec0;
+            font-size: 1.05em;
+        }
+
+        .welcome-section {
+            background: linear-gradient(135deg, rgba(79, 172, 254, 0.15), rgba(245, 87, 108, 0.15));
+            border-radius: 16px;
+            padding: 20px 25px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(79, 172, 254, 0.2);
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .welcome-section.active {
+            display: block;
+        }
+
+        .welcome-section .greeting {
+            color: #e2e8f0;
+            font-size: 1.2em;
+            font-weight: 600;
+        }
+
+        .welcome-section .greeting span {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .welcome-section .user-id {
+            color: #718096;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        .user-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .user-section label {
+            color: #e2e8f0;
+            font-weight: 600;
+            font-size: 0.9em;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .user-section input {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+
+        .user-section input:focus {
+            outline: none;
+            border-color: #4facfe;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .user-section input:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .search-box input {
+            flex: 1;
+            padding: 16px 20px;
+            border-radius: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            font-size: 1.05em;
+            transition: all 0.3s;
+        }
+
+        .search-box input::placeholder {
+            color: #718096;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #4facfe;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .search-box button {
+            padding: 16px 35px;
+            border: none;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            color: #fff;
+            font-size: 1.05em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .search-box button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 35px rgba(245, 87, 108, 0.4);
+        }
+
+        .search-box button:active {
+            transform: translateY(0);
+        }
+
+        .search-box button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 25px;
+            color: #a0aec0;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            width: 45px;
+            height: 45px;
+            border: 4px solid rgba(255, 255, 255, 0.05);
+            border-top: 4px solid #4facfe;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .results {
+            display: none;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .results.active {
+            display: grid;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .result-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 14px;
+            padding: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .result-item:hover {
+            transform: translateY(-4px);
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(79, 172, 254, 0.3);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .result-item img {
+            width: 100%;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+
+        .result-item .title {
+            color: #e2e8f0;
+            font-weight: 600;
+            font-size: 0.9em;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            line-height: 1.3;
+        }
+
+        .result-item .duration {
+            color: #718096;
+            font-size: 0.8em;
+            margin-top: 5px;
+        }
+
+        .result-item .badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 0.7em;
+            font-weight: 700;
+            margin-top: 5px;
+        }
+
+        .badge.audio {
+            background: rgba(79, 172, 254, 0.2);
+            color: #4facfe;
+        }
+
+        .badge.video {
+            background: rgba(245, 87, 108, 0.2);
+            color: #f5576c;
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(20px);
+            padding: 18px 30px;
+            border-radius: 16px;
+            color: #fff;
+            font-weight: 600;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.5s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 999;
+            max-width: 400px;
+        }
+
+        .notification.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .notification.success {
+            border-color: #4facfe;
+        }
+
+        .notification.error {
+            border-color: #f5576c;
+        }
+
+        .notification.info {
+            border-color: #f093fb;
+        }
+
+        .bot-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            color: #718096;
+            font-size: 0.85em;
+        }
+
+        .bot-status .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4facfe;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%,
+            100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.3;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .search-box {
+                flex-direction: column;
+            }
+
+            .search-box button {
+                width: 100%;
+            }
+
+            .results {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+
+            .notification {
+                left: 20px;
+                right: 20px;
+                bottom: 20px;
+            }
+        }
+    </style>
 </head>
 <body>
-  <header>
-    <div class="hud-title">🎱 8 Pool Bilardo</div>
-    <div id="turn-indicator" class="hud-info">Sıra: Oyuncu 1</div>
-    <button class="btn" onclick="resetGame()">Yeniden Başlat</button>
-  </header>
 
-  <div id="canvas-container">
-    <canvas id="poolCanvas" width="1090" height="590"></canvas>
-  </div>
+    <div class="container">
+        <div class="header">
+            <h1>🎵 FullSongBot</h1>
+            <p>YouTube'da ara, seç, bot ile al!</p>
+        </div>
 
-  <script>
-    // Telegram WebApp Auto-Login
-    let playerName = 'Player 1';
-    if (window.Telegram && window.Telegram.WebApp) {
-      const tg = window.Telegram.WebApp;
-      tg.ready();
-      tg.expand();
-      if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-        playerName = tg.initDataUnsafe.user.first_name || 'Telegram Oyuncusu';
-      }
-    }
+        <!-- Hoşgeldin Bölümü -->
+        <div class="welcome-section" id="welcomeSection">
+            <div class="greeting">
+                👋 Hoşgeldin, <span id="userName">İsim</span>!
+            </div>
+            <div class="user-id">
+                🆔 ID: <span id="userIdDisplay">-</span>
+            </div>
+        </div>
 
-    const canvas = document.getElementById('poolCanvas');
-    const ctx = canvas.getContext('2d');
-    const turnIndicator = document.getElementById('turn-indicator');
+        <div class="user-section">
+            <label>👤 Telegram User ID</label>
+            <input type="text" id="userId" placeholder="Otomatik algılanıyor..." disabled>
+            <small style="color: #718096; display: block; margin-top: 5px;">
+                ✅ WebView üzerinden otomatik algılandı
+            </small>
+        </div>
 
-    const TABLE_WIDTH = 1000, TABLE_HEIGHT = 500, RAIL_WIDTH = 45, BALL_RADIUS = 13.5;
-    let balls = [], cueBall = null, aimAngle = 0, power = 0, isAiming = false, currentTurn = 1;
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="🎤 Şarkı veya video ara...">
+            <button onclick="searchMusic()" id="searchBtn">🔍 Ara</button>
+        </div>
 
-    const COLORS = {
-      0: '#f8fafc', 1: '#eab308', 2: '#2563eb', 3: '#dc2626', 4: '#7c3aed',
-      5: '#ea580c', 6: '#16a34a', 7: '#881337', 8: '#09090b',
-      9: '#eab308', 10: '#2563eb', 11: '#dc2626', 12: '#7c3aed',
-      13: '#ea580c', 14: '#16a34a', 15: '#881337'
-    };
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>🔎 YouTube'da aranıyor...</p>
+        </div>
 
-    function initBalls() {
-      balls = [];
-      cueBall = { id: 0, num: 0, x: 250, y: 250, vx: 0, vy: 0, type: 'cue', color: '#fff', inPocket: false };
-      balls.push(cueBall);
+        <div class="results" id="results"></div>
 
-      const apexX = 720, apexY = 250, spacing = BALL_RADIUS * 2 + 0.5, rowSpacing = spacing * 0.866;
-      const order = [1, 9, 2, 3, 8, 10, 11, 4, 12, 5, 7, 13, 6, 14, 15];
-      let idx = 0;
-      for (let r = 0; r < 5; r++) {
-        const startY = apexY - (r * spacing) / 2;
-        for (let c = 0; c <= r; c++) {
-          const num = order[idx++];
-          balls.push({
-            id: num, num: num,
-            x: apexX + r * rowSpacing, y: startY + c * spacing,
-            vx: 0, vy: 0, type: num === 8 ? '8ball' : (num < 8 ? 'solid' : 'stripe'),
-            color: COLORS[num], inPocket: false
-          });
-        }
-      }
-    }
+        <div class="bot-status">
+            <span class="dot"></span>
+            <span>Bot aktif • @FullSongBot</span>
+        </div>
+    </div>
 
-    function resetGame() {
-      initBalls();
-      currentTurn = 1;
-      updateTurnText();
-    }
+    <div class="notification" id="notification"></div>
 
-    function updateTurnText() {
-      turnIndicator.textContent = currentTurn === 1 ? 'Sıra: ' + playerName : 'Sıra: Bot / Oyuncu 2';
-    }
+    <script>
+        // ⚠️ BOT SUNUCU ADRESİNİ BURAYA YAZIN
+        const BOT_API_URL = 'https://fullsongbot.onrender.com';
 
-    function draw() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.save();
-      // Table Frame
-      ctx.fillStyle = '#2c1810';
-      ctx.roundRect(0, 0, canvas.width, canvas.height, 24);
-      ctx.fill();
+        // Telegram WebApp'den bilgileri al
+        let telegramUser = null;
 
-      // Felt
-      ctx.fillStyle = '#0d6338';
-      ctx.fillRect(RAIL_WIDTH, RAIL_WIDTH, TABLE_WIDTH, TABLE_HEIGHT);
+        function initTelegramUser() {
+            try {
+                // Telegram WebApp API
+                if (window.Telegram && window.Telegram.WebApp) {
+                    const webApp = window.Telegram.WebApp;
+                    const user = webApp.initDataUnsafe?.user;
 
-      // Pockets
-      const pockets = [
-        {x: 0, y: 0}, {x: TABLE_WIDTH/2, y: 0}, {x: TABLE_WIDTH, y: 0},
-        {x: 0, y: TABLE_HEIGHT}, {x: TABLE_WIDTH/2, y: TABLE_HEIGHT}, {x: TABLE_WIDTH, y: TABLE_HEIGHT}
-      ];
-      ctx.fillStyle = '#000';
-      for(const p of pockets) {
-        ctx.beginPath();
-        ctx.arc(RAIL_WIDTH + p.x, RAIL_WIDTH + p.y, 25, 0, Math.PI*2);
-        ctx.fill();
-      }
+                    if (user) {
+                        telegramUser = {
+                            id: user.id,
+                            firstName: user.first_name || 'Kullanıcı',
+                            lastName: user.last_name || '',
+                            username: user.username || '',
+                            languageCode: user.language_code || 'tr'
+                        };
 
-      // Balls
-      for(const b of balls) {
-        if(b.inPocket) continue;
-        const cx = RAIL_WIDTH + b.x, cy = RAIL_WIDTH + b.y;
-        ctx.fillStyle = b.color;
-        ctx.beginPath();
-        ctx.arc(cx, cy, BALL_RADIUS, 0, Math.PI*2);
-        ctx.fill();
-        if(b.num > 0) {
-          ctx.fillStyle = '#fff';
-          ctx.beginPath();
-          ctx.arc(cx, cy, 6, 0, Math.PI*2);
-          ctx.fill();
-          ctx.fillStyle = '#000';
-          ctx.font = 'bold 8px sans-serif';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(b.num, cx, cy);
-        }
-      }
+                        // Kullanıcı bilgilerini göster
+                        document.getElementById('userId').value = telegramUser.id;
+                        document.getElementById('userIdDisplay').textContent = telegramUser.id;
 
-      // Aim Line & Cue
-      if(isAiming && !cueBall.inPocket) {
-        const cx = RAIL_WIDTH + cueBall.x, cy = RAIL_WIDTH + cueBall.y;
-        ctx.strokeStyle = 'rgba(255,255,255,0.7)';
-        ctx.setLineDash([4,4]);
-        ctx.beginPath();
-        ctx.moveTo(cx, cy);
-        ctx.lineTo(cx + Math.cos(aimAngle)*200, cy + Math.sin(aimAngle)*200);
-        ctx.stroke();
-        ctx.setLineDash([]);
-      }
-      ctx.restore();
-    }
+                        const fullName = telegramUser.firstName + (telegramUser.lastName ? ' ' + telegramUser.lastName : '');
+                        document.getElementById('userName').textContent = fullName;
 
-    function updatePhysics() {
-      for(const b of balls) {
-        if(b.inPocket) continue;
-        b.x += b.vx; b.y += b.vy;
-        b.vx *= 0.99; b.vy *= 0.99;
-        if(Math.hypot(b.vx, b.vy) < 0.05) { b.vx = 0; b.vy = 0; }
+                        // Hoşgeldin mesajını göster
+                        document.getElementById('welcomeSection').classList.add('active');
 
-        // Cushions
-        if(b.x < BALL_RADIUS) { b.x = BALL_RADIUS; b.vx = -b.vx*0.9; }
-        if(b.x > TABLE_WIDTH - BALL_RADIUS) { b.x = TABLE_WIDTH - BALL_RADIUS; b.vx = -b.vx*0.9; }
-        if(b.y < BALL_RADIUS) { b.y = BALL_RADIUS; b.vy = -b.vy*0.9; }
-        if(b.y > TABLE_HEIGHT - BALL_RADIUS) { b.y = TABLE_HEIGHT - BALL_RADIUS; b.vy = -b.vy*0.9; }
+                        showNotification(`🎵 Hoşgeldin ${fullName}!`, 'info');
 
-        // Pockets
-        const pockets = [{x:0,y:0},{x:500,y:0},{x:1000,y:0},{x:0,y:500},{x:500,y:500},{x:1000,y:500}];
-        for(const p of pockets) {
-          if(Math.hypot(b.x - p.x, b.y - p.y) < 24) {
-            b.inPocket = true;
-            b.vx = 0; b.vy = 0;
-            if(b.id === 0) {
-              setTimeout(() => { b.inPocket = false; b.x = 250; b.y = 250; }, 800);
+                        // WebApp'i genişlet
+                        webApp.expand();
+
+                        return true;
+                    }
+                }
+
+                // Telegram WebApp yoksa manuel giriş yap
+                console.log('Telegram WebApp bulunamadı, manuel giriş yapılabilir.');
+                document.getElementById('userId').disabled = false;
+                document.getElementById('userId').placeholder = 'Telegram ID\'nizi girin';
+                document.getElementById('userId').value = '';
+                return false;
+
+            } catch (error) {
+                console.error('Telegram başlatma hatası:', error);
+                return false;
             }
-          }
         }
-      }
 
-      // Ball collisions
-      for(let i=0; i<balls.length; i++) {
-        for(let j=i+1; j<balls.length; j++) {
-          const b1 = balls[i], b2 = balls[j];
-          if(b1.inPocket || b2.inPocket) continue;
-          const dx = b2.x - b1.x, dy = b2.y - b1.y, dist = Math.hypot(dx, dy);
-          if(dist < BALL_RADIUS*2 && dist > 0.001) {
-            const nx = dx/dist, ny = dy/dist;
-            const kx = b1.vx - b2.vx, ky = b1.vy - b2.vy;
-            const p = 2 * (nx*kx + ny*ky) / 2;
-            b1.vx -= p*nx*0.95; b1.vy -= p*ny*0.95;
-            b2.vx += p*nx*0.95; b2.vy += p*ny*0.95;
-          }
+        // Telegram WebApp'den gelen verileri işle
+        function handleTelegramData() {
+            if (window.Telegram && window.Telegram.WebApp) {
+                const webApp = window.Telegram.WebApp;
+                const initData = webApp.initData;
+
+                // Bot'a doğrulama için gönderebiliriz
+                console.log('Telegram initData mevcut');
+            }
         }
-      }
-    }
 
-    function loop() {
-      updatePhysics();
-      draw();
-      requestAnimationFrame(loop);
-    }
+        async function searchMusic() {
+            const query = document.getElementById('searchInput').value.trim();
+            if (!query) {
+                showNotification('Lütfen bir şarkı adı yazın!', 'error');
+                return;
+            }
 
-    // Touch / Mouse Aim & Shoot
-    canvas.addEventListener('pointerdown', (e) => {
-      const rect = canvas.getBoundingClientRect();
-      const scaleX = canvas.width / rect.width;
-      const scaleY = canvas.height / rect.height;
-      const mx = (e.clientX - rect.left) * scaleX - RAIL_WIDTH;
-      const my = (e.clientY - rect.top) * scaleY - RAIL_WIDTH;
-      aimAngle = Math.atan2(my - cueBall.y, mx - cueBall.x);
-      isAiming = true;
-    });
+            let userId = document.getElementById('userId').value.trim();
 
-    canvas.addEventListener('pointermove', (e) => {
-      if(!isAiming) return;
-      const rect = canvas.getBoundingClientRect();
-      const scaleX = canvas.width / rect.width;
-      const scaleY = canvas.height / rect.height;
-      const mx = (e.clientX - rect.left) * scaleX - RAIL_WIDTH;
-      const my = (e.clientY - rect.top) * scaleY - RAIL_WIDTH;
-      aimAngle = Math.atan2(my - cueBall.y, mx - cueBall.x);
-    });
+            // Eğer hala ID yoksa manuel iste
+            if (!userId) {
+                const manualId = prompt('Telegram ID\'nizi girin:');
+                if (manualId) {
+                    userId = manualId;
+                    document.getElementById('userId').value = userId;
+                } else {
+                    showNotification('Lütfen Telegram ID\'nizi girin!', 'error');
+                    return;
+                }
+            }
 
-    canvas.addEventListener('pointerup', () => {
-      if(isAiming) {
-        cueBall.vx = Math.cos(aimAngle) * 16;
-        cueBall.vy = Math.sin(aimAngle) * 16;
-        isAiming = false;
-        currentTurn = currentTurn === 1 ? 2 : 1;
-        updateTurnText();
-      }
-    });
+            // Loading göster
+            document.getElementById('loading').classList.add('active');
+            document.getElementById('results').classList.remove('active');
+            document.getElementById('results').innerHTML = '';
+            document.getElementById('searchBtn').disabled = true;
 
-    initBalls();
-    updateTurnText();
-    loop();
-  </script>
+            try {
+                const response = await fetch(`${BOT_API_URL}/search?q=${encodeURIComponent(query)}`);
+                const data = await response.json();
+
+                document.getElementById('loading').classList.remove('active');
+                document.getElementById('searchBtn').disabled = false;
+
+                if (data.error) {
+                    showNotification('Hata: ' + data.error, 'error');
+                    return;
+                }
+
+                if (data.results && data.results.length > 0) {
+                    showResults(data.results, userId);
+                } else {
+                    showNotification('Sonuç bulunamadı!', 'error');
+                }
+            } catch (error) {
+                document.getElementById('loading').classList.remove('active');
+                document.getElementById('searchBtn').disabled = false;
+                showNotification('Bağlantı hatası! Bot çalışmıyor olabilir.', 'error');
+                console.error('Hata:', error);
+            }
+        }
+
+        function showResults(results, userId) {
+            const container = document.getElementById('results');
+            container.innerHTML = '';
+            container.classList.add('active');
+
+            results.forEach((item) => {
+                const div = document.createElement('div');
+                div.className = 'result-item';
+                div.innerHTML = `
+                            <img src="${item.thumbnail}" alt="${item.title}">
+                            <div class="title">${item.title}</div>
+                            <div class="duration">⏱ ${item.duration}</div>
+                            <div class="badge ${item.type}">${item.type === 'audio' ? '🎵 Müzik' : '🎬 Video'}</div>
+                        `;
+                div.onclick = () => sendToBot(item, userId);
+                container.appendChild(div);
+            });
+        }
+
+        async function sendToBot(item, userId) {
+            showNotification('📤 Bot\'a gönderiliyor...', 'info');
+
+            try {
+                const response = await fetch(`${BOT_API_URL}/send`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        user_id: userId,
+                        url: item.url,
+                        title: item.title,
+                        type: item.type
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showNotification('✅ Şarkı Telegram\'a gönderildi!', 'success');
+                } else {
+                    showNotification('❌ Hata: ' + data.error, 'error');
+                }
+            } catch (error) {
+                showNotification('❌ Bağlantı hatası!', 'error');
+                console.error('Hata:', error);
+            }
+        }
+
+        function showNotification(message, type) {
+            const notif = document.getElementById('notification');
+            notif.textContent = message;
+            notif.className = 'notification show ' + type;
+            clearTimeout(notif._timeout);
+            notif._timeout = setTimeout(() => {
+                notif.className = 'notification';
+            }, 5000);
+        }
+
+        // Enter tuşu ile arama
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchMusic();
+            }
+        });
+
+        // Sayfa yüklendiğinde Telegram bilgilerini al
+        document.addEventListener('DOMContentLoaded', function() {
+            initTelegramUser();
+            handleTelegramData();
+
+            // WebApp hazır olduğunda
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.ready();
+                window.Telegram.WebApp.enableClosingConfirmation();
+            }
+        });
+    </script>
+
 </body>
 </html>
