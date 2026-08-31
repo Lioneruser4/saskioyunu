@@ -1,43 +1,28 @@
 import os
-import requests
-import asyncio
-from flask import Flask, request, jsonify
-from telegram import Bot
-from telegram.error import TelegramError
-from flask_cors import CORS
-import yt_dlp
 import tempfile
-import time
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+from telegram import Bot
+import yt_dlp
 
 app = Flask(__name__)
 CORS(app)
 
-# Telegram Bot Token
-BOT_TOKEN = os.environ.get('BOT_TOKEN', 'YOUR_BOT_TOKEN_HERE')
-bot = Bot(token=BOT_TOKEN)
+BOT_TOKEN = os.environ.get('BOT_TOKEN')
+if not BOT_TOKEN:
+    print('❌ BOT_TOKEN ayarlanmamış!')
+    exit(1)
 
-# İndirme ayarları
-ydl_opts = {
-    'format': 'bestaudio/best',
-    'postprocessors': [{
-        'key': 'FFmpegExtractAudio',
-        'preferredcodec': 'mp3',
-        'preferredquality': '192',
-    }],
-    'quiet': True,
-    'no_warnings': True,
-    'extract_flat': False,
-}
+bot = Bot(token=BOT_TOKEN)
 
 @app.route('/search', methods=['GET'])
 def search_youtube():
-    """YouTube arama"""
     query = request.args.get('q', '')
     if not query:
         return jsonify({'error': 'Arama sorgusu gerekli'}), 400
     
     try:
-        ydl_opts_search = {
+        ydl_opts = {
             'quiet': True,
             'no_warnings': True,
             'extract_flat': True,
@@ -45,7 +30,7 @@ def search_youtube():
             'default_search': 'ytsearch10'
         }
         
-        with yt_dlp.YoutubeDL(ydl_opts_search) as ydl:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(query, download=False)
             results = []
             
@@ -72,7 +57,6 @@ def search_youtube():
 
 @app.route('/send', methods=['POST'])
 def send_to_telegram():
-    """İndir ve gönder"""
     data = request.json
     user_id = data.get('user_id')
     url = data.get('url')
@@ -84,7 +68,7 @@ def send_to_telegram():
     
     try:
         with tempfile.TemporaryDirectory() as temp_dir:
-            ydl_opts_download = {
+            ydl_opts = {
                 'format': 'bestaudio/best' if media_type == 'audio' else 'best',
                 'postprocessors': [{
                     'key': 'FFmpegExtractAudio',
@@ -96,27 +80,20 @@ def send_to_telegram():
                 'no_warnings': True,
             }
             
-            with yt_dlp.YoutubeDL(ydl_opts_download) as ydl:
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=True)
                 filename = ydl.prepare_filename(info)
                 
                 if media_type == 'audio':
                     filename = filename.rsplit('.', 1)[0] + '.mp3'
                 
-                # Dosya boyutu kontrolü
-                file_size = os.path.getsize(filename) / (1024 * 1024)  # MB
-                if file_size > 50:
-                    return jsonify({'error': 'Dosya çok büyük (50MB limit)'}), 400
-                
-                # Telegram'a gönder
                 if media_type == 'audio':
                     with open(filename, 'rb') as f:
                         bot.send_audio(
                             chat_id=user_id,
                             audio=f,
                             title=title[:50],
-                            performer='FullSongBot',
-                            caption=f'🎵 {title[:50]}'
+                            performer='FullSongBot'
                         )
                 else:
                     with open(filename, 'rb') as f:
@@ -128,22 +105,12 @@ def send_to_telegram():
                 
                 return jsonify({'success': True, 'message': 'Gönderildi!'})
                 
-    except TelegramError as e:
-        return jsonify({'error': f'Telegram hatası: {str(e)}'}), 500
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 @app.route('/', methods=['GET'])
 def health():
-    return jsonify({
-        'status': 'FullSongBot çalışıyor! 🎵',
-        'version': '1.0'
-    })
-
-@app.route('/webhook', methods=['POST'])
-def webhook():
-    """Telegram webhook (opsiyonel)"""
-    return jsonify({'status': 'ok'})
+    return jsonify({'status': 'FullSongBot çalışıyor! 🎵'})
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
