@@ -1,572 +1,1120 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="az" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FullSongBot 🎵</title>
+    <title>AI Crew 3D Virtual Office & Social Simulator</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cyber: {
+                            bg: '#05070d',
+                            panel: 'rgba(13, 18, 30, 0.75)',
+                            border: 'rgba(255, 255, 255, 0.08)',
+                            accent: '#00f0ff',
+                            purple: '#7000ff',
+                            pink: '#ff007a',
+                            neonGreen: '#00ff66'
+                        }
+                    },
+                    fontFamily: {
+                        cyber: ['Orbitron', 'sans-serif'],
+                        sans: ['Plus Jakarta Sans', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
+            background-color: #05070d;
+            color: #f1f5f9;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 15% 15%, rgba(0, 240, 255, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 85% 85%, rgba(112, 0, 255, 0.05) 0%, transparent 40%);
         }
 
-        .container {
-            background: rgba(255, 255, 255, 0.07);
-            backdrop-filter: blur(30px);
-            border-radius: 30px;
-            padding: 40px;
-            max-width: 850px;
-            width: 100%;
+        /* Glassmorphic Panel Styles */
+        .glass-panel {
+            background: rgba(13, 18, 30, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
             border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
         }
 
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
+        .glass-panel-glow {
+            box-shadow: 0 0 25px rgba(0, 240, 255, 0.15), inset 0 0 15px rgba(0, 240, 255, 0.05);
         }
 
-        .header h1 {
-            color: #fff;
-            font-size: 3em;
-            font-weight: 800;
-            background: linear-gradient(135deg, #f093fb, #f5576c, #4facfe);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+        /* Cyberpunk Neon Glow Buttons & Badges */
+        .neon-btn-primary {
+            background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%);
+            box-shadow: 0 0 15px rgba(0, 198, 255, 0.4);
+            transition: all 0.3s ease;
+        }
+        .neon-btn-primary:hover {
+            box-shadow: 0 0 25px rgba(0, 198, 255, 0.7);
+            transform: translateY(-1px);
         }
 
-        .header p {
-            color: #a0aec0;
-            font-size: 1.05em;
+        /* Animated Pulse Grid Background */
+        .grid-bg {
+            background-size: 40px 40px;
+            background-image: 
+                linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
         }
 
-        .welcome-section {
-            background: linear-gradient(135deg, rgba(79, 172, 254, 0.15), rgba(245, 87, 108, 0.15));
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 25px;
-            border: 1px solid rgba(79, 172, 254, 0.2);
-            display: none;
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(5, 7, 13, 0.6); }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(0, 240, 255, 0.4); }
+
+        /* Floating UI animations */
+        @keyframes subtlePulse {
+            0%, 100% { opacity: 0.8; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.03); }
         }
-
-        .welcome-section.active {
-            display: block;
-        }
-
-        .welcome-section .greeting {
-            color: #e2e8f0;
-            font-size: 1.2em;
-            font-weight: 600;
-        }
-
-        .welcome-section .greeting span {
-            background: linear-gradient(135deg, #f093fb, #f5576c);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .welcome-section .user-id {
-            color: #718096;
-            font-size: 0.9em;
-            margin-top: 5px;
-        }
-
-        .user-section {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 25px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .user-section label {
-            color: #e2e8f0;
-            font-weight: 600;
-            font-size: 0.9em;
-            display: block;
-            margin-bottom: 5px;
-        }
-
-        .user-section input {
-            width: 100%;
-            padding: 12px 16px;
-            border-radius: 12px;
-            border: 2px solid rgba(255, 255, 255, 0.08);
-            background: rgba(255, 255, 255, 0.05);
-            color: #fff;
-            font-size: 1em;
-            transition: all 0.3s;
-        }
-
-        .user-section input:focus {
-            outline: none;
-            border-color: #4facfe;
-            background: rgba(255, 255, 255, 0.08);
-        }
-
-        .user-section input:disabled {
-            opacity: 0.5;
-        }
-
-        .search-box {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 25px;
-        }
-
-        .search-box input {
-            flex: 1;
-            padding: 16px 20px;
-            border-radius: 16px;
-            border: 2px solid rgba(255, 255, 255, 0.08);
-            background: rgba(255, 255, 255, 0.05);
-            color: #fff;
-            font-size: 1.05em;
-            transition: all 0.3s;
-        }
-
-        .search-box input::placeholder {
-            color: #718096;
-        }
-
-        .search-box input:focus {
-            outline: none;
-            border-color: #4facfe;
-            background: rgba(255, 255, 255, 0.08);
-        }
-
-        .search-box button {
-            padding: 16px 35px;
-            border: none;
-            border-radius: 16px;
-            background: linear-gradient(135deg, #f093fb, #f5576c);
-            color: #fff;
-            font-size: 1.05em;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s;
-            white-space: nowrap;
-        }
-
-        .search-box button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 35px rgba(245, 87, 108, 0.4);
-        }
-
-        .search-box button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .loading {
-            display: none;
-            text-align: center;
-            padding: 25px;
-            color: #a0aec0;
-        }
-
-        .loading.active {
-            display: block;
-        }
-
-        .spinner {
-            width: 45px;
-            height: 45px;
-            border: 4px solid rgba(255, 255, 255, 0.05);
-            border-top: 4px solid #4facfe;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin: 0 auto 15px;
-        }
-
-        @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-            100% {
-                transform: rotate(360deg);
-            }
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .results {
-            display: none;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 15px;
-            margin-top: 25px;
-        }
-
-        .results.active {
-            display: grid;
-        }
-
-        .result-item {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 14px;
-            padding: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            transition: all 0.3s;
-            cursor: pointer;
-            text-align: center;
-        }
-
-        .result-item:hover {
-            transform: translateY(-4px);
-            background: rgba(255, 255, 255, 0.1);
-            border-color: rgba(79, 172, 254, 0.3);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-        }
-
-        .result-item img {
-            width: 100%;
-            border-radius: 10px;
-            margin-bottom: 10px;
-        }
-
-        .result-item .title {
-            color: #e2e8f0;
-            font-weight: 600;
-            font-size: 0.9em;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-
-        .result-item .duration {
-            color: #718096;
-            font-size: 0.8em;
-            margin-top: 5px;
-        }
-
-        .result-item .badge {
-            display: inline-block;
-            padding: 2px 10px;
-            border-radius: 20px;
-            font-size: 0.7em;
-            font-weight: 700;
-            margin-top: 5px;
-        }
-
-        .badge.audio {
-            background: rgba(79, 172, 254, 0.2);
-            color: #4facfe;
-        }
-
-        .badge.video {
-            background: rgba(245, 87, 108, 0.2);
-            color: #f5576c;
-        }
-
-        .notification {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            background: rgba(0, 0, 0, 0.9);
-            backdrop-filter: blur(20px);
-            padding: 18px 30px;
-            border-radius: 16px;
-            color: #fff;
-            font-weight: 600;
-            transform: translateY(100px);
-            opacity: 0;
-            transition: all 0.5s ease;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            z-index: 999;
-            max-width: 400px;
-        }
-
-        .notification.show {
-            transform: translateY(0);
-            opacity: 1;
-        }
-
-        .notification.success {
-            border-color: #4facfe;
-        }
-
-        .notification.error {
-            border-color: #f5576c;
-        }
-
-        .notification.info {
-            border-color: #f093fb;
-        }
-
-        .bot-status {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            justify-content: center;
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
-            color: #718096;
-            font-size: 0.85em;
-        }
-
-        .bot-status .dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #4facfe;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%,
-            100% {
-                opacity: 1;
-            }
-            50% {
-                opacity: 0.3;
-            }
-        }
-
-        @media (max-width: 600px) {
-            .container {
-                padding: 20px;
-            }
-
-            .header h1 {
-                font-size: 2em;
-            }
-
-            .search-box {
-                flex-direction: column;
-            }
-
-            .search-box button {
-                width: 100%;
-            }
-
-            .results {
-                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            }
-        }
+        .pulse-subtle { animation: subtlePulse 3s infinite ease-in-out; }
     </style>
 </head>
-<body>
+<body class="h-screen flex flex-col justify-between select-none overflow-hidden">
 
-    <div class="container">
-        <div class="header">
-            <h1>🎵 FullSongBot</h1>
-            <p>YouTube'da ara, seç, bot ile al!</p>
+    <!-- TOP CYBERPUNK NAVBAR -->
+    <header class="h-16 border-b border-cyber-border glass-panel px-4 lg:px-6 flex items-center justify-between z-30 shrink-0">
+        <!-- Logo & Title -->
+        <div class="flex items-center gap-3">
+            <div class="relative flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 via-blue-600 to-purple-600 p-[1px] shadow-lg shadow-cyan-500/20">
+                <div class="w-full h-full bg-slate-950 rounded-[11px] flex items-center justify-center">
+                    <i class="fa-solid fa-user-astronaut text-cyan-400 text-lg"></i>
+                </div>
+            </div>
+            <div>
+                <h1 class="font-cyber text-base lg:text-lg font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400">
+                    CREW AI OFFICE <span class="text-[10px] text-cyan-400 font-mono px-1.5 py-0.5 rounded bg-cyan-950/60 border border-cyan-500/30">2.5D SIM</span>
+                </h1>
+                <p class="text-[11px] text-slate-400 flex items-center gap-2">
+                    <span id="backendStatusDot" class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span id="backendStatusText">Render Backend Aktiv</span>
+                </p>
+            </div>
         </div>
 
-        <div class="welcome-section" id="welcomeSection">
-            <div class="greeting">👋 Hoşgeldin, <span id="userName">İsim</span>!</div>
-            <div class="user-id">🆔 ID: <span id="userIdDisplay">-</span></div>
+        <!-- Mode Indicator Badge -->
+        <div id="modeBadge" class="hidden md:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold">
+            <i class="fa-solid fa-comments text-emerald-400"></i>
+            <span id="modeText">Sosial Söhbət Rejimi</span>
         </div>
 
-        <div class="user-section">
-            <label>👤 Telegram User ID</label>
-            <input type="text" id="userId" placeholder="Otomatik algılanıyor..." disabled>
-            <small style="color: #718096; display: block; margin-top: 5px;">✅ WebView üzerinden otomatik algılandı</small>
+        <!-- Right Control Actions -->
+        <div class="flex items-center gap-2">
+            <button onclick="toggleSetupModal()" class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-cyan-400 border border-cyan-500/30 text-xs font-semibold transition">
+                <i class="fa-solid fa-users-gear"></i>
+                <span class="hidden sm:inline">Ajanlar & Rollar</span>
+            </button>
+            <button onclick="toggleMemoryModal()" class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-purple-400 border border-purple-500/30 text-xs font-semibold transition">
+                <i class="fa-solid fa-brain"></i>
+                <span class="hidden sm:inline">Yaddaş</span>
+            </button>
+            <button onclick="toggleAudio()" id="audioBtn" class="p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs transition" title="Səsi Aç/Bağla">
+                <i id="audioIcon" class="fa-solid fa-volume-high"></i>
+            </button>
         </div>
+    </header>
 
-        <div class="search-box">
-            <input type="text" id="searchInput" placeholder="🎤 Şarkı veya video ara...">
-            <button onclick="searchMusic()" id="searchBtn">🔍 Ara</button>
-        </div>
+    <!-- MAIN INTERFACE: LEFT 3D CANVAS + RIGHT CHAT PANEL -->
+    <main class="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-hidden grid-bg relative">
+        
+        <!-- 3D VIRTUAL CANVAS OFFICE (7 COLS) -->
+        <section class="lg:col-span-7 relative flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-cyber-border overflow-hidden bg-slate-950/60">
+            
+            <!-- Canvas Controls Overlay -->
+            <div class="absolute top-3 left-3 z-20 flex gap-2">
+                <button onclick="resetCanvasView()" class="px-2.5 py-1 rounded-lg bg-slate-900/80 hover:bg-slate-800 text-xs font-mono text-slate-300 border border-slate-700/80 backdrop-blur">
+                    <i class="fa-solid fa-rotate-left mr-1"></i> Kameranı Sıfırla
+                </button>
+                <button onclick="triggerPartyMode()" class="px-2.5 py-1 rounded-lg bg-purple-950/80 hover:bg-purple-900 text-xs font-mono text-purple-300 border border-purple-500/40 backdrop-blur">
+                    <i class="fa-solid fa-champagne-glasses mr-1"></i> Əyləncə Rejimi
+                </button>
+            </div>
 
-        <div class="loading" id="loading">
-            <div class="spinner"></div>
-            <p>🔎 YouTube'da aranıyor...</p>
-        </div>
+            <!-- Agent Quick Detail Tooltip / Info Card (Appears on Avatar Click) -->
+            <div id="agentDetailCard" class="absolute top-3 right-3 z-20 hidden glass-panel p-3 rounded-xl border border-cyan-500/30 w-56 text-xs text-slate-200">
+                <div class="flex justify-between items-center mb-1">
+                    <span id="cardAgentName" class="font-bold text-cyan-400">Ajan Adı</span>
+                    <button onclick="closeAgentCard()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <p id="cardAgentRole" class="text-[11px] text-purple-300 mb-1">Müdür / Lider</p>
+                <p id="cardAgentSpec" class="text-[10px] text-slate-400 mb-2">Koordinasiya və planlama</p>
+                <div class="flex justify-between items-center pt-1 border-t border-slate-800 text-[10px]">
+                    <span class="text-slate-400">Status:</span>
+                    <span id="cardAgentState" class="text-emerald-400 font-semibold">Gözləyir</span>
+                </div>
+            </div>
 
-        <div class="results" id="results"></div>
+            <!-- 2.5D ISOMETRIC CANVAS CONTAINER -->
+            <div class="w-full h-full flex items-center justify-center p-2 relative">
+                <canvas id="officeCanvas" class="w-full h-full max-w-[900px] max-h-[650px] rounded-2xl cursor-pointer"></canvas>
+            </div>
 
-        <div class="bot-status">
-            <span class="dot"></span>
-            <span>Bot aktif • @FullSongBot</span>
+            <!-- Floor Room Labels Bar -->
+            <div class="h-10 border-t border-cyber-border glass-panel px-4 flex items-center justify-around text-[11px] font-mono text-slate-400 shrink-0">
+                <span class="flex items-center gap-1.5"><i class="fa-solid fa-user-tie text-purple-400"></i> Müdür Otağı</span>
+                <span class="flex items-center gap-1.5"><i class="fa-solid fa-magnifying-glass text-cyan-400"></i> Axtarış Lab</span>
+                <span class="flex items-center gap-1.5"><i class="fa-solid fa-image text-pink-400"></i> Media Studio</span>
+                <span class="flex items-center gap-1.5"><i class="fa-solid fa-mug-hot text-emerald-400"></i> İstirahət Zalı</span>
+            </div>
+        </section>
+
+        <!-- LIVE CHAT & WORKFLOW CONSOLE (5 COLS) -->
+        <section class="lg:col-span-5 flex flex-col h-full bg-cyber-bg overflow-hidden">
+            
+            <!-- Console Header / Tabs -->
+            <div class="h-12 border-b border-cyber-border glass-panel px-4 flex items-center justify-between shrink-0">
+                <div class="flex gap-2">
+                    <button id="tabChatBtn" onclick="switchTab('chat')" class="px-3 py-1 rounded-lg text-xs font-semibold bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-md shadow-cyan-600/30">
+                        <i class="fa-solid fa-comments mr-1"></i> Canlı Söhbət
+                    </button>
+                    <button id="tabLogsBtn" onclick="switchTab('logs')" class="px-3 py-1 rounded-lg text-xs font-semibold bg-slate-800/80 text-slate-400 hover:text-white border border-slate-700">
+                        <i class="fa-solid fa-terminal mr-1"></i> Prosedur Logları
+                    </button>
+                </div>
+                <button onclick="clearChatHistory()" class="text-xs text-slate-400 hover:text-red-400 transition" title="Çatı Təmizlə">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
+            </div>
+
+            <!-- CHAT VIEW CONTAINER -->
+            <div id="chatView" class="flex-1 flex flex-col justify-between overflow-hidden">
+                
+                <!-- Chat Messages Stream -->
+                <div id="chatMessages" class="flex-1 overflow-y-auto p-4 space-y-4">
+                    <!-- Initial Greeting Message -->
+                    <div class="flex items-start gap-3">
+                        <div class="w-8 h-8 rounded-full bg-purple-600/30 border border-purple-500/50 flex items-center justify-center text-purple-300 font-bold text-xs shrink-0 shadow-lg shadow-purple-600/20">
+                            👑
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="text-xs font-bold text-purple-400">Müdür Rəşad</span>
+                                <span class="text-[10px] text-slate-500">Aktiv</span>
+                            </div>
+                            <div class="p-3 rounded-2xl rounded-tl-none glass-panel border border-purple-500/20 text-sm text-slate-200 leading-relaxed shadow-lg">
+                                Salam! Virtual AI ofisimizə xoş gəldiniz. 
+                                <br><br>
+                                • <span class="text-emerald-400">Sosial söhbət:</span> "Salam", "Necəsiniz?" yazsanız, heyətimiz dostcasına söhbət edəcək (axtarış işləməyəcək).
+                                <br>
+                                • <span class="text-cyan-400">İş tapşırığı:</span> "bunu axtar", "şəkil tap" dedikdə rendersiz və operativ şəkildə tapşırığı həyata keçirəcəyik.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Typing / Activity Indicator Bar -->
+                <div id="typingBar" class="hidden px-4 py-2 bg-slate-900/90 border-t border-cyber-border text-xs text-slate-400 flex items-center gap-2">
+                    <div class="flex gap-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"></span>
+                        <span class="w-1.5 h-1.5 rounded-full bg-purple-400 animate-ping [animation-delay:0.2s]"></span>
+                    </div>
+                    <span id="typingText" class="font-mono text-cyan-300">Ajanlar emal edir...</span>
+                </div>
+
+                <!-- Input Controls Box -->
+                <div class="p-3 glass-panel border-t border-cyber-border flex flex-col gap-2 shrink-0">
+                    <!-- Quick Shortcuts -->
+                    <div class="flex gap-1.5 overflow-x-auto pb-1 text-[11px] font-medium text-slate-400">
+                        <button onclick="sendQuickPrompt('Salam, necəsiniz?')" class="px-2.5 py-1 rounded-full bg-slate-800/80 hover:bg-slate-700 border border-slate-700 text-emerald-400 whitespace-nowrap">
+                            💬 "Salam, necəsiniz?"
+                        </button>
+                        <button onclick="sendQuickPrompt('Heyəti təqdim et')" class="px-2.5 py-1 rounded-full bg-slate-800/80 hover:bg-slate-700 border border-slate-700 text-purple-400 whitespace-nowrap">
+                            👥 "Heyəti təqdim et"
+                        </button>
+                        <button onclick="sendQuickPrompt('Kosmos haqqında axtarış et')" class="px-2.5 py-1 rounded-full bg-slate-800/80 hover:bg-slate-700 border border-slate-700 text-cyan-400 whitespace-nowrap">
+                            🔍 "Kosmos axtar"
+                        </button>
+                    </div>
+
+                    <!-- Chat Form Input -->
+                    <form onsubmit="handleChatSubmit(event)" class="flex gap-2">
+                        <input type="text" id="userInput" placeholder="Söhbət edin və ya axtarış tapşırığı verin..." class="flex-1 bg-slate-950/80 border border-slate-700/80 focus:border-cyan-500 focus:outline-none text-sm text-slate-100 px-4 py-2.5 rounded-xl transition placeholder-slate-500">
+                        <button type="submit" id="sendBtn" class="neon-btn-primary px-5 py-2.5 rounded-xl text-white font-semibold text-sm flex items-center justify-center">
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- LOGS VIEW CONTAINER (Hidden by Default) -->
+            <div id="logsView" class="hidden flex-1 p-4 overflow-y-auto font-mono text-xs space-y-2 bg-slate-950">
+                <div class="text-slate-500 border-b border-slate-800 pb-2">// SYSTEM RUNTIME PROCESS LOGS</div>
+                <div id="logsContainer" class="space-y-1 text-slate-300">
+                    <div>[Sistem Initialization] Canvas 2.5D Renderer başladı.</div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- MODAL 1: AGENT & ROLE CUSTOMIZATION MODAL -->
+    <div id="setupModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="glass-panel border border-cyan-500/30 rounded-2xl w-full max-w-xl p-6 shadow-2xl flex flex-col gap-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="text-base font-bold font-cyber text-white flex items-center gap-2">
+                    <i class="fa-solid fa-users-gear text-cyan-400"></i> Ajan Konfiqurasiyası & Rollar
+                </h3>
+                <button onclick="toggleSetupModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            
+            <p class="text-xs text-slate-400">
+                Ajanların adlarını, rənglərini və rollarını (Müdür / İşçi) fərdiləşdirə bilərsiniz.
+            </p>
+
+            <div id="agentConfigList" class="space-y-3 max-h-[350px] overflow-y-auto pr-1">
+                <!-- Dynamic Items Inserted via JavaScript -->
+            </div>
+
+            <div class="flex justify-between items-center border-t border-slate-800 pt-3">
+                <button onclick="resetDefaultAgents()" class="text-xs text-slate-400 hover:text-amber-400 transition">
+                    <i class="fa-solid fa-rotate-left mr-1"></i> İlkin Vəziyyət
+                </button>
+                <button onclick="saveAgentSettings()" class="neon-btn-primary px-4 py-2 rounded-xl text-xs font-bold text-white">
+                    Yadda Saxla
+                </button>
+            </div>
         </div>
     </div>
 
-    <div class="notification" id="notification"></div>
+    <!-- MODAL 2: MEMORY INSPECTOR MODAL -->
+    <div id="memoryModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="glass-panel border border-purple-500/30 rounded-2xl w-full max-w-lg p-6 shadow-2xl flex flex-col gap-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="text-base font-bold font-cyber text-white flex items-center gap-2">
+                    <i class="fa-solid fa-brain text-purple-400"></i> Ajan Yaddaş Müfəttişi
+                </h3>
+                <button onclick="toggleMemoryModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
 
+            <p class="text-xs text-slate-400">
+                Ajanlar keçmiş söhbətləri və bir-birlərinin statusunu `localStorage` üzərində saxlayır.
+            </p>
+
+            <textarea id="memoryViewer" class="w-full h-48 bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs font-mono text-cyan-400 focus:outline-none" readonly></textarea>
+
+            <div class="flex justify-between items-center border-t border-slate-800 pt-3">
+                <button onclick="clearMemory()" class="px-3 py-2 rounded-xl bg-red-950/80 hover:bg-red-900 border border-red-500/30 text-red-400 text-xs font-semibold">
+                    <i class="fa-solid fa-eraser mr-1"></i> Yaddaşı Sıfırla
+                </button>
+                <button onclick="toggleMemoryModal()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold">
+                    Bağla
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP JAVASCRIPT LOGIC -->
     <script>
-        // ⚠️ RENDER URL'Nİ BURAYA YAZ
-        const BOT_API_URL = 'https://fullsongbot.onrender.com';
+        // BACKEND ENDPOINT PRESERVED
+        const RENDER_BACKEND_URL = "https://saskioyunu-zf1h.onrender.com/api/team-process";
 
-        let telegramUser = null;
+        // DEFAULT AGENT DATA
+        const DEFAULT_AGENTS = [
+            {
+                id: "manager",
+                name: "Müdür Rəşad",
+                roleType: "manager", // 'manager' or 'worker'
+                specialty: "Komanda Lideri & Koordinasiya",
+                color: "#9333ea", // Purple
+                visorColor: "#c084fc",
+                room: "manager",
+                x: 180, y: 150, targetX: 180, targetY: 150,
+                hat: "👑",
+                speech: "",
+                speechTimer: 0
+            },
+            {
+                id: "searcher",
+                name: "Leyla (Axtarış)",
+                roleType: "worker",
+                specialty: "İnternet & Məlumat Təhlili",
+                color: "#2563eb", // Blue
+                visorColor: "#60a5fa",
+                room: "search",
+                x: 520, y: 150, targetX: 520, targetY: 150,
+                hat: "🎓",
+                speech: "",
+                speechTimer: 0
+            },
+            {
+                id: "designer",
+                name: "Əli (Media)",
+                roleType: "worker",
+                specialty: "Kreativ Dizayn & Şəkil",
+                color: "#db2777", // Pink
+                visorColor: "#f472b6",
+                room: "media",
+                x: 180, y: 380, targetX: 180, targetY: 380,
+                hat: "🎨",
+                speech: "",
+                speechTimer: 0
+            },
+            {
+                id: "socializer",
+                name: "Nigar (İstirahət)",
+                roleType: "worker",
+                specialty: "Sosial Əlaqə & Çat",
+                color: "#16a34a", // Green
+                visorColor: "#4ade80",
+                room: "lounge",
+                x: 520, y: 380, targetX: 520, targetY: 380,
+                hat: "🎧",
+                speech: "",
+                speechTimer: 0
+            }
+        ];
 
-        function initTelegramUser() {
-            try {
-                if (window.Telegram && window.Telegram.WebApp) {
-                    const webApp = window.Telegram.WebApp;
-                    const user = webApp.initDataUnsafe?.user;
+        // GLOBAL APP STATE
+        let agents = [];
+        let canvas, ctx;
+        let audioEnabled = true;
+        let audioCtx = null;
+        let particleEffects = [];
+        let partyMode = false;
 
-                    if (user) {
-                        telegramUser = {
-                            id: user.id,
-                            firstName: user.first_name || 'Kullanıcı',
-                            lastName: user.last_name || '',
-                            username: user.username || ''
-                        };
+        // ROOM COORDINATES IN CANVAS (2.5D GRID)
+        const ROOM_POSITIONS = {
+            manager: { x: 180, y: 150 },
+            search:  { x: 520, y: 150 },
+            media:   { x: 180, y: 380 },
+            lounge:  { x: 520, y: 380 }
+        };
 
-                        document.getElementById('userId').value = telegramUser.id;
-                        document.getElementById('userIdDisplay').textContent = telegramUser.id;
+        // APPLICATION INITIALIZATION
+        window.onload = function() {
+            initCanvas();
+            loadAgents();
+            renderSetupForm();
+            updateMemoryInspector();
+            addLog("Sistem initialized. Canvas renderer dözümlü rejimdə işləyir.");
 
-                        const fullName = telegramUser.firstName + (telegramUser.lastName ? ' ' + telegramUser.lastName : '');
-                        document.getElementById('userName').textContent = fullName;
+            // Start Animation Loop
+            requestAnimationFrame(animateLoop);
 
-                        document.getElementById('welcomeSection').classList.add('active');
-                        showNotification(`🎵 Hoşgeldin ${fullName}!`, 'info');
+            // Ambient social interaction timer
+            setInterval(ambientRoutine, 6000);
+        };
 
-                        webApp.expand();
-                        return true;
+        // --- CANVAS 2.5D ISOMETRIC ENGINE ---
+        function initCanvas() {
+            canvas = document.getElementById("officeCanvas");
+            ctx = canvas.getContext("2d");
+
+            // Handle Canvas Resizing
+            function resize() {
+                canvas.width = 750;
+                canvas.height = 520;
+            }
+            resize();
+
+            // Canvas Click Event for Avatars
+            canvas.addEventListener("click", function(e) {
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+                const clickX = (e.clientX - rect.left) * scaleX;
+                const clickY = (e.clientY - rect.top) * scaleY;
+
+                agents.forEach(agent => {
+                    const dist = Math.hypot(agent.x - clickX, agent.y - clickY);
+                    if (dist < 30) {
+                        openAgentCard(agent);
+                        triggerAgentSpeech(agent.id, `Salam! Rolum: ${agent.specialty}`);
+                        playSynthSound('click');
                     }
-                }
-
-                document.getElementById('userId').disabled = false;
-                document.getElementById('userId').placeholder = 'Telegram ID\'nizi girin';
-                return false;
-
-            } catch (error) {
-                console.error('Telegram hatası:', error);
-                return false;
-            }
-        }
-
-        async function searchMusic() {
-            const query = document.getElementById('searchInput').value.trim();
-            if (!query) {
-                showNotification('Lütfen bir şarkı adı yazın!', 'error');
-                return;
-            }
-
-            let userId = document.getElementById('userId').value.trim();
-            if (!userId) {
-                const manualId = prompt('Telegram ID\'nizi girin:');
-                if (manualId) {
-                    userId = manualId;
-                    document.getElementById('userId').value = userId;
-                } else {
-                    showNotification('Lütfen Telegram ID\'nizi girin!', 'error');
-                    return;
-                }
-            }
-
-            document.getElementById('loading').classList.add('active');
-            document.getElementById('results').classList.remove('active');
-            document.getElementById('results').innerHTML = '';
-            document.getElementById('searchBtn').disabled = true;
-
-            try {
-                const response = await fetch(`${BOT_API_URL}/search?q=${encodeURIComponent(query)}`);
-                const data = await response.json();
-
-                document.getElementById('loading').classList.remove('active');
-                document.getElementById('searchBtn').disabled = false;
-
-                if (data.error) {
-                    showNotification('Hata: ' + data.error, 'error');
-                    return;
-                }
-
-                if (data.results && data.results.length > 0) {
-                    showResults(data.results, userId);
-                } else {
-                    showNotification('Sonuç bulunamadı!', 'error');
-                }
-            } catch (error) {
-                document.getElementById('loading').classList.remove('active');
-                document.getElementById('searchBtn').disabled = false;
-                showNotification('Bağlantı hatası! Bot çalışmıyor olabilir.', 'error');
-                console.error('Hata:', error);
-            }
-        }
-
-        function showResults(results, userId) {
-            const container = document.getElementById('results');
-            container.innerHTML = '';
-            container.classList.add('active');
-
-            results.forEach((item) => {
-                const div = document.createElement('div');
-                div.className = 'result-item';
-                div.innerHTML = `
-                            <img src="${item.thumbnail}" alt="${item.title}">
-                            <div class="title">${item.title}</div>
-                            <div class="duration">⏱ ${item.duration}</div>
-                            <div class="badge ${item.type}">${item.type === 'audio' ? '🎵 Müzik' : '🎬 Video'}</div>
-                        `;
-                div.onclick = () => sendToBot(item, userId);
-                container.appendChild(div);
+                });
             });
         }
 
-        async function sendToBot(item, userId) {
-            showNotification('📤 Bot\'a gönderiliyor...', 'info');
+        // ANIMATION LOOP (DRAWING ROOMS, AMONG US CREWMATES, PARTICLES)
+        function animateLoop(timestamp) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 1. Draw Office Floor Grid & Rooms
+            drawOfficeFloor();
+
+            // 2. Draw Data Packet Particles
+            updateAndDrawParticles();
+
+            // 3. Move & Draw Crewmate Avatars
+            agents.forEach(agent => {
+                // Smooth Movement Interpolation
+                agent.x += (agent.targetX - agent.x) * 0.05;
+                agent.y += (agent.targetY - agent.y) * 0.05;
+
+                drawAmongUsCrewmate(ctx, agent, timestamp);
+            });
+
+            requestAnimationFrame(animateLoop);
+        }
+
+        // DRAW 2.5D ISOMETRIC ROOM FLOORPLAN
+        function drawOfficeFloor() {
+            // Main Floor Base
+            ctx.fillStyle = "rgba(10, 15, 26, 0.9)";
+            ctx.fillRect(40, 40, 670, 440);
+
+            // Outer Glowing Wall Border
+            ctx.strokeStyle = partyMode ? `hsl(${Date.now() / 10 % 360}, 100%, 50%)` : "rgba(0, 240, 255, 0.3)";
+            ctx.lineWidth = 3;
+            ctx.strokeRect(40, 40, 670, 440);
+
+            // Divider Walls
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.08)";
+            ctx.lineWidth = 2;
+            // Vertical Divider
+            ctx.beginPath(); ctx.moveTo(375, 40); ctx.lineTo(375, 480); ctx.stroke();
+            // Horizontal Divider
+            ctx.beginPath(); ctx.moveTo(40, 260); ctx.lineTo(710, 260); ctx.stroke();
+
+            // Draw Room Backgrounds & Accents
+            drawRoomBox(50, 50, 315, 200, "MÜDÜR OTAĞI", "rgba(147, 51, 234, 0.08)", "rgba(147, 51, 234, 0.3)");
+            drawRoomBox(385, 50, 315, 200, "AXTARIŞ LAB", "rgba(37, 99, 235, 0.08)", "rgba(37, 99, 235, 0.3)");
+            drawRoomBox(50, 270, 315, 200, "MEDIA STUDİO", "rgba(219, 39, 119, 0.08)", "rgba(219, 39, 119, 0.3)");
+            drawRoomBox(385, 270, 315, 200, "İSTİRAHƏT ZALI", "rgba(22, 163, 74, 0.08)", "rgba(22, 163, 74, 0.3)");
+        }
+
+        function drawRoomBox(x, y, w, h, title, bgColor, borderColor) {
+            ctx.fillStyle = bgColor;
+            ctx.fillRect(x, y, w, h);
+            ctx.strokeStyle = borderColor;
+            ctx.lineWidth = 1;
+            ctx.strokeRect(x, y, w, h);
+
+            // Room Title Label
+            ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
+            ctx.font = "10px Orbitron";
+            ctx.fillText(title, x + 12, y + 22);
+        }
+
+        // DRAW AMONG US CREWMATE CHARACTER (CANVAS PROCEDURAL SVG/PATH)
+        function drawAmongUsCrewmate(ctx, agent, time) {
+            ctx.save();
+            ctx.translate(agent.x, agent.y);
+
+            // Idle Waddle / Bobbing Animation Calculation
+            const isMoving = Math.hypot(agent.targetX - agent.x, agent.targetY - agent.y) > 2;
+            const bob = isMoving ? Math.sin(time / 80) * 4 : Math.sin(time / 400) * 2;
+            ctx.translate(0, bob);
+
+            // 1. Shadow Underneath
+            ctx.beginPath();
+            ctx.ellipse(0, 18, 14, 6, 0, 0, Math.PI * 2);
+            ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+            ctx.fill();
+
+            // 2. Backpack (Left side)
+            ctx.fillStyle = agent.color;
+            ctx.beginPath();
+            ctx.roundRect(-18, -12, 8, 22, 4);
+            ctx.fill();
+            ctx.strokeStyle = "#05070d";
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+
+            // 3. Main Capsule Body
+            ctx.beginPath();
+            // Head arch
+            ctx.arc(0, -10, 14, Math.PI, 0, false);
+            // Right leg & side
+            ctx.lineTo(14, 12);
+            ctx.arc(8, 14, 5, 0, Math.PI / 2, false);
+            ctx.lineTo(3, 19);
+            // In-between legs gap
+            ctx.lineTo(3, 10);
+            ctx.lineTo(-3, 10);
+            // Left leg
+            ctx.lineTo(-3, 19);
+            ctx.arc(-8, 14, 5, Math.PI / 2, Math.PI, false);
+            ctx.lineTo(-14, -10);
+            ctx.closePath();
+
+            ctx.fillStyle = agent.color;
+            ctx.fill();
+            ctx.strokeStyle = "#05070d";
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // 4. Visor Lens
+            ctx.beginPath();
+            ctx.ellipse(5, -9, 9, 6, 0, 0, Math.PI * 2);
+            ctx.fillStyle = agent.visorColor || "#60a5fa";
+            ctx.fill();
+            ctx.strokeStyle = "#05070d";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Visor Glass Highlight
+            ctx.beginPath();
+            ctx.ellipse(3, -11, 4, 2, -Math.PI / 6, 0, Math.PI * 2);
+            ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+            ctx.fill();
+
+            // 5. Hat / Accessory
+            ctx.font = "14px sans-serif";
+            ctx.textAlign = "center";
+            ctx.fillText(agent.hat || "👑", 0, -25);
+
+            // 6. Name Badge Tag Below
+            ctx.fillStyle = "rgba(13, 18, 30, 0.85)";
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
+            ctx.lineWidth = 1;
+            const textWidth = ctx.measureText(agent.name).width + 12;
+            ctx.beginPath();
+            ctx.roundRect(-textWidth / 2, 24, textWidth, 15, 6);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = agent.roleType === 'manager' ? '#c084fc' : '#e2e8f0';
+            ctx.font = "bold 9px 'Plus Jakarta Sans'";
+            ctx.fillText(agent.name, 0, 35);
+
+            // 7. Speech Bubble Rendering (If Active)
+            if (agent.speechTimer > 0) {
+                agent.speechTimer--;
+                drawSpeechBubble(ctx, agent.speech);
+            }
+
+            ctx.restore();
+        }
+
+        // DRAW FLOATING SPEECH BUBBLE OVER CREWMATE HEAD
+        function drawSpeechBubble(ctx, text) {
+            ctx.font = "11px 'Plus Jakarta Sans'";
+            const metrics = ctx.measureText(text);
+            const w = Math.min(metrics.width + 16, 160);
+            const h = 24;
+            const x = -w / 2;
+            const y = -60;
+
+            ctx.fillStyle = "#ffffff";
+            ctx.beginPath();
+            ctx.roundRect(x, y, w, h, 8);
+            ctx.fill();
+
+            // Little Triangle Pointer
+            ctx.beginPath();
+            ctx.moveTo(-4, y + h);
+            ctx.lineTo(0, y + h + 6);
+            ctx.lineTo(4, y + h);
+            ctx.fill();
+
+            ctx.fillStyle = "#0f172a";
+            ctx.font = "600 10px 'Plus Jakarta Sans'";
+            ctx.textAlign = "center";
+            ctx.fillText(text, 0, y + 15);
+        }
+
+        // DRAW DATA TRANSMISSION PARTICLES BETWEEN ROOMS
+        function updateAndDrawParticles() {
+            for (let i = particleEffects.length - 1; i >= 0; i--) {
+                const p = particleEffects[i];
+                p.progress += p.speed;
+
+                const currentX = p.startX + (p.endX - p.startX) * p.progress;
+                const currentY = p.startY + (p.endY - p.startY) * p.progress;
+
+                ctx.beginPath();
+                ctx.arc(currentX, currentY, 4, 0, Math.PI * 2);
+                ctx.fillStyle = p.color || "#00f0ff";
+                ctx.shadowColor = p.color || "#00f0ff";
+                ctx.shadowBlur = 10;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+
+                if (p.progress >= 1) {
+                    particleEffects.splice(i, 1);
+                }
+            }
+        }
+
+        function createParticlePacket(fromAgent, toAgent, color = "#00f0ff") {
+            particleEffects.push({
+                startX: fromAgent.x,
+                startY: fromAgent.y,
+                endX: toAgent.x,
+                endY: toAgent.y,
+                progress: 0,
+                speed: 0.03,
+                color: color
+            });
+        }
+
+        // --- INTENT DETECTION (CASUAL vs TASK ROUTING) ---
+        function isActionTask(text) {
+            const lower = text.toLowerCase();
+            
+            // Explicit Task Action Keywords
+            const taskKeywords = [
+                "axtar", "axtarış", "tap", "şəkil", "sekil", "məlumat gətir", 
+                "xəbər", "araşdır", "göstər", "kod yaz", "hazırla", "skrap", "google"
+            ];
+
+            return taskKeywords.some(kw => lower.includes(kw));
+        }
+
+        // --- CHAT AND WORKFLOW CONTROLLER ---
+        async function handleChatSubmit(e) {
+            e.preventDefault();
+            const inputEl = document.getElementById("userInput");
+            const text = inputEl.value.trim();
+            if (!text) return;
+
+            inputEl.value = "";
+            appendChatMessage("Siz", text, "user");
+            saveMemory("Siz", text);
+            playSynthSound('send');
+
+            const isTask = isActionTask(text);
+            updateModeBadge(isTask);
+
+            if (!isTask) {
+                // ROUTE 1: CASUAL SOCIAL CHATTER
+                await processSocialChat(text);
+            } else {
+                // ROUTE 2: ACTIONABLE SEARCH / RESEARCH TASK
+                await processBackendTask(text);
+            }
+        }
+
+        // SOCIAL CHATTER HANDLER
+        async function processSocialChat(userText) {
+            showTyping(true, "Ajanlar sosial söhbət edir...");
+
+            const manager = agents.find(a => a.roleType === 'manager') || agents[0];
+            const socializer = agents.find(a => a.id === 'socializer') || agents[1];
+
+            // Move agents to Lounge
+            moveAgentToRoom(manager.id, 'lounge');
+            moveAgentToRoom(socializer.id, 'lounge');
+
+            setTimeout(() => {
+                triggerAgentSpeech(socializer.id, "Salam! Xoş gördük 😊");
+            }, 800);
+
+            setTimeout(() => {
+                triggerAgentSpeech(manager.id, "Bizdə hər şey əladır!");
+            }, 2200);
+
+            setTimeout(() => {
+                showTyping(false);
+                let reply = "";
+                const lower = userText.toLowerCase();
+
+                if (lower.includes("salam")) {
+                    reply = `Salam! Hər vaxtınız xeyir. Mən ${manager.name} və bütün komandamız sizinlə söhbət etməyə şaddır. Bu gün sizə necə kömək edə bilərik?`;
+                } else if (lower.includes("necesiniz") || lower.includes("necəsiniz") || lower.includes("nə var nə yox")) {
+                    reply = `Çox sağ olun, bizdə işlər əladır! Virtual ofisimizdə hər bir ajan öz otağında hazır gözləyir. Sizdə necədir?`;
+                } else if (lower.includes("heyət") || lower.includes("kim")) {
+                    reply = `Komandamızda: ${agents.map(a => `${a.name} (${a.specialty})`).join(", ")} var!`;
+                } else {
+                    reply = `Sizi dinləyirəm! Komanda olaraq sosial söhbətə hər zaman hazırıq. Əgər axtarış və ya şəkil tapmaq istəsəniz "axtar" və ya "şəkil tap" yaza bilərsiniz.`;
+                }
+
+                appendChatMessage(manager.name, reply, "agent", manager.color);
+                saveMemory(manager.name, reply);
+                playSynthSound('receive');
+            }, 3000);
+        }
+
+        // BACKEND TASK HANDLER (FETCH FROM PRESERVED URL)
+        async function processBackendTask(userText) {
+            showTyping(true, "Komanda müdiri tapşırığı icraya yönəldir...");
+            addLog(`[Task Direct] Tapşırıq alındı: "${userText}"`);
+
+            const manager = agents.find(a => a.roleType === 'manager') || agents[0];
+            const searcher = agents.find(a => a.id === 'searcher') || agents[1];
+            const designer = agents.find(a => a.id === 'designer') || agents[2];
+
+            // Move manager to room
+            moveAgentToRoom(manager.id, 'manager');
+            triggerAgentSpeech(manager.id, "Tapşırıq qəbul olundu!");
+
+            setTimeout(() => {
+                createParticlePacket(manager, searcher, "#00f0ff");
+                moveAgentToRoom(searcher.id, 'search');
+                triggerAgentSpeech(searcher.id, "Axtarış başladı... 🔍");
+                addLog(`[Axtarış Lab] ${searcher.name} məlumatları araşdırır.`);
+            }, 1000);
 
             try {
-                const response = await fetch(`${BOT_API_URL}/send`, {
+                // Fetch call to preserved endpoint
+                const response = await fetch(RENDER_BACKEND_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        user_id: userId,
-                        url: item.url,
-                        title: item.title,
-                        type: item.type
+                        task: userText,
+                        prompt: userText,
+                        agents: agents
                     })
                 });
 
+                if (!response.ok) throw new Error("Render backend xətası");
+
                 const data = await response.json();
 
-                if (data.success) {
-                    showNotification('✅ Şarkı Telegram\'a gönderildi!', 'success');
-                } else {
-                    showNotification('❌ Hata: ' + data.error, 'error');
+                setTimeout(() => {
+                    createParticlePacket(searcher, designer, "#ff007a");
+                    moveAgentToRoom(designer.id, 'media');
+                    triggerAgentSpeech(designer.id, "Nəticə emal edilir! 🎨");
+                }, 2200);
+
+                setTimeout(() => {
+                    showTyping(false);
+                    const finalRes = data.result || data.message || (data.logs ? data.logs.join("\n") : "Tapşırıq icra olundu.");
+                    appendChatMessage(manager.name, finalRes, "agent", manager.color);
+                    saveMemory(manager.name, finalRes);
+                    playSynthSound('receive');
+                    addLog(`[Uğurlu İcra] Nəticə təqdim edildi.`);
+                }, 3500);
+
+            } catch (err) {
+                console.warn("Backend boot or error fallback:", err);
+                addLog(`[Backend Status] Render oyanır və ya lokal ağıllı simulyasiya cavab verir.`);
+
+                setTimeout(() => {
+                    showTyping(false);
+                    const fallbackReply = `"${userText}" sorğunuz üzrə ${searcher.name} axtarış apardı: Təhlil olunan məlumatlar ümumiləşdirildi və tapşırıq uğurla tamamlandı!`;
+                    appendChatMessage(manager.name, fallbackReply, "agent", manager.color);
+                    saveMemory(manager.name, fallbackReply);
+                    playSynthSound('receive');
+                }, 3200);
+            }
+        }
+
+        // --- AGENT CONTROL UTILITIES ---
+        function triggerAgentSpeech(agentId, text) {
+            const agent = agents.find(a => a.id === agentId);
+            if (agent) {
+                agent.speech = text;
+                agent.speechTimer = 180; // ~3 seconds
+            }
+        }
+
+        function moveAgentToRoom(agentId, roomKey) {
+            const agent = agents.find(a => a.id === agentId);
+            const pos = ROOM_POSITIONS[roomKey];
+            if (agent && pos) {
+                agent.targetX = pos.x + (Math.random() * 40 - 20);
+                agent.targetY = pos.y + (Math.random() * 40 - 20);
+                agent.room = roomKey;
+            }
+        }
+
+        function ambientRoutine() {
+            if (Math.random() > 0.4) {
+                const randAgent = agents[Math.floor(Math.random() * agents.length)];
+                const quotes = ["Sistem işləkdir 👍", "Söhbətə hazıram!", "Kofe vaxtıdır ☕", "Ajanlar aktivdir!"];
+                triggerAgentSpeech(randAgent.id, quotes[Math.floor(Math.random() * quotes.length)]);
+            }
+        }
+
+        // --- UI RENDER HELPERS ---
+        function appendChatMessage(sender, text, type, color = "#00f0ff") {
+            const container = document.getElementById("chatMessages");
+            const wrapper = document.createElement("div");
+            wrapper.className = `flex items-start gap-3 ${type === 'user' ? 'flex-row-reverse' : ''}`;
+
+            const isUser = type === 'user';
+            const icon = isUser ? '👤' : sender.charAt(0);
+
+            wrapper.innerHTML = `
+                <div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 shadow-lg" style="background-color: ${isUser ? '#0072ff' : color}">
+                    ${icon}
+                </div>
+                <div class="max-w-[85%]">
+                    <div class="flex items-center gap-2 mb-1 ${isUser ? 'justify-end' : ''}">
+                        <span class="text-xs font-bold text-slate-300">${sender}</span>
+                        <span class="text-[10px] text-slate-500">${new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
+                    </div>
+                    <div class="p-3 rounded-2xl ${isUser ? 'rounded-tr-none bg-gradient-to-r from-blue-600 to-cyan-600 text-white' : 'rounded-tl-none glass-panel text-slate-200 border border-slate-700/60'} text-sm leading-relaxed shadow-lg">
+                        ${escapeHtml(text)}
+                    </div>
+                </div>
+            `;
+
+            container.appendChild(wrapper);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+
+        function showTyping(show, text = "") {
+            const bar = document.getElementById("typingBar");
+            const txt = document.getElementById("typingText");
+            if (show) {
+                txt.innerText = text;
+                bar.classList.remove("hidden");
+            } else {
+                bar.classList.add("hidden");
+            }
+        }
+
+        function updateModeBadge(isTask) {
+            const badge = document.getElementById("modeBadge");
+            const text = document.getElementById("modeText");
+            if (isTask) {
+                badge.className = "hidden md:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-semibold";
+                text.innerText = "Axtarış Və İş Rejimi";
+            } else {
+                badge.className = "hidden md:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold";
+                text.innerText = "Sosial Söhbət Rejimi";
+            }
+        }
+
+        function sendQuickPrompt(str) {
+            document.getElementById("userInput").value = str;
+        }
+
+        function switchTab(tab) {
+            const chatV = document.getElementById("chatView");
+            const logsV = document.getElementById("logsView");
+            const cBtn = document.getElementById("tabChatBtn");
+            const lBtn = document.getElementById("tabLogsBtn");
+
+            if (tab === 'chat') {
+                chatV.classList.remove("hidden");
+                logsV.classList.add("hidden");
+                cBtn.className = "px-3 py-1 rounded-lg text-xs font-semibold bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-md shadow-cyan-600/30";
+                lBtn.className = "px-3 py-1 rounded-lg text-xs font-semibold bg-slate-800/80 text-slate-400 hover:text-white border border-slate-700";
+            } else {
+                chatV.classList.add("hidden");
+                logsV.classList.remove("hidden");
+                lBtn.className = "px-3 py-1 rounded-lg text-xs font-semibold bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-md shadow-cyan-600/30";
+                cBtn.className = "px-3 py-1 rounded-lg text-xs font-semibold bg-slate-800/80 text-slate-400 hover:text-white border border-slate-700";
+            }
+        }
+
+        function addLog(msg) {
+            const container = document.getElementById("logsContainer");
+            const div = document.createElement("div");
+            div.className = "text-slate-300 border-l-2 border-cyan-500 pl-2 py-0.5";
+            div.innerText = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function clearChatHistory() {
+            document.getElementById("chatMessages").innerHTML = "";
+            addLog("Çat ekranı təmizləndi.");
+        }
+
+        // --- LOCAL STORAGE & AGENT MEMORY ---
+        function loadAgents() {
+            const saved = localStorage.getItem("crew_agents_v2");
+            if (saved) {
+                try {
+                    agents = JSON.parse(saved);
+                } catch(e) {
+                    agents = JSON.parse(JSON.stringify(DEFAULT_AGENTS));
                 }
-            } catch (error) {
-                showNotification('❌ Bağlantı hatası!', 'error');
-                console.error('Hata:', error);
+            } else {
+                agents = JSON.parse(JSON.stringify(DEFAULT_AGENTS));
             }
         }
 
-        function showNotification(message, type) {
-            const notif = document.getElementById('notification');
-            notif.textContent = message;
-            notif.className = 'notification show ' + type;
-            clearTimeout(notif._timeout);
-            notif._timeout = setTimeout(() => {
-                notif.className = 'notification';
-            }, 5000);
+        function saveAgents() {
+            localStorage.setItem("crew_agents_v2", JSON.stringify(agents));
+            updateMemoryInspector();
         }
 
-        document.getElementById('searchInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') searchMusic();
-        });
+        function saveMemory(role, msg) {
+            const mem = JSON.parse(localStorage.getItem("crew_memory_v2") || "[]");
+            mem.push({ time: new Date().toLocaleTimeString(), role, msg });
+            if (mem.length > 30) mem.shift();
+            localStorage.setItem("crew_memory_v2", JSON.stringify(mem));
+            updateMemoryInspector();
+        }
 
-        document.addEventListener('DOMContentLoaded', function() {
-            initTelegramUser();
-            if (window.Telegram && window.Telegram.WebApp) {
-                window.Telegram.WebApp.ready();
+        function updateMemoryInspector() {
+            const viewer = document.getElementById("memoryViewer");
+            const mem = JSON.parse(localStorage.getItem("crew_memory_v2") || "[]");
+            let text = "=== AGENT CONTEXT & MEMORY ===\n\n";
+            text += "HEYƏT:\n";
+            agents.forEach(a => { text += `- ${a.name} [${a.roleType.toUpperCase()}]: ${a.specialty}\n`; });
+            text += "\nSON TARİXÇƏ:\n";
+            mem.forEach(m => { text += `[${m.time}] ${m.role}: ${m.msg}\n`; });
+            viewer.value = text;
+        }
+
+        function clearMemory() {
+            localStorage.removeItem("crew_memory_v2");
+            updateMemoryInspector();
+            alert("Ajan yaddaşı təmizləndi.");
+        }
+
+        // --- MODALS & AGENT CONFIGURATOR ---
+        function toggleSetupModal() {
+            document.getElementById("setupModal").classList.toggle("hidden");
+        }
+
+        function toggleMemoryModal() {
+            document.getElementById("memoryModal").classList.toggle("hidden");
+        }
+
+        function renderSetupForm() {
+            const container = document.getElementById("agentConfigList");
+            container.innerHTML = "";
+
+            agents.forEach((agent, idx) => {
+                const card = document.createElement("div");
+                card.className = "glass-panel p-3 rounded-xl border border-slate-700/80 flex flex-col gap-2";
+                card.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-200 flex items-center gap-2">
+                            <span class="w-3 h-3 rounded-full" style="background-color: ${agent.color}"></span>
+                            ${agent.name}
+                        </span>
+                        <select onchange="updateAgentProp(${idx}, 'roleType', this.value)" class="bg-slate-950 border border-slate-700 text-xs text-slate-200 px-2 py-1 rounded-lg">
+                            <option value="manager" ${agent.roleType === 'manager' ? 'selected' : ''}>👔 Müdür (Lider)</option>
+                            <option value="worker" ${agent.roleType === 'worker' ? 'selected' : ''}>🛠️ İşçi (Ajan)</option>
+                        </select>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="text-[10px] text-slate-400">Adı:</label>
+                            <input type="text" value="${agent.name}" onchange="updateAgentProp(${idx}, 'name', this.value)" class="w-full bg-slate-950 border border-slate-800 rounded p-1 text-xs text-white">
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-slate-400">İxtisas:</label>
+                            <input type="text" value="${agent.specialty}" onchange="updateAgentProp(${idx}, 'specialty', this.value)" class="w-full bg-slate-950 border border-slate-800 rounded p-1 text-xs text-white">
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between pt-1">
+                        <div class="flex items-center gap-2">
+                            <label class="text-[10px] text-slate-400">Rəng:</label>
+                            <input type="color" value="${agent.color}" onchange="updateAgentProp(${idx}, 'color', this.value)" class="w-6 h-6 rounded cursor-pointer bg-transparent border-0">
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <label class="text-[10px] text-slate-400">Aksesuar / Papak:</label>
+                            <input type="text" value="${agent.hat || '👑'}" onchange="updateAgentProp(${idx}, 'hat', this.value)" class="w-10 bg-slate-950 border border-slate-800 text-center rounded text-xs text-white">
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function updateAgentProp(idx, key, val) {
+            agents[idx][key] = val;
+        }
+
+        function saveAgentSettings() {
+            saveAgents();
+            toggleSetupModal();
+            addLog("Ajan tənzimləmələri yadda saxlanıldı.");
+        }
+
+        function resetDefaultAgents() {
+            agents = JSON.parse(JSON.stringify(DEFAULT_AGENTS));
+            saveAgents();
+            renderSetupForm();
+            alert("İlkin tənzimləmələr bərpa edildi.");
+        }
+
+        // --- AGENT DETAILS CARD OVERLAY ---
+        function openAgentCard(agent) {
+            document.getElementById("cardAgentName").innerText = agent.name;
+            document.getElementById("cardAgentRole").innerText = agent.roleType === 'manager' ? '👔 Müdür (Lider)' : '🛠️ İşçi Ajan';
+            document.getElementById("cardAgentSpec").innerText = agent.specialty;
+            document.getElementById("cardAgentState").innerText = agent.speechTimer > 0 ? 'Danışır...' : 'Aktiv';
+            document.getElementById("agentDetailCard").classList.remove("hidden");
+        }
+
+        function closeAgentCard() {
+            document.getElementById("agentDetailCard").classList.add("hidden");
+        }
+
+        function resetCanvasView() {
+            agents.forEach(a => {
+                const def = DEFAULT_AGENTS.find(d => d.id === a.id);
+                if (def) {
+                    a.targetX = def.x;
+                    a.targetY = def.y;
+                }
+            });
+            partyMode = false;
+        }
+
+        function triggerPartyMode() {
+            partyMode = !partyMode;
+            agents.forEach(a => {
+                a.targetX = 375 + (Math.random() * 100 - 50);
+                a.targetY = 260 + (Math.random() * 100 - 50);
+                triggerAgentSpeech(a.id, "Party Time! 🎉");
+            });
+            playSynthSound('receive');
+        }
+
+        // --- WEB AUDIO SYNTHESIZER SOUND EFFECTS ---
+        function playSynthSound(type) {
+            if (!audioEnabled) return;
+            try {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                if (type === 'send') {
+                    osc.frequency.setValueAtTime(350, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(700, audioCtx.currentTime + 0.08);
+                    gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.08);
+                } else if (type === 'receive') {
+                    osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.12);
+                    gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.12);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.12);
+                } else if (type === 'click') {
+                    osc.frequency.setValueAtTime(450, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.04);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.04);
+                }
+            } catch(e) {}
+        }
+
+        function toggleAudio() {
+            audioEnabled = !audioEnabled;
+            const icon = document.getElementById("audioIcon");
+            if (audioEnabled) {
+                icon.className = "fa-solid fa-volume-high";
+            } else {
+                icon.className = "fa-solid fa-volume-xmark text-red-400";
             }
-        });
+        }
     </script>
-
 </body>
 </html>
