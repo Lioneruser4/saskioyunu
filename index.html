@@ -12,8 +12,8 @@
             --green: #538d4e;
             --yellow: #b59f3b;
             --gray: #3a3a3c;
-            --glow-green: rgba(83, 141, 78, 0.7);
-            --glow-yellow: rgba(181, 159, 59, 0.7);
+            --glow-green: rgba(83, 141, 78, 0.8);
+            --glow-yellow: rgba(181, 159, 59, 0.6);
         }
 
         * {
@@ -47,6 +47,10 @@
             left: 50%;
             z-index: -1;
             font-size: 16px; /* iOS'un otomatik zoom yapmasını engeller */
+            border: none;
+            outline: none;
+            background: transparent;
+            color: transparent;
         }
 
         /* Ekran Geçişleri */
@@ -140,6 +144,7 @@
             max-width: 330px;
             height: 100%;
             max-height: 400px;
+            margin-top: 20px;
         }
 
         .row {
@@ -188,7 +193,7 @@
         .tile.present { 
             background-color: var(--yellow); 
             border-color: var(--yellow); 
-            box-shadow: 0 0 15px var(--glow-yellow);
+            box-shadow: 0 0 10px var(--glow-yellow);
         }
         .tile.absent { 
             background-color: var(--gray); 
@@ -349,6 +354,7 @@
         let secretWord = '';
         let currentRow = 0;
         let gameOver = false;
+        let isChecking = false; // Kontrol sırasında tuş kilidi
         const maxRows = 6;
         const wordLength = 5;
         
@@ -379,7 +385,6 @@
         const soundPresent = () => playTone(400, 'triangle', 0.1);
         const soundAbsent = () => playTone(200, 'sawtooth', 0.1, 0.05);
         const soundWin = () => { playTone(500, 'square', 0.1); setTimeout(()=>playTone(700, 'square', 0.1), 100); setTimeout(()=>playTone(900, 'square', 0.3), 200); };
-        const soundError = () => playTone(150, 'sawtooth', 0.2, 0.1);
 
         // --- Başlangıç ---
         window.onload = () => {
@@ -420,6 +425,7 @@
 
         function resetGame() {
             gameOver = false;
+            isChecking = false;
             currentRow = 0;
             hiddenInput.value = '';
             
@@ -443,36 +449,43 @@
 
             document.getElementById('result-modal').classList.remove('active');
             
-            // Oyun ekranına tıklayınca klavyeyi aç
-            setTimeout(() => hiddenInput.focus(), 100);
+            // Kısa bir gecikmeyle klavyeyi tekrar aç (mobil uyumluluk için)
+            setTimeout(() => {
+                if(!gameOver) hiddenInput.focus();
+            }, 100);
         }
 
         // Tahtaya tıklandığında klavyeyi aç
         boardContainer.addEventListener('click', () => {
-            if (!gameOver) hiddenInput.focus();
+            if (!gameOver && !isChecking) hiddenInput.focus();
         });
 
-        // Klavye girişini dinle
+        // Klavye girişini harf harf dinle (Mobil uyumluluk için en garantili yöntem)
         hiddenInput.addEventListener('input', (e) => {
-            if (gameOver) return;
+            if (gameOver || isChecking) return;
             
-            // Sadece harfleri al ve büyük harfe çevir
+            // Sadece geçerli harfleri al ve büyük harfe çevir
             let val = e.target.value.toLocaleUpperCase(currentLang).replace(/[^A-ZĞÜŞİÖÇƏА-ЯЁ]/g, '');
             
-            // Eğer 5 harften fazla yazıldıysa kes
+            // Eğer 5 harften fazla yazıldıysa kes (bazen klavye önerileri vs. fazla harf basabilir)
             if (val.length > wordLength) {
                 val = val.slice(0, wordLength);
             }
             
             e.target.value = val;
             updateBoardFromInput(val);
+            
+            // EĞER 5 HARF YAZILDIYSA OTOMATİK KONTROL ET!
+            if (val.length === wordLength) {
+                checkWord();
+            }
         });
 
-        // Enter tuşuna basıldığında (veya mobil klavyede "Git" tuşuna) kontrol et
-        hiddenInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                checkWord();
+        // Mobil klavyelerde bazen input event'i kaçabilir, keyup ile de kontrol sağla
+        hiddenInput.addEventListener('keyup', (e) => {
+            if (gameOver || isChecking) return;
+            if (e.key === 'Backspace') {
+                updateBoardFromInput(hiddenInput.value);
             }
         });
 
@@ -494,16 +507,14 @@
         }
 
         function checkWord() {
-            if (gameOver) return;
+            if (gameOver || isChecking) return;
+            
+            isChecking = true; // Tuş girişini kilitle
+            
+            // KLAVYEYİ OTOMATİK KAPAT
+            hiddenInput.blur(); 
 
             const guess = hiddenInput.value;
-            
-            if (guess.length !== wordLength) {
-                showToast("Lütfen 5 harf girin!");
-                soundError();
-                return;
-            }
-
             const target = secretWord.toLocaleUpperCase(currentLang);
             const targetLetterCount = {};
             for (let l of target) targetLetterCount[l] = (targetLetterCount[l] || 0) + 1;
@@ -545,21 +556,24 @@
                 }
             }
 
-            // Oyun kontrolü (Animasyonlar bittikten sonra)
+            // Animasyonların bitmesini bekle, sonra oyunu ilerlet
             setTimeout(() => {
                 if (guess === target) {
                     gameOver = true;
                     document.getElementById(`row-${currentRow}`).classList.add('win-row');
                     soundWin();
                     showResult(true);
-                    hiddenInput.blur(); // Klavyeyi kapat
                 } else {
                     currentRow++;
                     hiddenInput.value = ''; // Bir sonraki satır için temizle
+                    isChecking = false; // Kilidi aç
+                    
                     if (currentRow === maxRows) {
                         gameOver = true;
                         showResult(false);
-                        hiddenInput.blur();
+                    } else {
+                        // Bir sonraki satır için klavyeyi tekrar aç
+                        hiddenInput.focus();
                     }
                 }
             }, wordLength * 150 + 200);
@@ -580,6 +594,7 @@
                 text.innerHTML = `Maalesef bilemedin.<br>Doğru kelime:<br><br><span style="font-size: 24px; color: white; letter-spacing: 2px;">${secretWord}</span>`;
             }
             modal.classList.add('active');
+            hiddenInput.blur(); // Klavyeyi kesin olarak kapat
         }
 
         function openSettings() {
@@ -591,7 +606,7 @@
 
         function closeSettings() {
             document.getElementById('settings-modal').classList.remove('active');
-            if (!gameOver) hiddenInput.focus();
+            if (!gameOver && !isChecking) hiddenInput.focus();
         }
 
         function showToast(message) {
