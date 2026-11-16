@@ -3,116 +3,129 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>NEON PAD — DJ Remix</title>
+<title>PRO DJ DECK</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
   html,body{height:100%}
   body{
     background:#05050a;
     background-image:
-      radial-gradient(circle at 20% 0%,rgba(120,60,255,.18),transparent 50%),
-      radial-gradient(circle at 80% 100%,rgba(255,60,140,.15),transparent 50%);
+      radial-gradient(circle at 15% 0%,rgba(120,60,255,.20),transparent 45%),
+      radial-gradient(circle at 85% 100%,rgba(255,60,140,.16),transparent 45%);
     color:#fff;font-family:'Segoe UI',system-ui,sans-serif;
     display:flex;flex-direction:column;align-items:center;
-    justify-content:center;padding:12px;gap:14px;overflow:hidden;
+    padding:10px;gap:10px;overflow:hidden;
   }
 
-  /* başlık */
-  .head{display:flex;align-items:center;gap:10px;width:100%;max-width:600px}
-  .logo{width:10px;height:10px;border-radius:50%;
-    background:#7a5cff;box-shadow:0 0 12px #7a5cff,0 0 24px #7a5cff}
-  .title{font-size:.95rem;font-weight:700;letter-spacing:6px;
+  .head{display:flex;align-items:center;gap:10px;width:100%;max-width:680px}
+  .logo{width:9px;height:9px;border-radius:50%;
+    background:#7a5cff;box-shadow:0 0 12px #7a5cff,0 0 22px #7a5cff}
+  .title{font-size:.9rem;font-weight:800;letter-spacing:5px;
     background:linear-gradient(90deg,#7a5cff,#ff3b9d,#ffb03b);
     -webkit-background-clip:text;background-clip:text;color:transparent}
   .spacer{flex:1}
-  .status{font-size:.65rem;color:#5a5a7a;letter-spacing:1px}
+  .status{font-size:.62rem;color:#5a5a7a;letter-spacing:1px;max-width:200px;
+    text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+  /* deck seçici */
+  .decks{display:flex;gap:8px;width:100%;max-width:680px}
+  .deck{
+    flex:1;padding:12px 8px;border-radius:12px;text-align:center;
+    background:linear-gradient(180deg,#14141f,#0e0e18);
+    box-shadow:inset 0 0 0 1px #23233a;
+    font-size:.75rem;font-weight:700;letter-spacing:1px;
+    cursor:pointer;transition:box-shadow .2s,color .2s;color:#6a6a8a;
+  }
+  .deck.active{color:#fff}
+  .deck.A.active{box-shadow:inset 0 0 0 2px #5c5cff,0 0 20px rgba(92,92,255,.4)}
+  .deck.B.active{box-shadow:inset 0 0 0 2px #ff3b9d,0 0 20px rgba(255,59,157,.4)}
+  .deck small{display:block;font-weight:400;font-size:.6rem;margin-top:3px;
+    opacity:.7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
   /* video */
-  #vidWrap{width:100%;max-width:600px;aspect-ratio:16/9;background:#000;
-    border-radius:16px;overflow:hidden;display:none;
+  #vidWrap{width:100%;max-width:680px;aspect-ratio:16/9;background:#000;
+    border-radius:14px;overflow:hidden;display:none;
     box-shadow:0 0 0 1px #1e1e30,0 12px 40px rgba(122,92,255,.25)}
   #vidWrap video{width:100%;height:100%;object-fit:cover}
 
   /* GRID 6x6 */
   #grid{
-    display:grid;grid-template-columns:repeat(6,1fr);gap:7px;
-    width:100%;max-width:600px;padding:14px;
+    display:grid;grid-template-columns:repeat(6,1fr);gap:6px;
+    width:100%;max-width:680px;padding:12px;
     background:linear-gradient(180deg,#0e0e18,#0a0a12);
-    border-radius:22px;
+    border-radius:20px;
     box-shadow:inset 0 0 0 1px #1e1e30,0 20px 60px rgba(0,0,0,.8);
   }
   .pad{
-    aspect-ratio:1;border-radius:14px;position:relative;cursor:pointer;
+    aspect-ratio:1;border-radius:12px;position:relative;cursor:pointer;
     background:#14141f;
     box-shadow:inset 0 0 0 1px #23233a,inset 0 0 20px rgba(0,0,0,.6);
     transition:transform .08s,box-shadow .18s,background .18s;
     overflow:hidden;
   }
-  .pad::after{
-    content:"";position:absolute;inset:0;border-radius:14px;
+  .pad::after{content:"";position:absolute;inset:0;border-radius:12px;
     background:radial-gradient(circle at 35% 25%,rgba(255,255,255,.5),transparent 70%);
-    opacity:0;transition:opacity .2s;pointer-events:none;
-  }
-  .pad.on{
-    background:currentColor;
-    box-shadow:0 0 28px currentColor,0 0 10px currentColor inset,
-      inset 0 0 0 1px rgba(255,255,255,.3);
-    transform:scale(1.04);
-  }
+    opacity:0;transition:opacity .2s;pointer-events:none}
+  .pad.on{background:currentColor;
+    box-shadow:0 0 26px currentColor,0 0 10px currentColor inset,
+      inset 0 0 0 1px rgba(255,255,255,.35);transform:scale(1.04)}
   .pad.on::after{opacity:.9}
   .pad:active{transform:scale(.92)}
 
-  /* KONTROL */
-  .bar{display:flex;gap:8px;width:100%;max-width:600px}
+  /* alt kontrol */
+  .bar{display:flex;gap:6px;width:100%;max-width:680px}
   .btn{
     flex:1;background:linear-gradient(180deg,#1a1a2a,#12121e);
-    color:#cfcfe8;border:none;padding:16px 8px;border-radius:14px;
-    font-size:.85rem;font-weight:600;cursor:pointer;
-    box-shadow:inset 0 0 0 1px #23233a,0 4px 12px rgba(0,0,0,.4);
+    color:#cfcfe8;border:none;padding:14px 6px;border-radius:12px;
+    font-size:.78rem;font-weight:600;cursor:pointer;
+    box-shadow:inset 0 0 0 1px #23233a;
     transition:background .2s,box-shadow .2s,color .2s;
-    display:flex;align-items:center;justify-content:center;gap:8px;
+    display:flex;align-items:center;justify-content:center;gap:5px;
   }
-  .btn:active{background:#23233a;box-shadow:inset 0 0 0 1px #3a3a5e}
-  .btn.music{color:#7ad4ff}
-  .btn.music:active{box-shadow:inset 0 0 0 1px #7ad4ff,0 0 20px rgba(122,212,255,.4)}
-  .btn.video{color:#ff9ad4}
-  .btn.video:active{box-shadow:inset 0 0 0 1px #ff9ad4,0 0 20px rgba(255,154,212,.4)}
-  .btn.stop{
-    flex:0 0 70px;color:#ff6b8a;font-size:1.3rem;
-    background:linear-gradient(180deg,#2a0f1c,#1a0812)
-  }
-  .btn.stop:active{box-shadow:inset 0 0 0 1px #ff6b8a,0 0 24px rgba(255,107,138,.5)}
+  .btn:active{box-shadow:inset 0 0 0 1px #3a3a5e}
+  .btn.stop{color:#ff6b8a;background:linear-gradient(180deg,#2a0f1c,#1a0812)}
+  .btn.rec{color:#ff8a5c}
+  .btn.rec.on{background:#3a1a10;box-shadow:inset 0 0 0 1px #ff8a5c,0 0 20px rgba(255,138,92,.5)}
   input[type=file]{display:none}
 
-  /* ses */
-  .vol{display:flex;align-items:center;gap:12px;width:100%;max-width:600px;
-    padding:0 6px;font-size:.8rem;color:#6a6a8a}
-  input[type=range]{flex:1;height:28px;accent-color:#7a5cff;cursor:pointer}
+  /* crossfader + ses */
+  .sliders{display:flex;flex-direction:column;gap:6px;width:100%;max-width:680px;padding:0 4px}
+  .sl{display:flex;align-items:center;gap:10px;font-size:.7rem;color:#7a7a9a}
+  .sl span:first-child{min-width:14px;text-align:center;font-weight:700}
+  input[type=range]{flex:1;height:26px;accent-color:#7a5cff;cursor:pointer}
+  .xf input[type=range]{accent-color:#ff3b9d}
 </style>
 </head>
 <body>
 
   <div class="head">
     <div class="logo"></div>
-    <div class="title">NEON PAD</div>
+    <div class="title">PRO DJ DECK</div>
     <div class="spacer"></div>
     <div class="status" id="status">Hazır</div>
+  </div>
+
+  <div class="decks">
+    <div class="deck A active" data-deck="A">DECK A<small id="nameA">yükle</small></div>
+    <div class="deck B" data-deck="B">DECK B<small id="nameB">yükle</small></div>
   </div>
 
   <div id="vidWrap"><video id="vid" muted playsinline></video></div>
 
   <div id="grid"></div>
 
-  <div class="bar">
-    <label class="btn music" for="audioFile">♪ Müzik</label>
-    <input type="file" id="audioFile" accept="audio/*">
-    <label class="btn video" for="videoFile">▶ Video</label>
-    <input type="file" id="videoFile" accept="video/*">
-    <button class="btn stop" id="stopAll">■</button>
+  <div class="sliders">
+    <div class="sl xf"><span>A</span><input type="range" id="xf" min="0" max="100" value="50"><span>B</span></div>
+    <div class="sl"><span>🔊</span><input type="range" id="vol" min="0" max="100" value="80"></div>
   </div>
 
-  <div class="vol">
-    <span>🔊</span><input type="range" id="vol" min="0" max="100" value="80">
+  <div class="bar">
+    <label class="btn" for="audioFile">♪ Müzik</label>
+    <input type="file" id="audioFile" accept="audio/*">
+    <label class="btn" for="videoFile">▶ Video</label>
+    <input type="file" id="videoFile" accept="video/*">
+    <button class="btn rec" id="recBtn">● Kaydet</button>
+    <button class="btn stop" id="stopAll">■</button>
   </div>
 
 <script>
@@ -122,12 +135,19 @@ const statusEl=document.getElementById('status');
 const vidWrap=document.getElementById('vidWrap');
 const vid=document.getElementById('vid');
 const volEl=document.getElementById('vol');
+const xfEl=document.getElementById('xf');
+const nameA=document.getElementById('nameA');
+const nameB=document.getElementById('nameB');
 
-let audioCtx,masterGain,buffer=null;
+let audioCtx,masterGain,gainA,gainB,recDest;
+let decks={A:{buffer:null,name:'',gain:null,activePads:new Set()},
+            B:{buffer:null,name:'',gain:null,activePads:new Set()}};
+let currentDeck='A';
 let pads=[];
 let videoURL=null;
+let recorder=null,recChunks=[];
 
-const DB='neonPad',STORE='f';
+const DB='proDJ',STORE='f';
 const openDB=()=>new Promise((res,rej)=>{const r=indexedDB.open(DB,1);
   r.onupgradeneeded=e=>e.target.result.createObjectStore(STORE);
   r.onsuccess=e=>res(e.target.result);r.onerror=e=>rej(e)});
@@ -141,26 +161,33 @@ const dbGet=async k=>{const db=await openDB();return new Promise((res,rej)=>{
 function initAudio(){
   if(audioCtx)return;
   audioCtx=new (window.AudioContext||window.webkitAudioContext)();
-  masterGain=audioCtx.createGain();
-  masterGain.gain.value=volEl.value/100;
+  masterGain=audioCtx.createGain();masterGain.gain.value=volEl.value/100;
+  recDest=audioCtx.createMediaStreamDestination();
   masterGain.connect(audioCtx.destination);
+  masterGain.connect(recDest);
+  gainA=audioCtx.createGain();gainA.connect(masterGain);
+  gainB=audioCtx.createGain();gainB.connect(masterGain);
+  decks.A.gain=gainA;decks.B.gain=gainB;
+  applyXfade();
 }
 
-// neon renk paleti
-const palette=[
-  '#ff2d6f','#ff5c2d','#ffb02d','#d0ff2d','#5cff8f','#2dffd0',
-  '#2db0ff','#5c5cff','#a02dff','#ff2dd0','#ff2d2d','#ff8f2d'
-];
+function applyXfade(){
+  if(!gainA||!gainB)return;
+  const x=xfEl.value/100; // 0 = A tam, 1 = B tam
+  gainA.gain.value=Math.cos(x*Math.PI/2);
+  gainB.gain.value=Math.cos((1-x)*Math.PI/2);
+}
+
+const palette=['#ff2d6f','#ff5c2d','#ffb02d','#d0ff2d','#5cff8f','#2dffd0',
+  '#2db0ff','#5c5cff','#a02dff','#ff2dd0','#ff2d2d','#ff8f2d'];
 const colorFor=i=>palette[i%palette.length];
 
-// grid
 for(let i=0;i<GRID;i++){
   const el=document.createElement('div');
-  el.className='pad';
-  el.dataset.i=i;
+  el.className='pad';el.dataset.i=i;
   el.style.color=colorFor(i);
   gridEl.appendChild(el);
-  pads.push({el,src:null,active:false,timer:null});
+  pads.push({el,src:null,active:false});
 }
 
 gridEl.addEventListener('pointerdown',e=>{
@@ -169,94 +196,149 @@ gridEl.addEventListener('pointerdown',e=>{
 });
 
 function triggerPad(i){
-  if(!buffer){statusEl.textContent='Önce müzik yükle';return;}
+  const deck=decks[currentDeck];
+  if(!deck.buffer){statusEl.textContent=`Deck ${currentDeck} boş — müzik yükle`;return;}
   initAudio();
   if(audioCtx.state==='suspended')audioCtx.resume();
 
   const pad=pads[i];
-  // aynı pad zaten çalıyorsa: yeniden başlat
+  const key=currentDeck+'_'+i;
+  // aynı pad aynı deck'te çalıyorsa durdur
+  if(pad.src && pad.deck===currentDeck){
+    try{pad.src.stop()}catch(e){}
+    pad.src=null;pad.active=false;
+    pad.el.classList.remove('on');
+    deck.activePads.delete(i);
+    return;
+  }
+  // başka deck'te çalıyorsa önce durdur
   if(pad.src){try{pad.src.stop()}catch(e){}}
-  if(pad.timer){clearTimeout(pad.timer);pad.timer=null;}
 
-  const dur=buffer.duration;
+  const dur=deck.buffer.duration;
   const slice=dur/GRID;
   const off=(i*slice)%dur;
+
   const src=audioCtx.createBufferSource();
-  src.buffer=buffer;
-  src.loop=false;
-  src.connect(masterGain);
-  src.start(0,off,slice);          // tek sefer, slice süresi kadar
-  pad.src=src;
-  pad.active=true;
+  src.buffer=deck.buffer;
+  src.loop=true;
+  src.loopStart=off;
+  src.loopEnd=Math.min(dur,off+slice);
+  src.connect(deck.gain);
+  src.start(0,off);
+
+  pad.src=src;pad.active=true;pad.deck=currentDeck;
   pad.el.classList.add('on');
-
-  // dilim bitince sön
-  const ms=slice*1000;
-  pad.timer=setTimeout(()=>{
-    pad.active=false;
-    pad.el.classList.remove('on');
-    pad.src=null;pad.timer=null;
-    syncVideo();
-  },ms);
-
+  deck.activePads.add(i);
   syncVideo();
 }
 
 function syncVideo(){
-  if(!vid.src||!vid.duration||!buffer)return;
-  const act=pads.find(p=>p.active);
-  if(!act){vid.pause();return;}
-  const i=+act.el.dataset.i;
+  if(!vid.src||!vid.duration)return;
+  const anyPad=pads.find(p=>p.active);
+  if(!anyPad){vid.pause();return;}
+  const i=+anyPad.el.dataset.i;
   const slice=vid.duration/GRID;
   vid.currentTime=(i*slice)%vid.duration;
   vid.play().catch(()=>{});
 }
 
 volEl.addEventListener('input',()=>{if(masterGain)masterGain.gain.value=volEl.value/100;});
+xfEl.addEventListener('input',applyXfade);
 
+document.querySelectorAll('.deck').forEach(d=>{
+  d.addEventListener('click',()=>{
+    currentDeck=d.dataset.deck;
+    document.querySelectorAll('.deck').forEach(x=>x.classList.remove('active'));
+    d.classList.add('active');
+  });
+});
+
+// müzik yükle → aktif deck'e
 document.getElementById('audioFile').addEventListener('change',async e=>{
   const f=e.target.files[0];if(!f)return;
   initAudio();
-  statusEl.textContent='Müzik çözülüyor...';
+  statusEl.textContent='Çözülüyor...';
   try{
-    buffer=await audioCtx.decodeAudioData(await f.arrayBuffer());
-    await dbPut('a',f);
-    statusEl.textContent=`✓ ${f.name}`;
-  }catch(err){statusEl.textContent='Hata: müzik okunamadı'}
+    const buf=await audioCtx.decodeAudioData(await f.arrayBuffer());
+    decks[currentDeck].buffer=buf;
+    decks[currentDeck].name=f.name;
+    if(currentDeck==='A')nameA.textContent=f.name.slice(0,18);
+    else nameB.textContent=f.name.slice(0,18);
+    await dbPut('deck_'+currentDeck,f);
+    statusEl.textContent=`Deck ${currentDeck}: ${f.name.slice(0,22)}`;
+  }catch(err){statusEl.textContent='Hata: çözülemedi'}
   e.target.value='';
 });
 
+// video
 document.getElementById('videoFile').addEventListener('change',async e=>{
   const f=e.target.files[0];if(!f)return;
   if(videoURL)URL.revokeObjectURL(videoURL);
   videoURL=URL.createObjectURL(f);
   vid.src=videoURL;vid.muted=true;
   vidWrap.style.display='block';
-  await dbPut('v',f);
+  await dbPut('video',f);
   statusEl.textContent='Video hazır';
   e.target.value='';
   vid.onloadedmetadata=()=>syncVideo();
 });
 
+// kayıt
+document.getElementById('recBtn').addEventListener('click',async function(){
+  if(recorder){
+    recorder.stop();
+    return;
+  }
+  initAudio();
+  if(audioCtx.state==='suspended')await audioCtx.resume();
+  recChunks=[];
+  const mime=MediaRecorder.isTypeSupported('audio/webm')?'audio/webm':'audio/ogg';
+  recorder=new MediaRecorder(recDest.stream,{mimeType:mime});
+  recorder.ondataavailable=e=>{if(e.data.size)recChunks.push(e.data)};
+  recorder.onstop=()=>{
+    const blob=new Blob(recChunks,{type:mime});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download='remix_'+Date.now()+(mime.includes('webm')?'.webm':'.ogg');
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(url),2000);
+    recorder=null;
+    this.classList.remove('on');
+    this.textContent='● Kaydet';
+    statusEl.textContent='Kayıt indirildi';
+  };
+  recorder.start();
+  this.classList.add('on');
+  this.textContent='⏹ Bitir';
+  statusEl.textContent='Kayıt başladı — remix yap, bitirince indir';
+});
+
+// tümünü durdur
 document.getElementById('stopAll').addEventListener('click',()=>{
   pads.forEach(p=>{
     if(p.src){try{p.src.stop()}catch(e){}}
-    if(p.timer)clearTimeout(p.timer);
-    p.src=null;p.timer=null;p.active=false;
-    p.el.classList.remove('on');
+    p.src=null;p.active=false;p.el.classList.remove('on');
   });
+  decks.A.activePads.clear();decks.B.activePads.clear();
   vid.pause();
   statusEl.textContent='Durduruldu';
 });
 
+// hafızadan yükle
 (async()=>{
   try{
-    const a=await dbGet('a');
-    if(a){initAudio();buffer=await audioCtx.decodeAudioData(await a.arrayBuffer());
-      statusEl.textContent='Müzik hazır';}
-    const v=await dbGet('v');
+    initAudio();
+    const a=await dbGet('deck_A');
+    if(a){decks.A.buffer=await audioCtx.decodeAudioData(await a.arrayBuffer());
+      decks.A.name=a.name;nameA.textContent=a.name.slice(0,18)}
+    const b=await dbGet('deck_B');
+    if(b){decks.B.buffer=await audioCtx.decodeAudioData(await b.arrayBuffer());
+      decks.B.name=b.name;nameB.textContent=b.name.slice(0,18)}
+    const v=await dbGet('video');
     if(v){videoURL=URL.createObjectURL(v);vid.src=videoURL;vid.muted=true;
       vidWrap.style.display='block';vid.onloadedmetadata=()=>syncVideo();}
+    statusEl.textContent='Hazır';
   }catch(e){}
 })();
 </script>
