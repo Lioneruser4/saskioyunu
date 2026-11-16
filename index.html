@@ -3,86 +3,100 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Pro Launchpad</title>
+<title>DJ Launchpad</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-  body{background:radial-gradient(circle at 50% 0%,#1b1b2a,#0a0a0f 70%);color:#eee;
-    font-family:system-ui,-apple-system,sans-serif;min-height:100vh;display:flex;
-    flex-direction:column;align-items:center;padding:12px;gap:12px;overflow-x:hidden}
-  h1{font-size:1rem;letter-spacing:4px;color:#7a7a9a;font-weight:600;margin-top:6px}
-  #videoWrap{width:100%;max-width:520px;aspect-ratio:16/9;background:#000;border-radius:12px;
-    overflow:hidden;position:relative;box-shadow:0 8px 30px rgba(0,0,0,.7);display:none}
-  #videoWrap video{width:100%;height:100%;object-fit:cover}
-  #grid{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;width:100%;max-width:520px;
-    padding:10px;background:#14141e;border-radius:14px;box-shadow:inset 0 0 0 1px #26263a,0 10px 40px rgba(0,0,0,.6)}
-  .pad{aspect-ratio:1;border-radius:7px;background:#23233a;cursor:pointer;position:relative;
-    transition:transform .07s,background .2s,box-shadow .2s;overflow:hidden}
-  .pad::after{content:"";position:absolute;inset:0;border-radius:7px;
-    background:radial-gradient(circle at 30% 30%,rgba(255,255,255,.25),transparent 60%);opacity:0;transition:opacity .2s}
-  .pad.on{box-shadow:0 0 14px currentColor,0 0 4px currentColor inset}
-  .pad.on::after{opacity:1}
-  .pad:active{transform:scale(.9)}
-  .bar{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;width:100%;max-width:520px}
-  button,label.filebtn{background:#2a2a44;color:#dcdcf0;border:none;padding:10px 14px;border-radius:9px;
-    font-size:.8rem;cursor:pointer;transition:background .2s;display:inline-flex;align-items:center;gap:6px}
-  button:hover,label.filebtn:hover{background:#3a3a5e}
-  button.danger{background:#4a2230}button.danger:hover{background:#6a2e42}
+  html,body{height:100%}
+  body{background:#0a0a0f;color:#eee;font-family:system-ui,-apple-system,sans-serif;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:10px;gap:12px;overflow:hidden}
+
+  /* ÜST: video (opsiyonel) */
+  #vidWrap{width:100%;max-width:560px;aspect-ratio:16/9;background:#000;border-radius:14px;
+    overflow:hidden;display:none;box-shadow:0 6px 24px rgba(0,0,0,.7)}
+  #vidWrap video{width:100%;height:100%;object-fit:cover}
+
+  /* GRID 6x6 */
+  #grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;
+    width:100%;max-width:560px;padding:12px;background:#12121c;border-radius:18px;
+    box-shadow:inset 0 0 0 1px #23233a,0 12px 40px rgba(0,0,0,.7)}
+  .pad{aspect-ratio:1;border-radius:12px;background:#1d1d30;cursor:pointer;
+    position:relative;transition:transform .06s,box-shadow .2s,background .2s;
+    display:flex;align-items:center;justify-content:center;font-size:.7rem;
+    color:#3a3a5a;font-weight:600;overflow:hidden}
+  .pad::before{content:"";position:absolute;inset:0;border-radius:12px;
+    background:radial-gradient(circle at 30% 25%,rgba(255,255,255,.3),transparent 65%);
+    opacity:0;transition:opacity .25s}
+  .pad.on::before{opacity:1}
+  .pad.on{box-shadow:0 0 22px currentColor,0 0 6px currentColor inset;transform:scale(1.02)}
+  .pad:active{transform:scale(.93)}
+
+  /* ALT KONTROL - az ve iri */
+  .bar{display:flex;gap:10px;width:100%;max-width:560px;align-items:center}
+  .bar label{flex:1}
+  button,label.filebtn{background:#2a2a44;color:#e0e0f5;border:none;
+    padding:14px 10px;border-radius:12px;font-size:.85rem;font-weight:600;
+    cursor:pointer;text-align:center;transition:background .2s;display:flex;
+    align-items:center;justify-content:center;gap:6px}
+  button:active,label.filebtn:active{background:#3a3a5e}
+  .stop{background:#3a1a2a;color:#ffb0c0;flex:0 0 60px;font-size:1.1rem}
+  .stop:active{background:#5a2438}
   input[type=file]{display:none}
-  #status{font-size:.72rem;color:#6a6a8a;text-align:center;min-height:16px;max-width:520px}
-  .row{display:flex;gap:8px;align-items:center;font-size:.78rem;color:#9a9ab8}
-  input[type=range]{width:90px;accent-color:#7a5cff}
-  #volVal{min-width:28px;text-align:right}
+
+  /* ses slider */
+  .vol{display:flex;gap:10px;align-items:center;width:100%;max-width:560px;
+    font-size:.75rem;color:#7a7a9a;padding:0 4px}
+  input[type=range]{flex:1;accent-color:#7a5cff;height:26px}
+
+  #status{font-size:.7rem;color:#5a5a7a;text-align:center;min-height:14px}
 </style>
 </head>
 <body>
-  <h1>PRO LAUNCHPAD</h1>
 
-  <div id="videoWrap"><video id="vid" muted playsinline></video></div>
+  <div id="vidWrap"><video id="vid" muted playsinline></video></div>
 
   <div id="grid"></div>
 
   <div class="bar">
-    <label class="filebtn">🎵 Müzik Yükle<input type="file" id="audioFile" accept="audio/*"></label>
-    <label class="filebtn">🎬 Video Yükle<input type="file" id="videoFile" accept="video/*"></label>
-    <button id="clearAll" class="danger">🗑️ Temizle</button>
+    <label class="filebtn" for="audioFile">🎵 Müzik</label>
+    <input type="file" id="audioFile" accept="audio/*">
+    <label class="filebtn" for="videoFile">🎬 Video</label>
+    <input type="file" id="videoFile" accept="video/*">
+    <button class="stop" id="stopAll">■</button>
   </div>
 
-  <div class="row">
-    <span>🔊</span><input type="range" id="vol" min="0" max="100" value="80"><span id="volVal">80</span>
+  <div class="vol">
+    <span>🔊</span><input type="range" id="vol" min="0" max="100" value="80">
   </div>
 
-  <div id="status">Hazır. Müzik yükle, pad'lere bas.</div>
+  <div id="status">Müzik yükle, pad'lere bas — remix başlasın</div>
 
 <script>
-const GRID=64, COLS=8;
+const GRID=36; // 6x6
 const gridEl=document.getElementById('grid');
 const statusEl=document.getElementById('status');
-const vidWrap=document.getElementById('videoWrap');
+const vidWrap=document.getElementById('vidWrap');
 const vid=document.getElementById('vid');
 const volEl=document.getElementById('vol');
-const volVal=document.getElementById('volVal');
 
-let audioCtx, masterGain, analyser;
-let buffer=null;          // decoded audio
-let pads=[];              // {el, src, gain, active, color}
-let videoURL=null, audioURL=null;
+let audioCtx,masterGain,buffer=null;
+let pads=[];
+let videoURL=null;
 
-// ---- IndexedDB ----
-const DB='launchpadDB', STORE='files';
-function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open(DB,1);
+const DB='djLP',STORE='f';
+const openDB=()=>new Promise((res,rej)=>{const r=indexedDB.open(DB,1);
   r.onupgradeneeded=e=>e.target.result.createObjectStore(STORE);
-  r.onsuccess=e=>res(e.target.result);r.onerror=e=>rej(e)})}
-async function dbPut(k,blob){const db=await openDB();return new Promise((res,rej)=>{
-  const tx=db.transaction(STORE,'readwrite');tx.objectStore(STORE).put(blob,k);
-  tx.oncomplete=()=>res();tx.onerror=e=>rej(e)})}
-async function dbGet(k){const db=await openDB();return new Promise((res,rej)=>{
+  r.onsuccess=e=>res(e.target.result);r.onerror=e=>rej(e)});
+const dbPut=async(k,b)=>{const db=await openDB();return new Promise((res,rej)=>{
+  const tx=db.transaction(STORE,'readwrite');tx.objectStore(STORE).put(b,k);
+  tx.oncomplete=res;tx.onerror=e=>rej(e)})};
+const dbGet=async k=>{const db=await openDB();return new Promise((res,rej)=>{
   const tx=db.transaction(STORE,'readonly');const rq=tx.objectStore(STORE).get(k);
-  rq.onsuccess=()=>res(rq.result);rq.onerror=e=>rej(e)})}
-async function dbDel(k){const db=await openDB();return new Promise((res,rej)=>{
+  rq.onsuccess=()=>res(rq.result);rq.onerror=e=>rej(e)})};
+const dbDel=async k=>{const db=await openDB();return new Promise((res,rej)=>{
   const tx=db.transaction(STORE,'readwrite');tx.objectStore(STORE).delete(k);
-  tx.oncomplete=()=>res();tx.onerror=e=>rej(e)})}
+  tx.oncomplete=res;tx.onerror=e=>rej(e)})};
 
-// ---- Audio engine ----
 function initAudio(){
   if(audioCtx)return;
   audioCtx=new (window.AudioContext||window.webkitAudioContext)();
@@ -91,29 +105,24 @@ function initAudio(){
   masterGain.connect(audioCtx.destination);
 }
 
-// pad rengi: HSV döngü
-function padColor(i){
-  const h=(i/GRID)*360;
-  return `hsl(${h},75%,55%)`;
-}
+// renk paleti (36 pad için canlı renkler)
+const palette=['#ff3b6b','#ff6b3b','#ffb03b','#d0ff3b','#5cff8f','#3bffd6',
+  '#3bb0ff','#5c5cff','#a03bff','#ff3bd0','#ff3b3b','#ff8f3b'];
+function colorFor(i){return palette[i%palette.length];}
 
 // grid oluştur
 for(let i=0;i<GRID;i++){
   const el=document.createElement('div');
   el.className='pad';
-  const c=padColor(i);
-  el.style.background='#23233a';
-  el.style.color=c;
   el.dataset.i=i;
+  el.style.color=colorFor(i);
   gridEl.appendChild(el);
-  pads.push({el,src:null,gain:null,active:false,color:c});
+  pads.push({el,src:null,active:false,color:colorFor(i)});
 }
 
-// pad tıklama
 gridEl.addEventListener('pointerdown',e=>{
   const p=e.target.closest('.pad');if(!p)return;
-  const i=+p.dataset.i;
-  togglePad(i);
+  togglePad(+p.dataset.i);
 });
 
 function togglePad(i){
@@ -122,61 +131,47 @@ function togglePad(i){
   if(audioCtx.state==='suspended')audioCtx.resume();
   const pad=pads[i];
   if(pad.active){
-    // durdur
-    try{pad.src.stop();}catch(e){}
+    try{pad.src.stop()}catch(e){}
     pad.active=false;
     pad.el.classList.remove('on');
-    pad.el.style.background='#23233a';
+    pad.el.style.background='#1d1d30';
     syncVideo();
     return;
   }
-  // her pad müziğin bir dilimini döngüde çalar
   const dur=buffer.duration;
   const slice=dur/GRID;
-  const offset=(i*slice)%dur;
+  const off=(i*slice)%dur;
   const src=audioCtx.createBufferSource();
-  src.buffer=buffer;
-  src.loop=true;
-  src.loopStart=offset;
-  src.loopEnd=Math.min(dur,offset+slice);
-  const g=audioCtx.createGain();g.gain.value=1;
-  src.connect(g);g.connect(masterGain);
-  src.start(0,offset);
-  pad.src=src;pad.gain=g;pad.active=true;
+  src.buffer=buffer;src.loop=true;
+  src.loopStart=off;src.loopEnd=Math.min(dur,off+slice);
+  src.connect(masterGain);
+  src.start(0,off);
+  pad.src=src;pad.active=true;
   pad.el.classList.add('on');
   pad.el.style.background=pad.color;
   syncVideo();
 }
 
-// video: hangi pad açıksa o dilimi göster
 function syncVideo(){
-  if(!vid.src)return;
-  const active=pads.find(p=>p.active);
-  if(!active){vid.pause();return;}
-  if(!buffer||!vid.duration)return;
-  const i=+active.el.dataset.i;
-  const dur=vid.duration;
-  const slice=dur/GRID;
-  const t=(i*slice)%dur;
-  vid.currentTime=t;
+  if(!vid.src||!vid.duration||!buffer)return;
+  const act=pads.find(p=>p.active);
+  if(!act){vid.pause();return;}
+  const i=+act.el.dataset.i;
+  const slice=vid.duration/GRID;
+  vid.currentTime=(i*slice)%vid.duration;
   vid.play().catch(()=>{});
 }
 
-// ses seviyesi
-volEl.addEventListener('input',()=>{
-  volVal.textContent=volEl.value;
-  if(masterGain)masterGain.gain.value=volEl.value/100;
-});
+volEl.addEventListener('input',()=>{if(masterGain)masterGain.gain.value=volEl.value/100;});
 
-// ---- Dosya yükleme ----
 document.getElementById('audioFile').addEventListener('change',async e=>{
   const f=e.target.files[0];if(!f)return;
   initAudio();
   statusEl.textContent='Müzik çözülüyor...';
   const arr=await f.arrayBuffer();
   buffer=await audioCtx.decodeAudioData(arr);
-  await dbPut('audio',f);
-  statusEl.textContent=`Müzik yüklendi: ${f.name} (${buffer.duration.toFixed(1)}s)`;
+  await dbPut('a',f);
+  statusEl.textContent=`✓ ${f.name} — ${buffer.duration.toFixed(1)}s`;
   e.target.value='';
 });
 
@@ -184,51 +179,31 @@ document.getElementById('videoFile').addEventListener('change',async e=>{
   const f=e.target.files[0];if(!f)return;
   if(videoURL)URL.revokeObjectURL(videoURL);
   videoURL=URL.createObjectURL(f);
-  vid.src=videoURL;
-  vid.muted=true;              // videonun kendi sesi kapalı
+  vid.src=videoURL;vid.muted=true;
   vidWrap.style.display='block';
-  await dbPut('video',f);
-  statusEl.textContent=`Video yüklendi: ${f.name} (sesi kapalı)`;
+  await dbPut('v',f);
+  statusEl.textContent='Video yüklendi (sesi kapalı)';
   e.target.value='';
   vid.onloadedmetadata=()=>syncVideo();
 });
 
-// temizle
-document.getElementById('clearAll').addEventListener('click',async()=>{
-  pads.forEach(p=>{if(p.active){try{p.src.stop()}catch(e){}}
-    p.active=false;p.el.classList.remove('on');p.el.style.background='#23233a'});
-  buffer=null;
-  vid.pause();vid.removeAttribute('src');vidWrap.style.display='none';
-  await dbDel('audio');await dbDel('video');
-  statusEl.textContent='Temizlendi.';
+document.getElementById('stopAll').addEventListener('click',()=>{
+  pads.forEach(p=>{if(p.active){try{p.src.stop()}catch(e){}
+    p.active=false;p.el.classList.remove('on');p.el.style.background='#1d1d30'}});
+  vid.pause();
+  statusEl.textContent='Durduruldu';
 });
 
-// ---- Açılışta hafızadan yükle ----
 (async()=>{
   try{
-    const a=await dbGet('audio');
-    if(a){
-      initAudio();
-      const arr=await a.arrayBuffer();
-      buffer=await audioCtx.decodeAudioData(arr);
-      statusEl.textContent='Kayıtlı müzik yüklendi.';
-    }
-    const v=await dbGet('video');
-    if(v){
-      videoURL=URL.createObjectURL(v);
-      vid.src=videoURL;vid.muted=true;vidWrap.style.display='block';
-      vid.onloadedmetadata=()=>syncVideo();
-    }
-  }catch(err){console.warn(err)}
+    const a=await dbGet('a');
+    if(a){initAudio();buffer=await audioCtx.decodeAudioData(await a.arrayBuffer());
+      statusEl.textContent='Kayıtlı müzik hazır';}
+    const v=await dbGet('v');
+    if(v){videoURL=URL.createObjectURL(v);vid.src=videoURL;vid.muted=true;
+      vidWrap.style.display='block';vid.onloadedmetadata=()=>syncVideo();}
+  }catch(e){}
 })();
-
-// klavye (PC)
-const keyMap={};
-document.addEventListener('keydown',e=>{
-  if(e.repeat)return;
-  const k=e.key.toLowerCase();
-  if(k>='1'&&k<='8'){const n=+k-1;togglePad(n);}
-});
 </script>
 </body>
 </html>
