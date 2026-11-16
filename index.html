@@ -3,76 +3,120 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>DJ Launchpad</title>
+<title>NEON PAD — DJ Remix</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
   html,body{height:100%}
-  body{background:#0a0a0f;color:#eee;font-family:system-ui,-apple-system,sans-serif;
-    display:flex;flex-direction:column;align-items:center;justify-content:center;
-    padding:10px;gap:12px;overflow:hidden}
+  body{
+    background:#05050a;
+    background-image:
+      radial-gradient(circle at 20% 0%,rgba(120,60,255,.18),transparent 50%),
+      radial-gradient(circle at 80% 100%,rgba(255,60,140,.15),transparent 50%);
+    color:#fff;font-family:'Segoe UI',system-ui,sans-serif;
+    display:flex;flex-direction:column;align-items:center;
+    justify-content:center;padding:12px;gap:14px;overflow:hidden;
+  }
 
-  /* ÜST: video (opsiyonel) */
-  #vidWrap{width:100%;max-width:560px;aspect-ratio:16/9;background:#000;border-radius:14px;
-    overflow:hidden;display:none;box-shadow:0 6px 24px rgba(0,0,0,.7)}
+  /* başlık */
+  .head{display:flex;align-items:center;gap:10px;width:100%;max-width:600px}
+  .logo{width:10px;height:10px;border-radius:50%;
+    background:#7a5cff;box-shadow:0 0 12px #7a5cff,0 0 24px #7a5cff}
+  .title{font-size:.95rem;font-weight:700;letter-spacing:6px;
+    background:linear-gradient(90deg,#7a5cff,#ff3b9d,#ffb03b);
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .spacer{flex:1}
+  .status{font-size:.65rem;color:#5a5a7a;letter-spacing:1px}
+
+  /* video */
+  #vidWrap{width:100%;max-width:600px;aspect-ratio:16/9;background:#000;
+    border-radius:16px;overflow:hidden;display:none;
+    box-shadow:0 0 0 1px #1e1e30,0 12px 40px rgba(122,92,255,.25)}
   #vidWrap video{width:100%;height:100%;object-fit:cover}
 
   /* GRID 6x6 */
-  #grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;
-    width:100%;max-width:560px;padding:12px;background:#12121c;border-radius:18px;
-    box-shadow:inset 0 0 0 1px #23233a,0 12px 40px rgba(0,0,0,.7)}
-  .pad{aspect-ratio:1;border-radius:12px;background:#1d1d30;cursor:pointer;
-    position:relative;transition:transform .06s,box-shadow .2s,background .2s;
-    display:flex;align-items:center;justify-content:center;font-size:.7rem;
-    color:#3a3a5a;font-weight:600;overflow:hidden}
-  .pad::before{content:"";position:absolute;inset:0;border-radius:12px;
-    background:radial-gradient(circle at 30% 25%,rgba(255,255,255,.3),transparent 65%);
-    opacity:0;transition:opacity .25s}
-  .pad.on::before{opacity:1}
-  .pad.on{box-shadow:0 0 22px currentColor,0 0 6px currentColor inset;transform:scale(1.02)}
-  .pad:active{transform:scale(.93)}
+  #grid{
+    display:grid;grid-template-columns:repeat(6,1fr);gap:7px;
+    width:100%;max-width:600px;padding:14px;
+    background:linear-gradient(180deg,#0e0e18,#0a0a12);
+    border-radius:22px;
+    box-shadow:inset 0 0 0 1px #1e1e30,0 20px 60px rgba(0,0,0,.8);
+  }
+  .pad{
+    aspect-ratio:1;border-radius:14px;position:relative;cursor:pointer;
+    background:#14141f;
+    box-shadow:inset 0 0 0 1px #23233a,inset 0 0 20px rgba(0,0,0,.6);
+    transition:transform .08s,box-shadow .18s,background .18s;
+    overflow:hidden;
+  }
+  .pad::after{
+    content:"";position:absolute;inset:0;border-radius:14px;
+    background:radial-gradient(circle at 35% 25%,rgba(255,255,255,.5),transparent 70%);
+    opacity:0;transition:opacity .2s;pointer-events:none;
+  }
+  .pad.on{
+    background:currentColor;
+    box-shadow:0 0 28px currentColor,0 0 10px currentColor inset,
+      inset 0 0 0 1px rgba(255,255,255,.3);
+    transform:scale(1.04);
+  }
+  .pad.on::after{opacity:.9}
+  .pad:active{transform:scale(.92)}
 
-  /* ALT KONTROL - az ve iri */
-  .bar{display:flex;gap:10px;width:100%;max-width:560px;align-items:center}
-  .bar label{flex:1}
-  button,label.filebtn{background:#2a2a44;color:#e0e0f5;border:none;
-    padding:14px 10px;border-radius:12px;font-size:.85rem;font-weight:600;
-    cursor:pointer;text-align:center;transition:background .2s;display:flex;
-    align-items:center;justify-content:center;gap:6px}
-  button:active,label.filebtn:active{background:#3a3a5e}
-  .stop{background:#3a1a2a;color:#ffb0c0;flex:0 0 60px;font-size:1.1rem}
-  .stop:active{background:#5a2438}
+  /* KONTROL */
+  .bar{display:flex;gap:8px;width:100%;max-width:600px}
+  .btn{
+    flex:1;background:linear-gradient(180deg,#1a1a2a,#12121e);
+    color:#cfcfe8;border:none;padding:16px 8px;border-radius:14px;
+    font-size:.85rem;font-weight:600;cursor:pointer;
+    box-shadow:inset 0 0 0 1px #23233a,0 4px 12px rgba(0,0,0,.4);
+    transition:background .2s,box-shadow .2s,color .2s;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+  }
+  .btn:active{background:#23233a;box-shadow:inset 0 0 0 1px #3a3a5e}
+  .btn.music{color:#7ad4ff}
+  .btn.music:active{box-shadow:inset 0 0 0 1px #7ad4ff,0 0 20px rgba(122,212,255,.4)}
+  .btn.video{color:#ff9ad4}
+  .btn.video:active{box-shadow:inset 0 0 0 1px #ff9ad4,0 0 20px rgba(255,154,212,.4)}
+  .btn.stop{
+    flex:0 0 70px;color:#ff6b8a;font-size:1.3rem;
+    background:linear-gradient(180deg,#2a0f1c,#1a0812)
+  }
+  .btn.stop:active{box-shadow:inset 0 0 0 1px #ff6b8a,0 0 24px rgba(255,107,138,.5)}
   input[type=file]{display:none}
 
-  /* ses slider */
-  .vol{display:flex;gap:10px;align-items:center;width:100%;max-width:560px;
-    font-size:.75rem;color:#7a7a9a;padding:0 4px}
-  input[type=range]{flex:1;accent-color:#7a5cff;height:26px}
-
-  #status{font-size:.7rem;color:#5a5a7a;text-align:center;min-height:14px}
+  /* ses */
+  .vol{display:flex;align-items:center;gap:12px;width:100%;max-width:600px;
+    padding:0 6px;font-size:.8rem;color:#6a6a8a}
+  input[type=range]{flex:1;height:28px;accent-color:#7a5cff;cursor:pointer}
 </style>
 </head>
 <body>
+
+  <div class="head">
+    <div class="logo"></div>
+    <div class="title">NEON PAD</div>
+    <div class="spacer"></div>
+    <div class="status" id="status">Hazır</div>
+  </div>
 
   <div id="vidWrap"><video id="vid" muted playsinline></video></div>
 
   <div id="grid"></div>
 
   <div class="bar">
-    <label class="filebtn" for="audioFile">🎵 Müzik</label>
+    <label class="btn music" for="audioFile">♪ Müzik</label>
     <input type="file" id="audioFile" accept="audio/*">
-    <label class="filebtn" for="videoFile">🎬 Video</label>
+    <label class="btn video" for="videoFile">▶ Video</label>
     <input type="file" id="videoFile" accept="video/*">
-    <button class="stop" id="stopAll">■</button>
+    <button class="btn stop" id="stopAll">■</button>
   </div>
 
   <div class="vol">
     <span>🔊</span><input type="range" id="vol" min="0" max="100" value="80">
   </div>
 
-  <div id="status">Müzik yükle, pad'lere bas — remix başlasın</div>
-
 <script>
-const GRID=36; // 6x6
+const GRID=36;
 const gridEl=document.getElementById('grid');
 const statusEl=document.getElementById('status');
 const vidWrap=document.getElementById('vidWrap');
@@ -83,7 +127,7 @@ let audioCtx,masterGain,buffer=null;
 let pads=[];
 let videoURL=null;
 
-const DB='djLP',STORE='f';
+const DB='neonPad',STORE='f';
 const openDB=()=>new Promise((res,rej)=>{const r=indexedDB.open(DB,1);
   r.onupgradeneeded=e=>e.target.result.createObjectStore(STORE);
   r.onsuccess=e=>res(e.target.result);r.onerror=e=>rej(e)});
@@ -93,9 +137,6 @@ const dbPut=async(k,b)=>{const db=await openDB();return new Promise((res,rej)=>{
 const dbGet=async k=>{const db=await openDB();return new Promise((res,rej)=>{
   const tx=db.transaction(STORE,'readonly');const rq=tx.objectStore(STORE).get(k);
   rq.onsuccess=()=>res(rq.result);rq.onerror=e=>rej(e)})};
-const dbDel=async k=>{const db=await openDB();return new Promise((res,rej)=>{
-  const tx=db.transaction(STORE,'readwrite');tx.objectStore(STORE).delete(k);
-  tx.oncomplete=res;tx.onerror=e=>rej(e)})};
 
 function initAudio(){
   if(audioCtx)return;
@@ -105,50 +146,59 @@ function initAudio(){
   masterGain.connect(audioCtx.destination);
 }
 
-// renk paleti (36 pad için canlı renkler)
-const palette=['#ff3b6b','#ff6b3b','#ffb03b','#d0ff3b','#5cff8f','#3bffd6',
-  '#3bb0ff','#5c5cff','#a03bff','#ff3bd0','#ff3b3b','#ff8f3b'];
-function colorFor(i){return palette[i%palette.length];}
+// neon renk paleti
+const palette=[
+  '#ff2d6f','#ff5c2d','#ffb02d','#d0ff2d','#5cff8f','#2dffd0',
+  '#2db0ff','#5c5cff','#a02dff','#ff2dd0','#ff2d2d','#ff8f2d'
+];
+const colorFor=i=>palette[i%palette.length];
 
-// grid oluştur
+// grid
 for(let i=0;i<GRID;i++){
   const el=document.createElement('div');
   el.className='pad';
   el.dataset.i=i;
   el.style.color=colorFor(i);
   gridEl.appendChild(el);
-  pads.push({el,src:null,active:false,color:colorFor(i)});
+  pads.push({el,src:null,active:false,timer:null});
 }
 
 gridEl.addEventListener('pointerdown',e=>{
   const p=e.target.closest('.pad');if(!p)return;
-  togglePad(+p.dataset.i);
+  triggerPad(+p.dataset.i);
 });
 
-function togglePad(i){
-  if(!buffer){statusEl.textContent='Önce müzik yükle 🎵';return;}
+function triggerPad(i){
+  if(!buffer){statusEl.textContent='Önce müzik yükle';return;}
   initAudio();
   if(audioCtx.state==='suspended')audioCtx.resume();
+
   const pad=pads[i];
-  if(pad.active){
-    try{pad.src.stop()}catch(e){}
-    pad.active=false;
-    pad.el.classList.remove('on');
-    pad.el.style.background='#1d1d30';
-    syncVideo();
-    return;
-  }
+  // aynı pad zaten çalıyorsa: yeniden başlat
+  if(pad.src){try{pad.src.stop()}catch(e){}}
+  if(pad.timer){clearTimeout(pad.timer);pad.timer=null;}
+
   const dur=buffer.duration;
   const slice=dur/GRID;
   const off=(i*slice)%dur;
   const src=audioCtx.createBufferSource();
-  src.buffer=buffer;src.loop=true;
-  src.loopStart=off;src.loopEnd=Math.min(dur,off+slice);
+  src.buffer=buffer;
+  src.loop=false;
   src.connect(masterGain);
-  src.start(0,off);
-  pad.src=src;pad.active=true;
+  src.start(0,off,slice);          // tek sefer, slice süresi kadar
+  pad.src=src;
+  pad.active=true;
   pad.el.classList.add('on');
-  pad.el.style.background=pad.color;
+
+  // dilim bitince sön
+  const ms=slice*1000;
+  pad.timer=setTimeout(()=>{
+    pad.active=false;
+    pad.el.classList.remove('on');
+    pad.src=null;pad.timer=null;
+    syncVideo();
+  },ms);
+
   syncVideo();
 }
 
@@ -168,10 +218,11 @@ document.getElementById('audioFile').addEventListener('change',async e=>{
   const f=e.target.files[0];if(!f)return;
   initAudio();
   statusEl.textContent='Müzik çözülüyor...';
-  const arr=await f.arrayBuffer();
-  buffer=await audioCtx.decodeAudioData(arr);
-  await dbPut('a',f);
-  statusEl.textContent=`✓ ${f.name} — ${buffer.duration.toFixed(1)}s`;
+  try{
+    buffer=await audioCtx.decodeAudioData(await f.arrayBuffer());
+    await dbPut('a',f);
+    statusEl.textContent=`✓ ${f.name}`;
+  }catch(err){statusEl.textContent='Hata: müzik okunamadı'}
   e.target.value='';
 });
 
@@ -182,14 +233,18 @@ document.getElementById('videoFile').addEventListener('change',async e=>{
   vid.src=videoURL;vid.muted=true;
   vidWrap.style.display='block';
   await dbPut('v',f);
-  statusEl.textContent='Video yüklendi (sesi kapalı)';
+  statusEl.textContent='Video hazır';
   e.target.value='';
   vid.onloadedmetadata=()=>syncVideo();
 });
 
 document.getElementById('stopAll').addEventListener('click',()=>{
-  pads.forEach(p=>{if(p.active){try{p.src.stop()}catch(e){}
-    p.active=false;p.el.classList.remove('on');p.el.style.background='#1d1d30'}});
+  pads.forEach(p=>{
+    if(p.src){try{p.src.stop()}catch(e){}}
+    if(p.timer)clearTimeout(p.timer);
+    p.src=null;p.timer=null;p.active=false;
+    p.el.classList.remove('on');
+  });
   vid.pause();
   statusEl.textContent='Durduruldu';
 });
@@ -198,7 +253,7 @@ document.getElementById('stopAll').addEventListener('click',()=>{
   try{
     const a=await dbGet('a');
     if(a){initAudio();buffer=await audioCtx.decodeAudioData(await a.arrayBuffer());
-      statusEl.textContent='Kayıtlı müzik hazır';}
+      statusEl.textContent='Müzik hazır';}
     const v=await dbGet('v');
     if(v){videoURL=URL.createObjectURL(v);vid.src=videoURL;vid.muted=true;
       vidWrap.style.display='block';vid.onloadedmetadata=()=>syncVideo();}
